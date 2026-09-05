@@ -1,0 +1,7 @@
+tags:
+  golden:
+    # Golden comparison is exact, and Skia's antialiasing differs between
+    # macOS and Linux — measured at up to 3.29% of pixels on identical trees.
+    # A tolerance wide enough to absorb that would also hide real changes: the
+    # header mark is 24px in a 1200x900 frame, well under 1%, so a drifted mark
+    # would pass. These therefore run on their own runner instead.

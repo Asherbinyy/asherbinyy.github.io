@@ -44,7 +44,11 @@ jobs:
         run: flutter analyze --fatal-infos
 
       - name: Run tests with coverage
-        run: flutter test --coverage
+        # Goldens run on their own macOS job: comparison is exact, and Skia
+        # antialiases differently on Linux, so identical trees differ by up to
+        # 3.29% of pixels. A tolerance wide enough to absorb that would hide
+        # real drift, such as a changed 24px mark.
+        run: flutter test --coverage --exclude-tags golden
 
       - name: Verify coverage threshold
         run: |
@@ -66,8 +70,45 @@ jobs:
           path: coverage/lcov.info
           if-no-files-found: ignore
 
+  goldens:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: kuhnroyal/flutter-fvm-config-action@v3
+        id: fvm-config
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fvm-config.outputs.FLUTTER_VERSION }}
+          channel: ${{ steps.fvm-config.outputs.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generate the mark and favicon set
+        run: dart run tool/generate_mark.dart
+
+      - name: Compare goldens
+        run: flutter test --tags golden
+
+      - name: Upload golden failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: test/golden/failures
+          if-no-files-found: ignore
+
   build:
-    needs: verify
+    needs: [verify, goldens]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
