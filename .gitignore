@@ -19,9 +19,11 @@ lib/app/l10n/generated/
 coverage/
 lcov.info
 
-# Generated static routes
-web/cv/index.html
-web/brief/index.html
+# Generated static routes — produced by tool/generate_static.dart
+web/cv/
+web/brief/
+web/robots.txt
+web/sitemap.xml
 
 # IDE — note the negation, see below
 .idea/
