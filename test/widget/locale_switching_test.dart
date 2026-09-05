@@ -8,7 +8,7 @@ import 'package:nocturne/app/app.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/locale_controller.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
-import 'package:nocturne/core/widgets/placeholder_screen.dart';
+import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 
 void main() {
   testWidgets('switching languages updates delegates and preserves the route', (
@@ -16,7 +16,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const ProviderScope(child: NocturneApp()));
     await tester.pumpAndSettle();
-    final context = tester.element(find.byType(PlaceholderScreen));
+    final context = tester.element(find.byType(ChromeScaffold));
     final router = GoRouter.of(context)..go('/work/fixture');
     final controller = ProviderScope.containerOf(context)
         .read(localeControllerProvider.notifier);
@@ -25,7 +25,7 @@ void main() {
     for (final locale in [AppLocale.arabic, AppLocale.english]) {
       controller.locale = locale;
       await tester.pumpAndSettle();
-      final active = tester.element(find.byType(PlaceholderScreen));
+      final active = tester.element(find.byType(ChromeScaffold));
 
       expect(active.l10n.localeName, locale.languageCode);
       expect(Localizations.localeOf(active).languageCode, locale.languageCode);

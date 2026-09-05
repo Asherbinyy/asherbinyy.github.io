@@ -14,6 +14,8 @@ import 'package:nocturne/app/theme/app_theme.dart';
 import 'package:nocturne/app/theme/theme_controller.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/platform/preference_store.dart';
+import 'package:nocturne/app/chrome/chrome_scaffold.dart';
+import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
 
 import '../../support/chrome_harness.dart';
@@ -64,7 +66,7 @@ void main() {
         breakpoint: ChromeBreakpoint.compact,
         capabilities: touchBrowser,
       );
-      final l10n = tester.element(find.byType(PlaceholderScreen)).l10n;
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       // The rail collapses below 1024px, but navigation must not vanish with
       // it — a phone browser is a primary target.
@@ -86,7 +88,7 @@ void main() {
         tester,
         breakpoint: ChromeBreakpoint.expanded,
       );
-      final l10n = tester.element(find.byType(PlaceholderScreen)).l10n;
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       await tester.tap(find.bySemanticsLabel(l10n.themeSwitchToDaybreak));
       await tester.pumpAndSettle();
@@ -99,7 +101,7 @@ void main() {
         AppTheme.daybreak.storageKey,
       );
       expect(
-        tester.element(find.byType(PlaceholderScreen)).tokens,
+        tester.element(find.byType(ChromeScaffold)).tokens,
         daybreakTokens,
       );
     });
@@ -108,11 +110,11 @@ void main() {
       tester,
     ) async {
       await pumpChrome(tester, breakpoint: ChromeBreakpoint.expanded);
-      final l10n = tester.element(find.byType(PlaceholderScreen)).l10n;
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       await tester.tap(find.bySemanticsLabel(l10n.languageSwitchToArabic));
       await tester.pumpAndSettle();
-      final active = tester.element(find.byType(PlaceholderScreen));
+      final active = tester.element(find.byType(ChromeScaffold));
 
       expect(active.l10n.localeName, 'ar');
       expect(Directionality.of(active), TextDirection.rtl);
@@ -123,7 +125,7 @@ void main() {
         tester,
         breakpoint: ChromeBreakpoint.large,
       );
-      final l10n = tester.element(find.byType(PlaceholderScreen)).l10n;
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
       expect(find.byType(AppRail), findsOneWidget);
 
       await tester.tap(find.bySemanticsLabel(l10n.recruiterModeOff));
@@ -144,7 +146,7 @@ void main() {
           PreferenceKey.language.storageKey: 'ar',
         },
       );
-      final active = tester.element(find.byType(PlaceholderScreen));
+      final active = tester.element(find.byType(ChromeScaffold));
 
       expect(active.tokens, daybreakTokens);
       expect(Directionality.of(active), TextDirection.rtl);
@@ -157,7 +159,7 @@ void main() {
     ) async {
       final semantics = tester.ensureSemantics();
       await pumpChrome(tester, breakpoint: ChromeBreakpoint.expanded);
-      final l10n = tester.element(find.byType(PlaceholderScreen)).l10n;
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       for (final label in [
         l10n.markLink,
@@ -223,7 +225,7 @@ void main() {
       tester,
     ) async {
       await pumpChrome(tester, breakpoint: ChromeBreakpoint.large);
-      final l10n = tester.element(find.byType(PlaceholderScreen)).l10n;
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       await tester.tap(find.text(l10n.navWork));
       await tester.pumpAndSettle();
@@ -232,21 +234,20 @@ void main() {
         tester.widget<PlaceholderScreen>(find.byType(PlaceholderScreen)).route,
         AppRoute.work,
       );
+      expect(find.byType(StationScreen), findsNothing);
     });
 
     testWidgets('the mark returns to the station', (tester) async {
       await pumpChrome(tester, breakpoint: ChromeBreakpoint.large);
-      final l10n = tester.element(find.byType(PlaceholderScreen)).l10n;
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       await tester.tap(find.text(l10n.navAbout));
       await tester.pumpAndSettle();
       await tester.tap(find.byType(AppMark));
       await tester.pumpAndSettle();
 
-      expect(
-        tester.widget<PlaceholderScreen>(find.byType(PlaceholderScreen)).route,
-        AppRoute.station,
-      );
+      // The station route renders the real screen, not a placeholder.
+      expect(find.byType(StationScreen), findsOneWidget);
     });
   });
 }

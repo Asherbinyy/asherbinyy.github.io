@@ -7,17 +7,17 @@ import 'package:go_router/go_router.dart';
 import 'package:nocturne/app/app.dart';
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/app_footer.dart';
+import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
 
 void main() {
-  testWidgets('every route resolves to its own placeholder', (tester) async {
+  testWidgets('every route resolves to its own screen', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: NocturneApp()));
     await tester.pumpAndSettle();
-    final context = tester.element(find.byType(PlaceholderScreen));
-    final router = GoRouter.of(context);
+    final router = GoRouter.of(tester.element(find.byType(ChromeScaffold)));
 
     for (final route in AppRoute.values) {
       router.go(
@@ -27,10 +27,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(
-        tester.widget<PlaceholderScreen>(find.byType(PlaceholderScreen)).route,
-        route,
-      );
+      if (route == AppRoute.station) {
+        // The only route with a real screen so far.
+        expect(find.byType(StationScreen), findsOneWidget);
+      } else {
+        expect(
+          tester
+              .widget<PlaceholderScreen>(find.byType(PlaceholderScreen))
+              .route,
+          route,
+        );
+      }
       expect(tester.takeException(), isNull);
     }
   });
@@ -40,7 +47,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const ProviderScope(child: NocturneApp()));
     await tester.pumpAndSettle();
-    final router = GoRouter.of(tester.element(find.byType(PlaceholderScreen)));
+    final router = GoRouter.of(tester.element(find.byType(ChromeScaffold)));
 
     for (final route in AppRoute.values) {
       router.go(
@@ -74,7 +81,7 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        final context = tester.element(find.byType(PlaceholderScreen));
+        final context = tester.element(find.byType(ChromeScaffold));
         final expected = mode == ThemeMode.dark
             ? nocturneTokens
             : daybreakTokens;
@@ -84,15 +91,6 @@ void main() {
         expect(
           Directionality.of(context),
           locale.languageCode == 'ar' ? TextDirection.rtl : TextDirection.ltr,
-        );
-        // The placeholder body itself still carries no invented copy; the only
-        // text on screen belongs to the chrome.
-        expect(
-          find.descendant(
-            of: find.byType(PlaceholderScreen),
-            matching: find.byType(Text),
-          ),
-          findsNothing,
         );
         expect(tester.takeException(), isNull);
       });

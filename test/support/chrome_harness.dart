@@ -6,8 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nocturne/app/app.dart';
 import 'package:nocturne/core/platform/platform_provider.dart';
 import 'package:nocturne/core/platform/pointer_capabilities.dart';
+import 'package:nocturne/content/asset_content.dart';
+import 'package:nocturne/content/content_repository.dart';
 import 'package:nocturne/core/platform/preference_store.dart';
 import 'package:nocturne/app/theme/theme_controller.dart';
+
+import 'content_readers.dart';
 
 /// The four documented breakpoints, with a width inside each band.
 enum ChromeBreakpoint {
@@ -57,6 +61,7 @@ Future<ProviderContainer> pumpChrome(
   Map<String, String>? preferences,
   ThemeMode? themeMode,
   Locale? locale,
+  AssetReader? reader,
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -68,12 +73,21 @@ Future<ProviderContainer> pumpChrome(
       preferenceStoreProvider.overrideWithValue(
         InMemoryPreferenceStore(preferences),
       ),
+      assetReaderProvider.overrideWithValue(reader ?? bundledContent()),
       platformCapabilitiesProvider.overrideWith(
-        () => _FixedCapabilities(capabilities),
+        () => FixedCapabilities(capabilities),
       ),
     ],
   );
   addTearDown(container.dispose);
+
+  // Content loading is real asynchronous I/O, which the test clock does not
+  // advance. Warming the providers here means the first build sees resolved
+  // content instead of a skeleton whose sweep would never settle.
+  await tester.runAsync(() async {
+    await container.read(profileProvider.future);
+    await container.read(careerProvider.future);
+  });
 
   await tester.pumpWidget(
     UncontrolledProviderScope(
@@ -85,8 +99,10 @@ Future<ProviderContainer> pumpChrome(
   return container;
 }
 
-class _FixedCapabilities extends PlatformCapabilities {
-  _FixedCapabilities(this._capabilities);
+/// Pins capability resolution so a test never depends on host media queries.
+class FixedCapabilities extends PlatformCapabilities {
+  /// Wraps a fixed snapshot.
+  FixedCapabilities(this._capabilities);
 
   final PointerCapabilities _capabilities;
 

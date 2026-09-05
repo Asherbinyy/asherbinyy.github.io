@@ -11,7 +11,7 @@ import 'package:nocturne/core/platform/app_messenger.dart';
 import 'package:nocturne/core/platform/message_surface.dart';
 import 'package:nocturne/core/platform/platform_provider.dart';
 import 'package:nocturne/core/platform/pointer_capabilities.dart';
-import 'package:nocturne/core/widgets/placeholder_screen.dart';
+import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 
 const _pointer = PointerCapabilities(canHover: true, hasFinePointer: true);
 const _touch = PointerCapabilities(hasCoarsePointer: true);
@@ -31,7 +31,7 @@ Future<void> _showMessage(
     ),
   );
   await tester.pumpAndSettle();
-  final context = tester.element(find.byType(PlaceholderScreen));
+  final context = tester.element(find.byType(ChromeScaffold));
   AppMessenger.of(context)
       .show('Fixture message', closeLabel: 'Dismiss fixture');
   await tester.pump();
