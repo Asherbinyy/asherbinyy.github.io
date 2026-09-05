@@ -106,9 +106,7 @@
       "platforms": [
         "ios"
       ],
-      "store": {
-        "ios": "https://apps.apple.com/us/app/snunu/id1627473292"
-      },
+      "store": {},
       "domain": "Consumer"
     },
     {
@@ -128,9 +126,7 @@
       "platforms": [
         "android"
       ],
-      "store": {
-        "android": "https://play.google.com/store/apps/details?id=com.crazyidea.coursesexams"
-      },
+      "store": {},
       "domain": "Education"
     }
   ]

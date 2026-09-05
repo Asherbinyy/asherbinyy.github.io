@@ -67,6 +67,7 @@ abstract final class ContentParser {
   static Apps apps(Map<String, dynamic> json) {
     final value = Apps.fromJson(json);
     _unique(value.apps.map((app) => app.id));
+    final storeLinks = <Uri>{};
     if (value.apps.where((app) => app.featured).length > 6) {
       throw const FormatException('At most six featured applications');
     }
@@ -78,6 +79,9 @@ abstract final class ContentParser {
         throw const FormatException('Invalid application platforms');
       }
       app.store.values.forEach(_link);
+      if (app.store.values.any((link) => !storeLinks.add(link))) {
+        throw const FormatException('Duplicate public store link');
+      }
       if (app.role case final String copy) _text(copy);
       if (app.metric case final String copy) _text(copy);
     }

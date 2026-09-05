@@ -52,9 +52,10 @@ void main() {
       );
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
-      // Mokaf ships with no store URLs. An absence the reader has to interpret
-      // would be worse than saying so.
-      expect(find.text(l10n.workNoStoreLink), findsOneWidget);
+      // Mokaf has no supplied listing; Snunu's listing is dead; AZ Exams has
+      // no independently verified URL. The ledger says so instead of linking
+      // to a dead or ambiguous destination.
+      expect(find.text(l10n.workNoStoreLink), findsNWidgets(3));
     });
 
     testWidgets('offers a store link for every listing the content has', (
@@ -67,9 +68,9 @@ void main() {
       );
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
-      // Nine iOS listings and two Google Play listings across eleven apps.
-      expect(find.text(l10n.workAppStore), findsNWidgets(9));
-      expect(find.text(l10n.workGooglePlay), findsNWidgets(2));
+      // Eight verified iOS listings and one unique Google Play listing.
+      expect(find.text(l10n.workAppStore), findsNWidgets(8));
+      expect(find.text(l10n.workGooglePlay), findsOneWidget);
     });
 
     testWidgets('shows a thumbnail on touch, where there is no hover', (

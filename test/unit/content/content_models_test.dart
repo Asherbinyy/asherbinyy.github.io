@@ -141,6 +141,12 @@ void main() {
         'https://example.invalid/store';
     expect(() => ContentParser.apps(apps), throwsFormatException);
   });
+  test('apps reject duplicate nonempty store links', () {
+    final first = _object(_item(apps, 'apps')['store'])['ios'];
+    _object(_item(apps, 'apps', 3)['store'])['ios'] = first;
+
+    expect(() => ContentParser.apps(apps), throwsFormatException);
+  });
   test('education rejects marks outside the percentage range', () {
     _item(_item(education, 'entries'), 'modules')['mark'] = 101;
     expect(() => ContentParser.education(education), throwsFormatException);
