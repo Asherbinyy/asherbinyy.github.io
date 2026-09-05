@@ -26,6 +26,7 @@ void main() {
       AppRoute.signal: SignalScreen,
       AppRoute.work: WorkScreen,
       AppRoute.privacy: PrivacyScreen,
+      AppRoute.campaign: StationScreen,
     };
 
     await tester.pumpWidget(const ProviderScope(child: NocturneApp()));
@@ -84,6 +85,17 @@ void main() {
         .toSet();
 
     expect(unframed, {AppRoute.cv, AppRoute.brief});
+  });
+
+  testWidgets('a campaign entry redirects to the station', (tester) async {
+    await tester.pumpWidget(const ProviderScope(child: NocturneApp()));
+    await pumpFrames(tester);
+    final router = GoRouter.of(tester.element(find.byType(ChromeScaffold)))
+      ..go('/r/graduate-role');
+    await pumpFrames(tester);
+
+    expect(router.routeInformationProvider.value.uri.path, '/');
+    expect(find.byType(StationScreen), findsOneWidget);
   });
 
   for (final mode in [ThemeMode.dark, ThemeMode.light]) {

@@ -51,6 +51,8 @@ linux/
 # Secrets — never commit
 .env
 .env.*
+.dev.vars
+.wrangler/
 **/google-services.json
 **/GoogleService-Info.plist
 firebase-service-account*.json

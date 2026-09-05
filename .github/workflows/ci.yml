@@ -50,6 +50,9 @@ jobs:
         # real drift, such as a changed 24px mark.
         run: flutter test --coverage --exclude-tags golden
 
+      - name: Test analytics Worker
+        run: node --test worker/test/*.test.js
+
       - name: Verify coverage threshold
         run: |
           python3 -c "
@@ -139,7 +142,9 @@ jobs:
         run: dart run tool/generate_static.dart
 
       - name: Build Web (WASM)
-        run: flutter build web --wasm --release
+        run: >-
+          flutter build web --wasm --release
+          --dart-define=ANALYTICS_ENDPOINT=https://nocturne-analytics.asherbinyy.workers.dev/v1/beacon
 
       - name: Ensure GitHub Pages routing and Jekyll bypass
         run: |

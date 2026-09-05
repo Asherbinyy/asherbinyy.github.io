@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/route_title.dart';
+import 'package:nocturne/core/analytics/analytics_route_view.dart';
+import 'package:nocturne/core/analytics/browser_analytics_context.dart';
 import 'package:nocturne/core/platform/app_messenger_host.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
 import 'package:nocturne/features/privacy/presentation/privacy_screen.dart';
@@ -24,11 +26,20 @@ abstract final class AppRouter {
         GoRoute(
           path: route.path,
           name: route.name,
+          redirect: route == AppRoute.campaign
+              ? (context, state) {
+                  captureCampaign(state.pathParameters['campaign']);
+                  return AppRoute.station.path;
+                }
+              : null,
           pageBuilder: (context, state) => NoTransitionPage<void>(
             key: state.pageKey,
-            child: RouteTitle(
-              route: route,
-              child: AppMessengerHost(child: _sequenced(route)),
+            child: AnalyticsRouteView(
+              route: state.uri.path,
+              child: RouteTitle(
+                route: route,
+                child: AppMessengerHost(child: _sequenced(route)),
+              ),
             ),
           ),
         ),

@@ -30,7 +30,7 @@ enum AppRoute {
   /// Reserved for the static HTML recruiter view in task 1.4.
   brief('/brief'),
 
-  /// Campaign placeholder; performs no tracking.
+  /// Session-scoped campaign entry; redirects to the station.
   campaign('/r/:campaign');
 
   const AppRoute(this.path);

@@ -1,0 +1,20 @@
+name = "nocturne-analytics"
+main = "worker/src/index.js"
+compatibility_date = "2026-09-05"
+workers_dev = true
+preview_urls = false
+send_metrics = false
+
+[vars]
+SITE_ID = "asherbinyy.github.io"
+SITE_ORIGIN = "https://asherbinyy.github.io"
+
+[triggers]
+crons = ["0 0 * * *", "0 1-23 * * *"]
+
+[observability.logs]
+enabled = false
+
+[[kv_namespaces]]
+binding = "ANALYTICS"
+id = "f93e4a6cc18b499f89eb67b743b3e0db"
