@@ -34,6 +34,9 @@ jobs:
       - name: Run code generation
         run: dart run build_runner build --delete-conflicting-outputs
 
+      - name: Generate the mark and favicon set
+        run: dart run tool/generate_mark.dart
+
       - name: Verify formatting
         run: dart format --set-exit-if-changed .
 
@@ -88,11 +91,11 @@ jobs:
       - name: Run code generation
         run: dart run build_runner build --delete-conflicting-outputs
 
+      - name: Generate the mark and favicon set
+        run: dart run tool/generate_mark.dart
+
       - name: Generate static routes
-        run: |
-          if [ -f tool/generate_static.dart ]; then
-            dart run tool/generate_static.dart
-          fi
+        run: dart run tool/generate_static.dart
 
       - name: Build Web (WASM)
         run: flutter build web --wasm --release

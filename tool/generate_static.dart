@@ -531,10 +531,10 @@ void _writeContactList(StringBuffer buf, Map<String, dynamic> contact) {
     );
   }
 
-  final phone = contact['phone'] as String?;
-  if (phone != null && phone.isNotEmpty) {
-    buf.writeln('<li><a href="tel:${_escAttr(phone)}">${_esc(phone)}</a></li>');
-  }
+  // The phone number is deliberately not published here. These two pages exist
+  // to be crawled, and an indexed tel: link is harvested by scrapers; email and
+  // the profile links are how recruiters actually make contact. It stays in
+  // profile.json for the CV document itself.
 
   final linkedin = contact['linkedin'] as String?;
   if (linkedin != null && linkedin.isNotEmpty) {
@@ -715,15 +715,19 @@ String _generateRobots() =>
 
 String _generateSitemap() {
   final now = DateTime.now().toUtc().toIso8601String().split('T').first;
+  // The application routes carry no trailing slash — AppRoute declares them
+  // as '/work', not '/work/' — and go_router resolves the slashed forms to its
+  // error route. Only the two static directories keep theirs, because Pages
+  // serves them as directories.
   final routes = <String>[
     '/',
     '/cv/',
     '/brief/',
-    '/signal/',
-    '/work/',
-    '/about/',
-    '/writing/',
-    '/privacy/',
+    '/signal',
+    '/work',
+    '/about',
+    '/writing',
+    '/privacy',
   ];
 
   final buf = StringBuffer()
