@@ -88,6 +88,34 @@ void main() {
     );
   });
 
+  test('cost is bounded by the viewport, not the length of the page', () {
+    // This is what holds the 4ms budget: a career sequence ten times longer
+    // must not cost ten times more to paint, because the painter samples the
+    // visible window rather than the whole trace.
+    final short = _operations(_painter(), viewport);
+    final long = _operations(
+      _painter(traceHeight: 40000, scrollOffset: 20000),
+      viewport,
+    );
+
+    // Not exactly equal: which burst peaks fall inside the window varies. The
+    // claim being made is that the cost does not scale with the page.
+    expect(long, lessThan(short * 2));
+  });
+
+  test('one paint of a full viewport stays well inside a frame', () {
+    // A coarse guard rather than a benchmark — a profile build is the real
+    // measurement. It catches a gross regression, such as sampling the whole
+    // trace again, without being flaky on a loaded machine.
+    final stopwatch = Stopwatch()..start();
+    for (var i = 0; i < 20; i++) {
+      _operations(_painter(phase: i / 20), viewport);
+    }
+    stopwatch.stop();
+
+    expect(stopwatch.elapsedMilliseconds / 20, lessThan(16));
+  });
+
   test('scrolling past the trace costs less than painting it', () {
     // The budget is 4ms a frame, and the cheapest way to hold it is not to
     // sample what is off screen.

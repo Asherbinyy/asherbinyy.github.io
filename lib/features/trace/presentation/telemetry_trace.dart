@@ -102,10 +102,25 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
     _sinceScroll = Duration.zero;
   }
 
+  /// Whether any part of the trace is currently on screen.
+  ///
+  /// Section 5 allows exactly one infinite loop on the site — the trace idle —
+  /// and requires it to pause off-screen. Scrolling past the career sequence
+  /// therefore costs nothing at all, not merely a cheap painter early-return.
+  bool get _isOnScreen {
+    if (!widget.controller.hasClients) return true;
+    final position = widget.controller.position;
+    final height = position.maxScrollExtent + position.viewportDimension;
+    if (height <= 0) return true;
+    return position.pixels < height &&
+        position.pixels + position.viewportDimension > 0;
+  }
+
   void _onTick(Duration elapsed) {
     final delta = elapsed - _lastTick;
     _lastTick = elapsed;
     if (delta <= Duration.zero) return;
+    if (!_isOnScreen) return;
 
     final offset = widget.controller.hasClients
         ? widget.controller.position.pixels

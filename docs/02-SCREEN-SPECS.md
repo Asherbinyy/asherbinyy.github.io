@@ -64,7 +64,7 @@ This exists because Flutter Web has an unavoidable initial payload. The choice i
 │  │  ──────────────────                                      │  2px amber rule, 120px wide
 │  │                                                          │
 │  │  Mobile engineer. 25 applications shipped                │  display-m, --text-secondary
-│  │  across five countries.                                  │
+│  │  across six countries.                                   │
 │  │                                                          │
 │  │  ╭─ 25 shipped ──╮ ╭─ 5 countries ─╮ ╭─ 4 years ─╮      │  instrument panels
 │  │  ╰───────────────╯ ╰───────────────╯ ╰───────────╯      │  mono numerals, corner ticks

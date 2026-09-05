@@ -24,7 +24,7 @@ The site must serve (1) without boring (2) or losing (3). This is the entire rea
 
 ## 2. The one thing this site has to prove
 
-**That the person behind it has shipped real software to real users, repeatedly, across five countries — and that the site itself is the proof, not a claim about it.**
+**That the person behind it has shipped real software to real users, repeatedly, across six countries — and that the site itself is the proof, not a claim about it.**
 
 Everything on the page either supports that or gets cut.
 

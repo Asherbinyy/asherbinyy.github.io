@@ -24,7 +24,7 @@ Every file is validated on load. A malformed file falls back to `assets/content/
 {
   "name": { "en": "Ahmed Elsherbini", "ar": "أحمد الشربيني" },
   "positioning": {
-    "en": "Mobile engineer. 25+ applications shipped across five countries.",
+    "en": "Mobile engineer. 25+ applications shipped across six countries.",
     "ar": "..."
   },
   "location": { "en": "Manchester, United Kingdom", "ar": "..." },
