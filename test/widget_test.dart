@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nocturne/app/app.dart';
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/app_footer.dart';
+import 'package:nocturne/features/signal/presentation/signal_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
@@ -30,8 +31,9 @@ void main() {
       await pumpFrames(tester);
 
       if (route == AppRoute.station) {
-        // The only route with a real screen so far.
         expect(find.byType(StationScreen), findsOneWidget);
+      } else if (route == AppRoute.signal) {
+        expect(find.byType(SignalScreen), findsOneWidget);
       } else {
         expect(
           tester

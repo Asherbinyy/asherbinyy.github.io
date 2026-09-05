@@ -3,7 +3,11 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:go_router/go_router.dart';
+
 import 'package:nocturne/app/app.dart';
+import 'package:nocturne/app/app_route.dart';
+import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_repository.dart';
 import 'package:nocturne/core/platform/platform_provider.dart';
@@ -27,6 +31,7 @@ Future<ProviderContainer> pumpStation(
   PointerCapabilities capabilities = pointerBrowser,
   ThemeMode? themeMode,
   Locale? locale,
+  AppRoute? initialRoute,
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -72,6 +77,12 @@ Future<ProviderContainer> pumpStation(
     await pumpFrames(tester);
   } else {
     await tester.pump();
+  }
+
+  if (initialRoute != null && initialRoute != AppRoute.station) {
+    GoRouter.of(tester.element(find.byType(ChromeScaffold)))
+        .goNamed(initialRoute.name);
+    await pumpFrames(tester);
   }
   return container;
 }
