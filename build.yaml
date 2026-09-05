@@ -12,6 +12,8 @@ targets:
           - lib/app/theme/theme_controller.dart
           - lib/features/trace/domain/trace_controller.dart
           - lib/content/providers.dart
+          - lib/content/asset_content.dart
+          - lib/features/station/domain/acquisition_controller.dart
       freezed:
         generate_for:
           - lib/content/models/**.dart

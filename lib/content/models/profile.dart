@@ -21,11 +21,33 @@ class Profile with _$Profile {
     Venture? venture,
     String? cvFile,
     Portrait? portrait,
+    @Default(<ProfileStat>[]) List<ProfileStat> stats,
   }) = _Profile;
 
   /// Decodes the documented JSON shape.
   factory Profile.fromJson(Map<String, dynamic> json) =>
       _$ProfileFromJson(json);
+}
+
+/// One of the hero's instrument panels.
+///
+/// Owner-supplied rather than derived. The screen spec's panels read "25
+/// shipped", "5 countries" and "4 years", and not one of those numbers is
+/// computable from the content: the ledger lists the publicly linkable subset,
+/// not everything delivered, and which roles count as commercial engineering is
+/// a judgement only the owner can make. `AGENTS.md` section 3 forbids inventing
+/// numbers, so an absent stats list renders no panels rather than a guess.
+@freezed
+class ProfileStat with _$ProfileStat {
+  /// [value] is a string so "25+" and "4" are equally expressible.
+  const factory ProfileStat({
+    required String value,
+    required LocalizedText label,
+  }) = _ProfileStat;
+
+  /// Decodes the documented JSON shape.
+  factory ProfileStat.fromJson(Map<String, dynamic> json) =>
+      _$ProfileStatFromJson(json);
 }
 
 /// Contact values supplied by the owner; optional links are omitted if missing.
