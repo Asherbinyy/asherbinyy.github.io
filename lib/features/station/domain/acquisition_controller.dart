@@ -1,20 +1,22 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'package:nocturne/features/station/domain/acquisition_session.dart';
+
 part 'acquisition_controller.g.dart';
 
 /// Whether the acquisition sequence has already played.
 ///
-/// The screen spec says once per session. This is held in memory rather than in
-/// storage: the sequence is not a preference the viewer chose, so writing it to
-/// the device would be a storage write nobody asked for, and
-/// `06-ANALYTICS-AND-PRIVACY.md` is explicit that nothing is written without a
-/// reason. A hard reload therefore replays it, which is recorded as a known
-/// divergence from "once per session".
+/// Browser builds seed this from a functional `sessionStorage` flag, so a hard
+/// reload in the same tab does not replay the sequence. The flag dies with the
+/// tab, carries no identity and is unrelated to analytics consent.
 @Riverpod(keepAlive: true)
 class AcquisitionPlayed extends _$AcquisitionPlayed {
   @override
-  bool build() => false;
+  bool build() => hasPlayedAcquisition();
 
   /// Marks the sequence complete, whether it ran or was skipped.
-  void markPlayed() => state = true;
+  void markPlayed() {
+    markAcquisitionPlayed();
+    state = true;
+  }
 }

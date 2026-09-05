@@ -25,7 +25,10 @@ import 'package:nocturne/features/station/presentation/widgets/hero_content.dart
 class StationScreen extends ConsumerWidget {
   /// Reads identity from the content layer, falling back to the bundled
   /// minimum rather than showing an error for a recoverable failure.
-  const StationScreen({super.key});
+  const StationScreen({this.acquisitionReveal, super.key});
+
+  /// Beat-three progress used only to reveal the name on first acquisition.
+  final Animation<double>? acquisitionReveal;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,6 +54,7 @@ class StationScreen extends ConsumerWidget {
               AsyncData(:final value) => _Resolved(
                 result: value,
                 locale: locale,
+                acquisitionReveal: acquisitionReveal,
               ),
               AsyncError() => const _Unavailable(),
               _ => const _Loading(),
@@ -86,19 +90,29 @@ class _Career extends ConsumerWidget {
 
 /// Content arrived, whether as the real profile or the bundled fallback.
 class _Resolved extends StatelessWidget {
-  const _Resolved({required this.result, required this.locale});
+  const _Resolved({
+    required this.result,
+    required this.locale,
+    required this.acquisitionReveal,
+  });
 
   final ContentResult<Profile> result;
   final AppLocale locale;
+  final Animation<double>? acquisitionReveal;
 
   @override
   Widget build(BuildContext context) => switch (result) {
     // A fallback still carries the owner's real name, positioning and contact,
     // so it renders as the hero rather than as an error.
-    ContentReady(:final data) => HeroContent(profile: data, locale: locale),
+    ContentReady(:final data) => HeroContent(
+      profile: data,
+      locale: locale,
+      acquisitionReveal: acquisitionReveal,
+    ),
     ContentFallback(:final profile) => HeroContent(
       profile: profile,
       locale: locale,
+      acquisitionReveal: acquisitionReveal,
     ),
     ContentUnavailable() => const _Unavailable(),
   };

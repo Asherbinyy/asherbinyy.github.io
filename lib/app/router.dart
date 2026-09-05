@@ -56,29 +56,43 @@ abstract final class AppRouter {
   /// it has to sit above the chrome rather than inside the routed content.
   /// Every other route resolves straight to its settled state.
   static Widget _sequenced(AppRoute route) {
-    final framed = _framed(route, _body(route));
     return route == AppRoute.station
-        ? AcquisitionSequence(child: framed)
-        : framed;
+        ? AcquisitionSequence(
+            builder: (context, contentReveal, chromeReveal) => _framed(
+              route,
+              _body(route, acquisitionReveal: contentReveal),
+              contentReveal: contentReveal,
+              chromeReveal: chromeReveal,
+            ),
+          )
+        : _framed(route, _body(route));
   }
 
   /// The screen for a route, or its reserved placeholder while one is pending.
-  static Widget _body(AppRoute route) => switch (route) {
-    AppRoute.station => const StationScreen(),
-    AppRoute.signal => const SignalScreen(),
-    AppRoute.work => const WorkScreen(),
-    AppRoute.privacy => const PrivacyScreen(),
-    _ => PlaceholderScreen(route: route),
-  };
+  static Widget _body(AppRoute route, {Animation<double>? acquisitionReveal}) =>
+      switch (route) {
+        AppRoute.station => StationScreen(acquisitionReveal: acquisitionReveal),
+        AppRoute.signal => const SignalScreen(),
+        AppRoute.work => const WorkScreen(),
+        AppRoute.privacy => const PrivacyScreen(),
+        _ => PlaceholderScreen(route: route),
+      };
 
   /// Global chrome is present on every route except the two static ones.
   ///
   /// `/cv` and `/brief` are hand-written HTML served directly by Pages, so
   /// these Flutter routes only exist as reserved paths. Framing them would
   /// imply the app owns pages it does not.
-  static Widget _framed(AppRoute route, Widget child) => route.hasGlobalChrome
+  static Widget _framed(
+    AppRoute route,
+    Widget child, {
+    Animation<double>? contentReveal,
+    Animation<double>? chromeReveal,
+  }) => route.hasGlobalChrome
       ? ChromeScaffold(
           route: route,
+          contentReveal: contentReveal,
+          chromeReveal: chromeReveal,
           // Section 6 runs the trace from the hero to the end of the career
           // sequence, both of which live on the station.
           backgroundBuilder: route == AppRoute.station

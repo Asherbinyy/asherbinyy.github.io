@@ -25,12 +25,19 @@ import 'package:nocturne/features/station/domain/acquisition_controller.dart';
 /// This widget owns beats one and two, which are pure overlay; the settled
 /// content underneath fades up across beats three and four, so nothing moves
 /// into place and there is no layout shift when the sequence ends.
-class AcquisitionSequence extends ConsumerStatefulWidget {
-  /// [child] is the settled state, built once and revealed.
-  const AcquisitionSequence({required this.child, super.key});
+typedef AcquisitionBuilder = Widget Function(
+  BuildContext context,
+  Animation<double> contentReveal,
+  Animation<double> chromeReveal,
+);
 
-  /// The settled hero and chrome.
-  final Widget child;
+/// Orchestrates the first station visit without changing settled layout.
+class AcquisitionSequence extends ConsumerStatefulWidget {
+  /// [builder] receives distinct beat-three content and beat-four chrome fades.
+  const AcquisitionSequence({required this.builder, super.key});
+
+  /// Builds the settled state without changing its layout during acquisition.
+  final AcquisitionBuilder builder;
 
   @override
   ConsumerState<AcquisitionSequence> createState() =>
@@ -64,17 +71,34 @@ class _AcquisitionSequenceState extends ConsumerState<AcquisitionSequence>
     ),
   );
 
-  /// Beats three and four: the settled state resolves.
-  late final CurvedAnimation _settle = CurvedAnimation(
+  /// Beat three: the baseline and hero content resolve.
+  late final CurvedAnimation _contentReveal = CurvedAnimation(
     parent: _controller,
     curve: const Interval(
       Tokens.acquisitionBeatTwo,
+      Tokens.acquisitionBeatThree,
+      curve: MotionCurves.emphasized,
+    ),
+  );
+
+  /// Beat four: header, rail and footer draw from their edges.
+  late final CurvedAnimation _chromeReveal = CurvedAnimation(
+    parent: _controller,
+    curve: const Interval(
+      Tokens.acquisitionBeatThree,
       1,
       curve: MotionCurves.emphasized,
     ),
   );
 
+  /// Reduced motion is one 200ms fade with no scan or staged movement.
+  late final CurvedAnimation _reducedReveal = CurvedAnimation(
+    parent: _controller,
+    curve: MotionCurves.emphasized,
+  );
+
   bool _hasStarted = false;
+  bool _usesReducedMotion = false;
 
   @override
   void didChangeDependencies() {
@@ -82,11 +106,13 @@ class _AcquisitionSequenceState extends ConsumerState<AcquisitionSequence>
     if (_hasStarted) return;
     _hasStarted = true;
 
-    if (ref.read(acquisitionPlayedProvider) || ReducedMotion.of(context)) {
-      // Reduced motion resolves to the settled state directly; the 200ms fade
-      // the spec calls for is the settled content's own opacity transition.
+    if (ref.read(acquisitionPlayedProvider)) {
       _finish();
       return;
+    }
+    _usesReducedMotion = ReducedMotion.of(context);
+    if (_usesReducedMotion) {
+      _controller.duration = Tokens.reducedAcquisition;
     }
     _controller.forward().whenComplete(_finish);
   }
@@ -95,7 +121,9 @@ class _AcquisitionSequenceState extends ConsumerState<AcquisitionSequence>
   void dispose() {
     _tick.dispose();
     _sweep.dispose();
-    _settle.dispose();
+    _contentReveal.dispose();
+    _chromeReveal.dispose();
+    _reducedReveal.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -126,6 +154,15 @@ class _AcquisitionSequenceState extends ConsumerState<AcquisitionSequence>
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final isPlayed = ref.watch(acquisitionPlayedProvider);
+    const complete = AlwaysStoppedAnimation<double>(1);
+    final content = widget.builder(
+      context,
+      _usesReducedMotion ? complete : _contentReveal,
+      _usesReducedMotion ? complete : _chromeReveal,
+    );
+    final settled = _usesReducedMotion
+        ? FadeTransition(opacity: _reducedReveal, child: content)
+        : content;
 
     return Semantics(
       liveRegion: !isPlayed,
@@ -143,8 +180,8 @@ class _AcquisitionSequenceState extends ConsumerState<AcquisitionSequence>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              FadeTransition(opacity: _settle, child: widget.child),
-              if (!isPlayed)
+              settled,
+              if (!isPlayed && !_usesReducedMotion)
                 IgnorePointer(
                   child: AnimatedBuilder(
                     animation: _controller,
@@ -152,7 +189,7 @@ class _AcquisitionSequenceState extends ConsumerState<AcquisitionSequence>
                       painter: _ScanLinePainter(
                         tick: _tick.value,
                         sweep: _sweep.value,
-                        settle: _settle.value,
+                        settle: _contentReveal.value,
                         beacon: tokens.beacon,
                         instrument: tokens.instrumentDim,
                         hairlineWidth: tokens.hairlineWidth,

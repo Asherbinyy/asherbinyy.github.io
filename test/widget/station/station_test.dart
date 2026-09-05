@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/chrome/app_footer.dart';
+import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
@@ -10,6 +11,7 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/features/station/domain/acquisition_controller.dart';
+import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/features/station/presentation/widgets/acquisition_sequence.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
 import 'package:nocturne/features/station/presentation/widgets/stat_panel.dart';
@@ -213,17 +215,60 @@ void main() {
       expect(container.read(acquisitionPlayedProvider), isTrue);
     });
 
-    testWidgets('reduced motion resolves straight to the settled state', (
+    testWidgets('beat three reveals content before beat four reveals chrome', (
       tester,
     ) async {
+      await pumpStation(
+        tester,
+        breakpoint: ChromeBreakpoint.expanded,
+        hasPlayedSequence: false,
+        settle: false,
+      );
+      final beatThreeMidpoint = Duration(
+        microseconds:
+            (Tokens.acquisition.inMicroseconds *
+                    (Tokens.acquisitionBeatTwo + Tokens.acquisitionBeatThree) /
+                    2)
+                .round(),
+      );
+
+      await tester.pump(beatThreeMidpoint);
+
+      final contentFade = tester.widget<FadeTransition>(
+        find
+            .ancestor(
+              of: find.byType(StationScreen),
+              matching: find.byType(FadeTransition),
+            )
+            .first,
+      );
+      final headerFade = tester.widget<FadeTransition>(
+        find
+            .ancestor(
+              of: find.byType(AppHeader),
+              matching: find.byType(FadeTransition),
+            )
+            .first,
+      );
+      expect(contentFade.opacity.value, greaterThan(Tokens.zero));
+      expect(headerFade.opacity.value, Tokens.zero);
+    });
+
+    testWidgets('reduced motion uses the specified 200ms fade', (tester) async {
       final container = await pumpStation(
         tester,
         breakpoint: ChromeBreakpoint.expanded,
         hasPlayedSequence: false,
         reducedMotion: true,
+        settle: false,
       );
 
-      // No 2400ms sequence ran, so the hero is already readable.
+      expect(container.read(acquisitionPlayedProvider), isFalse);
+      await tester.pump(Tokens.reducedAcquisition ~/ 2);
+      expect(container.read(acquisitionPlayedProvider), isFalse);
+      await tester.pump(Tokens.reducedAcquisition ~/ 2);
+      await tester.pump(Tokens.instant);
+
       expect(container.read(acquisitionPlayedProvider), isTrue);
       expect(find.text('Ahmed Elsherbini'), findsOneWidget);
     });

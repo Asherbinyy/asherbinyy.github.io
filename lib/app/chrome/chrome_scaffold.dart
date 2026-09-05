@@ -32,6 +32,8 @@ class ChromeScaffold extends ConsumerStatefulWidget {
     required this.route,
     required this.child,
     this.backgroundBuilder,
+    this.contentReveal,
+    this.chromeReveal,
     super.key,
   });
 
@@ -40,6 +42,12 @@ class ChromeScaffold extends ConsumerStatefulWidget {
 
   /// Routed content.
   final Widget child;
+
+  /// Beat-three opacity for routed content and its background trace.
+  final Animation<double>? contentReveal;
+
+  /// Beat-four opacity and edge movement for persistent chrome.
+  final Animation<double>? chromeReveal;
 
   /// Painted behind the scrolling content, given the page scroll controller.
   ///
@@ -99,40 +107,69 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
           policy: ReadingOrderTraversalPolicy(),
           child: Column(
             children: [
-              AppHeader(current: widget.route),
+              _ChromeReveal(
+                animation: widget.chromeReveal,
+                edge: _RevealEdge.top,
+                child: AppHeader(current: widget.route),
+              ),
               if (!AppHeader.hasInlineNav(context) && !isRecruiterMode)
-                _NavRow(current: widget.route),
+                _ChromeReveal(
+                  animation: widget.chromeReveal,
+                  edge: _RevealEdge.top,
+                  child: _NavRow(current: widget.route),
+                ),
               if (!hasRail && !isRecruiterMode)
-                _CollapsedProgress(progress: _progress),
+                _ChromeReveal(
+                  animation: widget.chromeReveal,
+                  edge: _RevealEdge.top,
+                  child: _CollapsedProgress(progress: _progress),
+                ),
               Expanded(
                 child: Row(
                   children: [
                     if (hasRail)
-                      ValueListenableBuilder<double>(
-                        valueListenable: _progress,
-                        builder: (context, progress, _) => AppRail(
-                          sectionName: _sectionName(context),
-                          progress: progress,
+                      _ChromeReveal(
+                        animation: widget.chromeReveal,
+                        edge: _RevealEdge.start,
+                        child: ValueListenableBuilder<double>(
+                          valueListenable: _progress,
+                          builder: (context, progress, _) => AppRail(
+                            sectionName: _sectionName(context),
+                            progress: progress,
+                          ),
                         ),
                       ),
                     Expanded(
-                      child: _ContentColumn(
-                        controller: _scroll,
-                        // Recruiter Mode has no trace: section 5 of the brief
-                        // says no map, no trace, no motion.
-                        background: isRecruiterMode
-                            ? null
-                            : widget.backgroundBuilder?.call(_scroll),
-                        child: isRecruiterMode
-                            ? const RecruiterView()
-                            : widget.child,
+                      child: FadeTransition(
+                        opacity:
+                            widget.contentReveal ??
+                            const AlwaysStoppedAnimation(1),
+                        child: _ContentColumn(
+                          controller: _scroll,
+                          // Recruiter Mode has no trace: section 5 of the brief
+                          // says no map, no trace, no motion.
+                          background: isRecruiterMode
+                              ? null
+                              : widget.backgroundBuilder?.call(_scroll),
+                          child: isRecruiterMode
+                              ? const RecruiterView()
+                              : widget.child,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const AnimatedConsentBanner(),
-              const _Footer(),
+              _ChromeReveal(
+                animation: widget.chromeReveal,
+                edge: _RevealEdge.bottom,
+                child: const AnimatedConsentBanner(),
+              ),
+              _ChromeReveal(
+                animation: widget.chromeReveal,
+                edge: _RevealEdge.bottom,
+                child: const _Footer(),
+              ),
             ],
           ),
         ),
@@ -149,6 +186,43 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
       }
     }
     return '';
+  }
+}
+
+enum _RevealEdge { top, bottom, start }
+
+/// Keeps chrome laid out at its final size while drawing it in from an edge.
+class _ChromeReveal extends StatelessWidget {
+  const _ChromeReveal({
+    required this.animation,
+    required this.edge,
+    required this.child,
+  });
+
+  final Animation<double>? animation;
+  final _RevealEdge edge;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final reveal = animation;
+    if (reveal == null) return child;
+    final direction = Directionality.of(context);
+    final offset = switch (edge) {
+      _RevealEdge.top => const Offset(0, -1),
+      _RevealEdge.bottom => const Offset(0, 1),
+      _RevealEdge.start => Offset(direction == TextDirection.ltr ? -1 : 1, 0),
+    };
+    return FadeTransition(
+      opacity: reveal,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: offset,
+          end: Offset.zero,
+        ).animate(reveal),
+        child: child,
+      ),
+    );
   }
 }
 

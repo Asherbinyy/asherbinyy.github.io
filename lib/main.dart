@@ -10,9 +10,10 @@ import 'package:nocturne/core/platform/shared_preference_store.dart';
 /// Loads the viewer's stored preferences before the first frame, so the app
 /// never paints one theme and then flips to another.
 ///
-/// The only thing read from or written to the device is the set of choices in
-/// `PreferenceKey` — theme, language and Recruiter Mode. No analytics
-/// identifier is stored here or anywhere else before consent.
+/// Persistent device storage holds only the choices in `PreferenceKey`.
+/// Acquisition uses one non-identifying, tab-scoped functional marker; campaign
+/// attribution uses the owner-defined entry slug for that tab. Neither is an
+/// analytics identifier, and no cross-session viewer identifier is stored.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   configureBrowserNavigation();

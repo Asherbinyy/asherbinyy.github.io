@@ -21,13 +21,21 @@ import 'package:nocturne/features/station/presentation/widgets/stat_panel.dart';
 /// scroll-down chevron — and none of them are here.
 class HeroContent extends StatelessWidget {
   /// [profile] is already resolved, so this widget never awaits.
-  const HeroContent({required this.profile, required this.locale, super.key});
+  const HeroContent({
+    required this.profile,
+    required this.locale,
+    this.acquisitionReveal,
+    super.key,
+  });
 
   /// Identity and positioning.
   final Profile profile;
 
   /// Active content channel.
   final AppLocale locale;
+
+  /// First-load beat-three progress; absent in the settled route.
+  final Animation<double>? acquisitionReveal;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +47,11 @@ class HeroContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(profile.name.resolve(locale), style: type.displayXl),
+        _AcquiredName(
+          name: profile.name.resolve(locale),
+          style: type.displayXl,
+          reveal: acquisitionReveal,
+        ),
         SizedBox(height: tokens.space16),
         // Short on purpose: a full-width rule reads as a divider, a 120px one
         // reads as a mark.
@@ -89,6 +101,38 @@ class HeroContent extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// Types the name by revealing its laid-out glyph run without changing size.
+class _AcquiredName extends StatelessWidget {
+  const _AcquiredName({
+    required this.name,
+    required this.style,
+    required this.reveal,
+  });
+
+  final String name;
+  final TextStyle style;
+  final Animation<double>? reveal;
+
+  @override
+  Widget build(BuildContext context) {
+    final animation = reveal;
+    if (animation == null) return Text(name, style: style);
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) => animation.isCompleted
+          ? child ?? const SizedBox.shrink()
+          : ClipRect(
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                widthFactor: animation.value,
+                child: child,
+              ),
+            ),
+      child: Text(name, style: style),
     );
   }
 }
