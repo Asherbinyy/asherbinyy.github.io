@@ -155,6 +155,16 @@ class NocturneTypography {
     color: tokens.instrument,
   );
 
+  /// The width of the capped measure at [style].
+  ///
+  /// Section 3 requires the body measure to be enforced with a max-width, not
+  /// guessed. Callers pass the style they are actually rendering so the cap
+  /// tracks the type rather than assuming body size.
+  double measureFor(TextStyle style) =>
+      (style.fontSize ?? Tokens.bodySize) *
+      Tokens.bodyMeasureCharacters *
+      Tokens.measureAdvanceRatio;
+
   /// Maps Material semantic slots onto the existing scale only.
   TextTheme get textTheme => TextTheme(
     displayLarge: displayXl,

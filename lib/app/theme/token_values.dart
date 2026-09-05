@@ -197,6 +197,9 @@ extension ThemeTokenValues on ThemeTokens {
   /// Shared bodyMeasureCharacters token.
   int get bodyMeasureCharacters => Tokens.bodyMeasureCharacters;
 
+  /// Shared measureAdvanceRatio token.
+  double get measureAdvanceRatio => Tokens.measureAdvanceRatio;
+
   /// Shared instant token.
   Duration get instant => Tokens.instant;
 
@@ -319,6 +322,21 @@ extension ThemeTokenValues on ThemeTokens {
 
   /// Shared railProgressHeight token.
   double get railProgressHeight => Tokens.railProgressHeight;
+
+  /// Shared heroRuleWidth token.
+  double get heroRuleWidth => Tokens.heroRuleWidth;
+
+  /// Shared heroRuleHeight token.
+  double get heroRuleHeight => Tokens.heroRuleHeight;
+
+  /// Shared grainTile token.
+  double get grainTile => Tokens.grainTile;
+
+  /// Shared grainSpecks token.
+  int get grainSpecks => Tokens.grainSpecks;
+
+  /// Shared acquisition token.
+  Duration get acquisition => Tokens.acquisition;
 
   /// Shared markNativeSize token.
   double get markNativeSize => Tokens.markNativeSize;

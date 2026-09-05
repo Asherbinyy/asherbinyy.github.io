@@ -161,6 +161,13 @@ abstract final class Tokens {
   /// Design-system value for bodyMeasureCharacters.
   static const int bodyMeasureCharacters = 68;
 
+  /// Average character advance as a fraction of the font size.
+  ///
+  /// Section 3 caps the measure at 68 characters and says to enforce it with a
+  /// max-width rather than guesswork. Proportional Latin text averages close to
+  /// half an em per character, which is what turns a character count into one.
+  static const double measureAdvanceRatio = 0.5;
+
   /// Exact instant scale and related values.
   static const Duration instant = Duration(milliseconds: 100),
       quick = Duration(milliseconds: 180),
@@ -270,6 +277,25 @@ abstract final class Tokens {
       railWidth = 56,
       footerHeight = 48,
       railProgressHeight = 3;
+
+  /// The hero's amber rule: 120px wide, 2px thick, and deliberately short of
+  /// the column — a full-width rule reads as a divider, a short one as a mark.
+  static const double heroRuleWidth = 120, heroRuleHeight = 2;
+
+  /// Grain tile edge, in logical pixels, and the specks drawn into one tile.
+  static const double grainTile = 128;
+
+  /// Specks per tile. Enough to read as texture at 3% opacity, few enough that
+  /// the tile paints in well under a frame.
+  static const int grainSpecks = 640;
+
+  /// Acquisition beat boundaries as fractions of the full sequence.
+  static const double acquisitionBeatOne = 0.25,
+      acquisitionBeatTwo = 0.583,
+      acquisitionBeatThree = 0.833;
+
+  /// The full acquisition sequence: four beats totalling 2400ms.
+  static const Duration acquisition = Duration(milliseconds: 2400);
 
   /// The mark: 2px stroke at its native 32px square, 24px in the header.
   static const double markNativeSize = 32, markStroke = 2, markHeaderSize = 24;
