@@ -18,8 +18,11 @@ void main() {
   late String sitemapXml;
 
   setUpAll(() {
-    // Run the generator to produce fresh output.
-    final result = Process.runSync('dart', [
+    // Run the generator under the pinned SDK rather than whatever `dart`
+    // happens to be on PATH, which would defeat .fvmrc. `flutter test` sets
+    // FLUTTER_ROOT to the SDK actually in use, so its bundled Dart is the
+    // right one both locally under FVM and in CI, which has no FVM.
+    final result = Process.runSync(_dartExecutable(), [
       'run',
       'tool/generate_static.dart',
     ], workingDirectory: _projectRoot());
@@ -300,4 +303,12 @@ String _projectRoot() {
     dir = dir.parent;
   }
   return Directory.current.path;
+}
+
+/// The Dart binary belonging to the SDK running this test.
+String _dartExecutable() {
+  final root = Platform.environment['FLUTTER_ROOT'];
+  if (root == null || root.isEmpty) return 'dart';
+  final bundled = File('$root/bin/cache/dart-sdk/bin/dart');
+  return bundled.existsSync() ? bundled.path : 'dart';
 }

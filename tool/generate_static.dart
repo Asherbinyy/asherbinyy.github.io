@@ -243,6 +243,11 @@ String _generateCv(
   final positioning = _esc(_en(profile['positioning']));
   final location = _esc(_en(profile['location']));
   final status = _esc(_en(profile['status']));
+  // Element escaping leaves double quotes intact, which would break out of a
+  // meta tag's content attribute, so attribute positions get their own values.
+  final nameAttr = _escAttr(_en(profile['name']));
+  final positioningAttr = _escAttr(_en(profile['positioning']));
+  final locationAttr = _escAttr(_en(profile['location']));
   final contact = profile['contact'] as Map<String, dynamic>? ?? {};
 
   final buf = StringBuffer()
@@ -256,16 +261,16 @@ String _generateCv(
     )
     ..writeln('<meta name="theme-color" content="#05070A">')
     ..writeln(
-      '<meta name="description" content="$positioning '
-      '${location.isNotEmpty ? '— $location' : ''}">',
+      '<meta name="description" content="$positioningAttr '
+      '${locationAttr.isNotEmpty ? '— $locationAttr' : ''}">',
     )
     ..writeln('<title>$name — CV</title>')
     ..writeln('<link rel="icon" type="image/png" href="/favicon.png">')
     ..writeln('<link rel="canonical" href="$baseUrl/cv/">')
     // Open Graph
     ..writeln('<meta property="og:type" content="profile">')
-    ..writeln('<meta property="og:title" content="$name — CV">')
-    ..writeln('<meta property="og:description" content="$positioning">')
+    ..writeln('<meta property="og:title" content="$nameAttr — CV">')
+    ..writeln('<meta property="og:description" content="$positioningAttr">')
     ..writeln('<meta property="og:url" content="$baseUrl/cv/">')
     ..writeln(
       '<meta property="og:image" '
@@ -273,8 +278,8 @@ String _generateCv(
     )
     // Twitter Card
     ..writeln('<meta name="twitter:card" content="summary">')
-    ..writeln('<meta name="twitter:title" content="$name — CV">')
-    ..writeln('<meta name="twitter:description" content="$positioning">')
+    ..writeln('<meta name="twitter:title" content="$nameAttr — CV">')
+    ..writeln('<meta name="twitter:description" content="$positioningAttr">')
     ..writeln('<style>')
     ..write(_criticalCss())
     ..writeln('</style>')
@@ -579,6 +584,8 @@ String _generateBrief(
   final positioning = _esc(_en(profile['positioning']));
   final location = _esc(_en(profile['location']));
   final status = _esc(_en(profile['status']));
+  final nameAttr = _escAttr(_en(profile['name']));
+  final positioningAttr = _escAttr(_en(profile['positioning']));
   final contact = profile['contact'] as Map<String, dynamic>? ?? {};
 
   final featured = (apps['apps'] as List<dynamic>? ?? [])
@@ -599,14 +606,16 @@ String _generateBrief(
       'content="width=device-width, initial-scale=1.0">',
     )
     ..writeln('<meta name="theme-color" content="#05070A">')
-    ..writeln('<meta name="description" content="$name — $positioning">')
+    ..writeln(
+      '<meta name="description" content="$nameAttr — $positioningAttr">',
+    )
     ..writeln('<title>$name — Brief</title>')
     ..writeln('<link rel="icon" type="image/png" href="/favicon.png">')
     ..writeln('<link rel="canonical" href="$baseUrl/brief/">')
     // Open Graph
     ..writeln('<meta property="og:type" content="profile">')
-    ..writeln('<meta property="og:title" content="$name — Brief">')
-    ..writeln('<meta property="og:description" content="$positioning">')
+    ..writeln('<meta property="og:title" content="$nameAttr — Brief">')
+    ..writeln('<meta property="og:description" content="$positioningAttr">')
     ..writeln('<meta property="og:url" content="$baseUrl/brief/">')
     ..writeln(
       '<meta property="og:image" '

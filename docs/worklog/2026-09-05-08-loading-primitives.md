@@ -171,7 +171,8 @@ fvm flutter build web --wasm               pass (built build/web)
 
 ## Known issues left open
 
-**Defects found in task 1.4, not fixed here (scope).**
+**Defects found in task 1.4. Numbers 1 to 3 are left for their owning task;
+4 and 5 were fixed in this session's final commit.**
 1. `web/icons/` holds `Icon-192.png` and `Icon-512.png` with a capital I, while
    `web/index.html` and `tool/generate_static.dart` reference lowercase
    `icons/icon-512.png`. GitHub Pages is case-sensitive, so every Open Graph
@@ -184,13 +185,16 @@ fvm flutter build web --wasm               pass (built build/web)
    (`/signal/`, `/work/`, `/about/`, `/writing/`, `/privacy/`). `AppRoute`
    declares them without, so go_router resolves those five to `errorBuilder`.
    Five of the eight advertised URLs land on the error route.
-4. `_esc` uses `HtmlEscapeMode.element`, which does not escape `"`, but its
-   output is interpolated into `content="…"` in nine meta tags. `_escAttr`
-   exists and is correct; it is simply not used there. Latent, not triggered by
-   the current content.
-5. `test/unit/tool/generate_static_test.dart` shells out to a bare `dart`, so
-   it may run under a different SDK than the pin. `Platform.resolvedExecutable`
-   is the fix and works in CI, which has no FVM.
+4. FIXED. `_esc` uses `HtmlEscapeMode.element`, which does not escape `"`, but
+   its output was interpolated into `content="…"` in nine meta tags. `_escAttr`
+   already existed and was correct; it simply was not used there. Latent, never
+   triggered by the current content, so the generated output is byte-identical.
+5. FIXED. `test/unit/tool/generate_static_test.dart` shelled out to a bare
+   `dart`, so it could run under a different SDK than the pin. It now resolves
+   the Dart bundled with `FLUTTER_ROOT`, which is the pinned SDK locally under
+   FVM and the action's SDK in CI, which has no FVM. Note that
+   `Platform.resolvedExecutable` is *not* the fix — under `flutter test` it is
+   `flutter_tester`, and passing it hangs the suite.
 
 **This task.**
 - The ten Arabic interface strings are agent-authored and want an owner read.
@@ -208,7 +212,8 @@ fvm flutter build web --wasm               pass (built build/web)
   unchanged from worklogs 04 and 05.
 
 ## Next
-Fix defects 4 and 5 above — both are small, and 4 is an escaping bug worth
-closing before more meta tags are added. Then task 1.5, global chrome, which is
-the first task that consumes these primitives and will prove the panel language
-and the shared sweep against real layout.
+Task 1.5, global chrome. It is the first task that consumes these primitives and
+will prove the panel language and the shared sweep against real layout. Defects
+1 to 3 above should be closed in 1.6b, which already owns those files — the
+icon case mismatch in particular means every social preview image on the site
+is currently a 404.
