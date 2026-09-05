@@ -146,6 +146,33 @@ jobs:
           touch build/web/.nojekyll
           cp build/web/index.html build/web/404.html
 
+      - name: Audit the indexable pages with Lighthouse
+        # 00-PROJECT-BRIEF.md section 9 sets a performance floor of 85 on the
+        # static routes. They are what a recruiter and a crawler actually
+        # reach, and they render without JavaScript, so this gate is about
+        # payload and markup rather than about the Flutter app.
+        run: |
+          npm install -g @lhci/cli@0.14.x
+          npx --yes http-server build/web -p 8080 --silent &
+          npx --yes wait-on http://127.0.0.1:8080/cv/ --timeout 60000
+          lhci autorun \
+            --collect.url=http://127.0.0.1:8080/cv/ \
+            --collect.url=http://127.0.0.1:8080/brief/ \
+            --collect.numberOfRuns=1 \
+            --collect.settings.preset=desktop \
+            --assert.assertions.categories:performance="error|minScore:0.85" \
+            --assert.assertions.categories:accessibility="error|minScore:0.9" \
+            --upload.target=filesystem \
+            --upload.outputDir=./lighthouse
+
+      - name: Upload the Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse
+          path: lighthouse
+          if-no-files-found: ignore
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
