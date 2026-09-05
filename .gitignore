@@ -1,0 +1,61 @@
+# FVM — .fvmrc IS committed, the SDK symlink is not
+.fvm/
+
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+pubspec.lock          # app, not package — SDK pinned via .fvmrc instead
+
+# Generated
+*.g.dart
+*.freezed.dart
+*.config.dart
+coverage/
+lcov.info
+
+# Generated static routes
+web/cv/index.html
+web/brief/index.html
+
+# IDE — note the negation, see below
+.idea/
+.vscode/*
+!.vscode/settings.json
+*.iml
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Native platform dirs — web-only project, these should not exist at all
+ios/
+android/
+macos/
+windows/
+linux/
+
+# Secrets — never commit
+.env
+.env.*
+**/google-services.json
+**/GoogleService-Info.plist
+firebase-service-account*.json
+*.keystore
+*.jks
+key.properties
+
+# Golden failures
+**/failures/
+
+# Agent scratch
+.agent/
+*.tmp
+
+# Standalone pattern: the documented inline comment is literal to Git.
+pubspec.lock
