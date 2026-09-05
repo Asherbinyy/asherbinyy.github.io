@@ -338,6 +338,9 @@ extension ThemeTokenValues on ThemeTokens {
   /// Shared acquisition token.
   Duration get acquisition => Tokens.acquisition;
 
+  /// Shared markCurveSigmas token.
+  double get markCurveSigmas => Tokens.markCurveSigmas;
+
   /// Shared markNativeSize token.
   double get markNativeSize => Tokens.markNativeSize;
 

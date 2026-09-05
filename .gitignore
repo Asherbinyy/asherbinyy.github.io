@@ -25,6 +25,11 @@ web/brief/
 web/robots.txt
 web/sitemap.xml
 
+# Generated brand rasters — produced by tool/generate_mark.dart from the one
+# committed source, assets/brand/mark.svg
+web/favicon.png
+web/icons/
+
 # IDE — note the negation, see below
 .idea/
 .vscode/*

@@ -40,10 +40,18 @@ class MarkPainter extends CustomPainter {
     final samples = size.width.ceil();
     final path = Path();
 
+    // The window spans the burst plus the flat carrier either side of it, so
+    // the mark reads as a burst on a line rather than as a bare hill.
+    const span = Tokens.carrierBurstWidth * Tokens.markCurveSigmas * 2;
+    const start = 0.5 - span / 2;
+
     for (var i = 0; i <= samples; i++) {
-      final position = i / samples;
-      final lobe = CarrierWave.burstEnvelope(position: position, centre: 0.5);
-      final point = Offset(position * size.width, baseline - lobe * amplitude);
+      final fraction = i / samples;
+      final lobe = CarrierWave.burstEnvelope(
+        position: start + fraction * span,
+        centre: 0.5,
+      );
+      final point = Offset(fraction * size.width, baseline - lobe * amplitude);
       if (i == 0) {
         path.moveTo(point.dx, point.dy);
       } else {

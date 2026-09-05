@@ -297,6 +297,14 @@ abstract final class Tokens {
   /// The full acquisition sequence: four beats totalling 2400ms.
   static const Duration acquisition = Duration(milliseconds: 2400);
 
+  /// How many standard deviations of the burst the mark spans.
+  ///
+  /// The mark is a burst on a carrier, not a bare curve: section 12 draws flat
+  /// line either side of the hump. Sampling five sigmas each way puts those
+  /// shoulders inside the box, where a one-sigma window would fill it with
+  /// hump alone and read as a hill.
+  static const double markCurveSigmas = 5;
+
   /// The mark: 2px stroke at its native 32px square, 24px in the header.
   static const double markNativeSize = 32, markStroke = 2, markHeaderSize = 24;
 }
