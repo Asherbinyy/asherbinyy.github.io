@@ -39,5 +39,81 @@
   "workDomainConsumer": "Consumer",
   "@workDomainConsumer": {
     "description": "Application category label for the Consumer domain."
+  },
+  "navStation": "Station",
+  "@navStation": {
+    "description": "Header link to the home route."
+  },
+  "navSignal": "Signal",
+  "@navSignal": {
+    "description": "Header link to the propagation map."
+  },
+  "navWork": "Work",
+  "@navWork": {
+    "description": "Header link to the shipped applications ledger."
+  },
+  "navWriting": "Writing",
+  "@navWriting": {
+    "description": "Header link to the writing feed."
+  },
+  "navAbout": "About",
+  "@navAbout": {
+    "description": "Header link to the about page."
+  },
+  "markLink": "Ahmed Elsherbini, back to the station",
+  "@markLink": {
+    "description": "Accessible name for the mark, which links to the home route."
+  },
+  "recruiterModeGlyph": "⬡",
+  "@recruiterModeGlyph": {
+    "description": "Visible glyph on the Recruiter Mode control. Not translated."
+  },
+  "recruiterModeOn": "Recruiter mode is on. Turn it off.",
+  "@recruiterModeOn": {
+    "description": "Announced when Recruiter Mode is currently on."
+  },
+  "recruiterModeOff": "Recruiter mode is off. Turn it on.",
+  "@recruiterModeOff": {
+    "description": "Announced when Recruiter Mode is currently off."
+  },
+  "languageSwitchToArabic": "Switch the language to Arabic",
+  "@languageSwitchToArabic": {
+    "description": "Announced by the language control while English is active."
+  },
+  "languageSwitchToEnglish": "Switch the language to English",
+  "@languageSwitchToEnglish": {
+    "description": "Announced by the language control while Arabic is active."
+  },
+  "themeGlyph": "◐",
+  "@themeGlyph": {
+    "description": "Visible glyph on the theme control. Not translated."
+  },
+  "themeSwitchToDaybreak": "Switch to the Daybreak theme",
+  "@themeSwitchToDaybreak": {
+    "description": "Announced by the theme control while Nocturne is active."
+  },
+  "themeSwitchToNocturne": "Switch to the Nocturne theme",
+  "@themeSwitchToNocturne": {
+    "description": "Announced by the theme control while Daybreak is active."
+  },
+  "traceStandby": "standby",
+  "@traceStandby": {
+    "description": "Rail indicator: the trace is at rest."
+  },
+  "traceScanning": "scanning",
+  "@traceScanning": {
+    "description": "Rail indicator: scrolling faster than the coherence threshold."
+  },
+  "traceLock": "lock",
+  "@traceLock": {
+    "description": "Rail indicator: the signal has resolved and locked."
+  },
+  "footerLocation": "Manchester",
+  "@footerLocation": {
+    "description": "The owner's city, shown in the footer."
+  },
+  "footerConsent": "Consent",
+  "@footerConsent": {
+    "description": "Footer link to the privacy and consent page."
   }
 }

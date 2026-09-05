@@ -37,4 +37,10 @@ enum AppRoute {
 
   /// Authoritative URL pattern, never a display label.
   final String path;
+
+  /// Whether the global chrome frames this route.
+  ///
+  /// `02-SCREEN-SPECS.md`: present on every route except `/cv` and `/brief`,
+  /// which are static HTML served outside the app entirely.
+  bool get hasGlobalChrome => this != AppRoute.cv && this != AppRoute.brief;
 }
