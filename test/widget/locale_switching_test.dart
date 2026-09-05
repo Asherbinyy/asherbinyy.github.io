@@ -35,7 +35,9 @@ void main() {
       );
       expect(GoRouter.of(active), same(router));
       expect(router.routeInformationProvider.value.uri.path, '/work/fixture');
-      expect(find.byType(Text), findsNothing);
+      // The chrome's own copy must follow the channel, not just the direction.
+      // The footer is present at every width, unlike the route links.
+      expect(find.text(active.l10n.footerLocation), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
   });

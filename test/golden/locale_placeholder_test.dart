@@ -27,8 +27,10 @@ void main() {
           Directionality.of(context),
           language == 'ar' ? TextDirection.rtl : TextDirection.ltr,
         );
+        // The placeholder body is empty, so this captures the app shell: the
+        // chrome is now what a route renders in each channel.
         await expectLater(
-          find.byType(PlaceholderScreen),
+          find.byType(NocturneApp),
           matchesGoldenFile('goldens/placeholder_${mode.name}_$language.png'),
         );
       });

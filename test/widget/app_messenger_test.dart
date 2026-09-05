@@ -37,6 +37,12 @@ Future<void> _showMessage(
   await tester.pump();
 }
 
+/// Whether keyboard focus currently rests inside the message's close button.
+bool _closeButtonHasFocus() {
+  final focused = FocusManager.instance.primaryFocus?.context;
+  return focused?.findAncestorWidgetOfExactType<TextButton>() != null;
+}
+
 void main() {
   testWidgets('pointer toast occupies the upper trailing corner and closes', (
     tester,
@@ -91,11 +97,18 @@ void main() {
     tester,
   ) async {
     await _showMessage(tester, _pointer);
-    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await tester.pump(Tokens.quick);
+    // The global chrome now sits ahead of the message in the traversal order,
+    // so tab until the close button holds focus. That still proves keyboard
+    // reachability without pinning the test to chrome's control count.
+    var guard = 0;
+    while (guard++ < 32 && !_closeButtonHasFocus()) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump(Tokens.quick);
+    }
     final button = tester.widget<TextButton>(find.byType(TextButton));
     final context = tester.element(find.byType(TextButton));
 
+    expect(_closeButtonHasFocus(), isTrue);
     expect(FocusManager.instance.primaryFocus?.hasFocus, isTrue);
     expect(
       button.style?.side?.resolve({WidgetState.focused})?.color,
