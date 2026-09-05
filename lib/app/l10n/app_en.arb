@@ -1,3 +1,43 @@
 {
-  "@@locale": "en"
+  "@@locale": "en",
+  "loading": "Loading",
+  "@loading": {
+    "description": "Announced by the carrier loader while an indeterminate load runs."
+  },
+  "loadingContent": "Loading content",
+  "@loadingContent": {
+    "description": "Announced by a skeleton region while its content loads."
+  },
+  "loadingImage": "Loading image",
+  "@loadingImage": {
+    "description": "Announced while an image resolves from placeholder to sharp."
+  },
+  "workDomainTravel": "Travel",
+  "@workDomainTravel": {
+    "description": "Application category label for the Travel domain."
+  },
+  "workDomainMobility": "Mobility",
+  "@workDomainMobility": {
+    "description": "Application category label for the Mobility domain."
+  },
+  "workDomainEducation": "Education",
+  "@workDomainEducation": {
+    "description": "Application category label for the Education domain."
+  },
+  "workDomainRetail": "Retail",
+  "@workDomainRetail": {
+    "description": "Application category label for the Retail domain."
+  },
+  "workDomainServices": "Services",
+  "@workDomainServices": {
+    "description": "Application category label for the Services domain."
+  },
+  "workDomainMarketplace": "Marketplace",
+  "@workDomainMarketplace": {
+    "description": "Application category label for the Marketplace domain."
+  },
+  "workDomainConsumer": "Consumer",
+  "@workDomainConsumer": {
+    "description": "Application category label for the Consumer domain."
+  }
 }

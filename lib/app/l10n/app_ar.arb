@@ -1,3 +1,13 @@
 {
-  "@@locale": "ar"
+  "@@locale": "ar",
+  "loading": "جارٍ التحميل",
+  "loadingContent": "جارٍ تحميل المحتوى",
+  "loadingImage": "جارٍ تحميل الصورة",
+  "workDomainTravel": "سفر",
+  "workDomainMobility": "تنقّل",
+  "workDomainEducation": "تعليم",
+  "workDomainRetail": "تجزئة",
+  "workDomainServices": "خدمات",
+  "workDomainMarketplace": "سوق",
+  "workDomainConsumer": "استهلاكي"
 }
