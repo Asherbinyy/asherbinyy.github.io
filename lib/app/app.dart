@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:nocturne/app/router.dart';
+import 'package:nocturne/app/l10n/generated/app_localizations.dart';
+import 'package:nocturne/app/l10n/locale_controller.dart';
 import 'package:nocturne/app/theme/daybreak_theme.dart';
 import 'package:nocturne/app/theme/nocturne_theme.dart';
 import 'package:nocturne/app/theme/tokens.dart';
@@ -15,17 +17,13 @@ import 'package:nocturne/core/platform/pointer_capabilities.dart';
 /// Empty foundation app; locale and theme controls belong to later tasks.
 class NocturneApp extends ConsumerStatefulWidget {
   /// Explicit inputs allow testing both artifacts without persistence.
-  const NocturneApp({
-    this.themeMode = ThemeMode.dark,
-    this.locale = const Locale('en'),
-    super.key,
-  });
+  const NocturneApp({this.themeMode = ThemeMode.dark, this.locale, super.key});
 
   /// Active theme, defaulting to the Nocturne identity.
   final ThemeMode themeMode;
 
-  /// Locale controls metrics and direction, without inventing translated copy.
-  final Locale locale;
+  /// Optional host override; otherwise the in-memory language controller wins.
+  final Locale? locale;
 
   @override
   ConsumerState<NocturneApp> createState() => _NocturneAppState();
@@ -42,6 +40,9 @@ class _NocturneAppState extends ConsumerState<NocturneApp> {
 
   @override
   Widget build(BuildContext context) {
+    final locale =
+        widget.locale ??
+        Locale(ref.watch(localeControllerProvider).languageCode);
     final capabilities =
         ref.watch(platformCapabilitiesProvider).valueOrNull ??
         const PointerCapabilities();
@@ -53,15 +54,19 @@ class _NocturneAppState extends ConsumerState<NocturneApp> {
         themeAnimationDuration: Tokens.noMotion,
         theme: DaybreakTheme.create(
           viewportWidth: constraints.maxWidth,
-          isArabic: widget.locale.languageCode == 'ar',
+          isArabic: locale.languageCode == 'ar',
         ),
         darkTheme: NocturneTheme.create(
           viewportWidth: constraints.maxWidth,
-          isArabic: widget.locale.languageCode == 'ar',
+          isArabic: locale.languageCode == 'ar',
         ),
-        locale: widget.locale,
-        supportedLocales: const [Locale('en'), Locale('ar')],
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        locale: locale,
+        supportedLocales: AppLocalizations.supportedLocales,
+        // The SDK's generated aggregate delegates use legacy Material types.
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
         builder: (context, child) => PlatformScope(
           service: PlatformService(
             capabilities: capabilities,

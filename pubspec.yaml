@@ -37,6 +37,7 @@ dev_dependencies:
   very_good_analysis: ^6.0.0
 
 flutter:
+  generate: true
   fonts:
     - family: Space Grotesk
       fonts:

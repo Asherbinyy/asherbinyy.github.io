@@ -8,6 +8,7 @@ targets:
         generate_for:
           - lib/core/platform/platform_provider.dart
           - lib/core/platform/message_controller.dart
+          - lib/app/l10n/locale_controller.dart
       freezed:
         generate_for:
           - lib/content/models/**.dart

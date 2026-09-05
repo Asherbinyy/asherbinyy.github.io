@@ -15,6 +15,7 @@ pubspec.lock          # app, not package — SDK pinned via .fvmrc instead
 *.g.dart
 *.freezed.dart
 *.config.dart
+lib/app/l10n/generated/
 coverage/
 lcov.info
 
