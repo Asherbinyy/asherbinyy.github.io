@@ -135,7 +135,7 @@ void main() {
       }
     });
 
-    test('stores only the three declared preference keys', () async {
+    test('the interface toggles write only their own keys', () async {
       final store = InMemoryPreferenceStore();
       _container(store)
         ..read(themeControllerProvider.notifier).toggle()
@@ -143,12 +143,19 @@ void main() {
         ..read(recruiterModeProvider.notifier).toggle();
       await Future<void>.delayed(Duration.zero);
 
-      // No identifier, no session key, nothing analytics-shaped.
+      // No identifier, no session key, nothing analytics-shaped. The consent
+      // key exists but only the consent controller may write it, so toggling
+      // the interface preferences must leave it untouched.
       final written = {
         for (final key in PreferenceKey.values)
           if (store.read(key.storageKey) != null) key,
       };
-      expect(written, PreferenceKey.values.toSet());
+      expect(written, {
+        PreferenceKey.theme,
+        PreferenceKey.language,
+        PreferenceKey.recruiterMode,
+      });
+      expect(store.read(PreferenceKey.consent.storageKey), isNull);
     });
   });
 }

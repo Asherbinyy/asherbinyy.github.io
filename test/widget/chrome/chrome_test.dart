@@ -2,7 +2,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/app_footer.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/app_mark.dart';
@@ -16,7 +15,7 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/platform/preference_store.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
-import 'package:nocturne/core/widgets/placeholder_screen.dart';
+import 'package:nocturne/features/work/presentation/work_screen.dart';
 
 import '../../support/chrome_harness.dart';
 import '../../support/pump.dart';
@@ -231,10 +230,7 @@ void main() {
       await tester.tap(find.text(l10n.navWork));
       await pumpFrames(tester);
 
-      expect(
-        tester.widget<PlaceholderScreen>(find.byType(PlaceholderScreen)).route,
-        AppRoute.work,
-      );
+      expect(find.byType(WorkScreen), findsOneWidget);
       expect(find.byType(StationScreen), findsNothing);
     });
 

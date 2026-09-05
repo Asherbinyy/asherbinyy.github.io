@@ -32,6 +32,7 @@ Future<ProviderContainer> pumpStation(
   ThemeMode? themeMode,
   Locale? locale,
   AppRoute? initialRoute,
+  Map<String, String>? preferences,
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -41,7 +42,9 @@ Future<ProviderContainer> pumpStation(
   final container = ProviderContainer(
     overrides: [
       assetReaderProvider.overrideWithValue(reader ?? bundledContent()),
-      preferenceStoreProvider.overrideWithValue(InMemoryPreferenceStore()),
+      preferenceStoreProvider.overrideWithValue(
+        InMemoryPreferenceStore(preferences),
+      ),
       platformCapabilitiesProvider.overrideWith(
         () => FixedCapabilities(capabilities),
       ),
@@ -59,6 +62,8 @@ Future<ProviderContainer> pumpStation(
   await tester.runAsync(() async {
     await container.read(profileProvider.future);
     await container.read(careerProvider.future);
+    await container.read(appsProvider.future);
+    await container.read(educationProvider.future);
   });
 
   await tester.pumpWidget(

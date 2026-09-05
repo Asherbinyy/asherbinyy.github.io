@@ -7,8 +7,10 @@ import 'package:go_router/go_router.dart';
 import 'package:nocturne/app/app.dart';
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/app_footer.dart';
+import 'package:nocturne/features/privacy/presentation/privacy_screen.dart';
 import 'package:nocturne/features/signal/presentation/signal_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
+import 'package:nocturne/features/work/presentation/work_screen.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/theme/tokens.dart';
@@ -18,6 +20,14 @@ import 'support/pump.dart';
 
 void main() {
   testWidgets('every route resolves to its own screen', (tester) async {
+    // Routes that have a real screen; the rest are still reserved placeholders.
+    final built = <AppRoute, Type>{
+      AppRoute.station: StationScreen,
+      AppRoute.signal: SignalScreen,
+      AppRoute.work: WorkScreen,
+      AppRoute.privacy: PrivacyScreen,
+    };
+
     await tester.pumpWidget(const ProviderScope(child: NocturneApp()));
     await pumpFrames(tester);
     final router = GoRouter.of(tester.element(find.byType(ChromeScaffold)));
@@ -30,19 +40,19 @@ void main() {
       );
       await pumpFrames(tester);
 
-      if (route == AppRoute.station) {
-        expect(find.byType(StationScreen), findsOneWidget);
-      } else if (route == AppRoute.signal) {
-        expect(find.byType(SignalScreen), findsOneWidget);
+      final screen = built[route];
+      if (screen != null) {
+        expect(find.byType(screen), findsOneWidget, reason: route.name);
       } else {
         expect(
           tester
               .widget<PlaceholderScreen>(find.byType(PlaceholderScreen))
               .route,
           route,
+          reason: route.name,
         );
       }
-      expect(tester.takeException(), isNull);
+      expect(tester.takeException(), isNull, reason: route.name);
     }
   });
 

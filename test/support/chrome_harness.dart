@@ -88,6 +88,8 @@ Future<ProviderContainer> pumpChrome(
   await tester.runAsync(() async {
     await container.read(profileProvider.future);
     await container.read(careerProvider.future);
+    await container.read(appsProvider.future);
+    await container.read(educationProvider.future);
   });
 
   await tester.pumpWidget(
