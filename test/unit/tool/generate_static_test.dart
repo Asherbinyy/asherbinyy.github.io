@@ -107,10 +107,7 @@ void main() {
     });
 
     test('has positioning text', () {
-      expect(
-        cvHtml,
-        contains('25+ applications shipped across five countries'),
-      );
+      expect(cvHtml, contains('25+ applications shipped across six countries'));
     });
 
     test('has status text', () {
