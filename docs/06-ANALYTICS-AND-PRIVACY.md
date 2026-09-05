@@ -89,21 +89,43 @@ Rules:
 
 ---
 
-## 5. The consent panel as a feature
+## 5. Consent
 
-`/privacy` is a designed page, not a banner.
+**A standard consent banner, shown on first visit.** Not a bespoke data-readout
+panel: a visitor arriving at a portfolio should meet the pattern they already
+know, and an unfamiliar interface asking about data reads as stranger than a
+familiar one, not more trustworthy.
 
-It shows a live table of every field the site can collect. For each: what it is, which tier, whether it is currently on, and — for anything currently being collected — **the actual live value from the viewer's own session.**
+Three options, presented with equal weight:
 
-So a visitor sees, for example: route `/work`, device class `pointer`, country `GB`, referrer `linkedin.com`, and a row for `session time` marked off with a toggle. They can watch their own data.
+| Control | Effect |
+|---|---|
+| **Accept all** | Tier 0 counters plus Tier 1 session events |
+| **Essential only** | Tier 0 counters alone. The default posture. |
+| **Reject** | Nothing at all, Tier 0 included |
 
-Two toggles: Tier 1 on/off, and a single "collect nothing" that also disables Tier 0 counters for that viewer.
+Rules:
+- Shown once, on first visit, until the viewer chooses. The choice persists so
+  they are never asked twice.
+- No pre-selected option, no pre-ticked boxes, no cookie wall, and no visual
+  weighting of "accept" over the other two. Making accept the amber one would
+  be a dark pattern.
+- Dismissing without choosing is not consent: the banner returns, and until a
+  choice is made only Tier 0 runs.
 
-Plain-language copy. No legalese, no dark patterns, decline is the same visual weight as accept. A separate short privacy notice covers controller identity, lawful basis, retention (aggregate counters 24 months, Tier 1 events 90 days), and the request/erasure route.
+**`/privacy` is a plain-language notice**, not a dashboard. It states what is
+collected at each tier, what is never collected, who the controller is, the
+lawful basis, retention, and the erasure route — and it carries the same three
+controls so a decision can be changed at any time. Withdrawal is as easy as
+granting and reachable from the footer on every page.
 
-This page is the honest answer to "show me you understand governance," and it costs a fraction of what a real tracking stack would.
+Copy is plain. No legalese, and decline carries the same visual weight as
+accept.
 
----
+**The detailed field-by-field readout belongs on `/how-it-was-built`** (see
+section 7), where a live table of every field, its tier and its current value
+demonstrates the pipeline to an engineer who came to read about it. On the
+consent path it is a wall of information nobody asked for.
 
 ## 6. Campaign links
 

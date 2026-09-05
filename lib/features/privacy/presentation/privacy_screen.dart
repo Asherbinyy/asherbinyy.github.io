@@ -1,53 +1,37 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import 'package:nocturne/app/l10n/generated/app_localizations.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
-import 'package:nocturne/core/analytics/consent.dart';
+import 'package:nocturne/content/asset_content.dart';
+import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/core/analytics/consent_controller.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
-import 'package:nocturne/core/platform/platform_service.dart';
-import 'package:nocturne/core/widgets/beacon_button.dart';
-import 'package:nocturne/core/widgets/instrument_panel.dart';
+import 'package:nocturne/features/privacy/presentation/widgets/consent_controls.dart';
 
-/// Whether a field is collected, and whether it ever could be.
-enum FieldStatus {
-  /// Currently being collected.
-  on,
-
-  /// Available but switched off.
-  off,
-
-  /// Never collected, under any consent.
-  never,
-}
-
-/// One row of the live readout.
-typedef PrivacyField = ({
-  String name,
-  String? tier,
-  FieldStatus status,
-  String value,
-});
-
-/// The consent panel as a designed page, not a banner.
+/// The privacy notice: what is collected, what never is, and how to change it.
 ///
-/// The live "your value" column is the whole point: a visitor watching their
-/// own data is a stronger demonstration of governance literacy than any badge.
-/// The `never` rows matter as much as the `on` rows.
+/// Plain language, not a dashboard. The field-by-field readout belongs on
+/// `/how-it-was-built`, where it demonstrates the pipeline to somebody who came
+/// to read about it rather than confronting a visitor who did not.
 class PrivacyScreen extends ConsumerWidget {
-  /// Reads consent and reports the viewer's own current session state.
+  /// Reads the current consent and the owner's contact address.
   const PrivacyScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
+    final type = context.type;
     final l10n = context.l10n;
-    final consent = ref.watch(consentControllerProvider);
+    final tier = ref.watch(consentControllerProvider);
+    final email = switch (ref.watch(profileProvider).valueOrNull) {
+      ContentReady(:final data) => data.contact.email,
+      ContentFallback(:final profile) => profile.contact.email,
+      _ => null,
+    };
+    final measure = BoxConstraints(maxWidth: type.measureFor(type.body));
 
     return Padding(
       padding: EdgeInsetsDirectional.only(
@@ -60,182 +44,37 @@ class PrivacyScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(l10n.privacyHeading, style: context.type.displayM),
+          Text(l10n.navPrivacy, style: type.displayM),
+          SizedBox(height: tokens.space24),
+          ConstrainedBox(
+            constraints: measure,
+            child: Text(l10n.privacyBody, style: type.body),
+          ),
+          SizedBox(height: tokens.space24),
+          Text(
+            consentSummary(context, tier),
+            style: type.telemetry.copyWith(color: tokens.instrument),
+          ),
+          SizedBox(height: tokens.space24),
+          const ConsentControls(),
           SizedBox(height: tokens.space32),
-          InstrumentPanel(
-            padding: EdgeInsets.all(tokens.space16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final field in fieldsFor(
-                  consent: consent,
-                  l10n: l10n,
-                  route: GoRouterState.of(context).uri.path,
-                  viewport: context.platform.viewport,
-                  isTouch: context.platform.isTouch,
-                ))
-                  _FieldRow(field: field),
-              ],
+          ConstrainedBox(
+            constraints: measure,
+            child: Text(
+              l10n.privacyRetention,
+              style: type.bodyS.copyWith(color: tokens.textSecondary),
             ),
           ),
-          SizedBox(height: tokens.space32),
-          // Both controls carry equal weight and neither is amber. Making
-          // "accept" the amber one would be a dark pattern on a page whose
-          // entire subject is not using them.
-          Wrap(
-            spacing: tokens.space16,
-            runSpacing: tokens.space16,
-            children: [
-              BeaconButton(
-                label: consent.allowsSessionEvents
-                    ? l10n.privacyWithdrawSession
-                    : l10n.privacyGrantSession,
-                onPressed: () {
-                  final controller = ref.read(
-                    consentControllerProvider.notifier,
-                  );
-                  if (consent.allowsSessionEvents) {
-                    controller.withdrawToAggregate();
-                  } else {
-                    controller.grantSession();
-                  }
-                },
-              ),
-              BeaconButton(
-                label: l10n.privacyCollectNothing,
-                onPressed: ref
-                    .read(consentControllerProvider.notifier)
-                    .collectNothing,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// The readout, reflecting the consent actually in force.
-  ///
-  /// Exposed so a test can assert the table matches the client's behaviour
-  /// rather than compare two independent descriptions of it.
-  static List<PrivacyField> fieldsFor({
-    required ConsentTier consent,
-    required AppLocalizations l10n,
-    required String route,
-    required ViewportClass viewport,
-    required bool isTouch,
-  }) {
-    final aggregate = consent.allowsAggregate;
-    final session = consent.allowsSessionEvents;
-
-    return [
-      (
-        name: l10n.privacyFieldRoute,
-        tier: l10n.privacyTierAggregate,
-        status: aggregate ? FieldStatus.on : FieldStatus.off,
-        value: aggregate ? route : l10n.privacyNotCollected,
-      ),
-      (
-        name: l10n.privacyFieldCountry,
-        tier: l10n.privacyTierAggregate,
-        status: aggregate ? FieldStatus.on : FieldStatus.off,
-        // Resolved server-side from the request and discarded in the same
-        // invocation, so the client genuinely does not know it.
-        value: aggregate
-            ? l10n.privacyResolvedServerSide
-            : l10n.privacyNotCollected,
-      ),
-      (
-        name: l10n.privacyFieldDevice,
-        tier: l10n.privacyTierAggregate,
-        status: aggregate ? FieldStatus.on : FieldStatus.off,
-        value: aggregate
-            ? (isTouch ? 'touch' : 'pointer')
-            : l10n.privacyNotCollected,
-      ),
-      (
-        name: l10n.privacyFieldReferrer,
-        tier: l10n.privacyTierAggregate,
-        status: aggregate ? FieldStatus.on : FieldStatus.off,
-        value: aggregate
-            ? l10n.privacyResolvedServerSide
-            : l10n.privacyNotCollected,
-      ),
-      // The never rows are as important as the on rows.
-      (
-        name: l10n.privacyFieldAddress,
-        tier: null,
-        status: FieldStatus.never,
-        value: l10n.privacyNotCollected,
-      ),
-      (
-        name: l10n.privacyFieldDwell,
-        tier: l10n.privacyTierSession,
-        status: session ? FieldStatus.on : FieldStatus.off,
-        value: session ? l10n.privacyOn : l10n.privacyNotCollected,
-      ),
-      (
-        name: l10n.privacyFieldClicks,
-        tier: l10n.privacyTierSession,
-        status: session ? FieldStatus.on : FieldStatus.off,
-        value: session ? l10n.privacyOn : l10n.privacyNotCollected,
-      ),
-      (
-        name: l10n.privacyFieldDemographics,
-        tier: null,
-        status: FieldStatus.never,
-        value: l10n.privacyNotCollected,
-      ),
-    ];
-  }
-}
-
-class _FieldRow extends StatelessWidget {
-  const _FieldRow({required this.field});
-
-  final PrivacyField field;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final type = context.type;
-    final l10n = context.l10n;
-    final label = switch (field.status) {
-      FieldStatus.on => l10n.privacyOn,
-      FieldStatus.off => l10n.privacyOff,
-      FieldStatus.never => l10n.privacyNever,
-    };
-
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: tokens.space8),
-      child: Row(
-        children: [
-          Expanded(flex: 3, child: Text(field.name, style: type.bodyS)),
-          Expanded(
-            child: Text(
-              field.tier ?? '',
-              style: type.telemetryS.copyWith(color: tokens.textMuted),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              label,
-              style: type.telemetryS.copyWith(
-                // Success is monochrome here too: an active field is not
-                // green, it is simply legible.
-                color: field.status == FieldStatus.on
-                    ? tokens.instrument
-                    : tokens.textMuted,
+          if (email != null) ...[
+            SizedBox(height: tokens.space12),
+            ConstrainedBox(
+              constraints: measure,
+              child: Text(
+                l10n.privacyContact(email),
+                style: type.bodyS.copyWith(color: tokens.textSecondary),
               ),
             ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              field.value,
-              style: type.telemetryS.copyWith(color: tokens.instrumentMid),
-            ),
-          ),
+          ],
         ],
       ),
     );

@@ -9,6 +9,7 @@ import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/app_nav.dart';
 import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/content/asset_content.dart';
+import 'package:nocturne/features/privacy/presentation/widgets/consent_banner.dart';
 import 'package:nocturne/features/recruiter/presentation/recruiter_view.dart';
 import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/content/models/career.dart';
@@ -130,6 +131,7 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
                   ],
                 ),
               ),
+              const AnimatedConsentBanner(),
               const _Footer(),
             ],
           ),

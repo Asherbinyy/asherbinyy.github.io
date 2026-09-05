@@ -41,7 +41,14 @@ void main() {
 
       expect(find.text(l10n.heroSeeTheWork), findsOneWidget);
       expect(find.text(l10n.heroReadTheCv), findsOneWidget);
-      expect(find.byType(BeaconButton), findsNWidgets(2));
+      // Scoped to the hero: the consent banner carries three of its own.
+      expect(
+        find.descendant(
+          of: find.byType(HeroContent),
+          matching: find.byType(BeaconButton),
+        ),
+        findsNWidgets(2),
+      );
     });
 
     testWidgets('the primary action navigates to the work ledger', (

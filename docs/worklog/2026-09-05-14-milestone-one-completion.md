@@ -147,3 +147,46 @@ fvm flutter build web --wasm                        pass (built build/web)
 The owner's decisions on the two store links, then a real phone check, then the
 Milestone 1 merge to `main`. Merging is what publishes the site, so it is the
 owner's to make.
+
+---
+
+## Addendum — consent redesigned to the standard pattern
+
+The owner reviewed the `/privacy` live-readout table and rejected it: no
+ordinary site presents a visitor with a field-by-field data dashboard, and the
+recognisable pattern is three options — accept, essential only, reject. They
+authorised changing the documents to match.
+
+**A concern was raised first and then set aside, which is recorded here so a
+later reader knows it was considered.** `06-ANALYTICS-AND-PRIVACY.md` §1 is
+marked binding and calls the privacy design the most defensible thing on the
+site, tied to the owner's dissertation on the gap between claimed and actual
+governance; §5 argued a visitor watching their own data beats any badge. The
+owner's judgement is that an unfamiliar interface asking about data reads as
+stranger than a familiar one, which is a fair reading and is now what the docs
+say.
+
+**The owner's objection also caught a real defect.** There was no consent
+prompt anywhere — the choice existed only on a page nobody visits, which is a
+compliance gap rather than a design preference. The banner fixes it.
+
+### What changed
+- `docs/06-ANALYTICS-AND-PRIVACY.md` §5 rewritten: a standard banner on first
+  visit, three equally weighted options, no pre-selection, and `/privacy` as a
+  plain-language notice. The detailed readout is reassigned to
+  `/how-it-was-built`, where it demonstrates the pipeline to somebody who came
+  to read about it.
+- `docs/02-SCREEN-SPECS.md` `/privacy` section rewritten to match.
+- Added `ConsentBanner` and `ConsentControls`; rewrote `PrivacyScreen` as prose
+  plus the same three controls, the current setting, retention and the erasure
+  route.
+- Removed the twelve field-readout ARB keys; added eleven for the new copy.
+- Rewrote the privacy widget tests: twelve now cover the banner's appearance,
+  its three options mapping to the right tiers, that it never returns once
+  answered, that it does not block the page, and that the notice states
+  retention and erasure. The twelve mandatory unit tests from §9 are unchanged.
+
+### Still true
+The tier model underneath is untouched: the client is still a hard no-op before
+consent, "essential only" is still Tier 0, "reject" still stops even aggregate
+counting, and nothing is transported anywhere because no Worker exists.
