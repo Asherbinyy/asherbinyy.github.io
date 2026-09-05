@@ -135,5 +135,25 @@
   "heroContentUnavailable": "Profile content did not load. The CV page does not depend on it.",
   "@heroContentUnavailable": {
     "description": "Shown when both the profile content and its bundled fallback fail to parse."
+  },
+  "tabRole": "Mobile Engineer",
+  "@tabRole": {
+    "description": "The owner's role, used in the browser tab title on the home route."
+  },
+  "navPrivacy": "Privacy",
+  "@navPrivacy": {
+    "description": "Section name for the privacy and consent page."
+  },
+  "navBrief": "Brief",
+  "@navBrief": {
+    "description": "Section name for the recruiter brief."
+  },
+  "navConsole": "Console",
+  "@navConsole": {
+    "description": "Section name for the analytics dashboard. Not a public surface."
+  },
+  "navCv": "CV",
+  "@navCv": {
+    "description": "Section name for the static HTML curriculum vitae."
   }
 }

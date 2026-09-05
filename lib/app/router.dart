@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
+import 'package:nocturne/app/route_title.dart';
 import 'package:nocturne/core/platform/app_messenger_host.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
@@ -21,12 +22,17 @@ abstract final class AppRouter {
           name: route.name,
           pageBuilder: (context, state) => NoTransitionPage<void>(
             key: state.pageKey,
-            child: AppMessengerHost(child: _sequenced(route)),
+            child: RouteTitle(
+              route: route,
+              child: AppMessengerHost(child: _sequenced(route)),
+            ),
           ),
         ),
     ],
-    errorBuilder: (context, state) =>
-        AppMessengerHost(child: _sequenced(AppRoute.station)),
+    errorBuilder: (context, state) => RouteTitle(
+      route: AppRoute.station,
+      child: AppMessengerHost(child: _sequenced(AppRoute.station)),
+    ),
   );
 
   /// The acquisition sequence wraps the whole frame on the station route.
