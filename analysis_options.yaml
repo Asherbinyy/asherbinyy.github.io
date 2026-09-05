@@ -1,0 +1,13 @@
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - build/**
+    - web/**
+
+linter:
+  rules:
+    # Standards section 1 requires SDK/material, third-party, then app groups.
+    directives_ordering: false
