@@ -242,6 +242,23 @@ void main() {
     });
   });
 
+  group('privacy of the indexable pages', () {
+    test('neither page publishes a telephone number', () {
+      // These exist to be crawled, and an indexed tel: link is harvested by
+      // scrapers. Email and the profile links carry contact instead.
+      expect(cvHtml, isNot(contains('tel:')));
+      expect(briefHtml, isNot(contains('tel:')));
+      expect(cvHtml, isNot(contains('+447741204235')));
+      expect(briefHtml, isNot(contains('+447741204235')));
+    });
+
+    test('email and the profile links still reach the owner', () {
+      expect(cvHtml, contains('mailto:'));
+      expect(cvHtml, contains('linkedin.com'));
+      expect(briefHtml, contains('mailto:'));
+    });
+  });
+
   group('robots.txt', () {
     test('allows all crawlers', () {
       expect(robotsTxt, contains('User-agent: *'));
@@ -269,11 +286,23 @@ void main() {
       expect(sitemapXml, contains('https://asherbinyy.github.io/'));
       expect(sitemapXml, contains('https://asherbinyy.github.io/cv/'));
       expect(sitemapXml, contains('https://asherbinyy.github.io/brief/'));
-      expect(sitemapXml, contains('https://asherbinyy.github.io/signal/'));
-      expect(sitemapXml, contains('https://asherbinyy.github.io/work/'));
-      expect(sitemapXml, contains('https://asherbinyy.github.io/about/'));
-      expect(sitemapXml, contains('https://asherbinyy.github.io/writing/'));
-      expect(sitemapXml, contains('https://asherbinyy.github.io/privacy/'));
+      // No trailing slash on application routes: AppRoute declares '/work',
+      // and go_router resolves '/work/' to its error route, so advertising the
+      // slashed form would point search engines at the error page.
+      expect(sitemapXml, contains('<loc>https://asherbinyy.github.io/signal<'));
+      expect(sitemapXml, contains('<loc>https://asherbinyy.github.io/work<'));
+      expect(sitemapXml, isNot(contains('/work/</loc>')));
+      // The two static pages are directories that Pages serves as such.
+      expect(sitemapXml, contains('<loc>https://asherbinyy.github.io/cv/<'));
+      expect(sitemapXml, contains('<loc>https://asherbinyy.github.io/about<'));
+      expect(
+        sitemapXml,
+        contains('<loc>https://asherbinyy.github.io/writing<'),
+      );
+      expect(
+        sitemapXml,
+        contains('<loc>https://asherbinyy.github.io/privacy<'),
+      );
     });
 
     test('does not include non-public routes', () {
