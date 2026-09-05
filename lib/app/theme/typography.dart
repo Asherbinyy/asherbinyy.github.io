@@ -2,6 +2,46 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
 
+/// Carries the full scale on the theme.
+///
+/// Material's `TextTheme` has no slot for the telemetry styles, and the scale
+/// depends on viewport width, so widgets cannot rebuild it without reading
+/// `MediaQuery.size` — which `04-FLUTTER-STANDARDS.md` section 16 bans. Putting
+/// it on the theme resolves both: the app computes it once from its
+/// `LayoutBuilder` and every widget reads it through `context.type`.
+@immutable
+class TypographyTokens extends ThemeExtension<TypographyTokens> {
+  /// Wraps an already-constructed scale.
+  const TypographyTokens(this.scale);
+
+  /// The active scale.
+  final NocturneTypography scale;
+
+  @override
+  TypographyTokens copyWith({NocturneTypography? scale}) =>
+      TypographyTokens(scale ?? this.scale);
+
+  /// The scale is discrete — sizes clamp against the viewport rather than
+  /// interpolating — so it snaps at the midpoint instead of blending.
+  @override
+  TypographyTokens lerp(covariant TypographyTokens? other, double t) {
+    if (other == null) return this;
+    return t < 0.5 ? this : other;
+  }
+}
+
+/// Resolves the active type scale at the point of use.
+extension TypographyContext on BuildContext {
+  /// The scale installed by either Nocturne theme.
+  NocturneTypography get type {
+    final result = Theme.of(this).extension<TypographyTokens>();
+    if (result == null) {
+      throw StateError('Nocturne typography tokens are missing.');
+    }
+    return result.scale;
+  }
+}
+
 /// The complete type scale, calculated from available viewport width.
 class NocturneTypography {
   /// Keeps Arabic metrics independent of widget directionality.

@@ -252,6 +252,18 @@ abstract final class Tokens {
 
   /// Design-system value for imageResolve.
   static const Duration imageResolve = Duration(milliseconds: 280);
+
+  /// Cycles of carrier visible across one container width at rest.
+  static const double carrierRestCycles = 3;
+
+  /// Baseline carrier amplitude, as a fraction of the available half-height.
+  static const double carrierRestAmplitude = 0.35;
+
+  /// Burst envelope width, as a fraction of the container width.
+  static const double carrierBurstWidth = 0.18;
+
+  /// Fewest and most nodes in a procedural station-card constellation.
+  static const int stationNodeMin = 5, stationNodeMax = 9;
 }
 
 /// Nocturne palette from design-system section 2.

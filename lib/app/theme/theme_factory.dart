@@ -81,7 +81,7 @@ abstract final class ThemeFactory {
       textTheme: typography.textTheme,
       primaryTextTheme: typography.textTheme,
       fontFamily: isArabic ? Tokens.arabicFamily : Tokens.bodyFamily,
-      extensions: [tokens],
+      extensions: [tokens, TypographyTokens(typography)],
       tooltipTheme: const TooltipThemeData(waitDuration: Tokens.tooltipDelay),
     );
   }

@@ -292,4 +292,19 @@ extension ThemeTokenValues on ThemeTokens {
 
   /// Shared imageResolve token.
   Duration get imageResolve => Tokens.imageResolve;
+
+  /// Shared carrierRestCycles token.
+  double get carrierRestCycles => Tokens.carrierRestCycles;
+
+  /// Shared carrierRestAmplitude token.
+  double get carrierRestAmplitude => Tokens.carrierRestAmplitude;
+
+  /// Shared carrierBurstWidth token.
+  double get carrierBurstWidth => Tokens.carrierBurstWidth;
+
+  /// Shared stationNodeMin token.
+  int get stationNodeMin => Tokens.stationNodeMin;
+
+  /// Shared stationNodeMax token.
+  int get stationNodeMax => Tokens.stationNodeMax;
 }
