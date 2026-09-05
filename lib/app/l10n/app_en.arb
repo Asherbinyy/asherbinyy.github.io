@@ -115,5 +115,25 @@
   "footerConsent": "Consent",
   "@footerConsent": {
     "description": "Footer link to the privacy and consent page."
+  },
+  "heroSeeTheWork": "See the work",
+  "@heroSeeTheWork": {
+    "description": "Primary hero call to action, navigating to the work ledger."
+  },
+  "heroReadTheCv": "Read the CV",
+  "@heroReadTheCv": {
+    "description": "Secondary hero call to action, opening the static HTML CV."
+  },
+  "acquisitionSkip": "Skip the opening sequence",
+  "@acquisitionSkip": {
+    "description": "Accessible name for the control that ends the opening sequence."
+  },
+  "acquisitionLabel": "Acquiring signal",
+  "@acquisitionLabel": {
+    "description": "Announced while the opening sequence runs."
+  },
+  "heroContentUnavailable": "Profile content did not load. The CV page does not depend on it.",
+  "@heroContentUnavailable": {
+    "description": "Shown when both the profile content and its bundled fallback fail to parse."
   }
 }

@@ -8,6 +8,10 @@ import 'package:nocturne/app/chrome/app_footer.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/app_nav.dart';
 import 'package:nocturne/app/chrome/app_rail.dart';
+import 'package:nocturne/content/asset_content.dart';
+import 'package:nocturne/content/content_result.dart';
+import 'package:nocturne/content/models/career.dart';
+import 'package:nocturne/core/painting/grain_painter.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/theme_controller.dart';
 import 'package:nocturne/app/theme/tokens.dart';
@@ -73,50 +77,42 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
 
     return Scaffold(
       backgroundColor: tokens.void_,
-      body: FocusTraversalGroup(
-        // Reading order is header, then content, then footer, in both
-        // directions; the ordering policy follows Directionality rather than
-        // being reversed by hand.
-        policy: ReadingOrderTraversalPolicy(),
-        child: Column(
-          children: [
-            AppHeader(current: widget.route),
-            if (!AppHeader.hasInlineNav(context) && !isRecruiterMode)
-              _NavRow(current: widget.route),
-            if (!hasRail && !isRecruiterMode)
-              _CollapsedProgress(progress: _progress),
-            Expanded(
-              child: Row(
-                children: [
-                  if (hasRail)
-                    ValueListenableBuilder<double>(
-                      valueListenable: _progress,
-                      builder: (context, progress, _) => AppRail(
-                        sectionName: _sectionName(context),
-                        progress: progress,
-                      ),
-                    ),
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) => SingleChildScrollView(
-                        controller: _scroll,
-                        // Short pages still fill the frame, so the footer sits
-                        // at the bottom of the viewport rather than floating
-                        // under a half-height column.
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight,
-                          ),
-                          child: widget.child,
+      body: _Grained(
+        child: FocusTraversalGroup(
+          // Reading order is header, then content, then footer, in both
+          // directions; the ordering policy follows Directionality rather than
+          // being reversed by hand.
+          policy: ReadingOrderTraversalPolicy(),
+          child: Column(
+            children: [
+              AppHeader(current: widget.route),
+              if (!AppHeader.hasInlineNav(context) && !isRecruiterMode)
+                _NavRow(current: widget.route),
+              if (!hasRail && !isRecruiterMode)
+                _CollapsedProgress(progress: _progress),
+              Expanded(
+                child: Row(
+                  children: [
+                    if (hasRail)
+                      ValueListenableBuilder<double>(
+                        valueListenable: _progress,
+                        builder: (context, progress, _) => AppRail(
+                          sectionName: _sectionName(context),
+                          progress: progress,
                         ),
                       ),
+                    Expanded(
+                      child: _ContentColumn(
+                        controller: _scroll,
+                        child: widget.child,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const AppFooter(),
-          ],
+              const _Footer(),
+            ],
+          ),
         ),
       ),
     );
@@ -131,6 +127,85 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
       }
     }
     return '';
+  }
+}
+
+/// The scrolling content column between the rail and the footer.
+class _ContentColumn extends StatelessWidget {
+  const _ContentColumn({required this.controller, required this.child});
+
+  final ScrollController controller;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => SingleChildScrollView(
+      controller: controller,
+      // Short pages still fill the frame, so the footer sits at the bottom of
+      // the viewport rather than floating under a half-height column.
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: constraints.maxHeight),
+        child: child,
+      ),
+    ),
+  );
+}
+
+/// Paints the static film grain behind the whole frame.
+///
+/// Design-system section 2: 3% opacity, rendered once as a tiled texture, in
+/// both themes. It never animates, so it stays on under reduced motion. A
+/// `RepaintBoundary` keeps it out of the trace's and the map's repaints.
+class _Grained extends StatelessWidget {
+  const _Grained({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        RepaintBoundary(
+          child: CustomPaint(
+            painter: GrainPainter(
+              colour: tokens.instrument,
+              opacity: tokens.grainOpacity,
+            ),
+          ),
+        ),
+        child,
+      ],
+    );
+  }
+}
+
+/// The footer, with the coordinate of the station the site transmits from.
+///
+/// "The current station" is the career role that has not ended — a rule the
+/// content states rather than one inferred from it. The screen spec wants the
+/// viewer's own coarse location once consent exists; until task 1.10 this
+/// fallback is the truthful reading, not a placeholder.
+class _Footer extends ConsumerWidget {
+  const _Footer();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final career = ref.watch(careerProvider).valueOrNull;
+    final coordinate = switch (career) {
+      ContentReady(:final data) => _latitudeOf(data),
+      _ => null,
+    };
+    return AppFooter(coordinate: coordinate);
+  }
+
+  static String? _latitudeOf(Career career) {
+    for (final role in career.roles) {
+      if (role.end != null || role.coords.length < 2) continue;
+      return 'lat ${role.coords.first.toStringAsFixed(4)}';
+    }
+    return null;
   }
 }
 

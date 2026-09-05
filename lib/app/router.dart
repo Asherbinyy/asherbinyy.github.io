@@ -6,6 +6,8 @@ import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/core/platform/app_messenger_host.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
+import 'package:nocturne/features/station/presentation/station_screen.dart';
+import 'package:nocturne/features/station/presentation/widgets/acquisition_sequence.dart';
 
 /// Owns route configuration without requiring the generator to analyze Flutter.
 abstract final class AppRouter {
@@ -19,19 +21,31 @@ abstract final class AppRouter {
           name: route.name,
           pageBuilder: (context, state) => NoTransitionPage<void>(
             key: state.pageKey,
-            child: AppMessengerHost(
-              child: _framed(route, PlaceholderScreen(route: route)),
-            ),
+            child: AppMessengerHost(child: _sequenced(route)),
           ),
         ),
     ],
-    errorBuilder: (context, state) => AppMessengerHost(
-      child: _framed(
-        AppRoute.station,
-        const PlaceholderScreen(route: AppRoute.station),
-      ),
-    ),
+    errorBuilder: (context, state) =>
+        AppMessengerHost(child: _sequenced(AppRoute.station)),
   );
+
+  /// The acquisition sequence wraps the whole frame on the station route.
+  ///
+  /// Its fourth beat draws the rail, header and footer in from their edges, so
+  /// it has to sit above the chrome rather than inside the routed content.
+  /// Every other route resolves straight to its settled state.
+  static Widget _sequenced(AppRoute route) {
+    final framed = _framed(route, _body(route));
+    return route == AppRoute.station
+        ? AcquisitionSequence(child: framed)
+        : framed;
+  }
+
+  /// The screen for a route, or its reserved placeholder while one is pending.
+  static Widget _body(AppRoute route) => switch (route) {
+    AppRoute.station => const StationScreen(),
+    _ => PlaceholderScreen(route: route),
+  };
 
   /// Global chrome is present on every route except the two static ones.
   ///
