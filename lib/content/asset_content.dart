@@ -2,7 +2,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:nocturne/content/content_repository.dart';
 import 'package:nocturne/content/content_result.dart';
+import 'package:nocturne/content/models/apps.dart';
 import 'package:nocturne/content/models/career.dart';
+import 'package:nocturne/content/models/education.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/content/providers.dart';
 
@@ -28,6 +30,16 @@ ContentRepository contentRepository(ContentRepositoryRef ref) =>
 @Riverpod(keepAlive: true)
 Future<ContentResult<Profile>> profile(ProfileRef ref) =>
     ref.watch(contentRepositoryProvider).profile();
+
+/// The shipped application ledger.
+@Riverpod(keepAlive: true)
+Future<ContentResult<Apps>> apps(AppsRef ref) =>
+    ref.watch(contentRepositoryProvider).apps();
+
+/// Qualifications, as the owner recorded them.
+@Riverpod(keepAlive: true)
+Future<ContentResult<Education>> education(EducationRef ref) =>
+    ref.watch(contentRepositoryProvider).education();
 
 /// Career stations, in the order the content declares them.
 @Riverpod(keepAlive: true)

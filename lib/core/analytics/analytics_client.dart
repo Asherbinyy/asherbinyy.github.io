@@ -1,0 +1,50 @@
+import 'package:nocturne/core/analytics/consent.dart';
+import 'package:nocturne/core/analytics/events.dart';
+
+/// Sends one beacon. Injected so no test ever reaches the network.
+typedef BeaconSender = Future<void> Function(AnalyticsBeacon beacon);
+
+/// The only thing on the site that may talk to the analytics endpoint.
+///
+/// A **hard no-op** until consent resolves, per section 4: not a queue that
+/// flushes later — no data is captured at all before the grant. That
+/// distinction matters, because a buffer that flushes on consent has still
+/// collected from someone who had not agreed.
+///
+/// Tier 0 is the exception the regulation itself makes: aggregate, cookieless
+/// counters that create no per-person record and write nothing to the device.
+/// An explicit "collect nothing" switches even those off.
+class AnalyticsClient {
+  /// The transport is positional so it can stay private: a named parameter
+  /// cannot be, and a public transport would let a caller send around the
+  /// consent checks below.
+  AnalyticsClient(this._send, {ConsentTier? tier})
+    : tier = tier ?? ConsentTier.unresolved;
+
+  final BeaconSender _send;
+
+  /// The consent this client is operating under.
+  ///
+  /// Assigning it applies a decision immediately and within the same session:
+  /// there is no buffer to drain on withdrawal, because nothing was buffered.
+  ConsentTier tier;
+
+  /// Records an event if — and only if — the current consent permits it.
+  ///
+  /// Returns whether anything was sent, so a test can assert silence rather
+  /// than infer it.
+  Future<bool> record(AnalyticsBeacon beacon) async {
+    if (!_permits(beacon.event)) return false;
+    await _send(beacon);
+    return true;
+  }
+
+  /// Whether [event] may be collected under the current tier.
+  bool _permits(AnalyticsEvent event) {
+    if (!tier.allowsAggregate) return false;
+    // Route views are the Tier 0 counter. Everything else is a session event
+    // and needs an affirmative grant.
+    if (event == AnalyticsEvent.routeView) return true;
+    return tier.allowsSessionEvents;
+  }
+}

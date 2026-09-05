@@ -9,6 +9,7 @@ import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/app_nav.dart';
 import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/content/asset_content.dart';
+import 'package:nocturne/features/recruiter/presentation/recruiter_view.dart';
 import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/core/painting/grain_painter.dart';
@@ -116,8 +117,14 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
                     Expanded(
                       child: _ContentColumn(
                         controller: _scroll,
-                        background: widget.backgroundBuilder?.call(_scroll),
-                        child: widget.child,
+                        // Recruiter Mode has no trace: section 5 of the brief
+                        // says no map, no trace, no motion.
+                        background: isRecruiterMode
+                            ? null
+                            : widget.backgroundBuilder?.call(_scroll),
+                        child: isRecruiterMode
+                            ? const RecruiterView()
+                            : widget.child,
                       ),
                     ),
                   ],

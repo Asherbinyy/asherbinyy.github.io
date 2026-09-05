@@ -7,8 +7,10 @@ import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/route_title.dart';
 import 'package:nocturne/core/platform/app_messenger_host.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
+import 'package:nocturne/features/privacy/presentation/privacy_screen.dart';
 import 'package:nocturne/features/signal/presentation/signal_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
+import 'package:nocturne/features/work/presentation/work_screen.dart';
 import 'package:nocturne/features/station/presentation/widgets/acquisition_sequence.dart';
 import 'package:nocturne/features/trace/presentation/station_trace.dart';
 
@@ -53,6 +55,8 @@ abstract final class AppRouter {
   static Widget _body(AppRoute route) => switch (route) {
     AppRoute.station => const StationScreen(),
     AppRoute.signal => const SignalScreen(),
+    AppRoute.work => const WorkScreen(),
+    AppRoute.privacy => const PrivacyScreen(),
     _ => PlaceholderScreen(route: route),
   };
 

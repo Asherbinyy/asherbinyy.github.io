@@ -47,7 +47,15 @@ enum PreferenceKey {
   language('nocturne.language'),
 
   /// Whether the viewer turned on Recruiter Mode.
-  recruiterMode('nocturne.recruiterMode');
+  recruiterMode('nocturne.recruiterMode'),
+
+  /// The viewer's consent decision.
+  ///
+  /// Storing the decision is what makes a refusal durable; re-asking on every
+  /// visit would be the dark pattern `06-ANALYTICS-AND-PRIVACY.md` section 5
+  /// forbids. No identifier accompanies it, and no session id is ever written
+  /// here or anywhere else on the device.
+  consent('nocturne.consent');
 
   const PreferenceKey(this.storageKey);
 

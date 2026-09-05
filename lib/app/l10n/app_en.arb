@@ -192,5 +192,154 @@
   "signalClose": "Close",
   "@signalClose": {
     "description": "Closes the transmission panel."
+  },
+  "workHeading": "{count, plural, =1{One shipped application} other{{count} shipped applications}}",
+  "@workHeading": {
+    "description": "Heading on the work ledger, counting the applications listed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workSubheading": "Everything below is live and publicly linkable.",
+  "@workSubheading": {
+    "description": "Standfirst under the work ledger heading."
+  },
+  "workOpenStore": "Open {name} on the {store}",
+  "@workOpenStore": {
+    "description": "Accessible name for a store link on a ledger row.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "store": {
+        "type": "String"
+      }
+    }
+  },
+  "workAppStore": "App Store",
+  "@workAppStore": {
+    "description": "Apple's store, as a link label."
+  },
+  "workGooglePlay": "Google Play",
+  "@workGooglePlay": {
+    "description": "Google's store, as a link label."
+  },
+  "workNoStoreLink": "No public store listing",
+  "@workNoStoreLink": {
+    "description": "Shown where an application has no public listing."
+  },
+  "recruiterHeading": "Brief",
+  "@recruiterHeading": {
+    "description": "Heading of the in-app recruiter view."
+  },
+  "recruiterShipped": "Shipped",
+  "@recruiterShipped": {
+    "description": "Row label for shipped applications in the recruiter view."
+  },
+  "recruiterStack": "Stack",
+  "@recruiterStack": {
+    "description": "Row label for the technology stack in the recruiter view."
+  },
+  "recruiterEducation": "Education",
+  "@recruiterEducation": {
+    "description": "Row label for education in the recruiter view."
+  },
+  "recruiterContact": "Contact",
+  "@recruiterContact": {
+    "description": "Row label for contact details in the recruiter view."
+  },
+  "privacyHeading": "What this site knows about you",
+  "@privacyHeading": {
+    "description": "Consent page copy: privacyHeading"
+  },
+  "privacyField": "Field",
+  "@privacyField": {
+    "description": "Consent page copy: privacyField"
+  },
+  "privacyTier": "Tier",
+  "@privacyTier": {
+    "description": "Consent page copy: privacyTier"
+  },
+  "privacyStatus": "Status",
+  "@privacyStatus": {
+    "description": "Consent page copy: privacyStatus"
+  },
+  "privacyYourValue": "Your value",
+  "@privacyYourValue": {
+    "description": "Consent page copy: privacyYourValue"
+  },
+  "privacyOn": "on",
+  "@privacyOn": {
+    "description": "Consent page copy: privacyOn"
+  },
+  "privacyOff": "off",
+  "@privacyOff": {
+    "description": "Consent page copy: privacyOff"
+  },
+  "privacyNever": "never",
+  "@privacyNever": {
+    "description": "Consent page copy: privacyNever"
+  },
+  "privacyNotCollected": "not collected",
+  "@privacyNotCollected": {
+    "description": "Consent page copy: privacyNotCollected"
+  },
+  "privacyTierAggregate": "aggregate",
+  "@privacyTierAggregate": {
+    "description": "Consent page copy: privacyTierAggregate"
+  },
+  "privacyTierSession": "session",
+  "@privacyTierSession": {
+    "description": "Consent page copy: privacyTierSession"
+  },
+  "privacyFieldRoute": "Route",
+  "@privacyFieldRoute": {
+    "description": "Consent page copy: privacyFieldRoute"
+  },
+  "privacyFieldCountry": "Country",
+  "@privacyFieldCountry": {
+    "description": "Consent page copy: privacyFieldCountry"
+  },
+  "privacyFieldDevice": "Device class",
+  "@privacyFieldDevice": {
+    "description": "Consent page copy: privacyFieldDevice"
+  },
+  "privacyFieldReferrer": "Referrer host",
+  "@privacyFieldReferrer": {
+    "description": "Consent page copy: privacyFieldReferrer"
+  },
+  "privacyFieldAddress": "IP address",
+  "@privacyFieldAddress": {
+    "description": "Consent page copy: privacyFieldAddress"
+  },
+  "privacyFieldDwell": "Time per section",
+  "@privacyFieldDwell": {
+    "description": "Consent page copy: privacyFieldDwell"
+  },
+  "privacyFieldClicks": "Clicks",
+  "@privacyFieldClicks": {
+    "description": "Consent page copy: privacyFieldClicks"
+  },
+  "privacyFieldDemographics": "Gender, age",
+  "@privacyFieldDemographics": {
+    "description": "Consent page copy: privacyFieldDemographics"
+  },
+  "privacyGrantSession": "Turn on session analytics",
+  "@privacyGrantSession": {
+    "description": "Consent page copy: privacyGrantSession"
+  },
+  "privacyWithdrawSession": "Turn off session analytics",
+  "@privacyWithdrawSession": {
+    "description": "Consent page copy: privacyWithdrawSession"
+  },
+  "privacyCollectNothing": "Collect nothing",
+  "@privacyCollectNothing": {
+    "description": "Consent page copy: privacyCollectNothing"
+  },
+  "privacyResolvedServerSide": "resolved on the server, never stored",
+  "@privacyResolvedServerSide": {
+    "description": "Consent page copy: privacyResolvedServerSide"
   }
 }

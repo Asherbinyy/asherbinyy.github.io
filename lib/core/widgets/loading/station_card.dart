@@ -54,6 +54,18 @@ class StationCard extends StatelessWidget {
   /// Longitude of the country, when recorded.
   final double? longitude;
 
+  /// The smallest card that can carry its own label.
+  ///
+  /// One line of display-m plus one of telemetry-s, plus the padding either
+  /// side. Derived rather than guessed, so a change to the type scale cannot
+  /// leave a card overflowing.
+  static double _minimumLabelledHeight(NocturneTypography type) =>
+      (type.displayM.fontSize ?? Tokens.displayMMin) *
+          (type.displayM.height ?? Tokens.displayMHeight) +
+      (type.telemetryS.fontSize ?? Tokens.telemetrySSize) *
+          (type.telemetryS.height ?? Tokens.telemetryHeight) +
+      Tokens.space16 * 2;
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -84,29 +96,33 @@ class StationCard extends StatelessWidget {
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.all(tokens.space16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: type.displayM,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (telemetry.isNotEmpty)
-                    Wrap(
-                      spacing: tokens.space8,
-                      children: [
-                        for (final value in telemetry)
-                          Text(value, style: type.telemetryS),
-                      ],
+            // A thumbnail is too small for display-m to be legible, let alone
+            // to fit. Below that the constellation stands alone — the name is
+            // already beside it wherever a card this size is used.
+            if (height >= _minimumLabelledHeight(type))
+              Padding(
+                padding: EdgeInsets.all(tokens.space16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: type.displayM,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                ],
+                    if (telemetry.isNotEmpty)
+                      Wrap(
+                        spacing: tokens.space8,
+                        children: [
+                          for (final value in telemetry)
+                            Text(value, style: type.telemetryS),
+                        ],
+                      ),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
