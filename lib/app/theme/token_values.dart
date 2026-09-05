@@ -338,6 +338,33 @@ extension ThemeTokenValues on ThemeTokens {
   /// Shared acquisition token.
   Duration get acquisition => Tokens.acquisition;
 
+  /// Shared traceScanningVelocity token.
+  double get traceScanningVelocity => Tokens.traceScanningVelocity;
+
+  /// Shared traceLockVelocity token.
+  double get traceLockVelocity => Tokens.traceLockVelocity;
+
+  /// Shared traceLockDistance token.
+  double get traceLockDistance => Tokens.traceLockDistance;
+
+  /// Shared traceRestDelay token.
+  Duration get traceRestDelay => Tokens.traceRestDelay;
+
+  /// Shared traceCycles token.
+  double get traceCycles => Tokens.traceCycles;
+
+  /// Shared traceAmplitude token.
+  double get traceAmplitude => Tokens.traceAmplitude;
+
+  /// Shared traceBurstWidth token.
+  double get traceBurstWidth => Tokens.traceBurstWidth;
+
+  /// Shared traceColumnFraction token.
+  double get traceColumnFraction => Tokens.traceColumnFraction;
+
+  /// Shared traceNoiseAmplitude token.
+  double get traceNoiseAmplitude => Tokens.traceNoiseAmplitude;
+
   /// Shared markCurveSigmas token.
   double get markCurveSigmas => Tokens.markCurveSigmas;
 

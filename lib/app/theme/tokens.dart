@@ -297,6 +297,41 @@ abstract final class Tokens {
   /// The full acquisition sequence: four beats totalling 2400ms.
   static const Duration acquisition = Duration(milliseconds: 2400);
 
+  /// Scroll velocity above which the signal degrades toward noise, px/s.
+  static const double traceScanningVelocity = 900;
+
+  /// Scroll velocity below which the signal can lock, px/s.
+  static const double traceLockVelocity = 120;
+
+  /// How near the nearest burst must be for lock, in pixels.
+  static const double traceLockDistance = 200;
+
+  /// How long without scrolling before the trace reads as at rest.
+  static const Duration traceRestDelay = Duration(milliseconds: 1200);
+
+  /// Carrier cycles per viewport height.
+  ///
+  /// Expressed per screen rather than per trace so the waveform reads at the
+  /// same frequency whatever the page's length; a fixed count over the whole
+  /// trace turns into a slow decorative sine on a long page.
+  static const double traceCycles = 9;
+
+  /// Trace amplitude as a fraction of its own column width.
+  static const double traceAmplitude = 0.2;
+
+  /// Burst width as a fraction of the whole trace.
+  ///
+  /// Much narrower than the mark's, because the trace is pages long: at the
+  /// carrier's own width every burst would overlap every other and the rest
+  /// amplitude would never be seen.
+  static const double traceBurstWidth = 0.045;
+
+  /// Fraction of the content column the trace occupies, from the trailing edge.
+  static const double traceColumnFraction = 0.66;
+
+  /// Jitter added to the carrier when coherence is entirely lost.
+  static const double traceNoiseAmplitude = 0.55;
+
   /// How many standard deviations of the burst the mark spans.
   ///
   /// The mark is a burst on a carrier, not a bare curve: section 12 draws flat
