@@ -68,6 +68,7 @@ class ShippedApp with _$ShippedApp {
     required WorkDomain domain,
     String? role,
     String? metric,
+    String? country,
     @Default(false) bool featured,
   }) = _ShippedApp;
 
