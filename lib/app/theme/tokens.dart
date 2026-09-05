@@ -297,6 +297,24 @@ abstract final class Tokens {
   /// The full acquisition sequence: four beats totalling 2400ms.
   static const Duration acquisition = Duration(milliseconds: 2400);
 
+  /// Station node radius at rest and when selected, per the screen spec.
+  static const double stationNodeRadius = 6, stationNodeActiveRadius = 10;
+
+  /// How far the selected node's pulse ring expands beyond the node.
+  static const double stationPulseRadius = 22;
+
+  /// Arc opacity for legs that are not the active one.
+  static const double arcOpacity = 0.4;
+
+  /// How long the arcs take to draw in on first view.
+  static const Duration arcDraw = Duration(milliseconds: 1600);
+
+  /// Degrees between graticule lines on the map surface.
+  static const double graticuleStep = 30;
+
+  /// The map's aspect ratio. Equirectangular is 2:1 by construction.
+  static const double mapAspectRatio = 2;
+
   /// Scroll velocity above which the signal degrades toward noise, px/s.
   static const double traceScanningVelocity = 900;
 

@@ -338,6 +338,27 @@ extension ThemeTokenValues on ThemeTokens {
   /// Shared acquisition token.
   Duration get acquisition => Tokens.acquisition;
 
+  /// Shared stationNodeRadius token.
+  double get stationNodeRadius => Tokens.stationNodeRadius;
+
+  /// Shared stationNodeActiveRadius token.
+  double get stationNodeActiveRadius => Tokens.stationNodeActiveRadius;
+
+  /// Shared stationPulseRadius token.
+  double get stationPulseRadius => Tokens.stationPulseRadius;
+
+  /// Shared arcOpacity token.
+  double get arcOpacity => Tokens.arcOpacity;
+
+  /// Shared arcDraw token.
+  Duration get arcDraw => Tokens.arcDraw;
+
+  /// Shared graticuleStep token.
+  double get graticuleStep => Tokens.graticuleStep;
+
+  /// Shared mapAspectRatio token.
+  double get mapAspectRatio => Tokens.mapAspectRatio;
+
   /// Shared traceScanningVelocity token.
   double get traceScanningVelocity => Tokens.traceScanningVelocity;
 
