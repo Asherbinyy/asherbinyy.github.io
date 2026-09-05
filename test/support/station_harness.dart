@@ -14,6 +14,7 @@ import 'package:nocturne/features/station/domain/acquisition_controller.dart';
 
 import 'chrome_harness.dart';
 import 'content_readers.dart';
+import 'pump.dart';
 
 /// Pumps the app at the station route with content and preferences installed.
 Future<ProviderContainer> pumpStation(
@@ -68,7 +69,7 @@ Future<ProviderContainer> pumpStation(
     ),
   );
   if (settle) {
-    await tester.pumpAndSettle();
+    await pumpFrames(tester);
   } else {
     await tester.pump();
   }

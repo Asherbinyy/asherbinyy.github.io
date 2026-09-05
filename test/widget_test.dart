@@ -13,10 +13,12 @@ import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
 
+import 'support/pump.dart';
+
 void main() {
   testWidgets('every route resolves to its own screen', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: NocturneApp()));
-    await tester.pumpAndSettle();
+    await pumpFrames(tester);
     final router = GoRouter.of(tester.element(find.byType(ChromeScaffold)));
 
     for (final route in AppRoute.values) {
@@ -25,7 +27,7 @@ void main() {
             .replaceAll(':slug', 'fixture')
             .replaceAll(':campaign', 'fixture'),
       );
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
 
       if (route == AppRoute.station) {
         // The only route with a real screen so far.
@@ -46,7 +48,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const ProviderScope(child: NocturneApp()));
-    await tester.pumpAndSettle();
+    await pumpFrames(tester);
     final router = GoRouter.of(tester.element(find.byType(ChromeScaffold)));
 
     for (final route in AppRoute.values) {
@@ -55,7 +57,7 @@ void main() {
             .replaceAll(':slug', 'fixture')
             .replaceAll(':campaign', 'fixture'),
       );
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
 
       final expected = route.hasGlobalChrome ? findsOneWidget : findsNothing;
       expect(find.byType(ChromeScaffold), expected, reason: route.name);
@@ -80,7 +82,7 @@ void main() {
             child: NocturneApp(themeMode: mode, locale: locale),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpFrames(tester);
         final context = tester.element(find.byType(ChromeScaffold));
         final expected = mode == ThemeMode.dark
             ? nocturneTokens

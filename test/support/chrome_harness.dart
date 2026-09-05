@@ -12,6 +12,7 @@ import 'package:nocturne/core/platform/preference_store.dart';
 import 'package:nocturne/app/theme/theme_controller.dart';
 
 import 'content_readers.dart';
+import 'pump.dart';
 
 /// The four documented breakpoints, with a width inside each band.
 enum ChromeBreakpoint {
@@ -95,7 +96,7 @@ Future<ProviderContainer> pumpChrome(
       child: NocturneApp(themeMode: themeMode, locale: locale),
     ),
   );
-  await tester.pumpAndSettle();
+  await pumpFrames(tester);
   return container;
 }
 

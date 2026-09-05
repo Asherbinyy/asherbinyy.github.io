@@ -10,6 +10,7 @@ import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
 
 import '../support/chrome_harness.dart';
+import '../support/pump.dart';
 
 // Alchemist 0.11 cannot implement Flutter 3.47's Canvas API. Keep the same
 // screenshot coverage with the SDK comparator until the package is compatible.
@@ -31,7 +32,7 @@ void main() {
         );
         GoRouter.of(tester.element(find.byType(ChromeScaffold)))
             .goNamed(AppRoute.about.name);
-        await tester.pumpAndSettle();
+        await pumpFrames(tester);
         // Re-acquire after navigating: the previous route's element is gone.
         final context = tester.element(find.byType(ChromeScaffold));
 

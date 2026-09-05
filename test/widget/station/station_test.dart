@@ -17,6 +17,7 @@ import 'package:nocturne/features/station/presentation/widgets/stat_panel.dart';
 import '../../support/chrome_harness.dart';
 import '../../support/content_readers.dart';
 import '../../support/station_harness.dart';
+import '../../support/pump.dart';
 
 void main() {
   group('settled hero', () {
@@ -50,7 +51,7 @@ void main() {
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       await tester.tap(find.text(l10n.heroSeeTheWork));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
 
       expect(find.byType(HeroContent), findsNothing);
       expect(find.text(l10n.navWork), findsWidgets);
@@ -184,7 +185,7 @@ void main() {
       expect(container.read(acquisitionPlayedProvider), isFalse);
 
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
 
       expect(container.read(acquisitionPlayedProvider), isTrue);
       expect(find.text('Ahmed Elsherbini'), findsOneWidget);
@@ -200,7 +201,7 @@ void main() {
 
       await tester.pump(Tokens.acquisition ~/ 3);
       await tester.tapAt(const Offset(20, 300));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
 
       expect(container.read(acquisitionPlayedProvider), isTrue);
     });
@@ -229,7 +230,7 @@ void main() {
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       await tester.tap(find.text(l10n.navAbout));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
 
       expect(find.byType(AcquisitionSequence), findsNothing);
     });

@@ -19,6 +19,7 @@ import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
 
 import '../../support/chrome_harness.dart';
+import '../../support/pump.dart';
 
 void main() {
   group('breakpoints', () {
@@ -91,7 +92,7 @@ void main() {
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       await tester.tap(find.bySemanticsLabel(l10n.themeSwitchToDaybreak));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
 
       expect(container.read(themeControllerProvider), AppTheme.daybreak);
       expect(
@@ -113,7 +114,7 @@ void main() {
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       await tester.tap(find.bySemanticsLabel(l10n.languageSwitchToArabic));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
       final active = tester.element(find.byType(ChromeScaffold));
 
       expect(active.l10n.localeName, 'ar');
@@ -129,7 +130,7 @@ void main() {
       expect(find.byType(AppRail), findsOneWidget);
 
       await tester.tap(find.bySemanticsLabel(l10n.recruiterModeOff));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
 
       expect(container.read(recruiterModeProvider), isTrue);
       expect(find.byType(AppRail), findsNothing);
@@ -228,7 +229,7 @@ void main() {
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       await tester.tap(find.text(l10n.navWork));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
 
       expect(
         tester.widget<PlaceholderScreen>(find.byType(PlaceholderScreen)).route,
@@ -242,9 +243,9 @@ void main() {
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       await tester.tap(find.text(l10n.navAbout));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
       await tester.tap(find.byType(AppMark));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
 
       // The station route renders the real screen, not a placeholder.
       expect(find.byType(StationScreen), findsOneWidget);
