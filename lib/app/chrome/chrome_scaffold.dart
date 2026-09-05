@@ -26,13 +26,25 @@ import 'package:nocturne/core/platform/platform_scope.dart';
 /// rail by definition.
 class ChromeScaffold extends ConsumerStatefulWidget {
   /// [route] drives the nav's selected state and the rail's section name.
-  const ChromeScaffold({required this.route, required this.child, super.key});
+  const ChromeScaffold({
+    required this.route,
+    required this.child,
+    this.backgroundBuilder,
+    super.key,
+  });
 
   /// The route being displayed.
   final AppRoute route;
 
   /// Routed content.
   final Widget child;
+
+  /// Painted behind the scrolling content, given the page scroll controller.
+  ///
+  /// The telemetry trace lives here rather than inside the scroll view: it
+  /// needs the visible window to sample only what is on screen, which it
+  /// cannot know from inside a viewport that has already scrolled it.
+  final Widget Function(ScrollController controller)? backgroundBuilder;
 
   @override
   ConsumerState<ChromeScaffold> createState() => _ChromeScaffoldState();
@@ -104,6 +116,7 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
                     Expanded(
                       child: _ContentColumn(
                         controller: _scroll,
+                        background: widget.backgroundBuilder?.call(_scroll),
                         child: widget.child,
                       ),
                     ),
@@ -132,23 +145,37 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
 
 /// The scrolling content column between the rail and the footer.
 class _ContentColumn extends StatelessWidget {
-  const _ContentColumn({required this.controller, required this.child});
+  const _ContentColumn({
+    required this.controller,
+    required this.child,
+    this.background,
+  });
 
   final ScrollController controller;
   final Widget child;
+  final Widget? background;
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) => SingleChildScrollView(
-      controller: controller,
-      // Short pages still fill the frame, so the footer sits at the bottom of
-      // the viewport rather than floating under a half-height column.
-      child: ConstrainedBox(
-        constraints: BoxConstraints(minHeight: constraints.maxHeight),
-        child: child,
+  Widget build(BuildContext context) {
+    final layer = background;
+    return LayoutBuilder(
+      builder: (context, constraints) => Stack(
+        children: [
+          if (layer != null) Positioned.fill(child: layer),
+          SingleChildScrollView(
+            controller: controller,
+            // Short pages still fill the frame, so the footer sits at the
+            // bottom of the viewport rather than floating under a half-height
+            // column.
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: child,
+            ),
+          ),
+        ],
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// Paints the static film grain behind the whole frame.

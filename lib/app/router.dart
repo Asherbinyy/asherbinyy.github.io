@@ -9,6 +9,7 @@ import 'package:nocturne/core/platform/app_messenger_host.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/features/station/presentation/widgets/acquisition_sequence.dart';
+import 'package:nocturne/features/trace/presentation/station_trace.dart';
 
 /// Owns route configuration without requiring the generator to analyze Flutter.
 abstract final class AppRouter {
@@ -59,6 +60,14 @@ abstract final class AppRouter {
   /// these Flutter routes only exist as reserved paths. Framing them would
   /// imply the app owns pages it does not.
   static Widget _framed(AppRoute route, Widget child) => route.hasGlobalChrome
-      ? ChromeScaffold(route: route, child: child)
+      ? ChromeScaffold(
+          route: route,
+          // Section 6 runs the trace from the hero to the end of the career
+          // sequence, both of which live on the station.
+          backgroundBuilder: route == AppRoute.station
+              ? (controller) => StationTrace(controller: controller)
+              : null,
+          child: child,
+        )
       : Scaffold(body: child);
 }

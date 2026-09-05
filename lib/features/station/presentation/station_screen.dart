@@ -9,6 +9,7 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
+import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/app/app_route.dart';
@@ -17,6 +18,7 @@ import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
+import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
 
 /// The ground station: the acquisition sequence, then the settled hero.
@@ -41,12 +43,43 @@ class StationScreen extends ConsumerWidget {
         // Left-aligned to the rail. The screen spec is explicit that nothing
         // in the hero is centred.
         alignment: AlignmentDirectional.topStart,
-        child: switch (profile) {
-          AsyncData(:final value) => _Resolved(result: value, locale: locale),
-          AsyncError() => const _Unavailable(),
-          _ => const _Loading(),
-        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            switch (profile) {
+              AsyncData(:final value) => _Resolved(
+                result: value,
+                locale: locale,
+              ),
+              AsyncError() => const _Unavailable(),
+              _ => const _Loading(),
+            },
+            _Career(locale: locale),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+/// The career sequence, which is what the telemetry trace travels over.
+class _Career extends ConsumerWidget {
+  const _Career({required this.locale});
+
+  final AppLocale locale;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final roles = switch (ref.watch(careerProvider).valueOrNull) {
+      ContentReady(:final data) => data.roles,
+      _ => const <CareerRole>[],
+    };
+    if (roles.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: EdgeInsets.only(top: context.tokens.space96),
+      child: CareerSequence(roles: roles, locale: locale),
     );
   }
 }
