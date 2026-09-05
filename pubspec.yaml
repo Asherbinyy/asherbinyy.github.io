@@ -38,6 +38,8 @@ dev_dependencies:
 
 flutter:
   generate: true
+  assets:
+    - assets/content/
   fonts:
     - family: Space Grotesk
       fonts:

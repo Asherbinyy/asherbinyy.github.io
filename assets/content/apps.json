@@ -1,0 +1,137 @@
+{
+  "apps": [
+    {
+      "id": "tripster",
+      "name": "Tripster",
+      "platforms": [
+        "ios"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/ru/app/id1479200934"
+      },
+      "role": "Legacy Android to Flutter migration",
+      "domain": "Travel",
+      "featured": true
+    },
+    {
+      "id": "mokaf",
+      "name": "Mokaf",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "store": {},
+      "role": "Smart parking — real-time maps, QR, TAP / Apple Pay / STC Pay",
+      "domain": "Mobility",
+      "featured": true
+    },
+    {
+      "id": "az-courses",
+      "name": "AZ Courses",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/us/app/azcourses/id1592327429",
+        "android": "https://play.google.com/store/apps/details?id=com.crazyidea.coursesexams"
+      },
+      "role": "Redesign and rebuild — video, PDF, audio delivery",
+      "metric": "15,000+ downloads",
+      "domain": "Education",
+      "featured": true
+    },
+    {
+      "id": "enjoy",
+      "name": "Enjoy",
+      "platforms": [
+        "ios"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/us/app/enjoy4/id6447956809"
+      },
+      "role": "E-scooter rental — BLE QR unlock, in-app navigation",
+      "domain": "Mobility",
+      "featured": true
+    },
+    {
+      "id": "malboos",
+      "name": "Malboos",
+      "platforms": [
+        "ios"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/us/app/malboos/id6736588728"
+      },
+      "domain": "Retail",
+      "featured": true
+    },
+    {
+      "id": "tiara-beauty",
+      "name": "Tiara Beauty",
+      "platforms": [
+        "ios"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/us/app/tiara-beauty/id6502843404"
+      },
+      "domain": "Services",
+      "featured": true
+    },
+    {
+      "id": "tekrar",
+      "name": "Tekrar",
+      "platforms": [
+        "ios"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/us/app/tekrar/id6499494802"
+      },
+      "domain": "Education"
+    },
+    {
+      "id": "wasset",
+      "name": "Wasset",
+      "platforms": [
+        "ios"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/sa/app/wasset/id6474965574"
+      },
+      "domain": "Marketplace"
+    },
+    {
+      "id": "snunu",
+      "name": "Snunu",
+      "platforms": [
+        "ios"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/us/app/snunu/id1627473292"
+      },
+      "domain": "Consumer"
+    },
+    {
+      "id": "mostaqbaly",
+      "name": "Mostaqbaly",
+      "platforms": [
+        "ios"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/us/app/mostaqbaly/id6444834706"
+      },
+      "domain": "Education"
+    },
+    {
+      "id": "az-exams",
+      "name": "AZ Exams",
+      "platforms": [
+        "android"
+      ],
+      "store": {
+        "android": "https://play.google.com/store/apps/details?id=com.crazyidea.coursesexams"
+      },
+      "domain": "Education"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": {
+    "en": "Ahmed Elsherbini",
+    "ar": "أحمد الشربيني"
+  },
+  "positioning": {
+    "en": "Mobile engineer. 25+ applications shipped across five countries.",
+    "ar": null
+  },
+  "location": {
+    "en": "Manchester, United Kingdom",
+    "ar": null
+  },
+  "status": {
+    "en": "MSc Managing Innovation & IT, University of Salford — predicted Distinction",
+    "ar": null
+  },
+  "venture": {
+    "label": {
+      "en": "Co-founder, City Loom (early stage)",
+      "ar": null
+    },
+    "url": null
+  },
+  "contact": {
+    "email": "ahmed.elsherbini.tech@gmail.com",
+    "phone": "+447741204235",
+    "linkedin": "https://www.linkedin.com/in/ahmedelsherbini/",
+    "github": "https://github.com/Asherbinyy",
+    "gitlab": "https://gitlab.com/sherbini",
+    "medium": "https://sherbini.medium.com/",
+    "calendly": null
+  },
+  "cvFile": null,
+  "portrait": null
+}
