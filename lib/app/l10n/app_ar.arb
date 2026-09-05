@@ -38,5 +38,11 @@
   "navPrivacy": "الخصوصية",
   "navBrief": "الملخّص",
   "navConsole": "لوحة التحكم",
-  "navCv": "السيرة الذاتية"
+  "navCv": "السيرة الذاتية",
+  "signalHeading": "أين جرى العمل",
+  "signalMapLabel": "خريطة الانتشار. استخدم مفاتيح الأسهم للتنقّل بين المحطات.",
+  "signalStationLabel": "{city}، {country}",
+  "signalScrubberLabel": "التسلسل الزمني للمسيرة",
+  "signalAppsShipped": "{count, plural, =1{تطبيق واحد} other{{count} تطبيقات}}",
+  "signalClose": "إغلاق"
 }

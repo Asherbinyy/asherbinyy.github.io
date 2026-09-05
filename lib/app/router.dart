@@ -7,6 +7,7 @@ import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/route_title.dart';
 import 'package:nocturne/core/platform/app_messenger_host.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
+import 'package:nocturne/features/signal/presentation/signal_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/features/station/presentation/widgets/acquisition_sequence.dart';
 import 'package:nocturne/features/trace/presentation/station_trace.dart';
@@ -51,6 +52,7 @@ abstract final class AppRouter {
   /// The screen for a route, or its reserved placeholder while one is pending.
   static Widget _body(AppRoute route) => switch (route) {
     AppRoute.station => const StationScreen(),
+    AppRoute.signal => const SignalScreen(),
     _ => PlaceholderScreen(route: route),
   };
 

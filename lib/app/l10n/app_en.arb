@@ -155,5 +155,42 @@
   "navCv": "CV",
   "@navCv": {
     "description": "Section name for the static HTML curriculum vitae."
+  },
+  "signalHeading": "Where the work happened",
+  "@signalHeading": {
+    "description": "Heading on the propagation map page."
+  },
+  "signalMapLabel": "Propagation map. Use the arrow keys to move between stations.",
+  "@signalMapLabel": {
+    "description": "Accessible description of the map and how to navigate it."
+  },
+  "signalStationLabel": "{city}, {country}",
+  "@signalStationLabel": {
+    "description": "Accessible name for one station node.",
+    "placeholders": {
+      "city": {
+        "type": "String"
+      },
+      "country": {
+        "type": "String"
+      }
+    }
+  },
+  "signalScrubberLabel": "Career chronology",
+  "@signalScrubberLabel": {
+    "description": "Accessible name for the chronology scrubber."
+  },
+  "signalAppsShipped": "{count, plural, =1{1 application} other{{count} applications}}",
+  "@signalAppsShipped": {
+    "description": "How many applications a station shipped.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "signalClose": "Close",
+  "@signalClose": {
+    "description": "Closes the transmission panel."
   }
 }
