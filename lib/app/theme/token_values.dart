@@ -307,4 +307,25 @@ extension ThemeTokenValues on ThemeTokens {
 
   /// Shared stationNodeMax token.
   int get stationNodeMax => Tokens.stationNodeMax;
+
+  /// Shared headerHeight token.
+  double get headerHeight => Tokens.headerHeight;
+
+  /// Shared railWidth token.
+  double get railWidth => Tokens.railWidth;
+
+  /// Shared footerHeight token.
+  double get footerHeight => Tokens.footerHeight;
+
+  /// Shared railProgressHeight token.
+  double get railProgressHeight => Tokens.railProgressHeight;
+
+  /// Shared markNativeSize token.
+  double get markNativeSize => Tokens.markNativeSize;
+
+  /// Shared markStroke token.
+  double get markStroke => Tokens.markStroke;
+
+  /// Shared markHeaderSize token.
+  double get markHeaderSize => Tokens.markHeaderSize;
 }

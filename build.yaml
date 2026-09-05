@@ -9,6 +9,8 @@ targets:
           - lib/core/platform/platform_provider.dart
           - lib/core/platform/message_controller.dart
           - lib/app/l10n/locale_controller.dart
+          - lib/app/theme/theme_controller.dart
+          - lib/features/trace/domain/trace_controller.dart
           - lib/content/providers.dart
       freezed:
         generate_for:

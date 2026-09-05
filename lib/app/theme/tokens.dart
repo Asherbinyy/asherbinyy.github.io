@@ -264,6 +264,15 @@ abstract final class Tokens {
 
   /// Fewest and most nodes in a procedural station-card constellation.
   static const int stationNodeMin = 5, stationNodeMax = 9;
+
+  /// Chrome dimensions from screen-spec section "Global chrome".
+  static const double headerHeight = 64,
+      railWidth = 56,
+      footerHeight = 48,
+      railProgressHeight = 3;
+
+  /// The mark: 2px stroke at its native 32px square, 24px in the header.
+  static const double markNativeSize = 32, markStroke = 2, markHeaderSize = 24;
 }
 
 /// Nocturne palette from design-system section 2.
