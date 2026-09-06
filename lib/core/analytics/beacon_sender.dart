@@ -16,6 +16,14 @@ class HttpBeaconSender {
   final Uri endpoint;
 
   /// Sends one compact JSON beacon. There is deliberately no retry queue.
+  ///
+  /// **Absent fields are omitted rather than sent as null.** The Worker
+  /// rejects a beacon carrying a field it does not know, which is the right
+  /// posture for a public endpoint — but it also means the client and the
+  /// Worker deploy independently and a client that always names every field
+  /// breaks the moment it learns a new one. Omitting nulls keeps a newer
+  /// client working against an older Worker, and the Worker reads an absent
+  /// field and a null one identically.
   Future<void> call(AnalyticsBeacon beacon) async {
     final result = await client.post(
       endpoint,
@@ -24,10 +32,10 @@ class HttpBeaconSender {
         'event': beacon.event.name,
         'route': beacon.route,
         'deviceClass': beacon.deviceClass,
-        'referrerHost': beacon.referrerHost,
-        'campaign': beacon.campaign,
-        'sessionId': beacon.sessionId,
-        'value': beacon.value,
+        if (beacon.referrerHost != null) 'referrerHost': beacon.referrerHost,
+        if (beacon.campaign != null) 'campaign': beacon.campaign,
+        if (beacon.sessionId != null) 'sessionId': beacon.sessionId,
+        if (beacon.value != null) 'value': beacon.value,
       }),
     );
     if (result.statusCode < 200 || result.statusCode >= 300) {
