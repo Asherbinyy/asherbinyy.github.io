@@ -16,6 +16,12 @@ import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/platform/pointer_capabilities.dart';
 
+/// The title the hand-authored shell in `web/index.html` already carries.
+///
+/// Kept in step with that file by a test rather than by memory: a tab that
+/// disagrees with the document it replaced reads as carelessness.
+const String shellTitle = 'Ahmed Elsherbini — Mobile Engineer, Manchester';
+
 /// The app shell. Theme, language and Recruiter Mode are driven by controllers.
 class NocturneApp extends ConsumerStatefulWidget {
   /// Explicit inputs allow testing both artifacts without touching storage.
@@ -57,6 +63,15 @@ class _NocturneAppState extends ConsumerState<NocturneApp> {
     return LayoutBuilder(
       builder: (context, constraints) => MaterialApp.router(
         debugShowCheckedModeBanner: false,
+        // `WidgetsApp` mounts its own `Title` and defaults it to the empty
+        // string, which does not leave `document.title` alone — it overwrites
+        // it. Without this the hand-authored title in `web/index.html` was
+        // erased on first build and the tab sat blank until content resolved,
+        // which is what the deployed /writing page was observed doing.
+        //
+        // The same words as the shell's static title, so nothing flickers
+        // between the document loading and Flutter taking over.
+        title: shellTitle,
         routerConfig: _router,
         themeMode: themeMode,
         themeAnimationDuration: Tokens.noMotion,
