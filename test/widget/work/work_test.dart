@@ -6,7 +6,7 @@ import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/theme_controller.dart';
 import 'package:nocturne/core/platform/preference_store.dart';
 import 'package:nocturne/features/recruiter/presentation/recruiter_view.dart';
-import 'package:nocturne/features/work/presentation/widgets/ledger_row.dart';
+import 'package:nocturne/features/work/presentation/widgets/work_card.dart';
 import 'package:nocturne/features/work/presentation/work_screen.dart';
 
 import '../../support/chrome_harness.dart';
@@ -15,8 +15,8 @@ import '../../support/pump.dart';
 import '../../support/station_harness.dart';
 
 void main() {
-  group('the ledger', () {
-    testWidgets('renders a row for every application in the content', (
+  group('the work grid', () {
+    testWidgets('renders a card for every application in the content', (
       tester,
     ) async {
       await pumpStation(
@@ -27,7 +27,7 @@ void main() {
 
       // apps.json lists eleven. The schema's intended twelfth is missing, and
       // inventing one would be a claim the owner never made.
-      expect(find.byType(LedgerRow), findsNWidgets(11));
+      expect(find.byType(WorkCard), findsNWidgets(11));
     });
 
     testWidgets('leads with the strongest evidence it has', (tester) async {
@@ -73,7 +73,7 @@ void main() {
       expect(find.text(l10n.workGooglePlay), findsOneWidget);
     });
 
-    testWidgets('shows a thumbnail on touch, where there is no hover', (
+    testWidgets('lays every card out on a phone without overflowing', (
       tester,
     ) async {
       await pumpStation(
@@ -83,7 +83,7 @@ void main() {
         initialRoute: AppRoute.work,
       );
 
-      expect(find.byType(LedgerRow), findsNWidgets(11));
+      expect(find.byType(WorkCard), findsNWidgets(11));
       expect(tester.takeException(), isNull);
     });
 
@@ -97,7 +97,7 @@ void main() {
         ),
       );
 
-      expect(find.byType(LedgerRow), findsNothing);
+      expect(find.byType(WorkCard), findsNothing);
       expect(find.byType(WorkScreen), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -113,7 +113,7 @@ void main() {
       );
 
       expect(find.byType(RecruiterView), findsOneWidget);
-      expect(find.byType(LedgerRow), findsNothing);
+      expect(find.byType(WorkCard), findsNothing);
     });
 
     testWidgets('shows the same featured applications as /brief', (

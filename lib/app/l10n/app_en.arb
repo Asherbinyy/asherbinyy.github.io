@@ -467,5 +467,18 @@
   "privacyCollectsNothingBody": "No analytics, no cookies, no third-party trackers, and nothing written to your device. There is no consent banner because there is nothing to consent to. If that ever changes, this page will say so first and you will be asked before anything is collected.",
   "@privacyCollectsNothingBody": {
     "description": "Privacy: body when analytics is off"
+  },
+  "aboutContact": "Contact",
+  "@aboutContact": {
+    "description": "About: contact section heading"
+  },
+  "aboutOpenLink": "Open {name}",
+  "@aboutOpenLink": {
+    "description": "About: accessible label for an external profile link",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -15,12 +15,19 @@ import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
-import 'package:nocturne/features/work/presentation/widgets/ledger_row.dart';
+import 'package:nocturne/features/work/presentation/widgets/work_card.dart';
 
-/// The work ledger: every shipped application, with its store links.
+/// Every shipped application, as a grid of visual cards.
 ///
-/// Screen spec: a ledger, not a card grid. This is the strongest evidence on
-/// the site and it should be impossible to miss.
+/// The screen spec originally specified a ledger and argued against cards, on
+/// the grounds that they would be "twelve identical rounded rectangles" and
+/// would bury the store links. The owner asked for a visual, interactive
+/// treatment, and both halves of that objection are answerable: the artwork is
+/// seeded per application so no two cards match, and the store links stay as
+/// their own separately focusable controls. The doc records the change.
+///
+/// This is still the strongest evidence on the site and it should be
+/// impossible to miss.
 class WorkScreen extends ConsumerWidget {
   /// Reads the application ledger from the content layer.
   const WorkScreen({super.key});
@@ -76,12 +83,18 @@ class _Ledger extends StatelessWidget {
           style: context.type.bodyL.copyWith(color: tokens.textSecondary),
         ),
         SizedBox(height: tokens.space32),
-        for (final app in apps)
-          LedgerRow(
-            app: app,
-            domainLabel: app.domain.label(l10n),
-            origin: AppOrigins.resolve(app: app, career: career),
-          ),
+        Wrap(
+          spacing: tokens.space32,
+          runSpacing: tokens.space48,
+          children: [
+            for (final app in apps)
+              WorkCard(
+                app: app,
+                domainLabel: app.domain.label(l10n),
+                origin: AppOrigins.resolve(app: app, career: career),
+              ),
+          ],
+        ),
       ],
     );
   }

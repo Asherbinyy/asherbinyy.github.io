@@ -226,5 +226,18 @@
   "privacyCollectsNothingBody": "لا تحليلات، ولا كوكيز، ولا متتبعات خارجية، ولا شيء يُكتب على جهازك. لا توجد نافذة موافقة لأنه لا شيء يستدعي الموافقة. وإن تغيّر ذلك يومًا، ستقول هذه الصفحة ذلك أولًا وستُسأل قبل جمع أي شيء.",
   "@privacyCollectsNothingBody": {
     "description": "Privacy: body when analytics is off"
+  },
+  "aboutContact": "التواصل",
+  "@aboutContact": {
+    "description": "About: contact section heading"
+  },
+  "aboutOpenLink": "افتح {name}",
+  "@aboutOpenLink": {
+    "description": "About: accessible label for an external profile link",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

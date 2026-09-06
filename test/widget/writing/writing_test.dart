@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/features/writing/data/writing_providers.dart';
 import 'package:nocturne/features/writing/domain/article.dart';
-import 'package:nocturne/features/writing/presentation/widgets/article_row.dart';
+import 'package:nocturne/features/writing/presentation/widgets/article_card.dart';
 
 import '../../support/chrome_harness.dart';
 import '../../support/station_harness.dart';
@@ -22,7 +22,7 @@ final Article anArticle = (
 
 void main() {
   group('the writing index', () {
-    testWidgets('renders a row for every article the feed returns', (
+    testWidgets('renders a card for every article the feed returns', (
       tester,
     ) async {
       await pumpStation(
@@ -40,7 +40,7 @@ void main() {
         ]),
       );
 
-      expect(find.byType(ArticleRow), findsNWidgets(2));
+      expect(find.byType(ArticleCard), findsNWidgets(2));
       expect(find.text('Shipping Flutter to the web'), findsOneWidget);
     });
 
@@ -71,7 +71,7 @@ void main() {
         overrides: withArticles(const []),
       );
 
-      expect(find.byType(ArticleRow), findsNothing);
+      expect(find.byType(ArticleCard), findsNothing);
     });
 
     testWidgets('never renders an error for a failed feed', (tester) async {
@@ -86,11 +86,11 @@ void main() {
         ],
       );
 
-      expect(find.byType(ArticleRow), findsNothing);
+      expect(find.byType(ArticleCard), findsNothing);
       expect(find.textContaining('rror'), findsNothing);
     });
 
-    testWidgets('exposes each row as a link for a screen reader', (
+    testWidgets('exposes each card as a link for a screen reader', (
       tester,
     ) async {
       await pumpStation(
@@ -100,7 +100,7 @@ void main() {
         overrides: withArticles([anArticle]),
       );
 
-      final semantics = tester.getSemantics(find.byType(ArticleRow));
+      final semantics = tester.getSemantics(find.byType(ArticleCard));
 
       expect(semantics.label, contains('Shipping Flutter to the web'));
     });
