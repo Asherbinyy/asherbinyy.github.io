@@ -36,7 +36,7 @@ class AnalyticsClient {
   /// Returns whether anything was sent, so a test can assert silence rather
   /// than infer it.
   Future<bool> record(AnalyticsBeacon event) async {
-    if (!permits(event.event)) return false;
+    if (!_permits(event.event)) return false;
     await _send(_identified(event));
     return true;
   }
@@ -65,11 +65,7 @@ class AnalyticsClient {
   final String Function() _sessionId;
 
   /// Whether [event] may be collected under the current tier.
-  ///
-  /// Public so `/how-it-was-built` can *measure* the rules rather than restate
-  /// them: a second hand-written description of what is collected would be a
-  /// claim about this code, and the two would eventually disagree.
-  bool permits(AnalyticsEvent event) {
+  bool _permits(AnalyticsEvent event) {
     if (!tier.allowsAggregate) return false;
     // Route views are the Tier 0 counter. Everything else is a session event
     // and needs an affirmative grant.

@@ -2,9 +2,6 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:go_router/go_router.dart';
-import 'package:nocturne/app/app_route.dart';
-import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/locale_controller.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
@@ -20,6 +17,7 @@ import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_panel.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
+import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
 import 'package:nocturne/features/about/presentation/widgets/education_table.dart';
 import 'package:nocturne/features/about/presentation/widgets/portrait_frame.dart';
 import 'package:nocturne/features/writing/presentation/widgets/writing_list.dart';
@@ -112,18 +110,15 @@ class _About extends StatelessWidget {
         SizedBox(height: tokens.space16),
         EducationTable(education: education),
         SizedBox(height: tokens.space48),
+        Text(l10n.aboutContact, style: context.type.heading),
+        SizedBox(height: tokens.space16),
+        ContactLinks(contact: profile.contact),
+        SizedBox(height: tokens.space48),
         Text(l10n.aboutWriting, style: context.type.heading),
         SizedBox(height: tokens.space16),
         // Three, not the archive: the spec puts writing at the foot of About
         // as evidence it exists, and `/writing` is where the list lives.
         const WritingList(limit: 3),
-        SizedBox(height: tokens.space48),
-        // The colophon's dependable entry point. The footer carries it too,
-        // but only where a 48px row has space for the label.
-        BeaconButton(
-          label: l10n.navHowItWasBuilt,
-          onPressed: () => context.goNamed(AppRoute.howItWasBuilt.name),
-        ),
       ],
     );
   }

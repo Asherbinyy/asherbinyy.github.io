@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/core/analytics/analytics_providers.dart';
 import 'package:nocturne/core/analytics/consent_controller.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
@@ -20,12 +21,20 @@ import 'package:nocturne/features/privacy/presentation/widgets/consent_controls.
 /// It does not block the page. Until a choice is made only Tier 0 runs, which
 /// is the same as "essential only", so nothing is collected in the meantime
 /// that a later refusal would have prevented.
+///
+/// **It does not appear at all when the build collects nothing**, which is the
+/// current production posture. Asking permission for something that cannot
+/// happen implies tracking the site is not doing, and asks for a decision that
+/// changes nothing.
 class ConsentBanner extends ConsumerWidget {
   /// Sits above the footer, across the content column.
   const ConsentBanner({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!ref.watch(analyticsIsCollectingProvider)) {
+      return const SizedBox.shrink();
+    }
     final tier = ref.watch(consentControllerProvider);
     if (tier.isResolved) return const SizedBox.shrink();
 

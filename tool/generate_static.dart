@@ -125,14 +125,38 @@ String _formatDate(String? date) {
 // ---------------------------------------------------------------------------
 
 /// Critical CSS matching Nocturne design tokens, inlined in both pages.
+/// Both palettes, transcribed from `01-DESIGN-SYSTEM.md` §2.
+///
+/// These carry the contrast corrections, which this file had missed until
+/// Milestone 3: `--text-muted` was still `#57687B`, measuring 3.53:1 against
+/// the page. `/cv` and `/brief` are the two indexable pages, so they were the
+/// worst place on the site to leave below AA.
+///
+/// The app follows the viewer's stored theme choice. These are static HTML
+/// with nowhere to store one and no JavaScript to read it, so they follow the
+/// operating system instead — the only preference a plain document can honour.
+///
+/// Comments live here rather than inside the emitted CSS: every byte of that
+/// string ships to every reader, and the reasoning is for whoever edits this
+/// file next.
 String _criticalCss() => '''
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
+  color-scheme:dark light;
   --void:#05070A;--surface:#0B0F16;--surface-raised:#131A24;
   --hairline:#1C2530;--hairline-strong:#2C3846;
-  --beacon:#F2A83B;--beacon-dim:#7E5720;
+  --beacon:#F2A83B;--beacon-dim:#875D22;
   --instrument:#C6D2E0;--instrument-mid:#8A99AB;--instrument-dim:#5A6878;
-  --text-primary:#E9EEF5;--text-secondary:#93A3B5;--text-muted:#57687B;
+  --text-primary:#E9EEF5;--text-secondary:#93A3B5;--text-muted:#70849A;
+}
+@media(prefers-color-scheme:light){
+  :root{
+    --void:#F1EDE4;--surface:#E8E3D8;--surface-raised:#FFFFFF;
+    --hairline:#CFC7B8;--hairline-strong:#A79C89;
+    --beacon:#95570B;--beacon-dim:#A37B41;
+    --instrument:#3A4654;--instrument-mid:#5B6773;--instrument-dim:#8E806A;
+    --text-primary:#12171E;--text-secondary:#4A5766;--text-muted:#5C6676;
+  }
 }
 html{font-size:16px;line-height:1.6;color:var(--text-primary);background:var(--void);font-family:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
 body{max-width:720px;margin:0 auto;padding:32px 20px 64px}
@@ -187,6 +211,7 @@ String _jsonLd(Map<String, dynamic> profile, Map<String, dynamic> education) {
     if (contact['github'] != null) contact['github'] as String,
     if (contact['gitlab'] != null) contact['gitlab'] as String,
     if (contact['medium'] != null) contact['medium'] as String,
+    if (contact['linktree'] != null) contact['linktree'] as String,
   ];
 
   final entries = education['entries'] as List<dynamic>? ?? [];
@@ -259,7 +284,15 @@ String _generateCv(
       '<meta name="viewport" '
       'content="width=device-width, initial-scale=1.0">',
     )
-    ..writeln('<meta name="theme-color" content="#05070A">')
+    // One per scheme, so the browser chrome matches the page it frames.
+    ..writeln(
+      '<meta name="theme-color" media="(prefers-color-scheme: dark)" '
+      'content="#05070A">',
+    )
+    ..writeln(
+      '<meta name="theme-color" media="(prefers-color-scheme: light)" '
+      'content="#F1EDE4">',
+    )
     ..writeln(
       '<meta name="description" content="$positioningAttr '
       '${locationAttr.isNotEmpty ? '— $locationAttr' : ''}">',
@@ -568,6 +601,14 @@ void _writeContactList(StringBuffer buf, Map<String, dynamic> contact) {
     );
   }
 
+  final linktree = contact['linktree'] as String?;
+  if (linktree != null && linktree.isNotEmpty) {
+    buf.writeln(
+      '<li><a href="${_escAttr(linktree)}" rel="noopener noreferrer" '
+      'target="_blank">Linktree</a></li>',
+    );
+  }
+
   buf.writeln('</ul>');
 }
 
@@ -605,7 +646,15 @@ String _generateBrief(
       '<meta name="viewport" '
       'content="width=device-width, initial-scale=1.0">',
     )
-    ..writeln('<meta name="theme-color" content="#05070A">')
+    // One per scheme, so the browser chrome matches the page it frames.
+    ..writeln(
+      '<meta name="theme-color" media="(prefers-color-scheme: dark)" '
+      'content="#05070A">',
+    )
+    ..writeln(
+      '<meta name="theme-color" media="(prefers-color-scheme: light)" '
+      'content="#F1EDE4">',
+    )
     ..writeln(
       '<meta name="description" content="$nameAttr — $positioningAttr">',
     )

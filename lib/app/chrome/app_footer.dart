@@ -57,21 +57,6 @@ class AppFooter extends StatelessWidget {
               ),
               SizedBox(width: tokens.space16),
               _FooterLink(label: l10n.footerConsent, route: AppRoute.privacy),
-              // Reachable but quiet: roadmap 2.7 calls this the page that
-              // converts "creative" into "hireable", and the reader who wants
-              // it is the one already looking at the footer.
-              //
-              // Not on a phone. The footer is one 48px row and this label is
-              // long; forcing it in overflows, and truncating a link to fit is
-              // worse than not offering it here. `/about` carries the same
-              // link at every width, so the page is never unreachable.
-              if (hasRoomForReadout) ...[
-                SizedBox(width: tokens.space16),
-                _FooterLink(
-                  label: l10n.navHowItWasBuilt,
-                  route: AppRoute.howItWasBuilt,
-                ),
-              ],
               // Only pushes the readout to the far edge. Without one there is
               // nothing to push, and an expanding Spacer would compete with
               // the location text for the space it needs to ellipsize into.

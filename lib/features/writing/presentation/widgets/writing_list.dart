@@ -7,7 +7,7 @@ import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
 import 'package:nocturne/features/writing/data/writing_providers.dart';
-import 'package:nocturne/features/writing/presentation/widgets/article_row.dart';
+import 'package:nocturne/features/writing/presentation/widgets/article_card.dart';
 
 /// The article list, shared by `/writing` and the foot of `/about`.
 ///
@@ -27,12 +27,12 @@ class WritingList extends ConsumerWidget {
     final articles = ref.watch(articlesProvider);
 
     return switch (articles) {
-      AsyncData(:final value) when value.isNotEmpty => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      AsyncData(:final value) when value.isNotEmpty => Wrap(
+        spacing: context.tokens.space32,
+        runSpacing: context.tokens.space32,
         children: [
           for (final article in value.take(limit ?? value.length))
-            ArticleRow(article: article),
+            ArticleCard(article: article),
         ],
       ),
       // Both an empty feed and a failed one land here. Nothing is rendered,

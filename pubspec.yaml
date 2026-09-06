@@ -42,7 +42,6 @@ flutter:
     - assets/content/
     - assets/brand/
     - assets/maps/
-    - assets/build_facts.json
   fonts:
     - family: Space Grotesk
       fonts:

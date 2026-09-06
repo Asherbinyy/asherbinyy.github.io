@@ -49,7 +49,21 @@ void main() {
     test('has proper meta tags', () {
       expect(cvHtml, contains('<meta charset="UTF-8">'));
       expect(cvHtml, contains('name="viewport"'));
-      expect(cvHtml, contains('name="theme-color" content="#05070A"'));
+      // One theme-color per scheme, so browser chrome matches the page.
+      expect(
+        cvHtml,
+        contains(
+          'name="theme-color" media="(prefers-color-scheme: dark)" '
+          'content="#05070A"',
+        ),
+      );
+      expect(
+        cvHtml,
+        contains(
+          'name="theme-color" media="(prefers-color-scheme: light)" '
+          'content="#F1EDE4"',
+        ),
+      );
       expect(cvHtml, contains('name="description"'));
     });
 
@@ -318,6 +332,32 @@ void main() {
       expect(sitemapXml, contains('<priority>0.9</priority>'));
       expect(sitemapXml, contains('<priority>0.7</priority>'));
     });
+  });
+
+  group("both static pages follow the reader's theme", () {
+    // The app follows a stored choice; these pages have nowhere to store one
+    // and no JavaScript to read it, so they follow the operating system.
+    for (final page in [('cv', () => cvHtml), ('brief', () => briefHtml)]) {
+      test('${page.$1} declares both schemes', () {
+        expect(page.$2(), contains('color-scheme:dark light'));
+        expect(page.$2(), contains('@media(prefers-color-scheme:light)'));
+      });
+
+      test('${page.$1} carries the Daybreak palette for light', () {
+        // The corrected values, not the first draft: #95570B rather than
+        // #A8620C, which failed AA on paper.
+        expect(page.$2(), contains('--beacon:#95570B'));
+        expect(page.$2(), contains('--text-muted:#5C6676'));
+      });
+
+      test('${page.$1} carries the corrected Nocturne palette', () {
+        // This file shipped the pre-correction values until Milestone 3:
+        // --text-muted was #57687B, which measured 3.53:1 on the page.
+        expect(page.$2(), contains('--text-muted:#70849A'));
+        expect(page.$2(), isNot(contains('#57687B')));
+        expect(page.$2(), isNot(contains('#7E5720')));
+      });
+    }
   });
 }
 

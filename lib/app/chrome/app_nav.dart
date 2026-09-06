@@ -94,6 +94,10 @@ class _NavLinkState extends State<_NavLink> {
 
     return Semantics(
       link: true,
+      // The visible text is excluded below to avoid announcing the label
+      // twice, which means this node has to carry it — without this the whole
+      // primary navigation announces nothing at all.
+      label: label,
       selected: widget.isActive,
       child: ListenableBuilder(
         listenable: _states,

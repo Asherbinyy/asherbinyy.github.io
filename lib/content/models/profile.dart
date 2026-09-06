@@ -62,6 +62,9 @@ class Contact with _$Contact {
     Uri? gitlab,
     Uri? medium,
     Uri? calendly,
+
+    /// The owner's Linktree, which collects the same destinations in one page.
+    Uri? linktree,
   }) = _Contact;
 
   /// Decodes the documented JSON shape.

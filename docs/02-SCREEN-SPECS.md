@@ -150,6 +150,29 @@ Evri sits on the map as a station with a smaller node and no arc weight. It is p
 
 ## `/work` — Shipped applications
 
+**Superseded in Milestone 3: this is now a grid of visual cards.** The ledger
+below is kept because its reasoning still constrains the design.
+
+The original objection to cards was twofold — that they would be "twelve
+identical rounded rectangles", and that they would bury the store links. Both
+are answered rather than overruled. The artwork is `StationCard`, seeded from
+the application id and drawing the propagation map's own node vocabulary, so no
+two cards are alike and an application with a recorded country places its node
+where the country is. The store links remain their own separately focusable
+controls rather than being folded into a card-wide tap target, so the thing the
+page exists for is still the most actionable element on it.
+
+There is deliberately no decorative hover on the card body: motion answers
+actions, and a card that lights up while offering nothing to press answers
+nothing.
+
+`/writing` follows the same pattern, seeded from each article's URL. There, the
+whole card *is* the link, because an article has exactly one destination.
+
+---
+
+### The original ledger specification
+
 Not a card grid. A ledger.
 
 ```

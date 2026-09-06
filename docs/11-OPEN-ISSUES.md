@@ -8,7 +8,25 @@ than burying it in a worklog nobody re-reads.
 Worklogs record what happened in a session. **This file records what is still
 true.** If the two disagree, this file is the one to fix.
 
-Last reviewed: 2026-09-06, at the end of Milestone 2's build.
+Last reviewed: 2026-09-06, after deploying the Milestone 2 Worker.
+
+---
+
+## 0. What this build collects: nothing
+
+The release build supplies no `ANALYTICS_ENDPOINT`, so there is no sender, no
+client, and no collection of any kind — no beacon, no consent banner, nothing
+written to a visitor's device. `/privacy` says exactly that and offers no
+controls, because a control that changes nothing is theatre.
+
+**Dormant, not deleted.** The tiers, the consent model, the banner, `/console`,
+the Worker and all their tests remain in the repository and still pass;
+`test/widget/privacy/privacy_test.dart` runs the consent machinery against a
+build that *is* collecting, so it cannot rot. Restoring collection is one
+`--dart-define` on the release build line in `.github/workflows/ci.yml`.
+
+The deployed Worker is untouched and still serves `/v1/writing`, which is
+content rather than analytics and carries nothing about the viewer.
 
 ---
 
@@ -53,26 +71,31 @@ numbers and translations, and every row below is one of those.
 
 | # | Item | Notes |
 |---|---|---|
-| 3.1 | **The hero's amber CTA is below the fold on a first visit at 1200×900.** Adding the two stat panels pushed it down. It is *not* obscured — the consent banner and footer are `Column` siblings, not overlays — and it returns above the fold the moment consent is answered, because the scroll viewport grows from ~670px to ~795px. But the first visit is exactly when a recruiter arrives, and `02-SCREEN-SPECS.md`'s hero diagram shows panels *and* buttons above the trace. | Resolving it means either tightening hero spacing (which is token-governed, so it needs a named token, not a raw number) or accepting the trade. Deliberately not decided by an agent. |
+| ~~3.1~~ | **Closed.** The hero's amber CTA was below the fold on a first visit because the consent banner held a row. The banner is gone — this build collects nothing, so there is nothing to consent to — and the CTA now sits above the fold alongside both stat panels. Resolved as a side effect rather than by tightening spacing. |
 | 3.2 | **Trace and map frame cost have never been measured in a real browser profile.** Budgets are 4ms and 6ms. Widget tests cannot measure this. | Needs Chrome DevTools against the deployed build. |
-| 3.3 | **`/about` is unbuilt and belongs to no roadmap task.** It is in `00-PROJECT-BRIEF.md` §4 and has a full screen spec, but appears in neither Milestone 1's nor Milestone 2's task list. | Suggest folding it into 2.3, since the spec puts the Medium feed at the foot of it. Blocked on 1.9 (portrait) either way. |
-| 3.4 | **`/how-it-was-built` (2.7) has no route.** `AppRoute` has no entry for it. | Adding one is part of 2.7. |
 | 3.5 | **`InteractiveViewer` keeps its default boundary behaviour** on the propagation map, so direct panning only becomes useful once zoomed. | From the propagation-map session. |
 | 3.6 | **The acquisition sequence's once-per-tab behaviour is unobserved in a browser.** The VM test target cannot emulate a hard reload; the conditional web implementation is only proven by the WASM build compiling. | Needs the deployed site. |
 | 3.7 | **The build emits a missing Material/Cupertino icon-font warning.** The app bundles and uses neither package. | Cosmetic, long-standing. |
-| 3.8 | **`05-TESTING.md`'s other accessibility tests are unimplemented.** Contrast is now covered exhaustively by `test/unit/app/theme/contrast_test.dart`, but `meetsGuideline(androidTapTargetGuideline)`, the "every interactive element exposes a semantic label" sweep, and full keyboard traversal on `/`, `/work` and `/privacy` have no tests. | Roadmap 3.3 owns these. Recorded here so 3.3 does not have to rediscover the gap. |
+| 3.12 | **Bundled fonts are 556KB against a 480KB budget.** Roadmap 3.2 measured every budget in `03-ARCHITECTURE.md` §5: the gzipped initial payload is 0.99MB against 2.2MB, no image exceeds 180KB, and fonts were the one failure. Dropping the Arabic Presentation Forms blocks — legacy precomposed shapes HarfBuzz derives from the base block through GSUB anyway — and the Persian/Urdu extended ranges took the three Arabic faces from 543KB to 303KB, so the bundle went 794KB to 556KB. Closing the last 76KB means **shipping two Arabic weights instead of three**, which changes how Arabic emphasis reads, or **revising the budget**, which was probably set without pricing three Arabic weights beside seven Latin faces. A typography decision for the owner, not an agent. `test/unit/performance/budget_test.dart` holds the saving in place meanwhile. |
+| ~~3.8~~ | **Closed by roadmap 3.3.** `test/widget/accessibility_test.dart` now runs `androidTapTargetGuideline` and `labeledTapTargetGuideline` across all six public routes, plus keyboard traversal on `/`, `/work` and `/privacy`. It found a real defect on the first run: the primary navigation set `link: true` with no label while excluding the visible text, so **the whole nav announced nothing to a screen reader**. Fixed. |
 | 3.10 | **The console's code-split lands in the JS output, not the WasmGC one.** `fvm flutter build web --wasm` emits `main.dart.js_1.part.js` — a real 9.2KB deferred chunk on the JavaScript fallback path — but a single `main.dart.wasm` with no separate part. So a browser on the WasmGC path downloads the dashboard whether or not it ever reaches the gate. Roadmap 2.5's "code-split" is met on one of the two outputs. | Not fixable from application code; it is a WasmGC deferred-loading limitation. Re-check when the SDK gains split output. |
 | 3.11 | **The console token is held in memory only.** Deliberate: it is a bearer credential for the analytics store, and a site whose argument is about not writing to visitors' devices should not make an exception for its own secret. The cost is re-entering it once per tab, paid only by the owner. | Change only if the owner asks. |
+| 3.12 | **The live writing page returned an empty browser document title after Flutter rendered.** Observed in isolated Chrome on 2026-09-06 while all six article rows were visible. | Investigate the route-title update and app-shell title interaction; no title fix was included in the Worker deployment. |
 | 3.9 | **`--hairline-strong` is below 3:1 in both themes** — 1.69 in Nocturne, 2.32 in Daybreak. It was deliberately left out of the contrast suite: it draws structural rules and panel edges, which WCAG 1.4.11 treats as decoration rather than information identifying a component, and where an edge does carry state the focus ring carries it. | A judgement call, not an oversight. Revisit in 3.3 if the audit disagrees. |
 
 ---
 
-## 3b. Live now, and needing action
+## 3b. Production verification remaining
+
+The Milestone 2 Worker was deployed on 2026-09-06 as version
+`d106e172-4182-4fdb-82f4-b0930f2a4ad0`, from the Worker source at `fdf851d`.
+The writing relay returns valid RSS containing six articles. This closes the
+version mismatch in 3b.1 and the outstanding server deployment associated with
+3b.2; PR #3 had already restored the client-side Tier 0 payload.
 
 | # | Item |
 |---|---|
-| **3b.1** | **The Worker is a version behind the site.** Milestone 2 changed `worker/src/index.js` — the `/v1/writing` relay, Tier 1 field validation, running totals for `/console`, and the digest payload fix — and none of it is deployed. Deploying needs `npx wrangler deploy`, and wrangler requires Node ≥ 22 where this machine has v20.2.0, so it could not be done from the session that wrote it. **Until it is deployed:** `/writing` shows nothing (it hides itself on failure, by design), Tier 1 events are rejected, and `/console` cannot read the aggregates shape it expects. Run `npx wrangler deploy` on a machine with Node 22+. |
-| **3b.2** | **A live analytics regression, now patched client-side.** The Milestone 2 client began sending `sessionId` and `value` on every beacon. The deployed Worker rejects any field it does not know — correct for a public endpoint — so *every* beacon 400'd, including Tier 0 route views that had worked since Milestone 1. The site collected nothing between the Milestone 2 deploy and the fix. `HttpBeaconSender` now omits absent fields, which restores Tier 0 against the old Worker and stays correct against the new one. **Tier 1 still needs 3b.1.** |
+| **3b.3** | **Positive production Tier 1 and authenticated console verification remain open.** All 26 local Worker tests pass, the matching Worker version is deployed, `/v1/writing` returns 200, its missing-Origin gate returns 403, and an unauthenticated `/v1/aggregates` read returns 401. The existing `CONSOLE_TOKEN` secret is configured and was preserved. A proposed synthetic Tier 1 event and deletion of its isolated test records were rejected by automatic approval review because they lacked specific authorization; neither action ran. Complete the positive checks with an explicitly consented browser session and the owner's existing console token, or separately authorize the synthetic test and cleanup. No real page-view counter was incremented for verification in this session. |
 
 ---
 
