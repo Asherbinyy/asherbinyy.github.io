@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nocturne/app/app.dart';
-import 'package:nocturne/app/theme/theme_controller.dart';
+import 'package:nocturne/app/bootstrap.dart';
 import 'package:nocturne/core/platform/browser_navigation.dart';
 import 'package:nocturne/core/platform/shared_preference_store.dart';
 
@@ -20,7 +20,7 @@ Future<void> main() async {
   final preferences = await SharedPreferenceStore.load();
   runApp(
     ProviderScope(
-      overrides: [preferenceStoreProvider.overrideWithValue(preferences)],
+      overrides: productionOverrides(preferences: preferences),
       child: const NocturneApp(),
     ),
   );
