@@ -56,10 +56,9 @@ void main() {
       'deviceClass': 'pointer',
       'referrerHost': 'example.com',
       'campaign': 'graduate-role',
-      // Tier 1 fields, absent on a Tier 0 route view. The wire shape carries
-      // the keys so the Worker's strict field check sees a stable object.
-      'sessionId': null,
-      'value': null,
+      // No sessionId and no value: a Tier 0 route view has neither, and
+      // sending them as nulls would be rejected by any Worker deployed before
+      // those fields existed.
     });
   });
 
@@ -82,5 +81,34 @@ void main() {
             ),
       ),
     );
+  });
+
+  test('sends a Tier 1 beacon with its identifier and value', () async {
+    late http.Request captured;
+    final client = MockClient.streaming((request, bodyStream) async {
+      captured = request as http.Request;
+      return http.StreamedResponse(const Stream.empty(), 202);
+    });
+
+    await HttpBeaconSender(
+      client: client,
+      endpoint: Uri.https('analytics.example.workers.dev', '/v1/beacon'),
+    ).call(
+      beacon(
+        event: AnalyticsEvent.scrollDepth,
+        route: '/work',
+        deviceClass: 'touch',
+        sessionId: 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
+        value: 3,
+      ),
+    );
+
+    expect(jsonDecode(captured.body), <String, Object?>{
+      'event': 'scroll_depth',
+      'route': '/work',
+      'deviceClass': 'touch',
+      'sessionId': 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
+      'value': 3,
+    });
   });
 }

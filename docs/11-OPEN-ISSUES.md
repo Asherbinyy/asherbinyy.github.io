@@ -67,6 +67,15 @@ numbers and translations, and every row below is one of those.
 
 ---
 
+## 3b. Live now, and needing action
+
+| # | Item |
+|---|---|
+| **3b.1** | **The Worker is a version behind the site.** Milestone 2 changed `worker/src/index.js` — the `/v1/writing` relay, Tier 1 field validation, running totals for `/console`, and the digest payload fix — and none of it is deployed. Deploying needs `npx wrangler deploy`, and wrangler requires Node ≥ 22 where this machine has v20.2.0, so it could not be done from the session that wrote it. **Until it is deployed:** `/writing` shows nothing (it hides itself on failure, by design), Tier 1 events are rejected, and `/console` cannot read the aggregates shape it expects. Run `npx wrangler deploy` on a machine with Node 22+. |
+| **3b.2** | **A live analytics regression, now patched client-side.** The Milestone 2 client began sending `sessionId` and `value` on every beacon. The deployed Worker rejects any field it does not know — correct for a public endpoint — so *every* beacon 400'd, including Tier 0 route views that had worked since Milestone 1. The site collected nothing between the Milestone 2 deploy and the fix. `HttpBeaconSender` now omits absent fields, which restores Tier 0 against the old Worker and stays correct against the new one. **Tier 1 still needs 3b.1.** |
+
+---
+
 ## 4. Verified after the Milestone 1 deploy
 
 Milestone 1 merged as `75b536c` and published on 2026-09-06. Run 34033338777
