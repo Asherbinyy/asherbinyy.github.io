@@ -8,7 +8,7 @@ than burying it in a worklog nobody re-reads.
 Worklogs record what happened in a session. **This file records what is still
 true.** If the two disagree, this file is the one to fix.
 
-Last reviewed: 2026-09-06, at the Milestone 1 merge.
+Last reviewed: 2026-09-06, after the Milestone 1 deploy.
 
 ---
 
@@ -60,18 +60,22 @@ numbers and translations, and every row below is one of those.
 
 ---
 
-## 4. Blocked behind the deploy, not behind code
+## 4. Verified after the Milestone 1 deploy
 
-These could not be verified before Milestone 1 reached `main`, because `main`
-is what publishes. They are the first things to check once it has.
+Milestone 1 merged as `75b536c` and published on 2026-09-06. Run 34033338777
+ran `verify`, `goldens`, `build` and `deploy` — the last two for the first time
+ever. All four succeeded.
 
-| # | Item |
-|---|---|
-| 4.1 | **The Lighthouse gate has never executed.** It is wired into the build job asserting performance ≥ 0.85 and accessibility ≥ 0.9 on `/cv` and `/brief`, but it only runs on `main`. Until it does, it is an untested assertion. |
-| 4.2 | **Deep links have never been tested on the live host.** `/work` entered directly depends on the `404.html` fallback that GitHub Pages fails silently on. |
-| 4.3 | **The analytics beacon has never transported anything.** The Worker is deployed and tested, but the release build only supplies the production endpoint on a Pages release, so nothing has ever been sent end to end. |
-| 4.4 | **The favicon has never been seen in light and dark browser chrome.** The `--void` background makes this a real check, per roadmap 1.6b. |
-| 4.5 | **No Open Graph image exists.** The plan was to capture the settled acquisition frame as the social preview. |
+| # | Item | Status |
+|---|---|---|
+| 4.1 | **The Lighthouse gate.** | **Closed.** It executed for the first time and passed, asserting performance ≥ 0.85 and accessibility ≥ 0.9 on `/cv` and `/brief` in the desktop preset. It is no longer an untested assertion. |
+| 4.2 | **Deep links on the live host.** | **Mostly closed.** `/work` serves the `404.html` fallback, which is the full hand-authored app shell with `<base href="/">`, so the app boots and `go_router` resolves the path client-side. The HTTP **status** is 404, which is inherent to GitHub Pages' SPA fallback and cannot be changed on Pages — it is exactly why `/cv` and `/brief` are real static files returning 200 to crawlers. What remains is confirming in a browser that the route actually renders, which is step 3 of the phone check. |
+| 4.3 | **The analytics beacon.** | **Mostly closed.** The Worker is live and enforcing its contract: a POST without the site origin returns 403, and one carrying `Origin: https://asherbinyy.github.io` is accepted past the origin gate and 400s on a malformed payload. The release build supplies the endpoint via `--dart-define` at `.github/workflows/ci.yml:147`. A *valid* beacon was deliberately **not** sent — it would write a counter for a page view that never happened and put false data in the owner's own analytics. Confirm from a real browser visit instead. |
+| 4.4 | **The favicon in light and dark browser chrome.** | **Open.** The `--void` background makes this a real check. Fold it into the phone check. |
+| 4.5 | **No Open Graph image exists.** | **Open.** The plan was to capture the settled acquisition frame as the social preview. |
+
+Live and returning 200: `/`, `/cv`, `/brief`, `/.nojekyll`, `/robots.txt`,
+`/sitemap.xml`.
 
 ---
 
@@ -101,5 +105,6 @@ acquisition sequence on a cold load and then a reload, to confirm it runs once
 per tab (3.6).
 
 **Status: never performed.** Milestone 1 was merged on the owner's explicit
-instruction without it, and it should be the first thing done against the live
-site.
+instruction without it. The site is now live at
+<https://asherbinyy.github.io>, so the check is no longer blocked — it is the
+first thing to do, and it also closes 4.2, 4.3 and 4.4.
