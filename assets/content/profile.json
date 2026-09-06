@@ -32,5 +32,21 @@
     "calendly": null
   },
   "cvFile": null,
-  "portrait": null
+  "portrait": null,
+  "stats": [
+    {
+      "value": "25+",
+      "label": {
+        "en": "shipped",
+        "ar": null
+      }
+    },
+    {
+      "value": "6",
+      "label": {
+        "en": "countries",
+        "ar": null
+      }
+    }
+  ]
 }

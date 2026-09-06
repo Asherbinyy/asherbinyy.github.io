@@ -59,6 +59,11 @@ void main() {
       await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
+      // With the stat panels present the actions sit just below the fold at
+      // this breakpoint while the consent banner still holds its row, so the
+      // button is scrolled into view rather than tapped at its laid-out offset.
+      await tester.ensureVisible(find.text(l10n.heroSeeTheWork));
+      await pumpFrames(tester);
       await tester.tap(find.text(l10n.heroSeeTheWork));
       await pumpFrames(tester);
 
@@ -69,11 +74,39 @@ void main() {
     testWidgets('renders no stat panels while the content declares none', (
       tester,
     ) async {
-      // profile.json carries no stats block yet, and section 3 forbids
-      // inventing the numbers, so the panels are absent rather than guessed.
-      await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
+      // Section 3 forbids inventing the numbers, so a profile without a stats
+      // block renders no panels rather than a guess.
+      await pumpStation(
+        tester,
+        breakpoint: ChromeBreakpoint.expanded,
+        reader: bundledContent(
+          overrides: {
+            'assets/content/profile.json': asAsset({
+              'name': {'en': 'Fixture Name'},
+              'positioning': {'en': 'Fixture positioning.'},
+              'contact': {'email': 'fixture@example.com'},
+            }),
+          },
+        ),
+      );
 
       expect(find.byType(StatPanel), findsNothing);
+    });
+
+    testWidgets('renders the two panels the shipped profile declares', (
+      tester,
+    ) async {
+      // The shipped profile.json carries only the two stats the documents
+      // state: 00-PROJECT-BRIEF.md section 2 and the positioning line both say
+      // 25+ applications across six countries. The spec's third panel, "4
+      // years", is not added here because no supplied file dates it.
+      await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
+
+      expect(find.byType(StatPanel), findsNWidgets(2));
+      expect(find.text('25+'), findsOneWidget);
+      expect(find.text('shipped'), findsOneWidget);
+      expect(find.text('6'), findsOneWidget);
+      expect(find.text('countries'), findsOneWidget);
     });
 
     testWidgets('renders a panel for every stat the content declares', (
