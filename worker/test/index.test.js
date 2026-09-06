@@ -466,3 +466,30 @@ test('a dwell longer than an hour is rejected as a forgotten tab', async () => {
 
   assert.equal(result.status, 400);
 });
+
+test('the digest payload carries counters and totals at the top level', async () => {
+  const posted = [];
+  const env = environment({DIGEST_WEBHOOK_URL: 'https://hooks.example/digest'});
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    posted.push(JSON.parse(init.body));
+    return new Response('{}', {status: 200});
+  };
+
+  try {
+    await handleRequest(
+      beaconRequest({event: 'scroll_depth', value: 3, campaign: null}),
+      env,
+      new Date('2026-09-06T09:00:00Z'),
+    );
+    // 12:00 in London is 11:00 UTC while British Summer Time is in effect.
+    await sendLondonNoonDigest(env, new Date('2026-09-06T11:00:00Z'));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.equal(posted.length, 1);
+  assert.ok(Array.isArray(posted[0].counters), 'counters must be an array');
+  assert.ok(Array.isArray(posted[0].totals), 'totals must be an array');
+  assert.ok(posted[0].generatedAt);
+});

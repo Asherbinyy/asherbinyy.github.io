@@ -378,7 +378,10 @@ export async function sendLondonNoonDigest(env, now = new Date()) {
   if ((await env.ANALYTICS.get(sentKey)) !== null) return false;
   await postJson(env.DIGEST_WEBHOOK_URL, {
     generatedAt: now.toISOString(),
-    counters: await aggregateSnapshot(env),
+    // Spread, not nested: the snapshot is already `{counters, totals}`, and
+    // wrapping it again would put a `counters.counters` in the payload the
+    // digest workflow reads.
+    ...(await aggregateSnapshot(env)),
   });
   await env.ANALYTICS.put(sentKey, '1', {
     expirationTtl: shortRetentionSeconds,

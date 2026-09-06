@@ -8,7 +8,7 @@ than burying it in a worklog nobody re-reads.
 Worklogs record what happened in a session. **This file records what is still
 true.** If the two disagree, this file is the one to fix.
 
-Last reviewed: 2026-09-06, during Milestone 2 task 2.2.
+Last reviewed: 2026-09-06, at the end of Milestone 2's build.
 
 ---
 
@@ -30,7 +30,7 @@ numbers and translations, and every row below is one of those.
 | 1.9 | **The portrait.** `profile.portrait` is null. Brief in `01-DESIGN-SYSTEM.md` §10. | `/about` cannot be built to spec | `/about` |
 | 1.10 | **Screenshots** for Mokaf, AZ Courses and City Loom. | Device frames have nothing to scrub | 2.1 |
 | 1.11 | **Case study prose** — three studies, context → problem → approach → outcome. The roadmap says explicitly that an agent cannot write these and will invent them if asked. **The screen is built and tested; `assets/content/studies/` is empty on purpose.** Drop a `{slug}.json` in and it renders with no code change. | `/work/:slug` says "not written yet" for every slug | — |
-| 1.12 | **n8n endpoint and a Resend account** for the digest. The Worker already has a `DIGEST_WEBHOOK_URL` secret and a noon Europe/London trigger waiting for one. | Digest dormant | 2.6 |
+| 1.12 | **n8n instance and a Resend account** for the digest. Everything buildable is built: the Worker's noon trigger, the payload, and the importable workflow with its summary and message in `automation/digest-workflow.json`. What remains is creating the two accounts, importing the workflow, adding the Resend credential and running `wrangler secret put DIGEST_WEBHOOK_URL`. Steps in `automation/README.md`. | Digest dormant, not broken | Nothing — 2.6's repository half is done |
 | 1.13 | **Calendly URL** is null in `profile.json`. | No booking link | — |
 
 ---
