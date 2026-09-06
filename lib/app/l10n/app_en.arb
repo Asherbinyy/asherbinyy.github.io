@@ -387,5 +387,77 @@
   "caseStudyPrototypeWeight": "Loads an interactive prototype from another site.",
   "@caseStudyPrototypeWeight": {
     "description": "Case study: what the click-to-load control will do"
+  },
+  "consoleHeading": "Last 30 days",
+  "@consoleHeading": {
+    "description": "Console: heading"
+  },
+  "consoleTokenPrompt": "Enter the console token.",
+  "@consoleTokenPrompt": {
+    "description": "Console: sign-in prompt"
+  },
+  "consoleTokenLabel": "Console token",
+  "@consoleTokenLabel": {
+    "description": "Console: token field label"
+  },
+  "consoleSignIn": "Open the console",
+  "@consoleSignIn": {
+    "description": "Console: sign-in action"
+  },
+  "consoleRejected": "That token was not accepted.",
+  "@consoleRejected": {
+    "description": "Console: rejected token"
+  },
+  "consoleUnavailable": "The analytics store could not be read.",
+  "@consoleUnavailable": {
+    "description": "Console: endpoint failure"
+  },
+  "consoleNothingYet": "Nothing collected in this window.",
+  "@consoleNothingYet": {
+    "description": "Console: empty window"
+  },
+  "consoleViews": "views",
+  "@consoleViews": {
+    "description": "Console: stat tile label"
+  },
+  "consoleUnique": "unique per day",
+  "@consoleUnique": {
+    "description": "Console: stat tile label"
+  },
+  "consoleCvOpens": "CV",
+  "@consoleCvOpens": {
+    "description": "Console: stat tile label"
+  },
+  "consoleMeanDwell": "mean on page",
+  "@consoleMeanDwell": {
+    "description": "Console: stat tile label"
+  },
+  "consoleCampaigns": "Applications",
+  "@consoleCampaigns": {
+    "description": "Console: campaign table heading"
+  },
+  "consoleColumnViews": "Views",
+  "@consoleColumnViews": {
+    "description": "Console: campaign column"
+  },
+  "consoleColumnCv": "CV",
+  "@consoleColumnCv": {
+    "description": "Console: campaign column"
+  },
+  "consoleColumnLastSeen": "Last seen",
+  "@consoleColumnLastSeen": {
+    "description": "Console: campaign column"
+  },
+  "consoleNoCampaigns": "No campaign entries yet.",
+  "@consoleNoCampaigns": {
+    "description": "Console: no campaign rows"
+  },
+  "consoleSignOut": "Close the console",
+  "@consoleSignOut": {
+    "description": "Console: clears the token"
+  },
+  "consoleDailyViews": "Views per day",
+  "@consoleDailyViews": {
+    "description": "Console: sparkline label"
   }
 }

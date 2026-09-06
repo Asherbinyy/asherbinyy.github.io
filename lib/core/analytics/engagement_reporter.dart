@@ -100,8 +100,19 @@ class _EngagementReporterState extends ConsumerState<EngagementReporter> {
   void _report() {
     final arrived = _arrived;
     final inputMode = _inputMode;
-    final client = _container?.read(analyticsClientProvider);
-    if (arrived == null || inputMode == null || client == null) return;
+    if (arrived == null || inputMode == null) return;
+
+    // The container can already be gone: when the whole app is torn down it
+    // disposes before its widgets do, and reading a disposed container throws.
+    // A beacon on the way out is best-effort by nature, and analytics must
+    // never surface — least of all as an exception during teardown.
+    final AnalyticsClient? client;
+    try {
+      client = _container?.read(analyticsClientProvider);
+    } on Object {
+      return;
+    }
+    if (client == null) return;
 
     final seconds = DateTime.now().difference(arrived).inSeconds;
     // A glance is not a reading. Under two seconds says nothing worth storing,

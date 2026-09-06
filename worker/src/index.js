@@ -76,7 +76,7 @@ export async function handleRequest(request, env, now = new Date()) {
     if (!authorised(request, env.CONSOLE_TOKEN)) {
       return response({error: 'Unauthorised'}, 401, headers);
     }
-    return response({counters: await aggregateSnapshot(env)}, 200, headers);
+    return response(await aggregateSnapshot(env), 200, headers);
   }
   return response({error: 'Not found'}, 404, headers);
 }
@@ -333,19 +333,32 @@ export async function visitorHash(salt, address, agent, siteId) {
 }
 
 export async function aggregateSnapshot(env) {
-  const counters = [];
+  return {
+    counters: await readRows(env, counterPrefix, 'count'),
+    // Running sums for the events that carry a number, so the console can
+    // divide totals by counts for a mean without any per-visit row existing.
+    totals: await readRows(env, totalPrefix, 'total'),
+  };
+}
+
+/// Reads every key under [prefix], splitting its dimensions back out.
+async function readRows(env, prefix, field) {
+  const rows = [];
   let cursor;
   do {
-    const page = await env.ANALYTICS.list({prefix: counterPrefix, cursor});
+    const page = await env.ANALYTICS.list({prefix, cursor});
     for (const entry of page.keys) {
-      counters.push({
-        dimensions: entry.name.slice(counterPrefix.length).split('|'),
-        count: Number(await env.ANALYTICS.get(entry.name)) || 0,
+      rows.push({
+        dimensions: entry.name
+          .slice(prefix.length)
+          .split('|')
+          .map((value) => decodeURIComponent(value)),
+        [field]: Number(await env.ANALYTICS.get(entry.name)) || 0,
       });
     }
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
-  return counters;
+  return rows;
 }
 
 export async function sendLondonNoonDigest(env, now = new Date()) {

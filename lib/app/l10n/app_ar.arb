@@ -146,5 +146,77 @@
   "caseStudyPrototypeWeight": "يُحمّل نموذجًا تفاعليًا من موقع آخر.",
   "@caseStudyPrototypeWeight": {
     "description": "Case study: what the click-to-load control will do"
+  },
+  "consoleHeading": "آخر ٣٠ يومًا",
+  "@consoleHeading": {
+    "description": "Console: heading"
+  },
+  "consoleTokenPrompt": "أدخل رمز لوحة التحكم.",
+  "@consoleTokenPrompt": {
+    "description": "Console: sign-in prompt"
+  },
+  "consoleTokenLabel": "رمز لوحة التحكم",
+  "@consoleTokenLabel": {
+    "description": "Console: token field label"
+  },
+  "consoleSignIn": "فتح لوحة التحكم",
+  "@consoleSignIn": {
+    "description": "Console: sign-in action"
+  },
+  "consoleRejected": "لم يُقبل هذا الرمز.",
+  "@consoleRejected": {
+    "description": "Console: rejected token"
+  },
+  "consoleUnavailable": "تعذّرت قراءة مخزن التحليلات.",
+  "@consoleUnavailable": {
+    "description": "Console: endpoint failure"
+  },
+  "consoleNothingYet": "لا شيء مُجمَّع في هذه الفترة.",
+  "@consoleNothingYet": {
+    "description": "Console: empty window"
+  },
+  "consoleViews": "مشاهدات",
+  "@consoleViews": {
+    "description": "Console: stat tile label"
+  },
+  "consoleUnique": "زائر يوميًا",
+  "@consoleUnique": {
+    "description": "Console: stat tile label"
+  },
+  "consoleCvOpens": "السيرة الذاتية",
+  "@consoleCvOpens": {
+    "description": "Console: stat tile label"
+  },
+  "consoleMeanDwell": "متوسط البقاء",
+  "@consoleMeanDwell": {
+    "description": "Console: stat tile label"
+  },
+  "consoleCampaigns": "الطلبات",
+  "@consoleCampaigns": {
+    "description": "Console: campaign table heading"
+  },
+  "consoleColumnViews": "المشاهدات",
+  "@consoleColumnViews": {
+    "description": "Console: campaign column"
+  },
+  "consoleColumnCv": "السيرة",
+  "@consoleColumnCv": {
+    "description": "Console: campaign column"
+  },
+  "consoleColumnLastSeen": "آخر ظهور",
+  "@consoleColumnLastSeen": {
+    "description": "Console: campaign column"
+  },
+  "consoleNoCampaigns": "لا توجد حملات بعد.",
+  "@consoleNoCampaigns": {
+    "description": "Console: no campaign rows"
+  },
+  "consoleSignOut": "إغلاق لوحة التحكم",
+  "@consoleSignOut": {
+    "description": "Console: clears the token"
+  },
+  "consoleDailyViews": "المشاهدات يوميًا",
+  "@consoleDailyViews": {
+    "description": "Console: sparkline label"
   }
 }

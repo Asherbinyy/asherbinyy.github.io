@@ -242,6 +242,15 @@ abstract final class Tokens {
   /// Design-system value for loaderWidth.
   static const double loaderWidth = 32;
 
+  /// Width of one `/console` stat tile.
+  ///
+  /// Not from `01-DESIGN-SYSTEM.md`: the console is Milestone 2 and the design
+  /// system predates it. Added here rather than written inline because §6 of
+  /// `AGENTS.md` bans raw values in feature code. Sized to hold four tiles on
+  /// one row at the expanded breakpoint, which is the layout the screen spec
+  /// draws.
+  static const double consoleTileWidth = 120;
+
   /// Design-system value for loaderHeight.
   static const double loaderHeight = 12;
 

@@ -110,7 +110,7 @@ test('the same daily visitor is counted once across route views', async () => {
   await handleRequest(beaconRequest({}, headers), env, now);
   await handleRequest(beaconRequest({}, headers), env, now);
 
-  const counters = await aggregateSnapshot(env);
+  const {counters} = await aggregateSnapshot(env);
   const unique = counters.find(({dimensions}) =>
     dimensions.includes('unique_visitor'),
   );
