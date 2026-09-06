@@ -13,7 +13,6 @@ import 'package:nocturne/core/analytics/engagement_reporter.dart';
 import 'package:nocturne/core/platform/app_messenger_host.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
 import 'package:nocturne/features/console/presentation/console_screen.dart';
-import 'package:nocturne/features/privacy/presentation/privacy_screen.dart';
 import 'package:nocturne/features/signal/presentation/signal_screen.dart';
 import 'package:nocturne/features/about/presentation/about_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
@@ -108,7 +107,6 @@ abstract final class AppRouter {
     AppRoute.writing => const WritingScreen(),
     AppRoute.about => const AboutScreen(),
     AppRoute.console => const ConsoleScreen(),
-    AppRoute.privacy => const PrivacyScreen(),
     _ => PlaceholderScreen(route: route),
   };
 

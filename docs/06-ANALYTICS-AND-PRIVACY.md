@@ -1,6 +1,24 @@
 # Analytics and Privacy — NOCTURNE
 
-This document is binding. Where it conflicts with a feature request, this wins.
+> **Status as shipped: this site collects nothing, and has no privacy page.**
+>
+> The release build supplies no analytics endpoint, so there is no sender, no
+> client, and no collection of any kind — no beacon, no cookie, no identifier,
+> and nothing written to a visitor's device. There is consequently no consent
+> banner and no `/privacy` route: both were removed in Milestone 3 on the
+> owner's instruction, because a prompt asking permission for collection that
+> cannot happen implies tracking the site is not doing.
+>
+> **Everything below describes the design that is dormant, not live.** The
+> tiers, the client, the Worker and their tests all remain in the repository
+> and still pass. Restoring collection means adding
+> `--dart-define=ANALYTICS_ENDPOINT=...` to the release build in
+> `.github/workflows/ci.yml` — and, because the sections below are the
+> obligations that come with collecting, restoring the consent interface and a
+> privacy notice along with it.
+
+This document is binding whenever collection is on. Where it conflicts with a
+feature request, this wins.
 
 ---
 

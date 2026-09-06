@@ -69,10 +69,12 @@ void main() {
     final trace = tester.widget<TelemetryTrace>(find.byType(TelemetryTrace));
     final labels = trace.labels;
 
-    // CI Company is the one role with a company name; the rest fall back to
-    // their city rather than to an invented employer.
+    // Employers now come from the owner's CV, so a burst names the company.
     expect(labels['ci-company']?.title, 'CI Company');
-    expect(labels['hwzn-tech']?.title, 'Riyadh');
+    expect(labels['hwzn-tech']?.title, 'Hwzn Tech');
+    // Evri is the one role the CV does not cover, so it still falls back to
+    // its city rather than to an invented employer.
+    expect(labels['evri']?.title, 'Manchester');
     expect(labels['evri']?.meta, contains('GB'));
     for (final label in labels.values) {
       expect(label.title, isNotEmpty);

@@ -43,14 +43,11 @@ void main() {
     test('total weight does not creep back up', () {
       final total = faces.fold(0, (sum, f) => sum + f.lengthSync());
 
-      // **This is a regression guard, not the budget.** §5 sets 480KB and the
-      // bundle is about 556KB: three Arabic weights cannot fit beside seven
-      // Latin faces at that figure. Dropping the presentation-form and
-      // extended blocks took 794KB to 556KB, and closing the rest means either
-      // shipping two Arabic weights instead of three or revising the budget —
-      // a typography decision, recorded as open issue 3.12 rather than made
-      // here. This bound stops the saving being quietly undone in the
-      // meantime.
+      // §5's budget, raised from 480KB to 580KB in Milestone 3 once the
+      // subsetting had been tightened as far as it could go without dropping
+      // an Arabic weight. The bundle sits at about 556KB, so this is the real
+      // budget rather than a placeholder — and it still stops the 238KB the
+      // resubsetting saved from being quietly undone.
       expect(total, lessThanOrEqualTo(580 * 1024));
     });
   });

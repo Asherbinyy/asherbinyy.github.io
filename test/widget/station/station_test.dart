@@ -93,20 +93,21 @@ void main() {
       expect(find.byType(StatPanel), findsNothing);
     });
 
-    testWidgets('renders the two panels the shipped profile declares', (
+    testWidgets('renders the three panels the shipped profile declares', (
       tester,
     ) async {
-      // The shipped profile.json carries only the two stats the documents
-      // state: 00-PROJECT-BRIEF.md section 2 and the positioning line both say
-      // 25+ applications across six countries. The spec's third panel, "4
-      // years", is not added here because no supplied file dates it.
+      // Every figure is traceable to a supplied document: 25+ applications
+      // and six countries from 00-PROJECT-BRIEF.md and the positioning line,
+      // and "4+ years commercial" from the owner's CV, which is what finally
+      // dated the spec's third panel.
       await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
 
-      expect(find.byType(StatPanel), findsNWidgets(2));
+      expect(find.byType(StatPanel), findsNWidgets(3));
       expect(find.text('25+'), findsOneWidget);
       expect(find.text('shipped'), findsOneWidget);
       expect(find.text('6'), findsOneWidget);
       expect(find.text('countries'), findsOneWidget);
+      expect(find.text('4+'), findsOneWidget);
     });
 
     testWidgets('renders a panel for every stat the content declares', (

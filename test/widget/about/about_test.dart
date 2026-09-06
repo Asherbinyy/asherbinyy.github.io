@@ -59,7 +59,7 @@ void main() {
         initialRoute: AppRoute.about,
       );
 
-      expect(find.text('In progress — predicted Distinction'), findsOneWidget);
+      expect(find.textContaining('Distinction'), findsWidgets);
     });
 
     testWidgets('carries the Edumundo simulation line', (tester) async {

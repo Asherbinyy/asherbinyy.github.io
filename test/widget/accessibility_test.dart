@@ -25,7 +25,6 @@ void main() {
     AppRoute.work,
     AppRoute.writing,
     AppRoute.about,
-    AppRoute.privacy,
   ];
 
   group('touch targets', () {
@@ -65,7 +64,7 @@ void main() {
 
   group('keyboard traversal', () {
     // 05-TESTING.md names these three routes specifically.
-    for (final route in [AppRoute.station, AppRoute.work, AppRoute.privacy]) {
+    for (final route in [AppRoute.station, AppRoute.work]) {
       testWidgets('${route.path} can be reached and left with Tab alone', (
         tester,
       ) async {

@@ -8,7 +8,6 @@ import 'package:nocturne/app/app.dart';
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/app_footer.dart';
 import 'package:nocturne/features/console/presentation/console_screen.dart';
-import 'package:nocturne/features/privacy/presentation/privacy_screen.dart';
 import 'package:nocturne/features/about/presentation/about_screen.dart';
 import 'package:nocturne/features/signal/presentation/signal_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
@@ -33,7 +32,6 @@ void main() {
       AppRoute.writing: WritingScreen,
       AppRoute.about: AboutScreen,
       AppRoute.console: ConsoleScreen,
-      AppRoute.privacy: PrivacyScreen,
       AppRoute.campaign: StationScreen,
     };
 

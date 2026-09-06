@@ -48,7 +48,7 @@ Grounding the aesthetic in the subject matters practically: when an interviewer 
 | Load state | **Signal acquisition sequence.** Converts Flutter Web's unavoidable initial payload into a deliberate, watchable moment rather than a blank screen. |
 | Arabic | Dual-channel transmission. Language switch framed as a frequency change. Full RTL. |
 | App screenshots | **Received transmissions.** Device frames that scrub through real screens as the viewer scrolls. |
-| Privacy posture | The consent panel shows, live, which fields are collected and which are off — including a readout of the viewer's own current session. |
+| Privacy posture | Nothing is collected, so nothing has to be disclosed, consented to, or explained. Milestone 3 removed the consent banner and `/privacy` along with the collection they existed for. |
 
 ### The one bold thing
 
@@ -65,7 +65,6 @@ Per the restraint principle: spend boldness in a single place. **The telemetry t
 /work/:slug        Case study, device-frame scrub
 /writing           Articles (Medium RSS)
 /about             Background, education, the venture, contact
-/privacy           Consent controls + live session readout
 /console           Analytics dashboard — auth-gated, not publicly linked
 /cv                Plain HTML, indexable, ATS-readable — NOT Flutter
 /brief             Recruiter Mode — static, fast, sixty-second read

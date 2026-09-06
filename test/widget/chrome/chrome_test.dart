@@ -166,7 +166,6 @@ void main() {
         l10n.recruiterModeOff,
         l10n.languageSwitchToArabic,
         l10n.themeSwitchToDaybreak,
-        l10n.footerConsent,
       ]) {
         expect(find.bySemanticsLabel(label), findsOneWidget, reason: label);
       }
@@ -195,7 +194,10 @@ void main() {
     ) async {
       await pumpChrome(tester, breakpoint: ChromeBreakpoint.large);
 
-      const expected = [AppMark, AppNav, ChromeControl, AppFooter];
+      // The footer carries no interactive element any more: its two links
+      // were the consent notice and the colophon, and both pages are gone.
+      // It is informational, so it is not a stop on the tour.
+      const expected = [AppMark, AppNav, ChromeControl];
       final reached = <Type>{};
       for (var press = 0; press < 24; press++) {
         await tester.sendKeyEvent(LogicalKeyboardKey.tab);
@@ -210,9 +212,6 @@ void main() {
         }
         if (focused.findAncestorWidgetOfExactType<ChromeControl>() != null) {
           reached.add(ChromeControl);
-        }
-        if (focused.findAncestorWidgetOfExactType<AppFooter>() != null) {
-          reached.add(AppFooter);
         }
       }
 

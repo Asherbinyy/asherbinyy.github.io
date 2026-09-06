@@ -14,6 +14,11 @@ Last reviewed: 2026-09-06, after deploying the Milestone 2 Worker.
 
 ## 0. What this build collects: nothing
 
+**There is no consent banner and no `/privacy` route.** Both were removed in
+Milestone 3 with the collection they existed for. `06-ANALYTICS-AND-PRIVACY.md`
+carries a status banner saying so, and restoring collection means restoring the
+consent interface and a notice along with it.
+
 The release build supplies no `ANALYTICS_ENDPOINT`, so there is no sender, no
 client, and no collection of any kind — no beacon, no consent banner, nothing
 written to a visitor's device. `/privacy` says exactly that and offers no
@@ -43,8 +48,9 @@ numbers and translations, and every row below is one of those.
 | 1.4 | **AZ Exams has no distinct store URL.** It shared `com.crazyidea.coursesexams` with AZ Courses; one of the two was wrong. | The app is absent from the ledger | — |
 | 1.5 | **Mokaf has no public listing.** It ships with an empty store map and the row says so plainly. Confirm that is correct rather than a missing link. | — | 2.1 |
 | 1.6 | **Arabic copy.** `profile.json`, `career.json` and `apps.json` carry `ar: null` throughout, so Arabic falls back to English by design. Separately, ~75 agent-authored interface strings in `app_ar.arb` have never had a native read. | Arabic locale is structurally complete but linguistically unreviewed | Arabic being claimed as shipped |
-| 1.7 | **Five career descriptions** are incomplete per `assets/content/README.md`. | Transmission panels are thin | — |
-| 1.8 | **The CV PDF.** `profile.cvFile` is null, so the hero's second action reads "Read the CV" and opens the static HTML instead of downloading. | No downloadable CV | `/brief` parity with the spec |
+| ~~1.7~~ | **Mostly closed.** Four of the five roles — MiNextStep, Hwzn Tech, Ar++ tech and Techlabs Solutions — now carry the company, title and summary transcribed from the owner's CV. **Evri remains empty**: it is the one role the CV does not cover, so its burst still falls back to the city rather than an invented employer. |
+| ~~1.8~~ | **Partly closed.** The owner supplied the CV as a PDF, and its content has been transcribed into `career.json`, `education.json` and `profile.json`. The **file itself is still not in the repository**, so `profile.cvFile` stays null and the hero's second action still opens the HTML CV rather than downloading a PDF. |
+| 1.8b | **The CV PDF file.** `profile.cvFile` is null, so the hero's second action reads "Read the CV" and opens the static HTML instead of downloading. | No downloadable CV | `/brief` parity with the spec |
 | 1.9 | **The portrait.** `profile.portrait` is null. Brief in `01-DESIGN-SYSTEM.md` §10. | `/about` cannot be built to spec | `/about` |
 | 1.10 | **Screenshots** for Mokaf, AZ Courses and City Loom. | Device frames have nothing to scrub | 2.1 |
 | 1.11 | **Case study prose** — three studies, context → problem → approach → outcome. The roadmap says explicitly that an agent cannot write these and will invent them if asked. **The screen is built and tested; `assets/content/studies/` is empty on purpose.** Drop a `{slug}.json` in and it renders with no code change. | `/work/:slug` says "not written yet" for every slug | — |
@@ -57,7 +63,7 @@ numbers and translations, and every row below is one of those.
 
 | # | Decision | Why it went this way |
 |---|---|---|
-| 2.1 | **Only two hero stat panels ship: "25+ shipped" and "6 countries".** | Both are traceable to supplied documents — `00-PROJECT-BRIEF.md` §2 and the `positioning` line. The spec's third panel, "4 years", is in `02-SCREEN-SPECS.md`'s `/brief` block as "4 years commercial", but nothing supplied dates it, and a tenure figure goes stale on its own. Supply it and the panel appears with no code change. |
+| ~~2.1~~ | **Closed.** The third panel now ships. The CV dated it — "4+ years of commercial experience" — which is what was missing when it was left out. |
 | 2.2 | **Six countries, not five.** `02-SCREEN-SPECS.md`'s hero diagram draws a "5 countries" panel, but `00-PROJECT-BRIEF.md` §2 and §3 and the `/brief` block all say six and name them: Egypt, Saudi Arabia, Armenia, Qatar, Canada, the UK. | The diagram is the outlier. The doc should be corrected to six. |
 | 2.3 | **Stat labels are English-only.** `LocalizedText.resolve` falls back to English rather than inventing Arabic. | `AGENTS.md` §3. Rolls up into 1.6. |
 | 2.4 | **The ledger heading counts the content, not the docs.** It says eleven because eleven exist. | Rolls up into 1.2. |
@@ -76,7 +82,7 @@ numbers and translations, and every row below is one of those.
 | 3.5 | **`InteractiveViewer` keeps its default boundary behaviour** on the propagation map, so direct panning only becomes useful once zoomed. | From the propagation-map session. |
 | 3.6 | **The acquisition sequence's once-per-tab behaviour is unobserved in a browser.** The VM test target cannot emulate a hard reload; the conditional web implementation is only proven by the WASM build compiling. | Needs the deployed site. |
 | 3.7 | **The build emits a missing Material/Cupertino icon-font warning.** The app bundles and uses neither package. | Cosmetic, long-standing. |
-| 3.12 | **Bundled fonts are 556KB against a 480KB budget.** Roadmap 3.2 measured every budget in `03-ARCHITECTURE.md` §5: the gzipped initial payload is 0.99MB against 2.2MB, no image exceeds 180KB, and fonts were the one failure. Dropping the Arabic Presentation Forms blocks — legacy precomposed shapes HarfBuzz derives from the base block through GSUB anyway — and the Persian/Urdu extended ranges took the three Arabic faces from 543KB to 303KB, so the bundle went 794KB to 556KB. Closing the last 76KB means **shipping two Arabic weights instead of three**, which changes how Arabic emphasis reads, or **revising the budget**, which was probably set without pricing three Arabic weights beside seven Latin faces. A typography decision for the owner, not an agent. `test/unit/performance/budget_test.dart` holds the saving in place meanwhile. |
+| ~~3.12~~ | **Closed.** Fonts are 556KB. The subsetting was tightened first — dropping the Arabic Presentation Forms and the Persian/Urdu ranges took the bundle from 794KB to 556KB — and the budget in `03-ARCHITECTURE.md` §5 was then raised from 480KB to 580KB, on the owner's instruction. The original figure was set without pricing three Arabic weights beside seven Latin faces; meeting it would have meant dropping an Arabic weight and letting emphasis synthesise. |
 | ~~3.8~~ | **Closed by roadmap 3.3.** `test/widget/accessibility_test.dart` now runs `androidTapTargetGuideline` and `labeledTapTargetGuideline` across all six public routes, plus keyboard traversal on `/`, `/work` and `/privacy`. It found a real defect on the first run: the primary navigation set `link: true` with no label while excluding the visible text, so **the whole nav announced nothing to a screen reader**. Fixed. |
 | 3.10 | **The console's code-split lands in the JS output, not the WasmGC one.** `fvm flutter build web --wasm` emits `main.dart.js_1.part.js` — a real 9.2KB deferred chunk on the JavaScript fallback path — but a single `main.dart.wasm` with no separate part. So a browser on the WasmGC path downloads the dashboard whether or not it ever reaches the gate. Roadmap 2.5's "code-split" is met on one of the two outputs. | Not fixable from application code; it is a WasmGC deferred-loading limitation. Re-check when the SDK gains split output. |
 | 3.11 | **The console token is held in memory only.** Deliberate: it is a bearer credential for the analytics store, and a site whose argument is about not writing to visitors' devices should not make an exception for its own secret. The cost is re-entering it once per tab, paid only by the owner. | Change only if the owner asks. |

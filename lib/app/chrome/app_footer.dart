@@ -1,14 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'package:go_router/go_router.dart';
-
-import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
-import 'package:nocturne/core/widgets/focus_ring.dart';
 
 /// The 48px footer, carrying the coordinate readout.
 ///
@@ -55,8 +51,7 @@ class AppFooter extends StatelessWidget {
                   style: context.type.meta,
                 ),
               ),
-              SizedBox(width: tokens.space16),
-              _FooterLink(label: l10n.footerConsent, route: AppRoute.privacy),
+
               // Only pushes the readout to the far edge. Without one there is
               // nothing to push, and an expanding Spacer would compete with
               // the location text for the space it needs to ellipsize into.
@@ -75,67 +70,6 @@ class AppFooter extends StatelessWidget {
                   ),
                 ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FooterLink extends StatefulWidget {
-  const _FooterLink({required this.label, required this.route});
-
-  final String label;
-  final AppRoute route;
-
-  @override
-  State<_FooterLink> createState() => _FooterLinkState();
-}
-
-class _FooterLinkState extends State<_FooterLink> {
-  final WidgetStatesController _states = WidgetStatesController();
-
-  @override
-  void dispose() {
-    _states.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    return Semantics(
-      link: true,
-      label: widget.label,
-      child: ListenableBuilder(
-        listenable: _states,
-        builder: (context, _) => FocusRing(
-          isFocused: _states.value.contains(WidgetState.focused),
-          child: InkWell(
-            onTap: () => context.goNamed(widget.route.name),
-            statesController: _states,
-            borderRadius: BorderRadius.circular(tokens.controlRadius),
-            hoverColor: Colors.transparent,
-            mouseCursor: context.platform.isPointer
-                ? SystemMouseCursors.click
-                : MouseCursor.defer,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: context.platform.minimumTarget,
-              ),
-              child: Center(
-                child: ExcludeSemantics(
-                  child: Text(
-                    widget.label,
-                    style: context.type.meta.copyWith(
-                      color: _states.value.contains(WidgetState.hovered)
-                          ? tokens.beacon
-                          : tokens.textMuted,
-                    ),
-                  ),
-                ),
-              ),
-            ),
           ),
         ),
       ),

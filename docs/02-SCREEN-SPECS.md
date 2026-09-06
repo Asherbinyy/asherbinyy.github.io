@@ -249,36 +249,14 @@ Below: the Edumundo simulation, one line. Then writing, pulled from the Medium f
 
 ---
 
-## `/privacy`
+## `/privacy` — removed
 
-A plain-language notice, and the same three controls the banner offers. Full
-behaviour in `06-ANALYTICS-AND-PRIVACY.md` §5.
+Removed in Milestone 3 with the collection it described. The site collects
+nothing, so there is nothing to disclose and no decision to offer. See
+`06-ANALYTICS-AND-PRIVACY.md` for the dormant design and what restoring it
+would require.
 
-```
-┌──┬─────────────────────────────────────────────────────────┐
-│  │  Privacy                                                 │
-│  │                                                          │
-│  │  This site counts page views so I know what people       │
-│  │  read. No cookies, no third-party trackers, and no       │
-│  │  profile of you is ever built.                           │
-│  │                                                          │
-│  │  Currently: essential only                               │
-│  │                                                          │
-│  │  [ Accept all ]  [ Essential only ]  [ Reject ]          │
-│  │                                                          │
-│  │  What is collected · what never is · retention ·         │
-│  │  how to ask for erasure                                  │
-└──┴─────────────────────────────────────────────────────────┘
-```
-
-The three controls carry equal visual weight and none of them is amber. Making
-"accept" the amber one would be a dark pattern on a page whose entire subject
-is not using them.
-
-### The consent banner
-
-Shown at the foot of the viewport on first visit, until a choice is made. One
-sentence, three controls, no pre-selection. It does not block the page.
+---
 
 ## `/brief` and Recruiter Mode
 
