@@ -102,6 +102,12 @@ Header, rail, footer, theme toggle, language toggle, Recruiter Mode toggle.
 
 **Done when:** the sequence runs once per session, is skippable by any input, reduced motion resolves to a 200ms fade, the settled hero matches `02-SCREEN-SPECS.md`, no layout shift on completion.
 
+### 1.6b The mark and favicon
+
+Depends on 1.7's curve function existing, even in early form — pull one frame from it rather than drawing the mark independently. Generate `assets/brand/mark.svg`, then the favicon set, per `01-DESIGN-SYSTEM.md` §12.
+
+**Done when:** the mark is legible at 16px, favicon renders correctly in both light and dark browser chrome (the `--void` background matters here — test both), tab title updates per route including on client-side navigation (not just on hard reload), `index.html`'s static title and OG image are set, the mark in the header links to `/`.
+
 ### 1.7 Telemetry trace
 
 The signature element. **Allow more than one session for this.**

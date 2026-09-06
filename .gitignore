@@ -15,12 +15,20 @@ pubspec.lock          # app, not package — SDK pinned via .fvmrc instead
 *.g.dart
 *.freezed.dart
 *.config.dart
+lib/app/l10n/generated/
 coverage/
 lcov.info
 
-# Generated static routes
-web/cv/index.html
-web/brief/index.html
+# Generated static routes — produced by tool/generate_static.dart
+web/cv/
+web/brief/
+web/robots.txt
+web/sitemap.xml
+
+# Generated brand rasters — produced by tool/generate_mark.dart from the one
+# committed source, assets/brand/mark.svg
+web/favicon.png
+web/icons/
 
 # IDE — note the negation, see below
 .idea/
@@ -43,6 +51,8 @@ linux/
 # Secrets — never commit
 .env
 .env.*
+.dev.vars
+.wrangler/
 **/google-services.json
 **/GoogleService-Info.plist
 firebase-service-account*.json

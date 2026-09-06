@@ -64,7 +64,7 @@ This exists because Flutter Web has an unavoidable initial payload. The choice i
 │  │  ──────────────────                                      │  2px amber rule, 120px wide
 │  │                                                          │
 │  │  Mobile engineer. 25 applications shipped                │  display-m, --text-secondary
-│  │  across five countries.                                  │
+│  │  across six countries.                                   │
 │  │                                                          │
 │  │  ╭─ 25 shipped ──╮ ╭─ 5 countries ─╮ ╭─ 4 years ─╮      │  instrument panels
 │  │  ╰───────────────╯ ╰───────────────╯ ╰───────────╯      │  mono numerals, corner ticks
@@ -228,32 +228,34 @@ Below: the Edumundo simulation, one line. Then writing, pulled from the Medium f
 
 ## `/privacy`
 
-The consent panel as a designed page, not a banner. Full behaviour in `06-ANALYTICS-AND-PRIVACY.md` §5.
+A plain-language notice, and the same three controls the banner offers. Full
+behaviour in `06-ANALYTICS-AND-PRIVACY.md` §5.
 
 ```
 ┌──┬─────────────────────────────────────────────────────────┐
-│  │  What this site knows about you                          │
+│  │  Privacy                                                 │
 │  │                                                          │
-│  │  Field            Tier        Status      Your value     │
-│  │  ──────────────────────────────────────────────────────  │
-│  │  Route            aggregate   on          /privacy       │
-│  │  Country          aggregate   on          GB             │
-│  │  Device class     aggregate   on          pointer        │
-│  │  Referrer host    aggregate   on          linkedin.com   │
-│  │  IP address       —           never       not collected  │
-│  │  Time per section session     off         —              │
-│  │  Clicks           session     off         —              │
-│  │  Gender, age      —           never       not collected  │
+│  │  This site counts page views so I know what people       │
+│  │  read. No cookies, no third-party trackers, and no       │
+│  │  profile of you is ever built.                           │
 │  │                                                          │
-│  │  [ Turn on session analytics ]  [ Collect nothing ]      │
+│  │  Currently: essential only                               │
+│  │                                                          │
+│  │  [ Accept all ]  [ Essential only ]  [ Reject ]          │
+│  │                                                          │
+│  │  What is collected · what never is · retention ·         │
+│  │  how to ask for erasure                                  │
 └──┴─────────────────────────────────────────────────────────┘
 ```
 
-The "Your value" column updating live is the whole point — a visitor watching their own data is a stronger demonstration of governance literacy than any badge or claim. The `never` rows are as important as the `on` rows.
+The three controls carry equal visual weight and none of them is amber. Making
+"accept" the amber one would be a dark pattern on a page whose entire subject
+is not using them.
 
-Both buttons carry equal visual weight. Neither is amber. Making "accept" the amber one would be a dark pattern on a page whose entire subject is not using them.
+### The consent banner
 
----
+Shown at the foot of the viewport on first visit, until a choice is made. One
+sentence, three controls, no pre-selection. It does not block the page.
 
 ## `/brief` and Recruiter Mode
 

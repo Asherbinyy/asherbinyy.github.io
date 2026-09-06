@@ -1,0 +1,26 @@
+targets:
+  $default:
+    builders:
+      # Riverpod 2's analyzer cannot summarize Flutter 3.47's newer syntax.
+      # Keep generated providers pure Dart; pass framework values as inputs.
+      # https://github.com/dart-lang/sdk/issues/61870
+      riverpod_generator:
+        generate_for:
+          - lib/core/platform/platform_provider.dart
+          - lib/core/platform/message_controller.dart
+          - lib/app/l10n/locale_controller.dart
+          - lib/app/theme/theme_controller.dart
+          - lib/core/analytics/consent_controller.dart
+          - lib/features/trace/domain/trace_controller.dart
+          - lib/content/providers.dart
+          - lib/content/asset_content.dart
+          - lib/features/station/domain/acquisition_controller.dart
+      freezed:
+        generate_for:
+          - lib/content/models/**.dart
+      json_serializable:
+        options:
+          checked: true
+          explicit_to_json: true
+        generate_for:
+          - lib/content/models/**.dart

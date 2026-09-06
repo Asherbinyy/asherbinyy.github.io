@@ -1,0 +1,95 @@
+{
+  "roles": [
+    {
+      "id": "ci-company",
+      "company": "CI Company",
+      "title": {
+        "en": "Flutter Developer & Team Leader",
+        "ar": null
+      },
+      "country": "EG",
+      "city": "Mansoura",
+      "coords": [
+        31.0409,
+        31.3785
+      ],
+      "start": "2021-10",
+      "end": "2023-04",
+      "employment": "full-time",
+      "summary": {
+        "en": "Led development of 16+ Flutter applications. Mentored a team of three.",
+        "ar": null
+      },
+      "stack": [
+        "Flutter",
+        "Dart",
+        "Firebase",
+        "REST"
+      ],
+      "appIds": [
+        "az-courses",
+        "enjoy",
+        "snunu",
+        "mostaqbaly"
+      ],
+      "traceWeight": 0.9
+    },
+    {
+      "id": "minextstep",
+      "company": "MiNextStep",
+      "country": "CA",
+      "city": "Toronto",
+      "coords": [
+        43.6532,
+        -79.3832
+      ],
+      "start": "2023-05",
+      "end": "2025-08",
+      "employment": "full-time then part-time"
+    },
+    {
+      "id": "hwzn-tech",
+      "country": "SA",
+      "city": "Riyadh",
+      "coords": [
+        24.7136,
+        46.6753
+      ],
+      "start": "2023-08",
+      "end": "2025-08"
+    },
+    {
+      "id": "ar-plus-plus",
+      "country": "AM",
+      "city": "Yerevan",
+      "coords": [
+        40.1792,
+        44.4991
+      ],
+      "start": "2024-01",
+      "end": "2025-04"
+    },
+    {
+      "id": "techlabs",
+      "country": "QA",
+      "city": "Doha",
+      "coords": [
+        25.2854,
+        51.531
+      ],
+      "start": "2025-02",
+      "end": "2025-05"
+    },
+    {
+      "id": "evri",
+      "country": "GB",
+      "city": "Manchester",
+      "coords": [
+        53.4808,
+        -2.2426
+      ],
+      "start": "2025-11",
+      "end": null
+    }
+  ]
+}

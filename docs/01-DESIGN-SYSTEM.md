@@ -346,3 +346,67 @@ A failed image falls back to its station card. A failed content section falls ba
 - Every loading region carries `Semantics(liveRegion: true, label: ...)` so screen readers announce state changes.
 - Skeletons are `ExcludeSemantics` — a screen reader should not read out placeholder geometry.
 - Loading states must be perceivable without motion, since the sweep is disabled under reduced motion. The skeleton's structure carries the meaning on its own.
+
+---
+
+## 12. The mark, the favicon, and the tab title
+
+Not designed from scratch — derived from a decision already made, so it can't drift from the rest of the system and doesn't need a separate design pass.
+
+### The mark
+
+**One waveform burst, the shape used for every career role on the telemetry trace (§6), frozen at its peak.** Not initials, not a circle, not an abstract geometric logo. The trace is already the site's signature and the most-described element; the mark is a single frame lifted directly from it.
+
+```
+     ╭─╮
+────╯   ╰──── 
+```
+
+Rules:
+- Single stroke, 2px at the mark's native 32×32 size, scales as a vector — SVG source, never a raster export.
+- Colour: `--beacon` on dark backgrounds, `--beacon` (the darkened Daybreak value) on light. Monochrome everywhere else — the mark is the one place amber appears with no content around it, which is exactly why it reads as a mark rather than decoration.
+- No wordmark version. No "AE" monogram variant. No circular badge container. The waveform stands alone at every size down to 16px — test this at favicon size specifically, since a burst with too many inflection points collapses into noise at 16px. Two or three curves maximum.
+- Lives at `assets/brand/mark.svg`, single source, every other size generated from it at build time.
+
+This is a five-minute asset once the trace painter's curve function exists in code — sample it at one fixed phase and export the path. It should not be designed independently of that function; if the trace's curve shape changes, regenerate the mark from it rather than hand-tuning both.
+
+### Favicon
+
+Generated from `mark.svg`, not designed separately:
+
+```
+web/favicon.png       32×32, standard
+web/icons/icon-192.png    192×192, PWA / bookmark
+web/icons/icon-512.png    512×512, PWA / share cards
+web/icons/icon-maskable.png   512×512, safe zone per Android maskable spec
+```
+
+Background is `--void` (`#05070A`), not transparent — a transparent favicon on a bright browser tab strip goes invisible in light-mode browser chrome, which is the most common favicon failure. Mark rendered in `--beacon`.
+
+No Daybreak-specific favicon variant. Browser chrome uses OS theme, not site theme, and shipping two favicons that swap on toggle is complexity with no visible benefit — nobody watches their browser tab while toggling site theme.
+
+### Browser tab title
+
+Not a static string. It changes with route, the same way a real instrument's readout changes with what it's currently displaying:
+
+| Route | Tab title |
+|---|---|
+| `/` | `Ahmed Elsherbini — Mobile Engineer` |
+| `/signal` | `Signal — Ahmed Elsherbini` |
+| `/work` | `Work — Ahmed Elsherbini` |
+| `/work/:slug` | `{App name} — Ahmed Elsherbini` |
+| `/about` | `About — Ahmed Elsherbini` |
+| `/writing` | `Writing — Ahmed Elsherbini` |
+| `/privacy` | `Privacy — Ahmed Elsherbini` |
+| `/brief` | `Ahmed Elsherbini — Brief` |
+| `/console` | `Console` (name omitted — this route isn't a public surface) |
+
+Pattern: name first only on the two entry points a stranger lands on (`/` and `/brief`); everywhere else, section first, name second, so a stack of open tabs is scannable — a recruiter with `/work`, `/about` and a case study open in three tabs sees what each one is without hovering.
+
+Set via `SystemChrome` / the `title` element in `router.dart`'s route builder, not hardcoded once in `index.html` — a title fixed in the HTML shell never updates on client-side navigation, which is a common Flutter Web miss.
+
+**`index.html`'s static `<title>`** — the one search engines and the very first paint see, before the app has mounted — is fixed: `Ahmed Elsherbini — Mobile Engineer, Manchester`. Include the location; it's a real signal for a UK-based search and costs nothing.
+
+### Where the mark appears
+
+Header, top-left, 24px, always links to `/`. Favicon. `index.html` OG image, composited over the acquisition sequence's settled frame rather than shown alone — the static social-preview image should look like a moment from the site, not a logo on a blank field. Nowhere else. It is a wayfinding element, not a decorative one, and it should not turn up as a watermark, a loading-screen centrepiece, or a repeated background pattern — that would compete with the trace for the role of "the one bold thing" that `00-PROJECT-BRIEF.md` §3 already assigns elsewhere.

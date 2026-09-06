@@ -1,0 +1,314 @@
+{
+  "@@locale": "en",
+  "loading": "Loading",
+  "@loading": {
+    "description": "Announced by the carrier loader while an indeterminate load runs."
+  },
+  "loadingContent": "Loading content",
+  "@loadingContent": {
+    "description": "Announced by a skeleton region while its content loads."
+  },
+  "loadingImage": "Loading image",
+  "@loadingImage": {
+    "description": "Announced while an image resolves from placeholder to sharp."
+  },
+  "workDomainTravel": "Travel",
+  "@workDomainTravel": {
+    "description": "Application category label for the Travel domain."
+  },
+  "workDomainMobility": "Mobility",
+  "@workDomainMobility": {
+    "description": "Application category label for the Mobility domain."
+  },
+  "workDomainEducation": "Education",
+  "@workDomainEducation": {
+    "description": "Application category label for the Education domain."
+  },
+  "workDomainRetail": "Retail",
+  "@workDomainRetail": {
+    "description": "Application category label for the Retail domain."
+  },
+  "workDomainServices": "Services",
+  "@workDomainServices": {
+    "description": "Application category label for the Services domain."
+  },
+  "workDomainMarketplace": "Marketplace",
+  "@workDomainMarketplace": {
+    "description": "Application category label for the Marketplace domain."
+  },
+  "workDomainConsumer": "Consumer",
+  "@workDomainConsumer": {
+    "description": "Application category label for the Consumer domain."
+  },
+  "navStation": "Station",
+  "@navStation": {
+    "description": "Header link to the home route."
+  },
+  "navSignal": "Signal",
+  "@navSignal": {
+    "description": "Header link to the propagation map."
+  },
+  "navWork": "Work",
+  "@navWork": {
+    "description": "Header link to the shipped applications ledger."
+  },
+  "navWriting": "Writing",
+  "@navWriting": {
+    "description": "Header link to the writing feed."
+  },
+  "navAbout": "About",
+  "@navAbout": {
+    "description": "Header link to the about page."
+  },
+  "markLink": "Ahmed Elsherbini, back to the station",
+  "@markLink": {
+    "description": "Accessible name for the mark, which links to the home route."
+  },
+  "recruiterModeGlyph": "⬡",
+  "@recruiterModeGlyph": {
+    "description": "Visible glyph on the Recruiter Mode control. Not translated."
+  },
+  "recruiterModeOn": "Recruiter mode is on. Turn it off.",
+  "@recruiterModeOn": {
+    "description": "Announced when Recruiter Mode is currently on."
+  },
+  "recruiterModeOff": "Recruiter mode is off. Turn it on.",
+  "@recruiterModeOff": {
+    "description": "Announced when Recruiter Mode is currently off."
+  },
+  "languageSwitchToArabic": "Switch the language to Arabic",
+  "@languageSwitchToArabic": {
+    "description": "Announced by the language control while English is active."
+  },
+  "languageSwitchToEnglish": "Switch the language to English",
+  "@languageSwitchToEnglish": {
+    "description": "Announced by the language control while Arabic is active."
+  },
+  "themeGlyph": "◐",
+  "@themeGlyph": {
+    "description": "Visible glyph on the theme control. Not translated."
+  },
+  "themeSwitchToDaybreak": "Switch to the Daybreak theme",
+  "@themeSwitchToDaybreak": {
+    "description": "Announced by the theme control while Nocturne is active."
+  },
+  "themeSwitchToNocturne": "Switch to the Nocturne theme",
+  "@themeSwitchToNocturne": {
+    "description": "Announced by the theme control while Daybreak is active."
+  },
+  "traceStandby": "standby",
+  "@traceStandby": {
+    "description": "Rail indicator: the trace is at rest."
+  },
+  "traceScanning": "scanning",
+  "@traceScanning": {
+    "description": "Rail indicator: scrolling faster than the coherence threshold."
+  },
+  "traceLock": "lock",
+  "@traceLock": {
+    "description": "Rail indicator: the signal has resolved and locked."
+  },
+  "footerLocation": "Manchester",
+  "@footerLocation": {
+    "description": "The owner's city, shown in the footer."
+  },
+  "footerConsent": "Consent",
+  "@footerConsent": {
+    "description": "Footer link to the privacy and consent page."
+  },
+  "heroSeeTheWork": "See the work",
+  "@heroSeeTheWork": {
+    "description": "Primary hero call to action, navigating to the work ledger."
+  },
+  "heroReadTheCv": "Read the CV",
+  "@heroReadTheCv": {
+    "description": "Secondary hero call to action, opening the static HTML CV."
+  },
+  "acquisitionSkip": "Skip the opening sequence",
+  "@acquisitionSkip": {
+    "description": "Accessible name for the control that ends the opening sequence."
+  },
+  "acquisitionLabel": "Acquiring signal",
+  "@acquisitionLabel": {
+    "description": "Announced while the opening sequence runs."
+  },
+  "heroContentUnavailable": "Profile content did not load. The CV page does not depend on it.",
+  "@heroContentUnavailable": {
+    "description": "Shown when both the profile content and its bundled fallback fail to parse."
+  },
+  "tabRole": "Mobile Engineer",
+  "@tabRole": {
+    "description": "The owner's role, used in the browser tab title on the home route."
+  },
+  "navPrivacy": "Privacy",
+  "@navPrivacy": {
+    "description": "Section name for the privacy and consent page."
+  },
+  "navBrief": "Brief",
+  "@navBrief": {
+    "description": "Section name for the recruiter brief."
+  },
+  "navConsole": "Console",
+  "@navConsole": {
+    "description": "Section name for the analytics dashboard. Not a public surface."
+  },
+  "navCv": "CV",
+  "@navCv": {
+    "description": "Section name for the static HTML curriculum vitae."
+  },
+  "signalHeading": "Where the work happened",
+  "@signalHeading": {
+    "description": "Heading on the propagation map page."
+  },
+  "signalMapLabel": "Propagation map. Use the arrow keys to move between stations.",
+  "@signalMapLabel": {
+    "description": "Accessible description of the map and how to navigate it."
+  },
+  "signalStationLabel": "{city}, {country}",
+  "@signalStationLabel": {
+    "description": "Accessible name for one station node.",
+    "placeholders": {
+      "city": {
+        "type": "String"
+      },
+      "country": {
+        "type": "String"
+      }
+    }
+  },
+  "signalScrubberLabel": "Career chronology",
+  "@signalScrubberLabel": {
+    "description": "Accessible name for the chronology scrubber."
+  },
+  "signalAppsShipped": "{count, plural, =1{1 application} other{{count} applications}}",
+  "@signalAppsShipped": {
+    "description": "How many applications a station shipped.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "signalClose": "Close",
+  "@signalClose": {
+    "description": "Closes the transmission panel."
+  },
+  "workHeading": "{count, plural, =1{One shipped application} other{{count} shipped applications}}",
+  "@workHeading": {
+    "description": "Heading on the work ledger, counting the applications listed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workSubheading": "Everything below is live and publicly linkable.",
+  "@workSubheading": {
+    "description": "Standfirst under the work ledger heading."
+  },
+  "workOpenStore": "Open {name} on the {store}",
+  "@workOpenStore": {
+    "description": "Accessible name for a store link on a ledger row.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "store": {
+        "type": "String"
+      }
+    }
+  },
+  "workAppStore": "App Store",
+  "@workAppStore": {
+    "description": "Apple's store, as a link label."
+  },
+  "workGooglePlay": "Google Play",
+  "@workGooglePlay": {
+    "description": "Google's store, as a link label."
+  },
+  "workNoStoreLink": "No public store listing",
+  "@workNoStoreLink": {
+    "description": "Shown where an application has no public listing."
+  },
+  "recruiterHeading": "Brief",
+  "@recruiterHeading": {
+    "description": "Heading of the in-app recruiter view."
+  },
+  "recruiterShipped": "Shipped",
+  "@recruiterShipped": {
+    "description": "Row label for shipped applications in the recruiter view."
+  },
+  "recruiterStack": "Stack",
+  "@recruiterStack": {
+    "description": "Row label for the technology stack in the recruiter view."
+  },
+  "recruiterEducation": "Education",
+  "@recruiterEducation": {
+    "description": "Row label for education in the recruiter view."
+  },
+  "recruiterContact": "Contact",
+  "@recruiterContact": {
+    "description": "Row label for contact details in the recruiter view."
+  },
+  "privacyHeading": "What this site knows about you",
+  "@privacyHeading": {
+    "description": "Consent page copy: privacyHeading"
+  },
+  "privacyNotCollected": "not collected",
+  "@privacyNotCollected": {
+    "description": "Consent page copy: privacyNotCollected"
+  },
+  "privacyCollectNothing": "Collect nothing",
+  "@privacyCollectNothing": {
+    "description": "Consent page copy: privacyCollectNothing"
+  },
+  "consentBannerBody": "This site counts page views so I know what people read. No cookies, no third-party trackers, and no profile of you is ever built.",
+  "@consentBannerBody": {
+    "description": "Consent copy: consentBannerBody"
+  },
+  "consentAcceptAll": "Accept all",
+  "@consentAcceptAll": {
+    "description": "Consent copy: consentAcceptAll"
+  },
+  "consentEssentialOnly": "Essential only",
+  "@consentEssentialOnly": {
+    "description": "Consent copy: consentEssentialOnly"
+  },
+  "consentReject": "Reject",
+  "@consentReject": {
+    "description": "Consent copy: consentReject"
+  },
+  "privacyBody": "This site counts page views so I know what people read. Country is worked out on the server from your request and the address is discarded immediately — it is never stored. No cookies, no third-party trackers, no profile of you, and nothing about your gender, age or identity, under any setting.",
+  "@privacyBody": {
+    "description": "Consent copy: privacyBody"
+  },
+  "privacyCurrentAcceptAll": "Currently: everything on",
+  "@privacyCurrentAcceptAll": {
+    "description": "Consent copy: privacyCurrentAcceptAll"
+  },
+  "privacyCurrentEssential": "Currently: essential only",
+  "@privacyCurrentEssential": {
+    "description": "Consent copy: privacyCurrentEssential"
+  },
+  "privacyCurrentRejected": "Currently: nothing collected",
+  "@privacyCurrentRejected": {
+    "description": "Consent copy: privacyCurrentRejected"
+  },
+  "privacyCurrentUnset": "Currently: essential only, until you choose",
+  "@privacyCurrentUnset": {
+    "description": "Consent copy: privacyCurrentUnset"
+  },
+  "privacyRetention": "Aggregate counts are kept for 24 months. Session events, if you turn them on, are kept for 90 days and are never linked across visits.",
+  "@privacyRetention": {
+    "description": "Consent copy: privacyRetention"
+  },
+  "privacyContact": "Ahmed Elsherbini is the controller. To ask what is held or to have it erased, email {email}.",
+  "@privacyContact": {
+    "description": "Consent copy: privacyContact",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  }
+}

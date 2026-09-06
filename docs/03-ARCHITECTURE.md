@@ -167,12 +167,19 @@ web/
   index.html          hand-authored shell, meta, OG, JSON-LD Person
   404.html            copy of index.html — see below
   .nojekyll           REQUIRED, see below
+  favicon.png         generated from assets/brand/mark.svg, see 01-DESIGN-SYSTEM.md §12
+  icons/
+    icon-192.png
+    icon-512.png
+    icon-maskable.png
   cv/index.html       plain HTML CV — no JS, no Flutter
   brief/index.html    Recruiter Mode static twin
   robots.txt
   sitemap.xml
   assets/
 ```
+
+`assets/brand/mark.svg` is the single source for the mark and every icon size — generate the raster sizes from it at build time rather than designing each separately.
 
 ### Two GitHub Pages requirements
 

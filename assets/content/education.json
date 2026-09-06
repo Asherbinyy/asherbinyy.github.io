@@ -1,0 +1,52 @@
+{
+  "entries": [
+    {
+      "institution": "University of Salford",
+      "award": "MSc Managing Innovation & Information Technology",
+      "start": "2025-09",
+      "end": "2026-09",
+      "status": "In progress — predicted Distinction",
+      "overallMark": 79,
+      "modules": [
+        {
+          "name": "Business Data Insights & Analytics",
+          "mark": 94
+        },
+        {
+          "name": "Managing Information Systems & Transformation",
+          "mark": 86
+        },
+        {
+          "name": "Cybersecurity & Information Management",
+          "mark": 81
+        },
+        {
+          "name": "Responsible Technologies",
+          "mark": 80
+        },
+        {
+          "name": "Managing Project Deployment & Delivery",
+          "mark": 75
+        },
+        {
+          "name": "Research Methods for Managers",
+          "mark": 72
+        },
+        {
+          "name": "Managing Innovation & Creativity",
+          "mark": 70
+        }
+      ],
+      "highlights": [
+        "Dissertation: human oversight and accountability in generative AI adoption within Big Four consulting firms",
+        "Led a smartphone manufacturer in the Edumundo strategy simulation — 2nd of cohort"
+      ]
+    },
+    {
+      "institution": "Mansoura University",
+      "award": "BEng Communications & Electronics Engineering",
+      "start": "2015-09",
+      "end": "2020-08"
+    }
+  ]
+}

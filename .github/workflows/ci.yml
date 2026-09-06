@@ -1,0 +1,203 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'phase/**'
+      - 'fix/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: kuhnroyal/flutter-fvm-config-action@v3
+        id: fvm-config
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fvm-config.outputs.FLUTTER_VERSION }}
+          channel: ${{ steps.fvm-config.outputs.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generate the mark and favicon set
+        run: dart run tool/generate_mark.dart
+
+      - name: Verify formatting
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze code
+        run: flutter analyze --fatal-infos
+
+      - name: Run tests with coverage
+        # Goldens run on their own macOS job: comparison is exact, and Skia
+        # antialiases differently on Linux, so identical trees differ by up to
+        # 3.29% of pixels. A tolerance wide enough to absorb that would hide
+        # real drift, such as a changed 24px mark.
+        run: flutter test --coverage --exclude-tags golden
+
+      - name: Test analytics Worker
+        run: node --test worker/test/*.test.js
+
+      - name: Verify coverage threshold
+        run: |
+          python3 -c "
+          lines = open('coverage/lcov.info').readlines()
+          total_lh = sum(int(l.split(':')[1]) for l in lines if l.startswith('LH:'))
+          total_lf = sum(int(l.split(':')[1]) for l in lines if l.startswith('LF:'))
+          pct = (total_lh / total_lf) * 100 if total_lf > 0 else 0
+          print(f'Line coverage: {pct:.2f}% ({total_lh}/{total_lf})')
+          if pct < 80.0:
+              print('Coverage below 80% threshold!')
+              exit(1)
+          "
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/lcov.info
+          if-no-files-found: ignore
+
+  goldens:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: kuhnroyal/flutter-fvm-config-action@v3
+        id: fvm-config
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fvm-config.outputs.FLUTTER_VERSION }}
+          channel: ${{ steps.fvm-config.outputs.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generate the mark and favicon set
+        run: dart run tool/generate_mark.dart
+
+      - name: Compare goldens
+        run: flutter test --tags golden
+
+      - name: Upload golden failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: test/golden/failures
+          if-no-files-found: ignore
+
+  build:
+    needs: [verify, goldens]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: kuhnroyal/flutter-fvm-config-action@v3
+        id: fvm-config
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fvm-config.outputs.FLUTTER_VERSION }}
+          channel: ${{ steps.fvm-config.outputs.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generate the mark and favicon set
+        run: dart run tool/generate_mark.dart
+
+      - name: Generate static routes
+        run: dart run tool/generate_static.dart
+
+      - name: Build Web (WASM)
+        run: >-
+          flutter build web --wasm --release
+          --dart-define=ANALYTICS_ENDPOINT=https://nocturne-analytics.asherbinyy.workers.dev/v1/beacon
+
+      - name: Ensure GitHub Pages routing and Jekyll bypass
+        run: |
+          touch build/web/.nojekyll
+          cp build/web/index.html build/web/404.html
+
+      - name: Audit the indexable pages with Lighthouse
+        # 00-PROJECT-BRIEF.md section 9 sets a performance floor of 85 on the
+        # static routes. They are what a recruiter and a crawler actually
+        # reach, and they render without JavaScript, so this gate is about
+        # payload and markup rather than about the Flutter app.
+        run: |
+          npm install -g @lhci/cli@0.14.x
+          npx --yes http-server build/web -p 8080 --silent &
+          npx --yes wait-on http://127.0.0.1:8080/cv/ --timeout 60000
+          lhci autorun \
+            --collect.url=http://127.0.0.1:8080/cv/ \
+            --collect.url=http://127.0.0.1:8080/brief/ \
+            --collect.numberOfRuns=1 \
+            --collect.settings.preset=desktop \
+            --assert.assertions.categories:performance="error|minScore:0.85" \
+            --assert.assertions.categories:accessibility="error|minScore:0.9" \
+            --upload.target=filesystem \
+            --upload.outputDir=./lighthouse
+
+      - name: Upload the Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse
+          path: lighthouse
+          if-no-files-found: ignore
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
