@@ -32,7 +32,7 @@ Authoritative. Any value not listed here is a bug. No raw hex, no magic numbers,
 --hairline-strong   #2C3846   active/hovered edges
 
 --beacon            #F2A83B   THE ONLY CHROMA. Name, live state, CTAs, focus, active
---beacon-dim        #7E5720   at rest: corner ticks, inactive marks
+--beacon-dim        #875D22   at rest: corner ticks, inactive marks
 --beacon-glow       #FFD48A   trace peak under lock, hover highlight
 
 --instrument        #C6D2E0   telemetry values, live readouts, the trace under lock
@@ -44,7 +44,7 @@ Authoritative. Any value not listed here is a bug. No raw hex, no magic numbers,
 
 --text-primary      #E9EEF5
 --text-secondary    #93A3B5
---text-muted        #57687B   metadata, timestamps, disabled
+--text-muted        #70849A   metadata, timestamps, disabled
 ```
 
 Note `--verified`: success states do not get their own colour. Confirmation is expressed through a change in weight, an icon, or a state label — not by turning something green. Green would be a second chroma and the system does not have one.
@@ -60,20 +60,20 @@ Technical drawing on paper. Not an inversion.
 --hairline          #CFC7B8
 --hairline-strong   #A79C89
 
---beacon            #A8620C   darkened for contrast on paper
---beacon-dim        #C9A878
+--beacon            #95570B   darkened for contrast on paper
+--beacon-dim        #A37B41
 --beacon-glow       #7A4506
 
 --instrument        #3A4654
---instrument-mid    #6B7887
---instrument-dim    #A79C89
+--instrument-mid    #5B6773
+--instrument-dim    #8E806A
 
 --alert             #A32A22
 --verified          #3A4654
 
 --text-primary      #12171E
 --text-secondary    #4A5766
---text-muted        #778395
+--text-muted        #5C6676
 ```
 
 ### Grain
@@ -87,6 +87,27 @@ Both themes carry a static film grain at 3% opacity over the base, rendered once
 - No gradients as decoration. Gradients only where they represent a real falloff — signal strength, trace amplitude.
 - No coloured shadows. Elevation is expressed through `--hairline-strong` edges and background shift, not blur.
 - Amber coverage should stay under roughly 5% of any viewport. If a screen looks amber, it is wrong.
+
+### Contrast is a constraint on this palette, not a review step
+
+Every value above is verified against WCAG 2.1 AA by
+`test/unit/app/theme/contrast_test.dart`, which checks each role against every
+surface it is painted on: 4.5:1 for text, 3:1 for gridlines, inactive data and
+corner ticks. Nothing in the type scale reaches WCAG's large-text allowance —
+the largest role carrying a non-primary colour is `heading` at 22px, and the
+threshold is 24px — so the 4.5:1 figure applies everywhere text is coloured.
+
+The primary call to action is checked as its label on its own fill rather than
+as amber on the page, because `BeaconButton` fills with `--beacon` and labels
+in `--void`.
+
+Seven values were darkened or lightened against their first draft to reach
+these floors, each by a lightness move that left its hue and saturation alone:
+Daybreak's `--beacon`, `--beacon-dim`, `--instrument-mid`, `--instrument-dim`
+and `--text-muted`, and Nocturne's `--text-muted` and `--beacon-dim`. Daybreak
+needed most of the work because dark ink on warm paper has less headroom than
+light ink on near-black. **Adding or changing a colour here means running that
+test**, not eyeballing it.
 
 ---
 

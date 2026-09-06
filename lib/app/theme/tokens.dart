@@ -370,7 +370,7 @@ const nocturneTokens = ThemeTokens(
   hairline: Color(0xFF1C2530),
   hairlineStrong: Color(0xFF2C3846),
   beacon: Color(0xFFF2A83B),
-  beaconDim: Color(0xFF7E5720),
+  beaconDim: Color(0xFF875D22),
   beaconGlow: Color(0xFFFFD48A),
   instrument: Color(0xFFC6D2E0),
   instrumentMid: Color(0xFF8A99AB),
@@ -379,7 +379,7 @@ const nocturneTokens = ThemeTokens(
   verified: Color(0xFFC6D2E0),
   textPrimary: Color(0xFFE9EEF5),
   textSecondary: Color(0xFF93A3B5),
-  textMuted: Color(0xFF57687B),
+  textMuted: Color(0xFF70849A),
 );
 
 /// Daybreak palette from design-system section 2.
@@ -389,15 +389,15 @@ const daybreakTokens = ThemeTokens(
   surfaceRaised: Color(0xFFFFFFFF),
   hairline: Color(0xFFCFC7B8),
   hairlineStrong: Color(0xFFA79C89),
-  beacon: Color(0xFFA8620C),
-  beaconDim: Color(0xFFC9A878),
+  beacon: Color(0xFF95570B),
+  beaconDim: Color(0xFFA37B41),
   beaconGlow: Color(0xFF7A4506),
   instrument: Color(0xFF3A4654),
-  instrumentMid: Color(0xFF6B7887),
-  instrumentDim: Color(0xFFA79C89),
+  instrumentMid: Color(0xFF5B6773),
+  instrumentDim: Color(0xFF8E806A),
   alert: Color(0xFFA32A22),
   verified: Color(0xFF3A4654),
   textPrimary: Color(0xFF12171E),
   textSecondary: Color(0xFF4A5766),
-  textMuted: Color(0xFF778395),
+  textMuted: Color(0xFF5C6676),
 );

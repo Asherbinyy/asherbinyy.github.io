@@ -8,7 +8,7 @@ than burying it in a worklog nobody re-reads.
 Worklogs record what happened in a session. **This file records what is still
 true.** If the two disagree, this file is the one to fix.
 
-Last reviewed: 2026-09-06, after the Milestone 1 deploy.
+Last reviewed: 2026-09-06, during Milestone 2 task 2.2.
 
 ---
 
@@ -57,6 +57,8 @@ numbers and translations, and every row below is one of those.
 | 3.5 | **`InteractiveViewer` keeps its default boundary behaviour** on the propagation map, so direct panning only becomes useful once zoomed. | From the propagation-map session. |
 | 3.6 | **The acquisition sequence's once-per-tab behaviour is unobserved in a browser.** The VM test target cannot emulate a hard reload; the conditional web implementation is only proven by the WASM build compiling. | Needs the deployed site. |
 | 3.7 | **The build emits a missing Material/Cupertino icon-font warning.** The app bundles and uses neither package. | Cosmetic, long-standing. |
+| 3.8 | **`05-TESTING.md`'s other accessibility tests are unimplemented.** Contrast is now covered exhaustively by `test/unit/app/theme/contrast_test.dart`, but `meetsGuideline(androidTapTargetGuideline)`, the "every interactive element exposes a semantic label" sweep, and full keyboard traversal on `/`, `/work` and `/privacy` have no tests. | Roadmap 3.3 owns these. Recorded here so 3.3 does not have to rediscover the gap. |
+| 3.9 | **`--hairline-strong` is below 3:1 in both themes** — 1.69 in Nocturne, 2.32 in Daybreak. It was deliberately left out of the contrast suite: it draws structural rules and panel edges, which WCAG 1.4.11 treats as decoration rather than information identifying a component, and where an edge does carry state the focus ring carries it. | A judgement call, not an oversight. Revisit in 3.3 if the audit disagrees. |
 
 ---
 
