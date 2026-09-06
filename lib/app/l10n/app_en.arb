@@ -484,5 +484,9 @@
   "stationCqResponse": "CQ answered — station receiving",
   "@stationCqResponse": {
     "description": "Easter egg: the response line shown when a viewer types CQ"
+  },
+  "consoleDormant": "Analytics is switched off, so there is nothing to show. This console is kept for the day it is switched back on.",
+  "@consoleDormant": {
+    "description": "Console: shown when the build collects nothing"
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/core/analytics/analytics_providers.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/loading/carrier_loader.dart';
@@ -50,7 +51,12 @@ class _ConsoleScreenState extends ConsumerState<ConsoleScreen> {
         top: tokens.space48,
         bottom: tokens.space64,
       ),
-      child: token == null || token.isEmpty
+      child: !ref.watch(analyticsIsCollectingProvider)
+          // A gate that accepts a token and then shows nothing is worse than
+          // no gate. With collection off there is no aggregates endpoint and
+          // never any data, so the page says so instead of asking.
+          ? const _Dormant()
+          : token == null || token.isEmpty
           ? const _Gate()
           : FutureBuilder<void>(
               future: _loading,
@@ -61,6 +67,32 @@ class _ConsoleScreenState extends ConsumerState<ConsoleScreen> {
             ),
     );
   }
+}
+
+/// Shown while the build collects nothing, in place of the token prompt.
+class _Dormant extends StatelessWidget {
+  const _Dormant();
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text(context.l10n.navConsole, style: context.type.displayM),
+      SizedBox(height: context.tokens.space16),
+      ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: context.type.measureFor(context.type.body),
+        ),
+        child: Text(
+          context.l10n.consoleDormant,
+          style: context.type.body.copyWith(
+            color: context.tokens.textSecondary,
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 /// The token prompt. No account, no session, no cookie — one bearer token.
