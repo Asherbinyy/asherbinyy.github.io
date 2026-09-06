@@ -1,11 +1,13 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/route_title.dart';
 import 'package:nocturne/core/analytics/analytics_route_view.dart';
+import 'package:nocturne/core/analytics/analytics_providers.dart';
 import 'package:nocturne/core/analytics/browser_analytics_context.dart';
 import 'package:nocturne/core/analytics/engagement_reporter.dart';
 import 'package:nocturne/core/platform/app_messenger_host.dart';
@@ -33,7 +35,17 @@ abstract final class AppRouter {
           name: route.name,
           redirect: route == AppRoute.campaign
               ? (context, state) {
-                  captureCampaign(state.pathParameters['campaign']);
+                  // The campaign slug is only worth capturing if something
+                  // will report it, and capturing it writes to sessionStorage
+                  // — which `/privacy` promises this build does not do. So the
+                  // link keeps working and lands on the station either way,
+                  // and nothing is written while collection is off.
+                  if (ProviderScope.containerOf(
+                    context,
+                    listen: false,
+                  ).read(analyticsIsCollectingProvider)) {
+                    captureCampaign(state.pathParameters['campaign']);
+                  }
                   return AppRoute.station.path;
                 }
               : null,

@@ -34,8 +34,20 @@ for face in "${latin_faces[@]}"; do
 done
 for face in "${arabic_faces[@]}"; do
   # All OpenType features are essential: Latin flags destroy Arabic joining.
+  #
+  # The ranges are modern Arabic only, and two earlier inclusions are
+  # deliberately gone:
+  #
+  # - U+FB50-FDFF and U+FE70-FEFF are the Arabic Presentation Forms. They are
+  #   legacy precomposed shapes; HarfBuzz derives initial, medial, final and
+  #   isolated forms from the base block through GSUB, so shipping them cost
+  #   36KB a face and changed nothing on screen.
+  # - U+0750-077F and U+08A0-08FF are extended blocks for languages this site
+  #   does not publish in. Arabic here is Arabic, not Persian or Urdu.
+  #
+  # Together these took the three Arabic faces from 543KB to 303KB.
   pyftsubset "$font_root/$face.ttf" \
-    --unicodes="U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+0000-00FF,U+2000-206F" \
+    --unicodes="U+0600-0605,U+060C-061F,U+0621-064A,U+064B-0652,U+0660-0669,U+066A-066D,U+0670,U+06D4,U+0000-00FF,U+2000-206F" \
     --layout-features="*" \
     --output-file="$subset_dir/$face-subset.ttf"
 done

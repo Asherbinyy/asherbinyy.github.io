@@ -13,6 +13,7 @@ import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/app/app_route.dart';
+import 'package:nocturne/features/station/presentation/widgets/cq_response.dart';
 import 'package:nocturne/features/station/presentation/widgets/cv_button.dart';
 import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
@@ -59,6 +60,10 @@ class StationScreen extends ConsumerWidget {
               AsyncError() => const _Unavailable(),
               _ => const _Loading(),
             },
+            // Roadmap 3.4's one easter egg. Silent and invisible until a
+            // viewer types CQ; its height is reserved either way so an answer
+            // never reflows the page.
+            const CqResponse(),
             _Career(locale: locale),
           ],
         ),
