@@ -177,9 +177,26 @@ Three case studies at Milestone 2. Recommended: **Mokaf** (payments, hard integr
   "stack": ["Flutter", "Google Maps SDK", "TAP SDK", "Apple Pay", "STC Pay"],
   "screens": [
     { "src": "assets/screens/mokaf/01.webp", "caption": { "en": "...", "ar": "..." } }
-  ]
+  ],
+  "prototype": {
+    "url": "https://example.com/prototype",
+    "status": { "en": "Early-stage prototype. No company formed.", "ar": "..." }
+  }
 }
 ```
+
+`prototype` is **optional** and only City Loom is expected to carry one.
+`02-SCREEN-SPECS.md` embeds its walking-tour prototype live at the top of that
+study, behind a poster and a click-to-load control, with one honest status line
+above it — and no field carried either, so this was added when `/work/:slug`
+was built. Omit the key entirely for a study with no prototype.
+
+**Which three studies.** This section recommends Mokaf, AZ Courses and
+Tripster. `02-SCREEN-SPECS.md` and `09-ROADMAP.md` both say Mokaf, AZ Courses
+and **City Loom**, and give City Loom its own section and the embedded
+prototype. The two later documents agree with each other, so they are treated
+as current; this recommendation is the outlier. Recorded in
+`docs/11-OPEN-ISSUES.md`.
 
 Structure every study as context → problem → approach → outcome. Outcome carries a number wherever one honestly exists. Where no number exists, say what changed qualitatively rather than inventing a percentage.
 

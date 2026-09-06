@@ -11,6 +11,7 @@ import 'package:nocturne/features/privacy/presentation/privacy_screen.dart';
 import 'package:nocturne/features/about/presentation/about_screen.dart';
 import 'package:nocturne/features/signal/presentation/signal_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
+import 'package:nocturne/features/work/presentation/case_study_screen.dart';
 import 'package:nocturne/features/work/presentation/work_screen.dart';
 import 'package:nocturne/features/writing/presentation/writing_screen.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
@@ -27,6 +28,7 @@ void main() {
       AppRoute.station: StationScreen,
       AppRoute.signal: SignalScreen,
       AppRoute.work: WorkScreen,
+      AppRoute.caseStudy: CaseStudyScreen,
       AppRoute.writing: WritingScreen,
       AppRoute.about: AboutScreen,
       AppRoute.privacy: PrivacyScreen,

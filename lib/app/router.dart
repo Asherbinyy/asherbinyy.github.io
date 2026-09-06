@@ -13,6 +13,7 @@ import 'package:nocturne/features/privacy/presentation/privacy_screen.dart';
 import 'package:nocturne/features/signal/presentation/signal_screen.dart';
 import 'package:nocturne/features/about/presentation/about_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
+import 'package:nocturne/features/work/presentation/case_study_screen.dart';
 import 'package:nocturne/features/work/presentation/work_screen.dart';
 import 'package:nocturne/features/writing/presentation/writing_screen.dart';
 import 'package:nocturne/features/station/presentation/widgets/acquisition_sequence.dart';
@@ -40,7 +41,9 @@ abstract final class AppRouter {
               route: state.uri.path,
               child: RouteTitle(
                 route: route,
-                child: AppMessengerHost(child: _sequenced(route)),
+                child: AppMessengerHost(
+                  child: _sequenced(route, slug: state.pathParameters['slug']),
+                ),
               ),
             ),
           ),
@@ -57,7 +60,7 @@ abstract final class AppRouter {
   /// Its fourth beat draws the rail, header and footer in from their edges, so
   /// it has to sit above the chrome rather than inside the routed content.
   /// Every other route resolves straight to its settled state.
-  static Widget _sequenced(AppRoute route) {
+  static Widget _sequenced(AppRoute route, {String? slug}) {
     return route == AppRoute.station
         ? AcquisitionSequence(
             builder: (context, contentReveal, chromeReveal) => _framed(
@@ -67,20 +70,26 @@ abstract final class AppRouter {
               chromeReveal: chromeReveal,
             ),
           )
-        : _framed(route, _body(route));
+        : _framed(route, _body(route, slug: slug));
   }
 
   /// The screen for a route, or its reserved placeholder while one is pending.
-  static Widget _body(AppRoute route, {Animation<double>? acquisitionReveal}) =>
-      switch (route) {
-        AppRoute.station => StationScreen(acquisitionReveal: acquisitionReveal),
-        AppRoute.signal => const SignalScreen(),
-        AppRoute.work => const WorkScreen(),
-        AppRoute.writing => const WritingScreen(),
-        AppRoute.about => const AboutScreen(),
-        AppRoute.privacy => const PrivacyScreen(),
-        _ => PlaceholderScreen(route: route),
-      };
+  static Widget _body(
+    AppRoute route, {
+    Animation<double>? acquisitionReveal,
+    String? slug,
+  }) => switch (route) {
+    AppRoute.station => StationScreen(acquisitionReveal: acquisitionReveal),
+    AppRoute.signal => const SignalScreen(),
+    AppRoute.work => const WorkScreen(),
+    // A missing slug cannot happen for a matched `/work/:slug`, but the
+    // screen's own "not written yet" state is the honest fallback anyway.
+    AppRoute.caseStudy => CaseStudyScreen(slug: slug ?? ''),
+    AppRoute.writing => const WritingScreen(),
+    AppRoute.about => const AboutScreen(),
+    AppRoute.privacy => const PrivacyScreen(),
+    _ => PlaceholderScreen(route: route),
+  };
 
   /// Global chrome is present on every route except the two static ones.
   ///

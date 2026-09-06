@@ -29,7 +29,7 @@ numbers and translations, and every row below is one of those.
 | 1.8 | **The CV PDF.** `profile.cvFile` is null, so the hero's second action reads "Read the CV" and opens the static HTML instead of downloading. | No downloadable CV | `/brief` parity with the spec |
 | 1.9 | **The portrait.** `profile.portrait` is null. Brief in `01-DESIGN-SYSTEM.md` §10. | `/about` cannot be built to spec | `/about` |
 | 1.10 | **Screenshots** for Mokaf, AZ Courses and City Loom. | Device frames have nothing to scrub | 2.1 |
-| 1.11 | **Case study prose** — three studies, context → problem → approach → outcome. The roadmap says explicitly that an agent cannot write these and will invent them if asked. | `/work/:slug` has no content | 2.1 |
+| 1.11 | **Case study prose** — three studies, context → problem → approach → outcome. The roadmap says explicitly that an agent cannot write these and will invent them if asked. **The screen is built and tested; `assets/content/studies/` is empty on purpose.** Drop a `{slug}.json` in and it renders with no code change. | `/work/:slug` says "not written yet" for every slug | — |
 | 1.12 | **n8n endpoint and a Resend account** for the digest. The Worker already has a `DIGEST_WEBHOOK_URL` secret and a noon Europe/London trigger waiting for one. | Digest dormant | 2.6 |
 | 1.13 | **Calendly URL** is null in `profile.json`. | No booking link | — |
 
@@ -43,6 +43,9 @@ numbers and translations, and every row below is one of those.
 | 2.2 | **Six countries, not five.** `02-SCREEN-SPECS.md`'s hero diagram draws a "5 countries" panel, but `00-PROJECT-BRIEF.md` §2 and §3 and the `/brief` block all say six and name them: Egypt, Saudi Arabia, Armenia, Qatar, Canada, the UK. | The diagram is the outlier. The doc should be corrected to six. |
 | 2.3 | **Stat labels are English-only.** `LocalizedText.resolve` falls back to English rather than inventing Arabic. | `AGENTS.md` §3. Rolls up into 1.6. |
 | 2.4 | **The ledger heading counts the content, not the docs.** It says eleven because eleven exist. | Rolls up into 1.2. |
+| 2.5 | **No placeholder case-study prose was shipped.** The approved plan was "machinery plus clearly-marked placeholder entries". The machinery is complete and proven against fixtures in `test/widget/work/case_study_test.dart`, but nothing was written into `assets/content/studies/`: placeholder prose about real client work would be a claim the owner never made, on a page a recruiter reads as fact, and `AGENTS.md` §3 forbids exactly that. The production screen says "not written yet" instead. | Reverse this by writing the three studies; no code changes. |
+| 2.6 | **Which three case studies.** `07-CONTENT-SCHEMA.md` recommended Mokaf, AZ Courses and **Tripster**; `02-SCREEN-SPECS.md` and `09-ROADMAP.md` both say Mokaf, AZ Courses and **City Loom**, and give City Loom its own section and the embedded prototype. The two agreeing documents were treated as current and 07 now records the discrepancy. | Confirm City Loom is the third. |
+| 2.7 | **`studies/{slug}.json` gained an optional `prototype` field.** `02-SCREEN-SPECS.md` requires City Loom's live embedded prototype and its honest status line; no schema field carried either. Documented in `07-CONTENT-SCHEMA.md`. | — |
 
 ---
 

@@ -347,5 +347,45 @@
   "aboutPortraitPending": "Portrait pending",
   "@aboutPortraitPending": {
     "description": "About screen: the reserved portrait frame"
+  },
+  "caseStudyScreensPending": "Screens pending",
+  "@caseStudyScreensPending": {
+    "description": "Case study: reserved device frame with no screenshots yet"
+  },
+  "caseStudyContext": "Context",
+  "@caseStudyContext": {
+    "description": "Case study: section heading"
+  },
+  "caseStudyProblem": "Problem",
+  "@caseStudyProblem": {
+    "description": "Case study: section heading"
+  },
+  "caseStudyApproach": "Approach",
+  "@caseStudyApproach": {
+    "description": "Case study: section heading"
+  },
+  "caseStudyOutcome": "Outcome",
+  "@caseStudyOutcome": {
+    "description": "Case study: section heading"
+  },
+  "caseStudyStack": "Stack",
+  "@caseStudyStack": {
+    "description": "Case study: technology list heading"
+  },
+  "caseStudyUnavailable": "This case study has not been written yet.",
+  "@caseStudyUnavailable": {
+    "description": "Case study: no study file exists for the slug"
+  },
+  "caseStudyBackToWork": "Back to the work",
+  "@caseStudyBackToWork": {
+    "description": "Case study: link back to the ledger"
+  },
+  "caseStudyLoadPrototype": "Load the prototype",
+  "@caseStudyLoadPrototype": {
+    "description": "Case study: click-to-load control for the embedded prototype"
+  },
+  "caseStudyPrototypeWeight": "Loads an interactive prototype from another site.",
+  "@caseStudyPrototypeWeight": {
+    "description": "Case study: what the click-to-load control will do"
   }
 }

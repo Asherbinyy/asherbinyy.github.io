@@ -106,5 +106,45 @@
   "aboutPortraitPending": "الصورة قيد الإعداد",
   "@aboutPortraitPending": {
     "description": "About screen: the reserved portrait frame"
+  },
+  "caseStudyScreensPending": "اللقطات قيد الإعداد",
+  "@caseStudyScreensPending": {
+    "description": "Case study: reserved device frame with no screenshots yet"
+  },
+  "caseStudyContext": "السياق",
+  "@caseStudyContext": {
+    "description": "Case study: section heading"
+  },
+  "caseStudyProblem": "المشكلة",
+  "@caseStudyProblem": {
+    "description": "Case study: section heading"
+  },
+  "caseStudyApproach": "المقاربة",
+  "@caseStudyApproach": {
+    "description": "Case study: section heading"
+  },
+  "caseStudyOutcome": "النتيجة",
+  "@caseStudyOutcome": {
+    "description": "Case study: section heading"
+  },
+  "caseStudyStack": "التقنيات",
+  "@caseStudyStack": {
+    "description": "Case study: technology list heading"
+  },
+  "caseStudyUnavailable": "لم تُكتب دراسة الحالة هذه بعد.",
+  "@caseStudyUnavailable": {
+    "description": "Case study: no study file exists for the slug"
+  },
+  "caseStudyBackToWork": "العودة إلى الأعمال",
+  "@caseStudyBackToWork": {
+    "description": "Case study: link back to the ledger"
+  },
+  "caseStudyLoadPrototype": "تحميل النموذج التجريبي",
+  "@caseStudyLoadPrototype": {
+    "description": "Case study: click-to-load control for the embedded prototype"
+  },
+  "caseStudyPrototypeWeight": "يُحمّل نموذجًا تفاعليًا من موقع آخر.",
+  "@caseStudyPrototypeWeight": {
+    "description": "Case study: what the click-to-load control will do"
   }
 }

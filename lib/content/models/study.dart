@@ -21,10 +21,30 @@ class Study with _$Study {
     required LocalizedText outcome,
     required List<String> stack,
     required List<StudyScreen> screens,
+    StudyPrototype? prototype,
   }) = _Study;
 
   /// Decodes the documented JSON shape.
   factory Study.fromJson(Map<String, dynamic> json) => _$StudyFromJson(json);
+}
+
+/// An interactive prototype embedded in the study.
+///
+/// Not in `07-CONTENT-SCHEMA.md`'s original shape: `02-SCREEN-SPECS.md` gives
+/// City Loom a live embedded prototype with a click-to-load poster and one
+/// honest status line above it, and no field carried either. Optional, so the
+/// two studies that have no prototype simply omit it.
+@freezed
+class StudyPrototype with _$StudyPrototype {
+  /// [status] is the honest one-liner the spec requires above the frame.
+  const factory StudyPrototype({
+    required Uri url,
+    required LocalizedText status,
+  }) = _StudyPrototype;
+
+  /// Decodes the documented JSON shape.
+  factory StudyPrototype.fromJson(Map<String, dynamic> json) =>
+      _$StudyPrototypeFromJson(json);
 }
 
 /// Screenshot reference with bilingual caption.
