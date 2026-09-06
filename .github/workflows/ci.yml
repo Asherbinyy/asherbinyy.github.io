@@ -141,19 +141,14 @@ jobs:
       - name: Generate static routes
         run: dart run tool/generate_static.dart
 
-      # /how-it-was-built states coverage and test counts publicly, so they are
-      # regenerated from this run's own artifacts rather than shipped from
-      # whatever was committed. A page claiming care cannot carry a stale
-      # number about itself.
-      - name: Measure the build for /how-it-was-built
-        run: |
-          flutter test --coverage --exclude-tags golden
-          dart run tool/generate_build_facts.dart
 
+      # No ANALYTICS_ENDPOINT is supplied, so the release build has no sender,
+      # no client, and therefore collects nothing: no beacon, no consent
+      # banner, and nothing written to a visitor's device. The tiers, the
+      # consent model, the Worker and its tests all remain in the repository.
+      # Restoring collection is one --dart-define on this line.
       - name: Build Web (WASM)
-        run: >-
-          flutter build web --wasm --release
-          --dart-define=ANALYTICS_ENDPOINT=https://nocturne-analytics.asherbinyy.workers.dev/v1/beacon
+        run: flutter build web --wasm --release
 
       - name: Ensure GitHub Pages routing and Jekyll bypass
         run: |

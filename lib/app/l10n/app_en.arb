@@ -460,89 +460,12 @@
   "@consoleDailyViews": {
     "description": "Console: sparkline label"
   },
-  "navHowItWasBuilt": "How it was built",
-  "@navHowItWasBuilt": {
-    "description": "Nav and title: the colophon page"
+  "privacyCollectsNothing": "This site collects nothing.",
+  "@privacyCollectsNothing": {
+    "description": "Privacy: heading line when analytics is off"
   },
-  "colophonIntro": "This page is generated from the repository it describes. Every number below is read from a build artifact, not typed in.",
-  "@colophonIntro": {
-    "description": "Colophon: opening line"
-  },
-  "colophonMeasured": "Measured",
-  "@colophonMeasured": {
-    "description": "Colophon: measurements section heading"
-  },
-  "colophonCoverage": "line coverage",
-  "@colophonCoverage": {
-    "description": "Colophon: stat label"
-  },
-  "colophonTests": "tests",
-  "@colophonTests": {
-    "description": "Colophon: stat label"
-  },
-  "colophonWorkerTests": "worker tests",
-  "@colophonWorkerTests": {
-    "description": "Colophon: stat label"
-  },
-  "colophonLighthouse": "CI fails the build below Lighthouse performance {performance} and accessibility {accessibility} on the two indexable pages.",
-  "@colophonLighthouse": {
-    "description": "Colophon: Lighthouse floors",
-    "placeholders": {
-      "performance": {
-        "type": "String"
-      },
-      "accessibility": {
-        "type": "String"
-      }
-    }
-  },
-  "colophonGeneratedOn": "Generated {date}",
-  "@colophonGeneratedOn": {
-    "description": "Colophon: generation date",
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
-  "colophonCollection": "What is collected",
-  "@colophonCollection": {
-    "description": "Colophon: collection readout heading"
-  },
-  "colophonCollectionIntro": "This table is derived from the code that enforces it, not written alongside it. A test compares the two.",
-  "@colophonCollectionIntro": {
-    "description": "Colophon: collection readout intro"
-  },
-  "colophonTierNone": "never",
-  "@colophonTierNone": {
-    "description": "Colophon: an event nothing permits"
-  },
-  "colophonTierAggregate": "counted anonymously",
-  "@colophonTierAggregate": {
-    "description": "Colophon: Tier 0"
-  },
-  "colophonTierSession": "only if you opt in",
-  "@colophonTierSession": {
-    "description": "Colophon: Tier 1"
-  },
-  "colophonNeverHeading": "What is never collected",
-  "@colophonNeverHeading": {
-    "description": "Colophon: never-collected heading"
-  },
-  "colophonNever": "No IP address is ever stored. No cookies, no fingerprinting, no session replay, no demographic inference, and no third-party trackers. Country is resolved on the server and the address is discarded in the same function call.",
-  "@colophonNever": {
-    "description": "Colophon: never-collected prose"
-  },
-  "colophonArchitecture": "Architecture",
-  "@colophonArchitecture": {
-    "description": "Colophon: architecture heading"
-  },
-  "colophonArchitectureBody": "Flutter Web renders to canvas, which search engines cannot read. The CV and the recruiter brief are therefore generated as plain HTML and served outside the app, so the two pages that need to be found are indexable and load without JavaScript.",
-  "@colophonArchitectureBody": {
-    "description": "Colophon: architecture prose"
-  },
-  "colophonUnavailable": "Build measurements are unavailable.",
-  "@colophonUnavailable": {
-    "description": "Colophon: facts failed to load"
+  "privacyCollectsNothingBody": "No analytics, no cookies, no third-party trackers, and nothing written to your device. There is no consent banner because there is nothing to consent to. If that ever changes, this page will say so first and you will be asked before anything is collected.",
+  "@privacyCollectsNothingBody": {
+    "description": "Privacy: body when analytics is off"
   }
 }

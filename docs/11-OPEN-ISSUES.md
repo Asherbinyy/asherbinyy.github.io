@@ -12,6 +12,24 @@ Last reviewed: 2026-09-06, after deploying the Milestone 2 Worker.
 
 ---
 
+## 0. What this build collects: nothing
+
+The release build supplies no `ANALYTICS_ENDPOINT`, so there is no sender, no
+client, and no collection of any kind — no beacon, no consent banner, nothing
+written to a visitor's device. `/privacy` says exactly that and offers no
+controls, because a control that changes nothing is theatre.
+
+**Dormant, not deleted.** The tiers, the consent model, the banner, `/console`,
+the Worker and all their tests remain in the repository and still pass;
+`test/widget/privacy/privacy_test.dart` runs the consent machinery against a
+build that *is* collecting, so it cannot rot. Restoring collection is one
+`--dart-define` on the release build line in `.github/workflows/ci.yml`.
+
+The deployed Worker is untouched and still serves `/v1/writing`, which is
+content rather than analytics and carries nothing about the viewer.
+
+---
+
 ## 1. Owner actions — content and assets
 
 Nothing here can be done by an agent. `AGENTS.md` §3 forbids inventing content,
@@ -53,7 +71,7 @@ numbers and translations, and every row below is one of those.
 
 | # | Item | Notes |
 |---|---|---|
-| 3.1 | **The hero's amber CTA is below the fold on a first visit at 1200×900.** Adding the two stat panels pushed it down. It is *not* obscured — the consent banner and footer are `Column` siblings, not overlays — and it returns above the fold the moment consent is answered, because the scroll viewport grows from ~670px to ~795px. But the first visit is exactly when a recruiter arrives, and `02-SCREEN-SPECS.md`'s hero diagram shows panels *and* buttons above the trace. | Resolving it means either tightening hero spacing (which is token-governed, so it needs a named token, not a raw number) or accepting the trade. Deliberately not decided by an agent. |
+| ~~3.1~~ | **Closed.** The hero's amber CTA was below the fold on a first visit because the consent banner held a row. The banner is gone — this build collects nothing, so there is nothing to consent to — and the CTA now sits above the fold alongside both stat panels. Resolved as a side effect rather than by tightening spacing. |
 | 3.2 | **Trace and map frame cost have never been measured in a real browser profile.** Budgets are 4ms and 6ms. Widget tests cannot measure this. | Needs Chrome DevTools against the deployed build. |
 | 3.5 | **`InteractiveViewer` keeps its default boundary behaviour** on the propagation map, so direct panning only becomes useful once zoomed. | From the propagation-map session. |
 | 3.6 | **The acquisition sequence's once-per-tab behaviour is unobserved in a browser.** The VM test target cannot emulate a hard reload; the conditional web implementation is only proven by the WASM build compiling. | Needs the deployed site. |
