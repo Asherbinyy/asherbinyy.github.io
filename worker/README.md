@@ -29,3 +29,37 @@ Keeping midnight out of the second trigger prevents two independent invocations
 from rotating the same salt concurrently. Counter keys expire after 24 calendar
 months; daily visitor hashes expire after two days; digest idempotency keys
 expire after two days.
+
+## Runtime and release verification
+
+Wrangler 4.129.0 requires Node 22 or later. The machine's default Node 20 can
+remain installed: run the deployment tool in an isolated npm runtime instead.
+The following invocation was verified with Node 22.23.2 and Wrangler 4.129.0:
+
+```bash
+npm exec --yes --package=node@22 --package=wrangler@4.129.0 -- wrangler --version
+npm exec --yes --package=node@22 -- node --test worker/test/*.test.js
+npm exec --yes --package=node@22 --package=wrangler@4.129.0 -- wrangler deploy --dry-run
+npm exec --yes --package=node@22 --package=wrangler@4.129.0 -- wrangler deploy
+```
+
+Run these from the repository root so Wrangler reads `wrangler.toml`. Use the
+existing authenticated Cloudflare account. A normal code deployment preserves
+existing secrets; do not rotate `CONSOLE_TOKEN` just to publish new code.
+
+Pages and the Worker deploy separately. A green Pages release does not deploy
+`worker/src/index.js`. When a release changes that file or its bindings, include
+the Worker deployment in the release and record its version ID in the worklog.
+Keep absent optional beacon fields omitted so older Workers continue accepting
+Tier 0 events while the two deployments are being coordinated.
+
+After deployment, check `/v1/writing` with the configured site Origin: it should
+return parseable RSS, not just a successful status. Check that missing Origin
+is rejected and that `/v1/aggregates` rejects an unauthenticated read. Verify an
+authenticated console read using the owner's existing token, entered through
+the console UI rather than copied into source or logs.
+
+A synthetic accepted beacon writes production counters. Do not use one as a
+routine health check without explicit authorization; use local contract tests
+and a consented browser session for positive event verification. Document any
+production test data and its cleanup separately from real visitor metrics.

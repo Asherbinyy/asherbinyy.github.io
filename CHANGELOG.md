@@ -5,7 +5,10 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
-Milestone 2, "Depth", on `phase/2-depth`. Not yet published.
+## [0.2.0] — 2026-09-06
+
+Milestone 2, "Depth". Published to GitHub Pages and tagged `v0.2.0`.
+The matching analytics Worker was deployed separately on 2026-09-06.
 
 ### Added
 
@@ -31,6 +34,10 @@ Milestone 2, "Depth", on `phase/2-depth`. Not yet published.
 
 ### Fixed
 
+- Absent optional beacon fields are omitted so Tier 0 remains compatible with
+  the independently deployed Worker (PR #3).
+- Deployed the matching Worker to enable the writing relay, Tier 1 validation,
+  console totals and corrected digest payload.
 - The digest payload double-nested its counters after `/console` needed totals.
 - The engagement reporter threw during teardown, reading a disposed container.
 - The footer overflowed by 148px on a phone once it carried a second link.
@@ -86,3 +93,5 @@ run outside CI, because `main` is what publishes them. `docs/11-OPEN-ISSUES.md`
 §4 and §5 carry the full list and what to check first.
 
 [0.1.0]: https://github.com/Asherbinyy/asherbinyy.github.io/releases/tag/v0.1.0
+
+[0.2.0]: https://github.com/Asherbinyy/asherbinyy.github.io/releases/tag/v0.2.0

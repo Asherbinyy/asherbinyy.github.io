@@ -8,7 +8,7 @@ than burying it in a worklog nobody re-reads.
 Worklogs record what happened in a session. **This file records what is still
 true.** If the two disagree, this file is the one to fix.
 
-Last reviewed: 2026-09-06, at the end of Milestone 2's build.
+Last reviewed: 2026-09-06, after deploying the Milestone 2 Worker.
 
 ---
 
@@ -55,8 +55,6 @@ numbers and translations, and every row below is one of those.
 |---|---|---|
 | 3.1 | **The hero's amber CTA is below the fold on a first visit at 1200×900.** Adding the two stat panels pushed it down. It is *not* obscured — the consent banner and footer are `Column` siblings, not overlays — and it returns above the fold the moment consent is answered, because the scroll viewport grows from ~670px to ~795px. But the first visit is exactly when a recruiter arrives, and `02-SCREEN-SPECS.md`'s hero diagram shows panels *and* buttons above the trace. | Resolving it means either tightening hero spacing (which is token-governed, so it needs a named token, not a raw number) or accepting the trade. Deliberately not decided by an agent. |
 | 3.2 | **Trace and map frame cost have never been measured in a real browser profile.** Budgets are 4ms and 6ms. Widget tests cannot measure this. | Needs Chrome DevTools against the deployed build. |
-| 3.3 | **`/about` is unbuilt and belongs to no roadmap task.** It is in `00-PROJECT-BRIEF.md` §4 and has a full screen spec, but appears in neither Milestone 1's nor Milestone 2's task list. | Suggest folding it into 2.3, since the spec puts the Medium feed at the foot of it. Blocked on 1.9 (portrait) either way. |
-| 3.4 | **`/how-it-was-built` (2.7) has no route.** `AppRoute` has no entry for it. | Adding one is part of 2.7. |
 | 3.5 | **`InteractiveViewer` keeps its default boundary behaviour** on the propagation map, so direct panning only becomes useful once zoomed. | From the propagation-map session. |
 | 3.6 | **The acquisition sequence's once-per-tab behaviour is unobserved in a browser.** The VM test target cannot emulate a hard reload; the conditional web implementation is only proven by the WASM build compiling. | Needs the deployed site. |
 | 3.7 | **The build emits a missing Material/Cupertino icon-font warning.** The app bundles and uses neither package. | Cosmetic, long-standing. |
@@ -67,12 +65,17 @@ numbers and translations, and every row below is one of those.
 
 ---
 
-## 3b. Live now, and needing action
+## 3b. Production verification remaining
+
+The Milestone 2 Worker was deployed on 2026-09-06 as version
+`d106e172-4182-4fdb-82f4-b0930f2a4ad0`, from the Worker source at `fdf851d`.
+The writing relay returns valid RSS containing six articles. This closes the
+version mismatch in 3b.1 and the outstanding server deployment associated with
+3b.2; PR #3 had already restored the client-side Tier 0 payload.
 
 | # | Item |
 |---|---|
-| **3b.1** | **The Worker is a version behind the site.** Milestone 2 changed `worker/src/index.js` — the `/v1/writing` relay, Tier 1 field validation, running totals for `/console`, and the digest payload fix — and none of it is deployed. Deploying needs `npx wrangler deploy`, and wrangler requires Node ≥ 22 where this machine has v20.2.0, so it could not be done from the session that wrote it. **Until it is deployed:** `/writing` shows nothing (it hides itself on failure, by design), Tier 1 events are rejected, and `/console` cannot read the aggregates shape it expects. Run `npx wrangler deploy` on a machine with Node 22+. |
-| **3b.2** | **A live analytics regression, now patched client-side.** The Milestone 2 client began sending `sessionId` and `value` on every beacon. The deployed Worker rejects any field it does not know — correct for a public endpoint — so *every* beacon 400'd, including Tier 0 route views that had worked since Milestone 1. The site collected nothing between the Milestone 2 deploy and the fix. `HttpBeaconSender` now omits absent fields, which restores Tier 0 against the old Worker and stays correct against the new one. **Tier 1 still needs 3b.1.** |
+| **3b.3** | **Positive production Tier 1 and authenticated console verification remain open.** All 26 local Worker tests pass, the matching Worker version is deployed, `/v1/writing` returns 200, its missing-Origin gate returns 403, and an unauthenticated `/v1/aggregates` read returns 401. The existing `CONSOLE_TOKEN` secret is configured and was preserved. A proposed synthetic Tier 1 event and deletion of its isolated test records were rejected by automatic approval review because they lacked specific authorization; neither action ran. Complete the positive checks with an explicitly consented browser session and the owner's existing console token, or separately authorize the synthetic test and cleanup. No real page-view counter was incremented for verification in this session. |
 
 ---
 
