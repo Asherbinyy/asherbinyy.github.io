@@ -34,12 +34,6 @@ class _Entry extends StatelessWidget {
     final tokens = context.tokens;
     final type = context.type;
 
-    // `entry.overallMark` is deliberately not rendered. The screen spec says
-    // "No overall average until the award is confirmed", and the supplied
-    // status reads "In progress". The value stays in the content and the
-    // model; only the presentation withholds it. Do not add it here without
-    // the award being confirmed first.
-    //
     // Highest first, on a copy — sorting the model's list in place would
     // mutate content the repository caches and hands to every other reader.
     final modules = [...entry.modules]

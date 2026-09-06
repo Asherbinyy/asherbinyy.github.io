@@ -48,8 +48,9 @@ numbers and translations, and every row below is one of those.
 | 1.4 | **AZ Exams has no distinct store URL.** It shared `com.crazyidea.coursesexams` with AZ Courses; one of the two was wrong. | The app is absent from the ledger | — |
 | 1.5 | **Mokaf has no public listing.** It ships with an empty store map and the row says so plainly. Confirm that is correct rather than a missing link. | — | 2.1 |
 | 1.6 | **Arabic copy.** `profile.json`, `career.json` and `apps.json` carry `ar: null` throughout, so Arabic falls back to English by design. Separately, ~75 agent-authored interface strings in `app_ar.arb` have never had a native read. | Arabic locale is structurally complete but linguistically unreviewed | Arabic being claimed as shipped |
-| 1.7 | **Five career descriptions** are incomplete per `assets/content/README.md`. | Transmission panels are thin | — |
-| 1.8 | **The CV PDF.** `profile.cvFile` is null, so the hero's second action reads "Read the CV" and opens the static HTML instead of downloading. | No downloadable CV | `/brief` parity with the spec |
+| ~~1.7~~ | **Mostly closed.** Four of the five roles — MiNextStep, Hwzn Tech, Ar++ tech and Techlabs Solutions — now carry the company, title and summary transcribed from the owner's CV. **Evri remains empty**: it is the one role the CV does not cover, so its burst still falls back to the city rather than an invented employer. |
+| ~~1.8~~ | **Partly closed.** The owner supplied the CV as a PDF, and its content has been transcribed into `career.json`, `education.json` and `profile.json`. The **file itself is still not in the repository**, so `profile.cvFile` stays null and the hero's second action still opens the HTML CV rather than downloading a PDF. |
+| 1.8b | **The CV PDF file.** `profile.cvFile` is null, so the hero's second action reads "Read the CV" and opens the static HTML instead of downloading. | No downloadable CV | `/brief` parity with the spec |
 | 1.9 | **The portrait.** `profile.portrait` is null. Brief in `01-DESIGN-SYSTEM.md` §10. | `/about` cannot be built to spec | `/about` |
 | 1.10 | **Screenshots** for Mokaf, AZ Courses and City Loom. | Device frames have nothing to scrub | 2.1 |
 | 1.11 | **Case study prose** — three studies, context → problem → approach → outcome. The roadmap says explicitly that an agent cannot write these and will invent them if asked. **The screen is built and tested; `assets/content/studies/` is empty on purpose.** Drop a `{slug}.json` in and it renders with no code change. | `/work/:slug` says "not written yet" for every slug | — |
@@ -62,7 +63,7 @@ numbers and translations, and every row below is one of those.
 
 | # | Decision | Why it went this way |
 |---|---|---|
-| 2.1 | **Only two hero stat panels ship: "25+ shipped" and "6 countries".** | Both are traceable to supplied documents — `00-PROJECT-BRIEF.md` §2 and the `positioning` line. The spec's third panel, "4 years", is in `02-SCREEN-SPECS.md`'s `/brief` block as "4 years commercial", but nothing supplied dates it, and a tenure figure goes stale on its own. Supply it and the panel appears with no code change. |
+| ~~2.1~~ | **Closed.** The third panel now ships. The CV dated it — "4+ years of commercial experience" — which is what was missing when it was left out. |
 | 2.2 | **Six countries, not five.** `02-SCREEN-SPECS.md`'s hero diagram draws a "5 countries" panel, but `00-PROJECT-BRIEF.md` §2 and §3 and the `/brief` block all say six and name them: Egypt, Saudi Arabia, Armenia, Qatar, Canada, the UK. | The diagram is the outlier. The doc should be corrected to six. |
 | 2.3 | **Stat labels are English-only.** `LocalizedText.resolve` falls back to English rather than inventing Arabic. | `AGENTS.md` §3. Rolls up into 1.6. |
 | 2.4 | **The ledger heading counts the content, not the docs.** It says eleven because eleven exist. | Rolls up into 1.2. |
