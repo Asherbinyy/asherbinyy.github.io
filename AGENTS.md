@@ -9,9 +9,11 @@ Multiple different agents work on this project. The worklog is how you find out 
 ## 1. Before you start
 
 1. Read `docs/00-PROJECT-BRIEF.md`, `docs/01-DESIGN-SYSTEM.md`, `docs/03-ARCHITECTURE.md` and `docs/04-FLUTTER-STANDARDS.md`.
-2. Read the **three most recent** files in `docs/worklog/`.
-3. Read `CHANGELOG.md`.
-4. State in your first message: what you understood the current state to be, and what you intend to change.
+2. Read `docs/11-OPEN-ISSUES.md`. Worklogs say what happened; that file says
+   what is still true. Close a row there when you close the item.
+3. Read the **three most recent** files in `docs/worklog/`.
+4. Read `CHANGELOG.md`.
+5. State in your first message: what you understood the current state to be, and what you intend to change.
 
 If the three most recent worklogs contradict each other, stop and say so rather than guessing.
 
