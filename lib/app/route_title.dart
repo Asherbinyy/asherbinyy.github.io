@@ -64,12 +64,16 @@ class RouteTitle extends ConsumerWidget {
       _ => null,
     };
 
+    // Until identity resolves, no `Title` is mounted at all, so the shell's
+    // own static title stands. Mounting one with an empty string does not
+    // leave the document alone — `Title` writes through `SystemChrome`
+    // unconditionally, so it *erases* the hand-authored title and leaves the
+    // tab blank until content loads. That was live: the deployed /writing page
+    // rendered with an empty document.title.
+    if (name == null) return child;
+
     return Title(
-      // Until identity resolves, the shell's own static title stands. Inventing
-      // a placeholder name would be worse than the correct one arriving late.
-      title: name == null
-          ? ''
-          : routeTitle(route: route, l10n: context.l10n, name: name),
+      title: routeTitle(route: route, l10n: context.l10n, name: name),
       color: context.tokens.void_,
       child: child,
     );
