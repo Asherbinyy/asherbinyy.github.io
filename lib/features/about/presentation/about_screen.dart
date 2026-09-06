@@ -2,6 +2,9 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:go_router/go_router.dart';
+import 'package:nocturne/app/app_route.dart';
+import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/locale_controller.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
@@ -114,6 +117,13 @@ class _About extends StatelessWidget {
         // Three, not the archive: the spec puts writing at the foot of About
         // as evidence it exists, and `/writing` is where the list lives.
         const WritingList(limit: 3),
+        SizedBox(height: tokens.space48),
+        // The colophon's dependable entry point. The footer carries it too,
+        // but only where a 48px row has space for the label.
+        BeaconButton(
+          label: l10n.navHowItWasBuilt,
+          onPressed: () => context.goNamed(AppRoute.howItWasBuilt.name),
+        ),
       ],
     );
   }

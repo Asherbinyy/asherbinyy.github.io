@@ -21,6 +21,13 @@ enum AppRoute {
   /// Consent controls, deferred beyond foundation.
   privacy('/privacy'),
 
+  /// How the site was built: architecture, measurements, privacy decisions.
+  ///
+  /// Not in `00-PROJECT-BRIEF.md` §4's structure, which predates it. Roadmap
+  /// 2.7 adds the page and calls it "the page that converts creative into
+  /// hireable", so the path is new rather than transcribed.
+  howItWasBuilt('/how-it-was-built'),
+
   /// Dashboard placeholder; no dashboard or data exists yet.
   console('/console'),
 

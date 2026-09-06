@@ -218,5 +218,90 @@
   "consoleDailyViews": "المشاهدات يوميًا",
   "@consoleDailyViews": {
     "description": "Console: sparkline label"
+  },
+  "navHowItWasBuilt": "كيف بُني",
+  "@navHowItWasBuilt": {
+    "description": "Nav and title: the colophon page"
+  },
+  "colophonIntro": "هذه الصفحة مُولَّدة من المستودع الذي تصفه. كل رقم أدناه مقروء من مخرجات البناء، لا مكتوب يدويًا.",
+  "@colophonIntro": {
+    "description": "Colophon: opening line"
+  },
+  "colophonMeasured": "قياسات",
+  "@colophonMeasured": {
+    "description": "Colophon: measurements section heading"
+  },
+  "colophonCoverage": "تغطية الأسطر",
+  "@colophonCoverage": {
+    "description": "Colophon: stat label"
+  },
+  "colophonTests": "اختبارًا",
+  "@colophonTests": {
+    "description": "Colophon: stat label"
+  },
+  "colophonWorkerTests": "اختبارات الخادم",
+  "@colophonWorkerTests": {
+    "description": "Colophon: stat label"
+  },
+  "colophonLighthouse": "يفشل البناء إن قلّ أداء Lighthouse عن {performance} أو الوصولية عن {accessibility} في الصفحتين المفهرستين.",
+  "@colophonLighthouse": {
+    "description": "Colophon: Lighthouse floors",
+    "placeholders": {
+      "performance": {
+        "type": "String"
+      },
+      "accessibility": {
+        "type": "String"
+      }
+    }
+  },
+  "colophonGeneratedOn": "وُلّدت في {date}",
+  "@colophonGeneratedOn": {
+    "description": "Colophon: generation date",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "colophonCollection": "ما يُجمع",
+  "@colophonCollection": {
+    "description": "Colophon: collection readout heading"
+  },
+  "colophonCollectionIntro": "هذا الجدول مشتق من الكود الذي ينفّذه، لا مكتوب بجانبه. ويقارن اختبار بينهما.",
+  "@colophonCollectionIntro": {
+    "description": "Colophon: collection readout intro"
+  },
+  "colophonTierNone": "أبدًا",
+  "@colophonTierNone": {
+    "description": "Colophon: an event nothing permits"
+  },
+  "colophonTierAggregate": "يُحصى دون تعريف",
+  "@colophonTierAggregate": {
+    "description": "Colophon: Tier 0"
+  },
+  "colophonTierSession": "فقط بموافقتك",
+  "@colophonTierSession": {
+    "description": "Colophon: Tier 1"
+  },
+  "colophonNeverHeading": "ما لا يُجمع أبدًا",
+  "@colophonNeverHeading": {
+    "description": "Colophon: never-collected heading"
+  },
+  "colophonNever": "لا يُخزَّن أي عنوان IP. لا كوكيز، ولا بصمات، ولا تسجيل للجلسات، ولا استنتاج ديموغرافي، ولا متتبعات خارجية. تُحدَّد الدولة على الخادم ويُهمل العنوان في نفس الاستدعاء.",
+  "@colophonNever": {
+    "description": "Colophon: never-collected prose"
+  },
+  "colophonArchitecture": "البنية",
+  "@colophonArchitecture": {
+    "description": "Colophon: architecture heading"
+  },
+  "colophonArchitectureBody": "يرسم Flutter Web على لوحة لا تقرأها محركات البحث. لذلك تُولَّد السيرة الذاتية وصفحة الموجز كـ HTML عادي خارج التطبيق، فتكون الصفحتان المطلوب إيجادهما قابلتين للفهرسة وتعملان بدون JavaScript.",
+  "@colophonArchitectureBody": {
+    "description": "Colophon: architecture prose"
+  },
+  "colophonUnavailable": "قياسات البناء غير متاحة.",
+  "@colophonUnavailable": {
+    "description": "Colophon: facts failed to load"
   }
 }
