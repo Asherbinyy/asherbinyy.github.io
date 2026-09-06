@@ -13,6 +13,7 @@ Continue Claude's Milestone 2 handoff by deploying the matching analytics Worker
 - Tested and dry-ran the existing Worker source, then deployed it as version `d106e172-4182-4fdb-82f4-b0930f2a4ad0` at 2026-09-06T17:13:36.192Z. The previous deployed version was `fa218355-3c1d-4be6-bee7-d821fe7ab4c8` from September 5.
 - Preserved the production KV binding, existing `CONSOLE_TOKEN` secret, site origin, and both cron schedules. No secret was rotated and no application or Worker source was changed.
 - Verified `/v1/writing` changed from 404 to 200 and returns parseable RSS with six articles. Missing Origin returns 403. An unauthenticated `/v1/aggregates` request returns 401.
+- Opened the live `/writing` route in isolated Chrome at 1200×900 with beacon URLs blocked before navigation. Visually confirmed all six articles and the bundled fonts; the relay also returned `x-nocturne-cache: hit` on a subsequent request.
 - Added the tested Node 22 deployment invocation and a release-verification procedure to the Worker README, including the fact that Pages CI does not deploy the Worker.
 - Updated the issue register to close the deployed-version mismatch and retain the remaining positive production verification as 3b.3. Removed stale rows claiming `/about` and `/how-it-was-built` are unbuilt; both were completed in worklog 08.
 - Corrected the changelog's stale Unreleased wording: Milestone 2 is already published and tagged, with its Worker deployed separately.
@@ -58,6 +59,7 @@ Python urllib initially received Cloudflare's edge-level 1010 rejection before r
 - Positive live Tier 1 acceptance and authenticated console reads remain unverified, as recorded in issue 3b.3. Local Tier 1 and aggregate-shape tests pass. No synthetic beacon was sent and no production analytics record was deleted in this session.
 - The real-phone check is still unperformed across both releases. The content, assets and digest-account gaps remain in the standing issue register.
 - The existing missing Material/Cupertino icon-font build warning remains.
+- The writing-page browser check returned an empty `document.title` after the app rendered. This is separate from the Worker deployment and remains to be investigated; the visible route and article content rendered correctly.
 - The Worker and Pages still deploy independently. The README now makes the required Worker release step explicit; no new automatic production deployment workflow or secret was introduced.
 
 ## Next
