@@ -5,6 +5,7 @@ import worker, {
   aggregateSnapshot,
   currentSalt,
   handleRequest,
+  relayWriting,
   rotateSalt,
   sendLondonNoonDigest,
   verifySaltRotation,
@@ -273,5 +274,96 @@ test('a missing KV binding fails closed', async () => {
     SITE_ORIGIN: siteOrigin,
   });
 
+  assert.equal(result.status, 503);
+});
+
+const sampleFeed = `<?xml version="1.0"?><rss version="2.0"><channel>
+<item><title>One</title><link>https://sherbini.medium.com/one</link></item>
+</channel></rss>`;
+
+function writingRequest(headers = {}) {
+  return new Request(`${siteOrigin}/v1/writing`, {
+    method: 'GET',
+    headers: {origin: siteOrigin, ...headers},
+  });
+}
+
+function stubFetch(responses) {
+  const calls = [];
+  const impl = async (url, init) => {
+    calls.push({url, init});
+    const next = responses.shift();
+    if (next instanceof Error) throw next;
+    return next;
+  };
+  impl.calls = calls;
+  return impl;
+}
+
+test('the writing relay refuses a request from another origin', async () => {
+  const env = environment({WRITING_FEED_URL: 'https://feed.example/feed'});
+
+  const result = await handleRequest(
+    writingRequest({origin: 'https://elsewhere.example'}),
+    env,
+  );
+
+  assert.equal(result.status, 403);
+});
+
+test('the writing relay returns the feed verbatim and caches it', async () => {
+  const env = environment({WRITING_FEED_URL: 'https://feed.example/feed'});
+  const now = new Date('2026-09-06T09:00:00Z');
+  const fetchImpl = stubFetch([new Response(sampleFeed, {status: 200})]);
+
+  const result = await relayWriting(env, now, new Headers(), fetchImpl);
+
+  assert.equal(result.status, 200);
+  assert.equal(await result.text(), sampleFeed);
+  assert.equal(result.headers.get('x-nocturne-cache'), 'miss');
+  assert.equal(await env.ANALYTICS.get('writing:feed'), sampleFeed);
+});
+
+test('a cached feed is served without asking Medium again', async () => {
+  const env = environment({WRITING_FEED_URL: 'https://feed.example/feed'});
+  const now = new Date('2026-09-06T09:00:00Z');
+  await env.ANALYTICS.put('writing:feed', sampleFeed);
+  const fetchImpl = stubFetch([]);
+
+  const result = await relayWriting(env, now, new Headers(), fetchImpl);
+
+  assert.equal(result.headers.get('x-nocturne-cache'), 'hit');
+  assert.equal(fetchImpl.calls.length, 0);
+});
+
+test('the relay reports a failed feed rather than an empty one', async () => {
+  const env = environment({WRITING_FEED_URL: 'https://feed.example/feed'});
+  const now = new Date('2026-09-06T09:00:00Z');
+  const fetchImpl = stubFetch([new Error('network down')]);
+
+  const result = await relayWriting(env, now, new Headers(), fetchImpl);
+
+  // An empty 200 would be indistinguishable from "nothing published", and the
+  // client decides to hide the section either way — but only one of the two is
+  // worth retrying.
+  assert.equal(result.status, 502);
+  assert.equal(await env.ANALYTICS.get('writing:feed'), null);
+});
+
+test('the relay forwards nothing about the viewer', async () => {
+  const env = environment({WRITING_FEED_URL: 'https://feed.example/feed'});
+  const now = new Date('2026-09-06T09:00:00Z');
+  const fetchImpl = stubFetch([new Response(sampleFeed, {status: 200})]);
+
+  await relayWriting(env, now, new Headers(), fetchImpl);
+
+  const [call] = fetchImpl.calls;
+  const forwarded = Object.keys(call.init.headers).map((n) => n.toLowerCase());
+  assert.deepEqual(forwarded, ['accept']);
+});
+
+test('the relay refuses to run without a configured feed', async () => {
+  const env = environment();
+  const result = await relayWriting(env, new Date(), new Headers());
   assert.equal(result.status, 503);
 });

@@ -34,6 +34,7 @@ Future<ProviderContainer> pumpStation(
   Locale? locale,
   AppRoute? initialRoute,
   Map<String, String>? preferences,
+  List<Override> overrides = const [],
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -49,6 +50,8 @@ Future<ProviderContainer> pumpStation(
       platformCapabilitiesProvider.overrideWith(
         () => FixedCapabilities(capabilities),
       ),
+      // Last, so a caller can replace any of the defaults above.
+      ...overrides,
     ],
   );
   addTearDown(container.dispose);

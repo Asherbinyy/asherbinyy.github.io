@@ -69,5 +69,42 @@
   "privacyCurrentRejected": "الحالة: لا يُجمع شيء",
   "privacyCurrentUnset": "الحالة: الضروري فقط، إلى أن تختار",
   "privacyRetention": "تُحفظ الأعداد الإجمالية 24 شهرًا. أما أحداث الجلسة، إن فعّلتها، فتُحفظ 90 يومًا ولا تُربط بين الزيارات.",
-  "privacyContact": "أحمد الشربيني هو المتحكم بالبيانات. لمعرفة ما هو محفوظ أو لطلب حذفه، راسل {email}."
+  "privacyContact": "أحمد الشربيني هو المتحكم بالبيانات. لمعرفة ما هو محفوظ أو لطلب حذفه، راسل {email}.",
+  "writingHeading": "الكتابة",
+  "@writingHeading": {
+    "description": "Writing screen: heading"
+  },
+  "writingSubheading": "منشور على Medium. كل مقال يفتح هناك.",
+  "@writingSubheading": {
+    "description": "Writing screen: subheading"
+  },
+  "writingUnavailable": "لا يوجد ما يُعرض حاليًا.",
+  "@writingUnavailable": {
+    "description": "Writing screen: shown when the feed yields nothing"
+  },
+  "writingOpenArticle": "افتح «{title}» على Medium",
+  "@writingOpenArticle": {
+    "description": "Writing screen: article link label",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutHeading": "نبذة",
+  "@aboutHeading": {
+    "description": "About screen: heading"
+  },
+  "aboutEducation": "التعليم",
+  "@aboutEducation": {
+    "description": "About screen: education section heading"
+  },
+  "aboutWriting": "الكتابة",
+  "@aboutWriting": {
+    "description": "About screen: writing section heading"
+  },
+  "aboutPortraitPending": "الصورة قيد الإعداد",
+  "@aboutPortraitPending": {
+    "description": "About screen: the reserved portrait frame"
+  }
 }

@@ -310,5 +310,42 @@
         "type": "String"
       }
     }
+  },
+  "writingHeading": "Writing",
+  "@writingHeading": {
+    "description": "Writing screen: heading"
+  },
+  "writingSubheading": "Published on Medium. Every entry opens there.",
+  "@writingSubheading": {
+    "description": "Writing screen: subheading"
+  },
+  "writingUnavailable": "Nothing to show right now.",
+  "@writingUnavailable": {
+    "description": "Writing screen: shown when the feed yields nothing"
+  },
+  "writingOpenArticle": "Open “{title}” on Medium",
+  "@writingOpenArticle": {
+    "description": "Writing screen: article link label",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutHeading": "About",
+  "@aboutHeading": {
+    "description": "About screen: heading"
+  },
+  "aboutEducation": "Education",
+  "@aboutEducation": {
+    "description": "About screen: education section heading"
+  },
+  "aboutWriting": "Writing",
+  "@aboutWriting": {
+    "description": "About screen: writing section heading"
+  },
+  "aboutPortraitPending": "Portrait pending",
+  "@aboutPortraitPending": {
+    "description": "About screen: the reserved portrait frame"
   }
 }

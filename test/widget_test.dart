@@ -8,9 +8,11 @@ import 'package:nocturne/app/app.dart';
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/app_footer.dart';
 import 'package:nocturne/features/privacy/presentation/privacy_screen.dart';
+import 'package:nocturne/features/about/presentation/about_screen.dart';
 import 'package:nocturne/features/signal/presentation/signal_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/features/work/presentation/work_screen.dart';
+import 'package:nocturne/features/writing/presentation/writing_screen.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/theme/tokens.dart';
@@ -25,6 +27,8 @@ void main() {
       AppRoute.station: StationScreen,
       AppRoute.signal: SignalScreen,
       AppRoute.work: WorkScreen,
+      AppRoute.writing: WritingScreen,
+      AppRoute.about: AboutScreen,
       AppRoute.privacy: PrivacyScreen,
       AppRoute.campaign: StationScreen,
     };

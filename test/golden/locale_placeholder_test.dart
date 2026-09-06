@@ -21,6 +21,10 @@ import '../support/pump.dart';
 // This covers a route whose body is still a reserved placeholder, so the
 // chrome is the only thing on screen. The hero has its own goldens, and the
 // chrome's breakpoint states have theirs.
+//
+// It follows whichever framed route is still unbuilt: /about carried it until
+// Milestone 2 gave that route a screen. When /console gains one too, this
+// should fold into chrome_test.dart rather than chase the last placeholder.
 void main() {
   for (final mode in [ThemeMode.dark, ThemeMode.light]) {
     for (final language in ['en', 'ar']) {
@@ -34,7 +38,7 @@ void main() {
           locale: Locale(language),
         );
         GoRouter.of(tester.element(find.byType(ChromeScaffold)))
-            .goNamed(AppRoute.about.name);
+            .goNamed(AppRoute.console.name);
         await pumpFrames(tester);
         // Re-acquire after navigating: the previous route's element is gone.
         final context = tester.element(find.byType(ChromeScaffold));

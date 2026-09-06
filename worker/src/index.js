@@ -53,6 +53,12 @@ export async function handleRequest(request, env, now = new Date()) {
     }
     return receiveBeacon(request, env, now, headers);
   }
+  if (url.pathname === '/v1/writing' && request.method === 'GET') {
+    if (origin !== env.SITE_ORIGIN) {
+      return response({error: 'Origin not allowed'}, 403, headers);
+    }
+    return relayWriting(env, now, headers);
+  }
   if (url.pathname === '/v1/aggregates' && request.method === 'GET') {
     if (!authorised(request, env.CONSOLE_TOKEN)) {
       return response({error: 'Unauthorised'}, 401, headers);
@@ -122,6 +128,61 @@ async function receiveBeacon(request, env, now, headers) {
     });
   }
   return response({accepted: true}, 202, headers);
+}
+
+/// How long a fetched feed is served from KV before Medium is asked again.
+const WRITING_TTL_SECONDS = 3600;
+
+/// Relays the owner's Medium feed, which the browser cannot fetch itself.
+///
+/// Medium serves no `access-control-allow-origin`, so a first-party relay is
+/// the only way a canvas app on another origin can read it. The response is
+/// the feed verbatim: parsing belongs to the client, which already carries an
+/// XML parser for it, and a Worker that reshaped the feed would be a second
+/// place for that shape to drift.
+///
+/// Nothing about the viewer reaches Medium. This runs server-side with no
+/// forwarded headers, so the request carries the Worker's identity, not
+/// theirs — which also means the relay is not analytics and needs no consent.
+export async function relayWriting(env, now, headers, fetchImpl = fetch) {
+  const feedUrl = env.WRITING_FEED_URL;
+  if (typeof feedUrl !== 'string' || !feedUrl.startsWith('https://')) {
+    return response({error: 'No feed is configured'}, 503, headers);
+  }
+
+  const cached = await env.ANALYTICS.get(WRITING_CACHE_KEY);
+  if (cached !== null) {
+    return feedResponse(cached, headers, 'hit');
+  }
+
+  let body;
+  try {
+    const result = await fetchImpl(feedUrl, {
+      headers: {accept: 'application/rss+xml, application/xml, text/xml'},
+    });
+    if (!result.ok) throw new Error(`Feed responded ${result.status}`);
+    body = await result.text();
+  } catch {
+    // Section 5 of the architecture: a feed failure hides the writing section
+    // rather than showing an error, so an empty 200 is wrong here — the client
+    // needs to be able to tell "nothing published" from "could not ask".
+    return response({error: 'Feed unavailable'}, 502, headers);
+  }
+
+  await env.ANALYTICS.put(WRITING_CACHE_KEY, body, {
+    expiration: Math.floor(now.getTime() / 1000) + WRITING_TTL_SECONDS,
+  });
+  return feedResponse(body, headers, 'miss');
+}
+
+const WRITING_CACHE_KEY = 'writing:feed';
+
+function feedResponse(body, headers, cacheState) {
+  const feedHeaders = new Headers(headers);
+  feedHeaders.set('content-type', 'application/xml; charset=utf-8');
+  feedHeaders.set('cache-control', `public, max-age=${WRITING_TTL_SECONDS}`);
+  feedHeaders.set('x-nocturne-cache', cacheState);
+  return new Response(body, {status: 200, headers: feedHeaders});
 }
 
 export function validateBeacon(input) {
