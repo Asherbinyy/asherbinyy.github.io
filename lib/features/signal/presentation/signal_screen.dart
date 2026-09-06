@@ -13,6 +13,7 @@ import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/painting/coastline_data.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/platform/secondary_surface.dart';
 import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
@@ -60,6 +61,7 @@ class _SignalScreenState extends ConsumerState<SignalScreen> {
   Widget build(BuildContext context) {
     final locale = ref.watch(localeControllerProvider);
     final career = ref.watch(careerProvider);
+    final coastlines = ref.watch(coastlineRingsProvider);
 
     return Padding(
       padding: EdgeInsetsDirectional.only(
@@ -68,14 +70,20 @@ class _SignalScreenState extends ConsumerState<SignalScreen> {
         top: context.tokens.space48,
         bottom: context.tokens.space64,
       ),
-      child: switch (career) {
-        AsyncData(value: ContentReady(:final data)) => _Map(
-          roles: data.roles,
-          locale: locale,
-          selected: _selected,
-          onSelected: (index) => _select(index, data.roles, locale),
-        ),
-        AsyncData() || AsyncError() => const _Unavailable(),
+      child: switch ((career, coastlines)) {
+        (
+          AsyncData(value: ContentReady(:final data)),
+          AsyncData(:final value),
+        ) =>
+          _Map(
+            roles: data.roles,
+            coastlines: value,
+            locale: locale,
+            selected: _selected,
+            onSelected: (index) => _select(index, data.roles, locale),
+          ),
+        (AsyncData() || AsyncError(), _) ||
+        (_, AsyncError()) => const _Unavailable(),
         _ => const _Loading(),
       },
     );
@@ -86,12 +94,14 @@ class _SignalScreenState extends ConsumerState<SignalScreen> {
 class _Map extends StatelessWidget {
   const _Map({
     required this.roles,
+    required this.coastlines,
     required this.locale,
     required this.selected,
     required this.onSelected,
   });
 
   final List<CareerRole> roles;
+  final List<CoastlineRing> coastlines;
   final AppLocale locale;
   final ValueNotifier<int> selected;
   final ValueChanged<int> onSelected;
@@ -128,6 +138,7 @@ class _Map extends StatelessWidget {
                 for (final role in roles)
                   role.id: l10n.signalStationLabel(role.city, role.country),
               },
+              coastlines: coastlines,
               onSelected: onSelected,
             ),
             SizedBox(height: tokens.space24),

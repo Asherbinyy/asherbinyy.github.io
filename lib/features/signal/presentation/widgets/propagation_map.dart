@@ -6,6 +6,7 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/map_painter.dart';
+import 'package:nocturne/core/painting/coastline_data.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 
@@ -20,6 +21,7 @@ class PropagationMap extends StatefulWidget {
     required this.stations,
     required this.selectedIndex,
     required this.labels,
+    required this.coastlines,
     required this.onSelected,
     super.key,
   });
@@ -32,6 +34,9 @@ class PropagationMap extends StatefulWidget {
 
   /// Accessible name per station, keyed by id.
   final Map<String, String> labels;
+
+  /// Bundled public-domain land outlines.
+  final List<CoastlineRing> coastlines;
 
   /// Called when a station is chosen by pointer, touch or keyboard.
   final ValueChanged<int> onSelected;
@@ -51,6 +56,7 @@ class _PropagationMapState extends State<PropagationMap>
     duration: Tokens.considered,
   );
   final FocusNode _focus = FocusNode(debugLabel: 'propagation map');
+  final TransformationController _transform = TransformationController();
   bool? _isSettled;
 
   @override
@@ -82,6 +88,7 @@ class _PropagationMapState extends State<PropagationMap>
     _draw.dispose();
     _pulse.dispose();
     _focus.dispose();
+    _transform.dispose();
     super.dispose();
   }
 
@@ -131,35 +138,44 @@ class _PropagationMapState extends State<PropagationMap>
                       // Section 7: crosshair over the map surface.
                       ? SystemMouseCursors.precise
                       : MouseCursor.defer,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTapUp: (details) {
-                      _focus.requestFocus();
-                      final index = MapPainter.nearestTo(
-                        details.localPosition,
-                        widget.stations,
-                        size,
-                        within: context.platform.minimumTarget,
-                      );
-                      if (index != null) widget.onSelected(index);
-                    },
-                    child: RepaintBoundary(
-                      child: AnimatedBuilder(
-                        animation: Listenable.merge([_draw, _pulse]),
-                        builder: (context, _) => CustomPaint(
-                          size: size,
-                          painter: MapPainter(
-                            stations: widget.stations,
-                            selectedIndex: widget.selectedIndex,
-                            drawProgress: MotionCurves.emphasized.transform(
-                              _draw.value,
+                  child: InteractiveViewer(
+                    transformationController: _transform,
+                    trackpadScrollCausesScale: true,
+                    child: SizedBox.fromSize(
+                      size: size,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTapUp: (details) {
+                          _focus.requestFocus();
+                          final index = MapPainter.nearestTo(
+                            details.localPosition,
+                            widget.stations,
+                            size,
+                            within: context.platform.minimumTarget,
+                          );
+                          if (index != null) widget.onSelected(index);
+                        },
+                        child: RepaintBoundary(
+                          child: AnimatedBuilder(
+                            animation: Listenable.merge([_draw, _pulse]),
+                            builder: (context, _) => CustomPaint(
+                              size: size,
+                              painter: MapPainter(
+                                stations: widget.stations,
+                                selectedIndex: widget.selectedIndex,
+                                drawProgress: MotionCurves.emphasized.transform(
+                                  _draw.value,
+                                ),
+                                pulse: _pulse.value,
+                                coastlines: widget.coastlines,
+                                landColour: tokens.hairlineStrong,
+                                graticuleColour: tokens.hairline,
+                                arcColour: tokens.instrumentDim,
+                                activeColour: tokens.beacon,
+                                nodeColour: tokens.instrumentDim,
+                                hairlineWidth: tokens.hairlineWidth,
+                              ),
                             ),
-                            pulse: _pulse.value,
-                            graticuleColour: tokens.hairline,
-                            arcColour: tokens.instrumentDim,
-                            activeColour: tokens.beacon,
-                            nodeColour: tokens.instrumentDim,
-                            hairlineWidth: tokens.hairlineWidth,
                           ),
                         ),
                       ),

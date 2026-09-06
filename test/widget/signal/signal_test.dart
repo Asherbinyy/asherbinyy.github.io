@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -66,6 +67,40 @@ void main() {
 
       expect(manchester.latitude, 53.4808);
       expect(manchester.longitude, -2.2426);
+    });
+
+    testWidgets('renders bundled land outlines without a map request', (
+      tester,
+    ) async {
+      await _pumpSignal(tester);
+
+      final map = tester.widget<PropagationMap>(find.byType(PropagationMap));
+      expect(map.coastlines.length, greaterThan(100));
+    });
+
+    testWidgets('supports direct pan and pointer scroll zoom', (tester) async {
+      await _pumpSignal(tester);
+      final viewer = tester.widget<InteractiveViewer>(
+        find.byType(InteractiveViewer),
+      );
+      final before = viewer.transformationController!.value.getMaxScaleOnAxis();
+      final centre = tester.getCenter(find.byType(InteractiveViewer));
+
+      await tester.sendEventToBinding(
+        PointerScrollEvent(
+          position: centre,
+          scrollDelta: const Offset(0, -100),
+        ),
+      );
+      await tester.pump();
+
+      expect(viewer.panEnabled, isTrue);
+      expect(viewer.scaleEnabled, isTrue);
+      expect(viewer.trackpadScrollCausesScale, isTrue);
+      expect(
+        viewer.transformationController!.value.getMaxScaleOnAxis(),
+        greaterThan(before),
+      );
     });
   });
 

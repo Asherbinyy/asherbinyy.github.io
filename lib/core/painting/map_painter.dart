@@ -1,6 +1,7 @@
 import 'package:flutter/rendering.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/painting/coastline_data.dart';
 import 'package:nocturne/core/painting/great_circle.dart';
 import 'package:nocturne/core/painting/projection.dart';
 
@@ -14,11 +15,8 @@ typedef MapStation = ({
 
 /// Draws the propagation map: graticule, arcs and station nodes.
 ///
-/// No map SDK, no API key, no third-party data flow — `03-ARCHITECTURE.md`
-/// rules all three out, and the privacy claim depends on it. The surface is a
-/// graticule rather than coastlines: the repository carries no coastline
-/// dataset, and a graticule is the honest instrument reading of a projection
-/// rather than an invented outline.
+/// No map SDK, no API key, no third-party data flow — the public-domain land
+/// geometry is bundled with the application.
 class MapPainter extends CustomPainter {
   /// [drawProgress] runs 0..1 as the arcs draw in on first view.
   const MapPainter({
@@ -26,6 +24,8 @@ class MapPainter extends CustomPainter {
     required this.selectedIndex,
     required this.drawProgress,
     required this.pulse,
+    required this.coastlines,
+    required this.landColour,
     required this.graticuleColour,
     required this.arcColour,
     required this.activeColour,
@@ -45,6 +45,12 @@ class MapPainter extends CustomPainter {
   /// The selected node's expanding ring, 0..1.
   final double pulse;
 
+  /// Bundled Natural Earth rings in geographic coordinates.
+  final List<CoastlineRing> coastlines;
+
+  /// Hairline land-outline colour.
+  final Color landColour;
+
   /// Graticule colour.
   final Color graticuleColour;
 
@@ -63,9 +69,34 @@ class MapPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
+    _paintLand(canvas, size);
     _paintGraticule(canvas, size);
     _paintArcs(canvas, size);
     _paintNodes(canvas, size);
+  }
+
+  void _paintLand(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = landColour
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = hairlineWidth;
+    final path = Path();
+    for (final ring in coastlines) {
+      for (var index = 0; index < ring.length; index++) {
+        final point = Projection.toCanvas(
+          latitude: ring[index].latitude,
+          longitude: ring[index].longitude,
+          size: size,
+        );
+        if (index == 0) {
+          path.moveTo(point.dx, point.dy);
+        } else {
+          path.lineTo(point.dx, point.dy);
+        }
+      }
+      path.close();
+    }
+    canvas.drawPath(path, paint);
   }
 
   void _paintGraticule(Canvas canvas, Size size) {
@@ -219,6 +250,8 @@ class MapPainter extends CustomPainter {
       oldDelegate.selectedIndex != selectedIndex ||
       oldDelegate.drawProgress != drawProgress ||
       oldDelegate.pulse != pulse ||
+      !identical(oldDelegate.coastlines, coastlines) ||
+      oldDelegate.landColour != landColour ||
       oldDelegate.graticuleColour != graticuleColour ||
       oldDelegate.arcColour != arcColour ||
       oldDelegate.activeColour != activeColour ||

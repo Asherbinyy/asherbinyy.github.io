@@ -13,6 +13,7 @@ import 'package:nocturne/content/content_repository.dart';
 import 'package:nocturne/core/platform/platform_provider.dart';
 import 'package:nocturne/core/platform/pointer_capabilities.dart';
 import 'package:nocturne/core/platform/preference_store.dart';
+import 'package:nocturne/core/painting/coastline_data.dart';
 import 'package:nocturne/app/theme/theme_controller.dart';
 import 'package:nocturne/features/station/domain/acquisition_controller.dart';
 
@@ -64,6 +65,9 @@ Future<ProviderContainer> pumpStation(
     await container.read(careerProvider.future);
     await container.read(appsProvider.future);
     await container.read(educationProvider.future);
+    if (initialRoute == AppRoute.signal) {
+      await container.read(coastlineRingsProvider.future);
+    }
   });
 
   await tester.pumpWidget(
