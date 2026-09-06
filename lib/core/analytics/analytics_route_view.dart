@@ -52,13 +52,15 @@ class _AnalyticsRouteViewState extends ConsumerState<AnalyticsRouteView> {
     if (client == null || !mounted) return;
     final mode = context.platform.inputMode;
     try {
-      await client.record((
-        event: AnalyticsEvent.routeView,
-        route: widget.route,
-        deviceClass: mode.name,
-        referrerHost: currentReferrerHost(),
-        campaign: currentCampaign(),
-      ));
+      await client.record(
+        beacon(
+          event: AnalyticsEvent.routeView,
+          route: widget.route,
+          deviceClass: mode.name,
+          referrerHost: currentReferrerHost(),
+          campaign: currentCampaign(),
+        ),
+      );
     } on Exception {
       // Analytics availability must not change navigation or visible content.
     }

@@ -1,5 +1,6 @@
 const saltKey = 'system|salt';
 const counterPrefix = 'counter|';
+const totalPrefix = 'total|';
 const visitorPrefix = 'visitor|';
 const digestPrefix = 'system|digest|';
 const saltLifetimeMs = 24 * 60 * 60 * 1000;
@@ -13,6 +14,18 @@ const allowedEvents = new Set([
   'cv_opened',
   'language_changed',
   'theme_changed',
+  'scroll_depth',
+  'section_dwell',
+  'error_reported',
+]);
+
+/// Events that carry a numeric `value`, and the range each one accepts.
+const valuedEvents = new Map([
+  // A quartile, 1 to 4.
+  ['scroll_depth', [1, 4]],
+  // Whole seconds on a route. Capped at an hour: anything longer is a tab left
+  // open, not a reading, and storing it would make that visit distinctive.
+  ['section_dwell', [2, 3600]],
 ]);
 
 export default {
@@ -97,6 +110,19 @@ async function receiveBeacon(request, env, now, headers) {
     beacon.campaign ?? '-',
   ];
   await increment(env.ANALYTICS, key(counterPrefix, dimensions), now);
+
+  // The session identifier is used to deduplicate within a tab and is then
+  // discarded: it is never a stored dimension, so no counter can be traced
+  // back to one viewer's tab. Section 4 allows the identifier to exist for the
+  // life of a tab; nothing says it has to be written down.
+  if (beacon.value !== null) {
+    await accumulate(
+      env.ANALYTICS,
+      key(totalPrefix, [date, beacon.event, beacon.route]),
+      beacon.value,
+      now,
+    );
+  }
 
   if (beacon.event === 'route_view') {
     const salt = await currentSalt(env, now);
@@ -193,6 +219,8 @@ export function validateBeacon(input) {
     'deviceClass',
     'referrerHost',
     'campaign',
+    'sessionId',
+    'value',
   ]);
   if (Object.keys(input).some((field) => !expected.has(field))) {
     throw new TypeError('Unexpected beacon field');
@@ -218,7 +246,36 @@ export function validateBeacon(input) {
     deviceClass: input.deviceClass,
     referrerHost,
     campaign,
+    sessionId: validSessionId(input.event, input.sessionId),
+    value: validValue(input.event, input.value),
   };
+}
+
+/// A Tier 1 session identifier: 32 hex characters, minted in the browser tab.
+///
+/// Rejected outright on `route_view`, which is Tier 0 and must never carry an
+/// identifier. A malformed one is an error rather than a silent drop, because
+/// a client sending the wrong shape is a bug worth surfacing.
+function validSessionId(event, value) {
+  if (value === null || value === undefined) return null;
+  if (event === 'route_view') {
+    throw new TypeError('Tier 0 events carry no session identifier');
+  }
+  if (typeof value !== 'string' || !/^[0-9a-f]{32}$/.test(value)) {
+    throw new TypeError('Invalid session identifier');
+  }
+  return value;
+}
+
+/// The one number an event may carry, range-checked per event.
+function validValue(event, value) {
+  if (value === null || value === undefined) return null;
+  const range = valuedEvents.get(event);
+  if (range === undefined) throw new TypeError('Event carries no value');
+  if (!Number.isInteger(value) || value < range[0] || value > range[1]) {
+    throw new TypeError('Value out of range');
+  }
+  return value;
 }
 
 export async function currentSalt(env, now = new Date()) {
@@ -314,6 +371,18 @@ export async function sendLondonNoonDigest(env, now = new Date()) {
     expirationTtl: shortRetentionSeconds,
   });
   return true;
+}
+
+/// Adds [amount] to a running total, for events that carry a number.
+///
+/// Kept beside the plain counter so the console can divide one by the other
+/// and get a mean — total seconds over dwell events is the median-ish figure
+/// the dashboard shows — without ever storing a per-visit row.
+async function accumulate(store, totalKey, amount, now) {
+  const current = Number(await store.get(totalKey)) || 0;
+  await store.put(totalKey, String(current + amount), {
+    expiration: retentionExpiry(now),
+  });
 }
 
 async function increment(store, counterKey, now) {

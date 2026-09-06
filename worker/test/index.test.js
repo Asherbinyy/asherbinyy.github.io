@@ -367,3 +367,102 @@ test('the relay refuses to run without a configured feed', async () => {
   const result = await relayWriting(env, new Date(), new Headers());
   assert.equal(result.status, 503);
 });
+
+test('a Tier 1 event may carry a session identifier', async () => {
+  const env = environment();
+  const sessionId = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
+
+  const result = await handleRequest(
+    beaconRequest({event: 'map_node_opened', sessionId, value: null}),
+    env,
+    new Date('2026-09-06T09:00:00Z'),
+  );
+
+  assert.equal(result.status, 202);
+  // It deduplicates within the request and is then discarded: no stored key
+  // may contain it, or a counter could be traced back to one viewer's tab.
+  const stored = JSON.stringify([...env.ANALYTICS.values.keys()]);
+  assert.ok(!stored.includes(sessionId));
+});
+
+test('a Tier 0 route view may not carry a session identifier', async () => {
+  const env = environment();
+
+  const result = await handleRequest(
+    beaconRequest({sessionId: 'a1b2c3d4e5f60718293a4b5c6d7e8f90'}),
+    env,
+    new Date('2026-09-06T09:00:00Z'),
+  );
+
+  assert.equal(result.status, 400);
+});
+
+test('a malformed session identifier is rejected', async () => {
+  const env = environment();
+
+  const result = await handleRequest(
+    beaconRequest({event: 'theme_changed', sessionId: 'not-a-hash'}),
+    env,
+    new Date('2026-09-06T09:00:00Z'),
+  );
+
+  assert.equal(result.status, 400);
+});
+
+test('scroll depth accumulates a total beside its counter', async () => {
+  const env = environment();
+  const now = new Date('2026-09-06T09:00:00Z');
+
+  await handleRequest(
+    beaconRequest({event: 'scroll_depth', value: 3, campaign: null}),
+    env,
+    now,
+  );
+  await handleRequest(
+    beaconRequest({event: 'scroll_depth', value: 4, campaign: null}),
+    env,
+    now,
+  );
+
+  assert.equal(
+    await env.ANALYTICS.get('total|2026-09-06|scroll_depth|%2Fwork'),
+    '7',
+  );
+});
+
+test('a value outside its event range is rejected', async () => {
+  const env = environment();
+
+  for (const value of [0, 5, 1.5]) {
+    const result = await handleRequest(
+      beaconRequest({event: 'scroll_depth', value}),
+      env,
+      new Date('2026-09-06T09:00:00Z'),
+    );
+    assert.equal(result.status, 400, `value ${value} should be rejected`);
+  }
+});
+
+test('an event that carries no value rejects one', async () => {
+  const env = environment();
+
+  const result = await handleRequest(
+    beaconRequest({event: 'theme_changed', value: 3}),
+    env,
+    new Date('2026-09-06T09:00:00Z'),
+  );
+
+  assert.equal(result.status, 400);
+});
+
+test('a dwell longer than an hour is rejected as a forgotten tab', async () => {
+  const env = environment();
+
+  const result = await handleRequest(
+    beaconRequest({event: 'section_dwell', value: 3601}),
+    env,
+    new Date('2026-09-06T09:00:00Z'),
+  );
+
+  assert.equal(result.status, 400);
+});

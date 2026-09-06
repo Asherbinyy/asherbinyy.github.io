@@ -13,20 +13,16 @@ import 'package:nocturne/core/platform/preference_store.dart';
 // 05-TESTING.md restates so they are never deleted. A failure here blocks
 // merge unconditionally.
 
-const AnalyticsBeacon _routeView = (
+final AnalyticsBeacon _routeView = beacon(
   event: AnalyticsEvent.routeView,
   route: '/work',
   deviceClass: 'pointer',
-  referrerHost: null,
-  campaign: null,
 );
 
-const AnalyticsBeacon _click = (
+final AnalyticsBeacon _click = beacon(
   event: AnalyticsEvent.mapNodeOpened,
   route: '/signal',
   deviceClass: 'pointer',
-  referrerHost: null,
-  campaign: null,
 );
 
 /// A transport that records every call, so silence can be asserted directly.
@@ -146,11 +142,11 @@ void main() {
     test('the beacon carries no field from the never-collected list', () {
       // Section 2: no identifier, no demographic, no referrer path, no address.
       // The record type is the enforcement — there is nowhere to put one.
-      const beacon = _routeView;
+      final event = _routeView;
 
-      expect(beacon.referrerHost, isNull);
-      expect(beacon.campaign, isNull);
-      expect(beacon.deviceClass, anyOf('touch', 'pointer'));
+      expect(event.referrerHost, isNull);
+      expect(event.campaign, isNull);
+      expect(event.deviceClass, anyOf('touch', 'pointer'));
     });
   });
 

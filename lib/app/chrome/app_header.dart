@@ -13,6 +13,8 @@ import 'package:nocturne/app/theme/app_theme.dart';
 import 'package:nocturne/app/theme/theme_controller.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
+import 'package:nocturne/core/analytics/events.dart';
+import 'package:nocturne/core/analytics/interactions.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 
 /// The 64px header: mark, route links, and the three controls.
@@ -82,7 +84,14 @@ class AppHeader extends ConsumerWidget {
                     ? l10n.languageSwitchToArabic
                     : l10n.languageSwitchToEnglish,
                 isActive: false,
-                onPressed: ref.read(localeControllerProvider.notifier).toggle,
+                onPressed: () {
+                  ref.read(localeControllerProvider.notifier).toggle();
+                  ref.recordInteraction(
+                    AnalyticsEvent.languageChanged,
+                    route: current?.path ?? AppRoute.station.path,
+                    inputMode: context.platform.inputMode,
+                  );
+                },
               ),
               ChromeControl(
                 label: l10n.themeGlyph,
@@ -90,7 +99,14 @@ class AppHeader extends ConsumerWidget {
                     ? l10n.themeSwitchToDaybreak
                     : l10n.themeSwitchToNocturne,
                 isActive: theme == AppTheme.daybreak,
-                onPressed: ref.read(themeControllerProvider.notifier).toggle,
+                onPressed: () {
+                  ref.read(themeControllerProvider.notifier).toggle();
+                  ref.recordInteraction(
+                    AnalyticsEvent.themeChanged,
+                    route: current?.path ?? AppRoute.station.path,
+                    inputMode: context.platform.inputMode,
+                  );
+                },
               ),
             ],
           ),

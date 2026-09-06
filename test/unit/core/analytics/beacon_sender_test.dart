@@ -6,7 +6,7 @@ import 'package:http/testing.dart';
 import 'package:nocturne/core/analytics/beacon_sender.dart';
 import 'package:nocturne/core/analytics/events.dart';
 
-const _beacon = (
+final _beacon = beacon(
   event: AnalyticsEvent.routeView,
   route: '/work',
   deviceClass: 'pointer',
@@ -56,6 +56,10 @@ void main() {
       'deviceClass': 'pointer',
       'referrerHost': 'example.com',
       'campaign': 'graduate-role',
+      // Tier 1 fields, absent on a Tier 0 route view. The wire shape carries
+      // the keys so the Worker's strict field check sees a stable object.
+      'sessionId': null,
+      'value': null,
     });
   });
 

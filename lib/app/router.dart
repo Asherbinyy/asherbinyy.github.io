@@ -7,6 +7,7 @@ import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/route_title.dart';
 import 'package:nocturne/core/analytics/analytics_route_view.dart';
 import 'package:nocturne/core/analytics/browser_analytics_context.dart';
+import 'package:nocturne/core/analytics/engagement_reporter.dart';
 import 'package:nocturne/core/platform/app_messenger_host.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
 import 'package:nocturne/features/privacy/presentation/privacy_screen.dart';
@@ -37,12 +38,18 @@ abstract final class AppRouter {
               : null,
           pageBuilder: (context, state) => NoTransitionPage<void>(
             key: state.pageKey,
-            child: AnalyticsRouteView(
+            child: EngagementReporter(
               route: state.uri.path,
-              child: RouteTitle(
-                route: route,
-                child: AppMessengerHost(
-                  child: _sequenced(route, slug: state.pathParameters['slug']),
+              child: AnalyticsRouteView(
+                route: state.uri.path,
+                child: RouteTitle(
+                  route: route,
+                  child: AppMessengerHost(
+                    child: _sequenced(
+                      route,
+                      slug: state.pathParameters['slug'],
+                    ),
+                  ),
                 ),
               ),
             ),

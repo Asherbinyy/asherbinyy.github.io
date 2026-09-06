@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/locale_controller.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
@@ -12,6 +13,8 @@ import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/content/models/career.dart';
+import 'package:nocturne/core/analytics/events.dart';
+import 'package:nocturne/core/analytics/interactions.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/painting/coastline_data.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
@@ -46,6 +49,11 @@ class _SignalScreenState extends ConsumerState<SignalScreen> {
 
   void _select(int index, List<CareerRole> roles, AppLocale locale) {
     _selected.value = index;
+    ref.recordInteraction(
+      AnalyticsEvent.mapNodeOpened,
+      route: AppRoute.signal.path,
+      inputMode: context.platform.inputMode,
+    );
     // Section 7 decides the surface once: a side panel on pointer, a bottom
     // sheet on touch. This screen never asks which it is on.
     if (context.platform.isTouch) {

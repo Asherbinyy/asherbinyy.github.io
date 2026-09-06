@@ -3,12 +3,12 @@ import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:nocturne/app/app_route.dart';
+import 'package:nocturne/features/station/presentation/widgets/cv_button.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/profile.dart';
-import 'package:nocturne/core/platform/static_route.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/features/station/presentation/widgets/stat_panel.dart';
 
@@ -91,13 +91,7 @@ class HeroContent extends StatelessWidget {
               emphasis: ButtonEmphasis.primary,
               onPressed: () => context.goNamed(AppRoute.work.name),
             ),
-            // The label names the outcome, per section 9. It reads "Read"
-            // rather than "Download" because profile.cvFile is absent and the
-            // action opens the static HTML CV instead of fetching a PDF.
-            BeaconButton(
-              label: l10n.heroReadTheCv,
-              onPressed: () => openStaticRoute(AppRoute.cv.path),
-            ),
+            const CvButton(route: AppRoute.station),
           ],
         ),
       ],

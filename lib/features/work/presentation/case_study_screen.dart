@@ -11,6 +11,8 @@ import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/content_result.dart';
+import 'package:nocturne/core/analytics/events.dart';
+import 'package:nocturne/core/analytics/interactions.dart';
 import 'package:nocturne/content/models/study.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
@@ -65,19 +67,34 @@ class CaseStudyScreen extends ConsumerWidget {
   }
 }
 
-class _Study extends StatefulWidget {
+class _Study extends ConsumerStatefulWidget {
   const _Study({required this.study, required this.locale});
 
   final Study study;
   final AppLocale locale;
 
   @override
-  State<_Study> createState() => _StudyState();
+  ConsumerState<_Study> createState() => _StudyState();
 }
 
-class _StudyState extends State<_Study> {
+class _StudyState extends ConsumerState<_Study> {
   /// Measures the two-column row, which is what bounds the frame's travel.
   final GlobalKey _rowKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    // Recorded here rather than on route change: the route resolves for every
+    // slug, but only a study that actually exists was opened.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.recordInteraction(
+        AnalyticsEvent.caseStudyOpened,
+        route: AppRoute.caseStudy.path,
+        inputMode: context.platform.inputMode,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

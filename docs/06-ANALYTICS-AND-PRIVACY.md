@@ -87,6 +87,27 @@ Rules:
 - Withdrawal is as easy as granting, reachable from the footer on every page, and takes effect immediately.
 - The session ID is regenerated per tab. It is never persisted to `localStorage`.
 
+### How the two measurements are actually taken
+
+"Time per section" and "scroll depth" are both reported **once, when the viewer
+leaves a route** — never continuously. A stream of scroll offsets would
+describe reading motion frame by frame, which is much nearer the session replay
+§2 bans outright than it is to a depth metric.
+
+| Field | Shape | Why |
+|---|---|---|
+| Scroll depth | A quartile, 1–4 | Answers "did they reach the work" and nothing else. A pixel offset answers far more than that. |
+| Time on a route | Whole seconds, only if ≥ 2s and ≤ 1h | A glance is not a reading, and a tab left open overnight is not either. Millisecond precision would be a sharper and more distinguishing number than the question deserves. |
+
+The Worker stores a running **total** beside the plain counter, so the console
+divides one by the other for a mean. No per-visit row is ever written.
+
+**The session identifier is never stored server-side.** It exists to
+deduplicate within a tab and is discarded in the same invocation, so no counter
+carries it as a dimension and none can be traced back to one viewer's tab. The
+Worker rejects a `route_view` that carries one at all, because Tier 0 must
+create no per-person record.
+
 ---
 
 ## 5. Consent

@@ -26,6 +26,8 @@ class HttpBeaconSender {
         'deviceClass': beacon.deviceClass,
         'referrerHost': beacon.referrerHost,
         'campaign': beacon.campaign,
+        'sessionId': beacon.sessionId,
+        'value': beacon.value,
       }),
     );
     if (result.statusCode < 200 || result.statusCode >= 300) {
