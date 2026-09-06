@@ -34,7 +34,6 @@ String routeTitle({
   AppRoute.caseStudy => '${l10n.navWork} — $name',
   AppRoute.writing => '${l10n.navWriting} — $name',
   AppRoute.about => '${l10n.navAbout} — $name',
-  AppRoute.privacy => '${l10n.navPrivacy} — $name',
   AppRoute.cv => '$name — ${l10n.navCv}',
   // A campaign link redirects to the station, so it carries its title.
   AppRoute.campaign => '$name — ${l10n.tabRole}',

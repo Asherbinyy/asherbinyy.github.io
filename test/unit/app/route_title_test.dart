@@ -24,7 +24,6 @@ void main() {
     expect(_title(AppRoute.work), 'Work — Ahmed Elsherbini');
     expect(_title(AppRoute.writing), 'Writing — Ahmed Elsherbini');
     expect(_title(AppRoute.about), 'About — Ahmed Elsherbini');
-    expect(_title(AppRoute.privacy), 'Privacy — Ahmed Elsherbini');
   });
 
   test('the console omits the name, not being a public surface', () {

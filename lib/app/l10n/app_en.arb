@@ -112,10 +112,6 @@
   "@footerLocation": {
     "description": "The owner's city, shown in the footer."
   },
-  "footerConsent": "Consent",
-  "@footerConsent": {
-    "description": "Footer link to the privacy and consent page."
-  },
   "heroSeeTheWork": "See the work",
   "@heroSeeTheWork": {
     "description": "Primary hero call to action, navigating to the work ledger."
@@ -139,10 +135,6 @@
   "tabRole": "Mobile Engineer",
   "@tabRole": {
     "description": "The owner's role, used in the browser tab title on the home route."
-  },
-  "navPrivacy": "Privacy",
-  "@navPrivacy": {
-    "description": "Section name for the privacy and consent page."
   },
   "navBrief": "Brief",
   "@navBrief": {
@@ -262,54 +254,9 @@
   "@privacyCollectNothing": {
     "description": "Consent page copy: privacyCollectNothing"
   },
-  "consentBannerBody": "This site counts page views so I know what people read. No cookies, no third-party trackers, and no profile of you is ever built.",
-  "@consentBannerBody": {
-    "description": "Consent copy: consentBannerBody"
-  },
-  "consentAcceptAll": "Accept all",
-  "@consentAcceptAll": {
-    "description": "Consent copy: consentAcceptAll"
-  },
-  "consentEssentialOnly": "Essential only",
-  "@consentEssentialOnly": {
-    "description": "Consent copy: consentEssentialOnly"
-  },
-  "consentReject": "Reject",
-  "@consentReject": {
-    "description": "Consent copy: consentReject"
-  },
-  "privacyBody": "This site counts page views so I know what people read. Country is worked out on the server from your request and the address is discarded immediately — it is never stored. No cookies, no third-party trackers, no profile of you, and nothing about your gender, age or identity, under any setting.",
-  "@privacyBody": {
-    "description": "Consent copy: privacyBody"
-  },
   "privacyCurrentAcceptAll": "Currently: everything on",
   "@privacyCurrentAcceptAll": {
     "description": "Consent copy: privacyCurrentAcceptAll"
-  },
-  "privacyCurrentEssential": "Currently: essential only",
-  "@privacyCurrentEssential": {
-    "description": "Consent copy: privacyCurrentEssential"
-  },
-  "privacyCurrentRejected": "Currently: nothing collected",
-  "@privacyCurrentRejected": {
-    "description": "Consent copy: privacyCurrentRejected"
-  },
-  "privacyCurrentUnset": "Currently: essential only, until you choose",
-  "@privacyCurrentUnset": {
-    "description": "Consent copy: privacyCurrentUnset"
-  },
-  "privacyRetention": "Aggregate counts are kept for 24 months. Session events, if you turn them on, are kept for 90 days and are never linked across visits.",
-  "@privacyRetention": {
-    "description": "Consent copy: privacyRetention"
-  },
-  "privacyContact": "Ahmed Elsherbini is the controller. To ask what is held or to have it erased, email {email}.",
-  "@privacyContact": {
-    "description": "Consent copy: privacyContact",
-    "placeholders": {
-      "email": {
-        "type": "String"
-      }
-    }
   },
   "writingHeading": "Writing",
   "@writingHeading": {
@@ -459,14 +406,6 @@
   "consoleDailyViews": "Views per day",
   "@consoleDailyViews": {
     "description": "Console: sparkline label"
-  },
-  "privacyCollectsNothing": "This site collects nothing.",
-  "@privacyCollectsNothing": {
-    "description": "Privacy: heading line when analytics is off"
-  },
-  "privacyCollectsNothingBody": "No analytics, no cookies, no third-party trackers, and nothing written to your device. There is no consent banner because there is nothing to consent to. If that ever changes, this page will say so first and you will be asked before anything is collected.",
-  "@privacyCollectsNothingBody": {
-    "description": "Privacy: body when analytics is off"
   },
   "aboutContact": "Contact",
   "@aboutContact": {

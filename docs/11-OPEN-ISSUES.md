@@ -14,6 +14,11 @@ Last reviewed: 2026-09-06, after deploying the Milestone 2 Worker.
 
 ## 0. What this build collects: nothing
 
+**There is no consent banner and no `/privacy` route.** Both were removed in
+Milestone 3 with the collection they existed for. `06-ANALYTICS-AND-PRIVACY.md`
+carries a status banner saying so, and restoring collection means restoring the
+consent interface and a notice along with it.
+
 The release build supplies no `ANALYTICS_ENDPOINT`, so there is no sender, no
 client, and no collection of any kind — no beacon, no consent banner, nothing
 written to a visitor's device. `/privacy` says exactly that and offers no
@@ -76,7 +81,7 @@ numbers and translations, and every row below is one of those.
 | 3.5 | **`InteractiveViewer` keeps its default boundary behaviour** on the propagation map, so direct panning only becomes useful once zoomed. | From the propagation-map session. |
 | 3.6 | **The acquisition sequence's once-per-tab behaviour is unobserved in a browser.** The VM test target cannot emulate a hard reload; the conditional web implementation is only proven by the WASM build compiling. | Needs the deployed site. |
 | 3.7 | **The build emits a missing Material/Cupertino icon-font warning.** The app bundles and uses neither package. | Cosmetic, long-standing. |
-| 3.12 | **Bundled fonts are 556KB against a 480KB budget.** Roadmap 3.2 measured every budget in `03-ARCHITECTURE.md` §5: the gzipped initial payload is 0.99MB against 2.2MB, no image exceeds 180KB, and fonts were the one failure. Dropping the Arabic Presentation Forms blocks — legacy precomposed shapes HarfBuzz derives from the base block through GSUB anyway — and the Persian/Urdu extended ranges took the three Arabic faces from 543KB to 303KB, so the bundle went 794KB to 556KB. Closing the last 76KB means **shipping two Arabic weights instead of three**, which changes how Arabic emphasis reads, or **revising the budget**, which was probably set without pricing three Arabic weights beside seven Latin faces. A typography decision for the owner, not an agent. `test/unit/performance/budget_test.dart` holds the saving in place meanwhile. |
+| ~~3.12~~ | **Closed.** Fonts are 556KB. The subsetting was tightened first — dropping the Arabic Presentation Forms and the Persian/Urdu ranges took the bundle from 794KB to 556KB — and the budget in `03-ARCHITECTURE.md` §5 was then raised from 480KB to 580KB, on the owner's instruction. The original figure was set without pricing three Arabic weights beside seven Latin faces; meeting it would have meant dropping an Arabic weight and letting emphasis synthesise. |
 | ~~3.8~~ | **Closed by roadmap 3.3.** `test/widget/accessibility_test.dart` now runs `androidTapTargetGuideline` and `labeledTapTargetGuideline` across all six public routes, plus keyboard traversal on `/`, `/work` and `/privacy`. It found a real defect on the first run: the primary navigation set `link: true` with no label while excluding the visible text, so **the whole nav announced nothing to a screen reader**. Fixed. |
 | 3.10 | **The console's code-split lands in the JS output, not the WasmGC one.** `fvm flutter build web --wasm` emits `main.dart.js_1.part.js` — a real 9.2KB deferred chunk on the JavaScript fallback path — but a single `main.dart.wasm` with no separate part. So a browser on the WasmGC path downloads the dashboard whether or not it ever reaches the gate. Roadmap 2.5's "code-split" is met on one of the two outputs. | Not fixable from application code; it is a WasmGC deferred-loading limitation. Re-check when the SDK gains split output. |
 | 3.11 | **The console token is held in memory only.** Deliberate: it is a bearer credential for the analytics store, and a site whose argument is about not writing to visitors' devices should not make an exception for its own secret. The cost is re-entering it once per tab, paid only by the owner. | Change only if the owner asks. |

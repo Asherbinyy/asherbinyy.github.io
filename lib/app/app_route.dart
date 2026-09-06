@@ -18,9 +18,6 @@ enum AppRoute {
   /// Background and contact.
   about('/about'),
 
-  /// Consent controls, deferred beyond foundation.
-  privacy('/privacy'),
-
   /// Dashboard placeholder; no dashboard or data exists yet.
   console('/console'),
 

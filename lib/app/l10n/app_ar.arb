@@ -28,14 +28,12 @@
   "traceScanning": "مسح",
   "traceLock": "التقاط",
   "footerLocation": "مانشستر",
-  "footerConsent": "الموافقة",
   "heroSeeTheWork": "اطّلع على الأعمال",
   "heroReadTheCv": "اقرأ السيرة الذاتية",
   "acquisitionSkip": "تخطّي المقدمة",
   "acquisitionLabel": "جارٍ التقاط الإشارة",
   "heroContentUnavailable": "تعذّر تحميل بيانات الملف الشخصي. صفحة السيرة الذاتية لا تعتمد عليها.",
   "tabRole": "مهندس تطبيقات الهاتف",
-  "navPrivacy": "الخصوصية",
   "navBrief": "الملخّص",
   "navConsole": "لوحة التحكم",
   "navCv": "السيرة الذاتية",
@@ -59,17 +57,7 @@
   "privacyHeading": "ما يعرفه هذا الموقع عنك",
   "privacyNotCollected": "لا يُجمع",
   "privacyCollectNothing": "لا تجمع شيئًا",
-  "consentBannerBody": "يحصي هذا الموقع مرات عرض الصفحات لأعرف ما يقرأه الناس. بلا كوكيز، وبلا متتبّعات خارجية، ودون بناء أي ملف عنك.",
-  "consentAcceptAll": "قبول الكل",
-  "consentEssentialOnly": "الضروري فقط",
-  "consentReject": "رفض",
-  "privacyBody": "يحصي هذا الموقع مرات عرض الصفحات لأعرف ما يقرأه الناس. تُحدَّد الدولة على الخادم من طلبك ثم يُهمَل العنوان فورًا ولا يُخزَّن أبدًا. بلا كوكيز، وبلا متتبّعات خارجية، ودون أي ملف عنك، ولا شيء عن جنسك أو عمرك أو هويتك مهما كان الإعداد.",
   "privacyCurrentAcceptAll": "الحالة: كل شيء مفعّل",
-  "privacyCurrentEssential": "الحالة: الضروري فقط",
-  "privacyCurrentRejected": "الحالة: لا يُجمع شيء",
-  "privacyCurrentUnset": "الحالة: الضروري فقط، إلى أن تختار",
-  "privacyRetention": "تُحفظ الأعداد الإجمالية 24 شهرًا. أما أحداث الجلسة، إن فعّلتها، فتُحفظ 90 يومًا ولا تُربط بين الزيارات.",
-  "privacyContact": "أحمد الشربيني هو المتحكم بالبيانات. لمعرفة ما هو محفوظ أو لطلب حذفه، راسل {email}.",
   "writingHeading": "الكتابة",
   "@writingHeading": {
     "description": "Writing screen: heading"
@@ -218,14 +206,6 @@
   "consoleDailyViews": "المشاهدات يوميًا",
   "@consoleDailyViews": {
     "description": "Console: sparkline label"
-  },
-  "privacyCollectsNothing": "هذا الموقع لا يجمع شيئًا.",
-  "@privacyCollectsNothing": {
-    "description": "Privacy: heading line when analytics is off"
-  },
-  "privacyCollectsNothingBody": "لا تحليلات، ولا كوكيز، ولا متتبعات خارجية، ولا شيء يُكتب على جهازك. لا توجد نافذة موافقة لأنه لا شيء يستدعي الموافقة. وإن تغيّر ذلك يومًا، ستقول هذه الصفحة ذلك أولًا وستُسأل قبل جمع أي شيء.",
-  "@privacyCollectsNothingBody": {
-    "description": "Privacy: body when analytics is off"
   },
   "aboutContact": "التواصل",
   "@aboutContact": {
