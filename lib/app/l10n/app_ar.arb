@@ -243,5 +243,9 @@
   "stationCqResponse": "تم الرد على النداء — المحطة تستقبل",
   "@stationCqResponse": {
     "description": "Easter egg: the response line shown when a viewer types CQ"
+  },
+  "consoleDormant": "التحليلات معطّلة، لذا لا يوجد ما يُعرض. أُبقيت لوحة التحكم استعدادًا لإعادة تفعيلها.",
+  "@consoleDormant": {
+    "description": "Console: shown when the build collects nothing"
   }
 }

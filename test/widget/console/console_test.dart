@@ -1,9 +1,11 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/app_nav.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
+import 'package:nocturne/core/analytics/analytics_providers.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/features/console/data/console_providers.dart';
 import 'package:nocturne/features/console/domain/console_summary.dart';
@@ -79,6 +81,13 @@ ConsoleSummary summaryWith({
   today: DateTime.utc(2026, 9, 30),
 );
 
+/// The console only has anything to show when the build is collecting, which
+/// production is not. These pump a collecting build; the dormant behaviour has
+/// its own group at the foot of the file.
+final List<Override> collecting = [
+  analyticsIsCollectingProvider.overrideWithValue(true),
+];
+
 void main() {
   group('the gate', () {
     testWidgets('asks for a token before showing anything', (tester) async {
@@ -86,6 +95,7 @@ void main() {
         tester,
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.console,
+        overrides: collecting,
       );
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
@@ -98,6 +108,7 @@ void main() {
         tester,
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.console,
+        overrides: collecting,
       );
 
       final field = tester.widget<TextField>(find.byType(TextField));
@@ -124,6 +135,7 @@ void main() {
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.console,
         overrides: [
+          ...collecting,
           consoleTokenProvider.overrideWith((ref) => 'a-token'),
           consoleSummaryProvider.overrideWith(
             (ref) async => summaryWith(
@@ -149,6 +161,7 @@ void main() {
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.console,
         overrides: [
+          ...collecting,
           consoleTokenProvider.overrideWith((ref) => 'a-token'),
           consoleSummaryProvider.overrideWith(
             (ref) async => summaryWith(
@@ -171,6 +184,7 @@ void main() {
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.console,
         overrides: [
+          ...collecting,
           consoleTokenProvider.overrideWith((ref) => 'a-token'),
           consoleSummaryProvider.overrideWith((ref) async => summaryWith()),
         ],
@@ -192,6 +206,24 @@ void main() {
       );
 
       expect(find.byType(ConsoleScreen), findsOneWidget);
+    });
+  });
+
+  group('the dormant build', () {
+    testWidgets('says the console is off rather than asking for a token', (
+      tester,
+    ) async {
+      // What production ships. A gate that takes a token and then shows
+      // nothing is worse than no gate at all.
+      await pumpStation(
+        tester,
+        breakpoint: ChromeBreakpoint.large,
+        initialRoute: AppRoute.console,
+      );
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+
+      expect(find.text(l10n.consoleDormant), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
     });
   });
 }

@@ -63,6 +63,7 @@ Future<ProviderContainer> pumpChrome(
   ThemeMode? themeMode,
   Locale? locale,
   AssetReader? reader,
+  List<Override> overrides = const [],
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -78,6 +79,8 @@ Future<ProviderContainer> pumpChrome(
       platformCapabilitiesProvider.overrideWith(
         () => FixedCapabilities(capabilities),
       ),
+      // Last, so a caller can replace any of the defaults above.
+      ...overrides,
     ],
   );
   addTearDown(container.dispose);

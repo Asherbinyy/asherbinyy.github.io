@@ -22,15 +22,19 @@ import '../support/pump.dart';
 // chrome was the only thing on screen. Milestone 2 built the last of those, so
 // there is no placeholder route left inside the chrome to photograph.
 //
-// It now covers the console's token gate instead, which keeps exactly the same
+// It now covers the console route instead, which keeps exactly the same
 // coverage this was for — both themes crossed with both directions, over a
-// deliberately sparse body — and gains a baseline for a newly built screen.
-// The gate is also the only page a public visitor can reach here, so it is
-// worth knowing when it changes.
+// deliberately sparse body.
+//
+// This build collects nothing, so the route shows its dormant notice rather
+// than the token gate. That is deliberately what gets photographed: a golden
+// is worth most when it shows what a visitor actually sees.
 void main() {
   for (final mode in [ThemeMode.dark, ThemeMode.light]) {
     for (final language in ['en', 'ar']) {
-      testWidgets('the console gate in ${mode.name} $language', (tester) async {
+      testWidgets('the console at rest in ${mode.name} $language', (
+        tester,
+      ) async {
         await pumpChrome(
           tester,
           breakpoint: ChromeBreakpoint.expanded,
@@ -52,7 +56,9 @@ void main() {
 
         await expectLater(
           find.byType(NocturneApp),
-          matchesGoldenFile('goldens/console_gate_${mode.name}_$language.png'),
+          matchesGoldenFile(
+            'goldens/console_dormant_${mode.name}_$language.png',
+          ),
         );
       });
     }
