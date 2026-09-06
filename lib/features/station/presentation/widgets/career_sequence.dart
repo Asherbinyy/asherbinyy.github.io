@@ -4,6 +4,7 @@ import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/career.dart';
+import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
 /// The career, top to bottom, as the trace's burst anchors.
 ///
@@ -13,7 +14,12 @@ import 'package:nocturne/content/models/career.dart';
 /// content states. The trace is the bold element and this must not compete.
 class CareerSequence extends StatelessWidget {
   /// [roles] arrive in the content's own chronological order.
-  const CareerSequence({required this.roles, required this.locale, super.key});
+  const CareerSequence({
+    required this.roles,
+    required this.locale,
+    required this.anchorRegistry,
+    super.key,
+  });
 
   /// Career stations.
   final List<CareerRole> roles;
@@ -21,12 +27,19 @@ class CareerSequence extends StatelessWidget {
   /// Active content channel.
   final AppLocale locale;
 
+  /// Supplies the stable keys the fixed trace layer measures.
+  final TraceAnchorRegistry anchorRegistry;
+
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [
-      for (final role in roles) _CareerEntry(role: role, locale: locale),
+      for (final role in roles)
+        KeyedSubtree(
+          key: anchorRegistry.keyFor(role.id),
+          child: _CareerEntry(role: role, locale: locale),
+        ),
     ],
   );
 }

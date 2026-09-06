@@ -9,6 +9,8 @@ import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/features/trace/domain/trace_geometry.dart';
 import 'package:nocturne/features/trace/presentation/telemetry_trace.dart';
+import 'package:nocturne/features/trace/presentation/trace_burst_label.dart';
+import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
 /// The trace, wired to the career content.
 ///
@@ -50,6 +52,7 @@ class StationTrace extends ConsumerWidget {
       controller: controller,
       bursts: bursts,
       labels: {for (final role in roles) role.id: _labelFor(role, locale)},
+      anchorRegistry: ref.watch(traceAnchorRegistryProvider),
     );
   }
 

@@ -76,9 +76,12 @@ class AnimatedConsentBanner extends StatelessWidget {
   const AnimatedConsentBanner({super.key});
 
   @override
-  Widget build(BuildContext context) => AnimatedSize(
-    duration: ReducedMotion.duration(context, Tokens.standard),
-    curve: MotionCurves.emphasized,
-    child: const ConsentBanner(),
-  );
+  Widget build(BuildContext context) {
+    if (ReducedMotion.of(context)) return const ConsentBanner();
+    return const AnimatedSize(
+      duration: Tokens.standard,
+      curve: MotionCurves.emphasized,
+      child: ConsentBanner(),
+    );
+  }
 }

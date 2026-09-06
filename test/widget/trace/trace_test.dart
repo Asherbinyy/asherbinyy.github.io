@@ -4,11 +4,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
+import 'package:nocturne/core/painting/trace_painter.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
 import 'package:nocturne/features/trace/domain/trace_controller.dart';
 import 'package:nocturne/features/trace/domain/trace_state.dart';
 import 'package:nocturne/features/trace/presentation/station_trace.dart';
 import 'package:nocturne/features/trace/presentation/telemetry_trace.dart';
+import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
 import '../../support/chrome_harness.dart';
 import '../../support/content_readers.dart';
@@ -39,6 +41,27 @@ void main() {
     expect(trace.bursts, hasLength(6));
     expect(trace.labels, hasLength(6));
   });
+
+  for (final reducedMotion in [false, true]) {
+    testWidgets('bursts follow career centres through scroll and resize '
+        '(reduced motion: $reducedMotion)', (tester) async {
+      final container = await pumpStation(
+        tester,
+        breakpoint: ChromeBreakpoint.large,
+        reducedMotion: reducedMotion,
+      );
+      final registry = container.read(traceAnchorRegistryProvider);
+      expectCareerAnchors(tester, registry);
+      final trace = tester.widget<TelemetryTrace>(find.byType(TelemetryTrace));
+      trace.controller.jumpTo(350);
+      await pumpFrames(tester);
+      expectCareerAnchors(tester, registry);
+      tester.view.physicalSize = const Size(1100, 700);
+      await pumpFrames(tester);
+      expectCareerAnchors(tester, registry);
+      if (reducedMotion) await tester.pumpAndSettle();
+    });
+  }
 
   testWidgets('every burst label comes from the content', (tester) async {
     await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
@@ -112,4 +135,27 @@ void main() {
     expect(find.byType(TelemetryTrace), findsNothing);
     expect(tester.takeException(), isNull);
   });
+}
+
+void expectCareerAnchors(WidgetTester tester, TraceAnchorRegistry registry) {
+  final paintFinder = find.byWidgetPredicate(
+    (widget) => widget is CustomPaint && widget.painter is TracePainter,
+  );
+  final painter = tester.widget<CustomPaint>(paintFinder).painter;
+  if (painter is! TracePainter) fail('Expected the telemetry painter');
+  final trace = tester.widget<TelemetryTrace>(find.byType(TelemetryTrace));
+  expect(painter.scrollOffset, trace.controller.offset);
+  final traceTop = tester.getTopLeft(paintFinder).dy;
+  for (final burst in painter.bursts) {
+    final anchorContext = registry.keyFor(burst.id).currentContext;
+    expect(anchorContext, isNotNull);
+    final anchorBox = anchorContext?.findRenderObject();
+    if (anchorBox is! RenderBox) fail('Career entry has no rendered box');
+    final centre = anchorBox.localToGlobal(
+      Offset(0, anchorBox.size.height / 2),
+    );
+    final paintedCentre =
+        burst.anchor * painter.traceHeight - painter.scrollOffset;
+    expect(paintedCentre, closeTo(centre.dy - traceTop, 0.01));
+  }
 }

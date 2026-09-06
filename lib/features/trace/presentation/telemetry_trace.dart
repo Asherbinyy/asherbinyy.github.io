@@ -1,38 +1,29 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
-import 'package:nocturne/app/theme/typography.dart';
-import 'package:nocturne/core/motion/curves.dart';
-import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/trace_painter.dart';
-import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/features/trace/domain/trace_controller.dart';
 import 'package:nocturne/features/trace/domain/trace_geometry.dart';
 import 'package:nocturne/features/trace/domain/trace_state.dart';
+import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
+import 'package:nocturne/features/trace/presentation/trace_burst_label.dart';
+import 'package:nocturne/features/trace/presentation/trace_frame.dart';
 
-/// What a burst says when the signal locks onto it.
-typedef TraceLabel = ({String id, String title, String meta});
-
-/// The telemetry trace: the site's signature element.
+/// Fixed trace layer driven by scroll, with bursts measured after layout.
 ///
-/// Section 6: one painted path driven by a single controller and the scroll
-/// offset, degrading toward noise as scroll velocity rises and resolving under
-/// lock. It runs behind the content column rather than inside the scroll view,
-/// so the painter knows the visible window and can sample only that.
-///
-/// Under reduced motion it renders static at rest amplitude with every burst
-/// label visible and no state machine at all, which is the settled state the
-/// design system requires rather than a disabled animation.
+/// Reduced motion keeps the carrier static while following the page offset.
 class TelemetryTrace extends ConsumerStatefulWidget {
   /// [controller] is the page scroll the trace reads.
   const TelemetryTrace({
     required this.controller,
     required this.bursts,
     required this.labels,
+    required this.anchorRegistry,
     super.key,
   });
 
@@ -45,6 +36,9 @@ class TelemetryTrace extends ConsumerStatefulWidget {
   /// One label per burst, keyed by the burst id.
   final Map<String, TraceLabel> labels;
 
+  /// Resolves the provisional burst geometry against rendered career entries.
+  final TraceAnchorRegistry anchorRegistry;
+
   @override
   ConsumerState<TelemetryTrace> createState() => _TelemetryTraceState();
 }
@@ -56,15 +50,18 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
         .round(),
   );
 
-  final ValueNotifier<_TraceFrame> _frame = ValueNotifier(
-    const _TraceFrame(offset: 0, velocity: 0, coherence: 1),
+  final ValueNotifier<TraceFrame> _frame = ValueNotifier(
+    const TraceFrame(offset: 0, velocity: 0, coherence: 1),
   );
+  final GlobalKey _traceKey = GlobalKey(debugLabel: 'telemetry-trace');
 
   Ticker? _ticker;
   double _lastOffset = 0;
   Duration _lastTick = Duration.zero;
   Duration _sinceScroll = Duration.zero;
   bool? _isSettled;
+  bool _measurementScheduled = false;
+  List<TraceBurst>? _measuredBursts;
 
   @override
   void initState() {
@@ -82,7 +79,11 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
     _ticker = null;
     if (settled) {
       // No state machine under reduced motion: the trace is simply at rest.
-      _frame.value = const _TraceFrame(offset: 0, velocity: 0, coherence: 1);
+      _frame.value = TraceFrame(
+        offset: widget.controller.hasClients ? widget.controller.offset : 0,
+        velocity: 0,
+        coherence: 1,
+      );
       _publish(TraceState.standby);
       return;
     }
@@ -100,13 +101,16 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
   void _onScroll() {
     if (!widget.controller.hasClients) return;
     _sinceScroll = Duration.zero;
+    if (_isSettled ?? false) {
+      _frame.value = TraceFrame(
+        offset: widget.controller.offset,
+        velocity: 0,
+        coherence: 1,
+      );
+    }
   }
 
-  /// Whether any part of the trace is currently on screen.
-  ///
-  /// Section 5 allows exactly one infinite loop on the site — the trace idle —
-  /// and requires it to pause off-screen. Scrolling past the career sequence
-  /// therefore costs nothing at all, not merely a cheap painter early-return.
+  /// Pauses the idle carrier when the document is outside the viewport.
   bool get _isOnScreen {
     if (!widget.controller.hasClients) return true;
     final position = widget.controller.position;
@@ -131,7 +135,7 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
     _sinceScroll += delta;
 
     final coherence = TraceGeometry.coherenceFor(velocity);
-    _frame.value = _TraceFrame(
+    _frame.value = TraceFrame(
       offset: offset,
       velocity: velocity,
       coherence: coherence,
@@ -141,16 +145,15 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
       TraceGeometry.stateFor(
         velocity: velocity,
         sinceLastScroll: _sinceScroll,
-        nearestBurstDistance: _nearestBurstDistance(offset),
+        nearestBurstDistance: _nearestBurst(offset)?.distance,
       ),
     );
   }
 
-  /// The bursts, confined to the trace below the hero.
-  ///
-  /// The career sequence starts one screen down, so the bursts do too — a
-  /// burst under the hero would lock the page onto a role nobody can see yet.
-  List<TraceBurst> get _anchoredBursts {
+  /// Uses provisional positions only until the career's first layout finishes.
+  List<TraceBurst> _anchoredBursts() {
+    final measured = _measuredBursts;
+    if (measured != null) return measured;
     if (!widget.controller.hasClients) return widget.bursts;
     final position = widget.controller.position;
     final height = position.maxScrollExtent + position.viewportDimension;
@@ -161,35 +164,56 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
     );
   }
 
-  /// Distance in pixels from the viewport centre to the nearest burst.
-  double? _nearestBurstDistance(double offset) {
-    if (widget.bursts.isEmpty || !widget.controller.hasClients) return null;
+  void _scheduleMeasurement() {
+    if (_measurementScheduled) return;
+    _measurementScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _measurementScheduled = false;
+      if (!mounted || !widget.controller.hasClients) return;
+      final traceContext = _traceKey.currentContext;
+      if (traceContext == null) return;
+      final position = widget.controller.position;
+      // Both sibling layers must finish layout before their coordinates agree,
+      // including after text reflow or a viewport resize.
+      final measured = widget.anchorRegistry.resolve(
+        bursts: widget.bursts,
+        traceContext: traceContext,
+        scrollOffset: position.pixels,
+        traceHeight: position.maxScrollExtent + position.viewportDimension,
+      );
+      if (measured == null || listEquals(measured, _measuredBursts)) return;
+      _measuredBursts = measured;
+      final frame = _frame.value;
+      _frame.value = TraceFrame(
+        offset: position.pixels,
+        velocity: frame.velocity,
+        coherence: frame.coherence,
+        phase: frame.phase,
+      );
+    });
+  }
+
+  /// Distance from the viewport centre using the last completed layout.
+  ({String id, double distance})? _nearestBurst(double offset) {
+    if (!widget.controller.hasClients) return null;
     final position = widget.controller.position;
     final height = position.maxScrollExtent + position.viewportDimension;
     final centre = offset + position.viewportDimension / 2;
-    double? nearest;
-    for (final burst in _anchoredBursts) {
+    ({String id, double distance})? nearest;
+    for (final burst in _anchoredBursts()) {
       final distance = (burst.anchor * height - centre).abs();
-      if (nearest == null || distance < nearest) nearest = distance;
+      if (nearest == null || distance < nearest.distance) {
+        nearest = (id: burst.id, distance: distance);
+      }
     }
     return nearest;
   }
 
   String? _lockedBurstId(double offset) {
-    if (!widget.controller.hasClients) return null;
-    final position = widget.controller.position;
-    final height = position.maxScrollExtent + position.viewportDimension;
-    final centre = offset + position.viewportDimension / 2;
-    String? id;
-    var nearest = double.infinity;
-    for (final burst in _anchoredBursts) {
-      final distance = (burst.anchor * height - centre).abs();
-      if (distance < nearest) {
-        nearest = distance;
-        id = burst.id;
-      }
-    }
-    return nearest <= Tokens.traceLockDistance ? id : null;
+    final nearest = _nearestBurst(offset);
+    return nearest != null && nearest.distance <= Tokens.traceLockDistance
+        ? nearest.id
+        : null;
   }
 
   void _publish(TraceState state) {
@@ -214,9 +238,10 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
           // leaving the content column's own measure clear.
           alignment: AlignmentDirectional.centerEnd,
           child: SizedBox(
+            key: _traceKey,
             width: constraints.maxWidth * Tokens.traceColumnFraction,
             height: constraints.maxHeight,
-            child: ValueListenableBuilder<_TraceFrame>(
+            child: ValueListenableBuilder<TraceFrame>(
               valueListenable: _frame,
               builder: (context, frame, _) {
                 final position = widget.controller.hasClients
@@ -225,7 +250,9 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
                 final traceHeight = position == null
                     ? constraints.maxHeight
                     : position.maxScrollExtent + position.viewportDimension;
-                final bursts = _anchoredBursts;
+                _scheduleMeasurement();
+                final bursts = _anchoredBursts();
+                final lockedBurstId = _lockedBurstId(frame.offset);
 
                 return Stack(
                   fit: StackFit.expand,
@@ -247,7 +274,7 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
                       ),
                     ),
                     for (final burst in bursts)
-                      _BurstLabel(
+                      TraceBurstLabel(
                         label: widget.labels[burst.id],
                         top:
                             burst.anchor * traceHeight -
@@ -255,9 +282,7 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
                             Tokens.space48,
                         // Under reduced motion every label stays visible,
                         // because there is no lock state to reveal them.
-                        isVisible:
-                            isSettled ||
-                            _lockedBurstId(frame.offset) == burst.id,
+                        isVisible: isSettled || lockedBurstId == burst.id,
                       ),
                   ],
                 );
@@ -268,65 +293,4 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
       ),
     );
   }
-}
-
-/// One burst's readout, shown while the signal is locked onto it.
-class _BurstLabel extends StatelessWidget {
-  const _BurstLabel({
-    required this.label,
-    required this.top,
-    required this.isVisible,
-  });
-
-  final TraceLabel? label;
-  final double top;
-  final bool isVisible;
-
-  @override
-  Widget build(BuildContext context) {
-    final content = label;
-    if (content == null) return const SizedBox.shrink();
-    final tokens = context.tokens;
-
-    return Positioned(
-      top: top,
-      left: 0,
-      child: AnimatedOpacity(
-        opacity: isVisible ? 1 : 0,
-        duration: ReducedMotion.duration(context, Motion.standard),
-        curve: MotionCurves.emphasized,
-        child: InstrumentPanel(
-          fill: tokens.surface,
-          padding: EdgeInsets.all(tokens.space12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                content.title,
-                style: context.type.bodyS.copyWith(color: tokens.beacon),
-              ),
-              Text(content.meta, style: context.type.telemetryS),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// One frame's worth of trace state, published without rebuilding the page.
-@immutable
-class _TraceFrame {
-  const _TraceFrame({
-    required this.offset,
-    required this.velocity,
-    required this.coherence,
-    this.phase = 0,
-  });
-
-  final double offset;
-  final double velocity;
-  final double coherence;
-  final double phase;
 }

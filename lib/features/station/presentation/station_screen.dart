@@ -20,6 +20,7 @@ import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
+import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
 /// The ground station: the acquisition sequence, then the settled hero.
 class StationScreen extends ConsumerWidget {
@@ -83,7 +84,11 @@ class _Career extends ConsumerWidget {
 
     return Padding(
       padding: EdgeInsets.only(top: context.tokens.space96),
-      child: CareerSequence(roles: roles, locale: locale),
+      child: CareerSequence(
+        roles: roles,
+        locale: locale,
+        anchorRegistry: ref.watch(traceAnchorRegistryProvider),
+      ),
     );
   }
 }

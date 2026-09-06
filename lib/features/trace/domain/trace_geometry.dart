@@ -213,12 +213,12 @@ abstract final class TraceGeometry {
     ];
   }
 
-  /// Lays out one burst per role, evenly spaced down the trace.
+  /// Creates provisional geometry for one burst per role.
   ///
   /// Roles arrive in the content's own order, which the schema states is
   /// chronological ascending, so the trace reads top to bottom as the career
-  /// ran. Spacing is even rather than proportional to dates: the trace is
-  /// anchored to the page's scroll, not to a calendar axis.
+  /// ran. Presentation replaces these even provisional positions with the
+  /// rendered career section centres after layout.
   static List<TraceBurst> layout(List<TraceRoleInput> roles) {
     if (roles.isEmpty) return const [];
     final longest = roles
