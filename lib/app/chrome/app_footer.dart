@@ -7,6 +7,7 @@ import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 
 /// The 48px footer, carrying the coordinate readout.
@@ -27,6 +28,9 @@ class AppFooter extends StatelessWidget {
     final tokens = context.tokens;
     final l10n = context.l10n;
     final readout = coordinate;
+
+    final hasRoomForReadout =
+        context.platform.viewport.index >= ViewportClass.medium.index;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -53,10 +57,31 @@ class AppFooter extends StatelessWidget {
               ),
               SizedBox(width: tokens.space16),
               _FooterLink(label: l10n.footerConsent, route: AppRoute.privacy),
-              const Spacer(),
+              // Reachable but quiet: roadmap 2.7 calls this the page that
+              // converts "creative" into "hireable", and the reader who wants
+              // it is the one already looking at the footer.
+              //
+              // Not on a phone. The footer is one 48px row and this label is
+              // long; forcing it in overflows, and truncating a link to fit is
+              // worse than not offering it here. `/about` carries the same
+              // link at every width, so the page is never unreachable.
+              if (hasRoomForReadout) ...[
+                SizedBox(width: tokens.space16),
+                _FooterLink(
+                  label: l10n.navHowItWasBuilt,
+                  route: AppRoute.howItWasBuilt,
+                ),
+              ],
+              // Only pushes the readout to the far edge. Without one there is
+              // nothing to push, and an expanding Spacer would compete with
+              // the location text for the space it needs to ellipsize into.
+              if (readout != null && hasRoomForReadout) const Spacer(),
               // The one place the concept winks. Quiet, muted, monospace.
-              // Omitted rather than faked while the reading is unavailable.
-              if (readout != null)
+              // Omitted rather than faked while the reading is unavailable,
+              // and dropped entirely on a phone: the footer is one 48px row,
+              // and when it runs out of room a decorative flourish yields
+              // before a navigational link does.
+              if (readout != null && hasRoomForReadout)
                 Text(
                   readout,
                   maxLines: 1,

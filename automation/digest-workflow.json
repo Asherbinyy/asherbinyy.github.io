@@ -1,0 +1,62 @@
+{
+  "name": "NOCTURNE daily digest",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nocturne-digest",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Digest webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "nocturne-digest"
+    },
+    {
+      "parameters": {
+        "jsCode": "// The Worker posts {generatedAt, counters, totals}. Counter dimensions are\n// positional: date | event | route | country | deviceClass | referrerHost |\n// campaign, with the unique-visitor row carrying only date and the literal.\n//\n// Nothing here identifies a person. There is no field that could: the Worker\n// discards the IP inside the request that resolved the country, and the Tier 1\n// session id is never stored as a dimension.\nconst body = $input.first().json;\nconst counters = body.counters ?? [];\nconst yesterday = new Date(Date.parse(body.generatedAt) - 86400000)\n  .toISOString()\n  .slice(0, 10);\n\nconst onDay = counters.filter((row) => row.dimensions?.[0] === yesterday);\nconst sum = (event) =>\n  onDay\n    .filter((row) => row.dimensions?.[1] === event)\n    .reduce((total, row) => total + (row.count ?? 0), 0);\n\nconst campaigns = new Map();\nfor (const row of onDay) {\n  const campaign = row.dimensions?.[6];\n  if (!campaign || campaign === '-') continue;\n  const current = campaigns.get(campaign) ?? {views: 0, cv: 0};\n  if (row.dimensions[1] === 'route_view') current.views += row.count ?? 0;\n  if (row.dimensions[1] === 'cv_opened') current.cv += row.count ?? 0;\n  campaigns.set(campaign, current);\n}\n\nconst ranked = [...campaigns.entries()].sort((a, b) => b[1].views - a[1].views);\nconst views = sum('route_view');\nconst unique = sum('unique_visitor');\nconst cvOpens = sum('cv_opened');\n\n// A quiet day sends nothing. A daily email that says \"0\" every day trains its\n// only reader to ignore it, and this one exists to be noticed when it matters.\nif (views === 0 && cvOpens === 0) {\n  return [];\n}\n\nconst lines = [\n  `${views} views from ${unique} visitors.`,\n  `${cvOpens} CV ${cvOpens === 1 ? 'open' : 'opens'}.`,\n  '',\n  ...ranked.map(([name, c]) => `${name}: ${c.views} views, ${c.cv} CV`),\n];\n\nreturn [\n  {\n    json: {\n      date: yesterday,\n      subject: `NOCTURNE ${yesterday}: ${views} views, ${cvOpens} CV`,\n      text: lines.join('\\n'),\n    },\n  },\n];"
+      },
+      "id": "summarise",
+      "name": "Summarise yesterday",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $env.DIGEST_FROM, to: [$env.DIGEST_TO], subject: $json.subject, text: $json.text }) }}",
+        "options": {}
+      },
+      "id": "send",
+      "name": "Send via Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_RESEND_CREDENTIAL_ID",
+          "name": "Resend API key"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Digest webhook": {
+      "main": [[{"node": "Summarise yesterday", "type": "main", "index": 0}]]
+    },
+    "Summarise yesterday": {
+      "main": [[{"node": "Send via Resend", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {"executionOrder": "v1"},
+  "pinData": {}
+}

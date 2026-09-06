@@ -9,6 +9,7 @@ import 'package:nocturne/app/app.dart';
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/content/asset_content.dart';
+import 'package:nocturne/features/work/data/study_providers.dart';
 import 'package:nocturne/content/content_repository.dart';
 import 'package:nocturne/core/platform/platform_provider.dart';
 import 'package:nocturne/core/platform/pointer_capabilities.dart';
@@ -33,7 +34,9 @@ Future<ProviderContainer> pumpStation(
   ThemeMode? themeMode,
   Locale? locale,
   AppRoute? initialRoute,
+  Map<String, String> pathParameters = const {},
   Map<String, String>? preferences,
+  List<Override> overrides = const [],
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -49,6 +52,8 @@ Future<ProviderContainer> pumpStation(
       platformCapabilitiesProvider.overrideWith(
         () => FixedCapabilities(capabilities),
       ),
+      // Last, so a caller can replace any of the defaults above.
+      ...overrides,
     ],
   );
   addTearDown(container.dispose);
@@ -67,6 +72,11 @@ Future<ProviderContainer> pumpStation(
     await container.read(educationProvider.future);
     if (initialRoute == AppRoute.signal) {
       await container.read(coastlineRingsProvider.future);
+    }
+    if (initialRoute == AppRoute.caseStudy) {
+      // Reading a slug with no file falls back to fallback.json, which is real
+      // file I/O the test clock does not advance. Warm it here like the rest.
+      await container.read(studyProvider(pathParameters['slug'] ?? '').future);
     }
   });
 
@@ -90,7 +100,7 @@ Future<ProviderContainer> pumpStation(
 
   if (initialRoute != null && initialRoute != AppRoute.station) {
     GoRouter.of(tester.element(find.byType(ChromeScaffold)))
-        .goNamed(initialRoute.name);
+        .goNamed(initialRoute.name, pathParameters: pathParameters);
     await pumpFrames(tester);
   }
   return container;

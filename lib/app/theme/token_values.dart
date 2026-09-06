@@ -278,6 +278,9 @@ extension ThemeTokenValues on ThemeTokens {
   /// Shared loaderWidth token.
   double get loaderWidth => Tokens.loaderWidth;
 
+  /// Width of one `/console` stat tile.
+  double get consoleTileWidth => Tokens.consoleTileWidth;
+
   /// Shared loaderHeight token.
   double get loaderHeight => Tokens.loaderHeight;
 

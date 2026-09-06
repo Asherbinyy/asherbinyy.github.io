@@ -141,6 +141,15 @@ jobs:
       - name: Generate static routes
         run: dart run tool/generate_static.dart
 
+      # /how-it-was-built states coverage and test counts publicly, so they are
+      # regenerated from this run's own artifacts rather than shipped from
+      # whatever was committed. A page claiming care cannot carry a stale
+      # number about itself.
+      - name: Measure the build for /how-it-was-built
+        run: |
+          flutter test --coverage --exclude-tags golden
+          dart run tool/generate_build_facts.dart
+
       - name: Build Web (WASM)
         run: >-
           flutter build web --wasm --release

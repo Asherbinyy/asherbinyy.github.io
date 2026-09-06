@@ -5,6 +5,7 @@ import worker, {
   aggregateSnapshot,
   currentSalt,
   handleRequest,
+  relayWriting,
   rotateSalt,
   sendLondonNoonDigest,
   verifySaltRotation,
@@ -109,7 +110,7 @@ test('the same daily visitor is counted once across route views', async () => {
   await handleRequest(beaconRequest({}, headers), env, now);
   await handleRequest(beaconRequest({}, headers), env, now);
 
-  const counters = await aggregateSnapshot(env);
+  const {counters} = await aggregateSnapshot(env);
   const unique = counters.find(({dimensions}) =>
     dimensions.includes('unique_visitor'),
   );
@@ -274,4 +275,221 @@ test('a missing KV binding fails closed', async () => {
   });
 
   assert.equal(result.status, 503);
+});
+
+const sampleFeed = `<?xml version="1.0"?><rss version="2.0"><channel>
+<item><title>One</title><link>https://sherbini.medium.com/one</link></item>
+</channel></rss>`;
+
+function writingRequest(headers = {}) {
+  return new Request(`${siteOrigin}/v1/writing`, {
+    method: 'GET',
+    headers: {origin: siteOrigin, ...headers},
+  });
+}
+
+function stubFetch(responses) {
+  const calls = [];
+  const impl = async (url, init) => {
+    calls.push({url, init});
+    const next = responses.shift();
+    if (next instanceof Error) throw next;
+    return next;
+  };
+  impl.calls = calls;
+  return impl;
+}
+
+test('the writing relay refuses a request from another origin', async () => {
+  const env = environment({WRITING_FEED_URL: 'https://feed.example/feed'});
+
+  const result = await handleRequest(
+    writingRequest({origin: 'https://elsewhere.example'}),
+    env,
+  );
+
+  assert.equal(result.status, 403);
+});
+
+test('the writing relay returns the feed verbatim and caches it', async () => {
+  const env = environment({WRITING_FEED_URL: 'https://feed.example/feed'});
+  const now = new Date('2026-09-06T09:00:00Z');
+  const fetchImpl = stubFetch([new Response(sampleFeed, {status: 200})]);
+
+  const result = await relayWriting(env, now, new Headers(), fetchImpl);
+
+  assert.equal(result.status, 200);
+  assert.equal(await result.text(), sampleFeed);
+  assert.equal(result.headers.get('x-nocturne-cache'), 'miss');
+  assert.equal(await env.ANALYTICS.get('writing:feed'), sampleFeed);
+});
+
+test('a cached feed is served without asking Medium again', async () => {
+  const env = environment({WRITING_FEED_URL: 'https://feed.example/feed'});
+  const now = new Date('2026-09-06T09:00:00Z');
+  await env.ANALYTICS.put('writing:feed', sampleFeed);
+  const fetchImpl = stubFetch([]);
+
+  const result = await relayWriting(env, now, new Headers(), fetchImpl);
+
+  assert.equal(result.headers.get('x-nocturne-cache'), 'hit');
+  assert.equal(fetchImpl.calls.length, 0);
+});
+
+test('the relay reports a failed feed rather than an empty one', async () => {
+  const env = environment({WRITING_FEED_URL: 'https://feed.example/feed'});
+  const now = new Date('2026-09-06T09:00:00Z');
+  const fetchImpl = stubFetch([new Error('network down')]);
+
+  const result = await relayWriting(env, now, new Headers(), fetchImpl);
+
+  // An empty 200 would be indistinguishable from "nothing published", and the
+  // client decides to hide the section either way — but only one of the two is
+  // worth retrying.
+  assert.equal(result.status, 502);
+  assert.equal(await env.ANALYTICS.get('writing:feed'), null);
+});
+
+test('the relay forwards nothing about the viewer', async () => {
+  const env = environment({WRITING_FEED_URL: 'https://feed.example/feed'});
+  const now = new Date('2026-09-06T09:00:00Z');
+  const fetchImpl = stubFetch([new Response(sampleFeed, {status: 200})]);
+
+  await relayWriting(env, now, new Headers(), fetchImpl);
+
+  const [call] = fetchImpl.calls;
+  const forwarded = Object.keys(call.init.headers).map((n) => n.toLowerCase());
+  assert.deepEqual(forwarded, ['accept']);
+});
+
+test('the relay refuses to run without a configured feed', async () => {
+  const env = environment();
+  const result = await relayWriting(env, new Date(), new Headers());
+  assert.equal(result.status, 503);
+});
+
+test('a Tier 1 event may carry a session identifier', async () => {
+  const env = environment();
+  const sessionId = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
+
+  const result = await handleRequest(
+    beaconRequest({event: 'map_node_opened', sessionId, value: null}),
+    env,
+    new Date('2026-09-06T09:00:00Z'),
+  );
+
+  assert.equal(result.status, 202);
+  // It deduplicates within the request and is then discarded: no stored key
+  // may contain it, or a counter could be traced back to one viewer's tab.
+  const stored = JSON.stringify([...env.ANALYTICS.values.keys()]);
+  assert.ok(!stored.includes(sessionId));
+});
+
+test('a Tier 0 route view may not carry a session identifier', async () => {
+  const env = environment();
+
+  const result = await handleRequest(
+    beaconRequest({sessionId: 'a1b2c3d4e5f60718293a4b5c6d7e8f90'}),
+    env,
+    new Date('2026-09-06T09:00:00Z'),
+  );
+
+  assert.equal(result.status, 400);
+});
+
+test('a malformed session identifier is rejected', async () => {
+  const env = environment();
+
+  const result = await handleRequest(
+    beaconRequest({event: 'theme_changed', sessionId: 'not-a-hash'}),
+    env,
+    new Date('2026-09-06T09:00:00Z'),
+  );
+
+  assert.equal(result.status, 400);
+});
+
+test('scroll depth accumulates a total beside its counter', async () => {
+  const env = environment();
+  const now = new Date('2026-09-06T09:00:00Z');
+
+  await handleRequest(
+    beaconRequest({event: 'scroll_depth', value: 3, campaign: null}),
+    env,
+    now,
+  );
+  await handleRequest(
+    beaconRequest({event: 'scroll_depth', value: 4, campaign: null}),
+    env,
+    now,
+  );
+
+  assert.equal(
+    await env.ANALYTICS.get('total|2026-09-06|scroll_depth|%2Fwork'),
+    '7',
+  );
+});
+
+test('a value outside its event range is rejected', async () => {
+  const env = environment();
+
+  for (const value of [0, 5, 1.5]) {
+    const result = await handleRequest(
+      beaconRequest({event: 'scroll_depth', value}),
+      env,
+      new Date('2026-09-06T09:00:00Z'),
+    );
+    assert.equal(result.status, 400, `value ${value} should be rejected`);
+  }
+});
+
+test('an event that carries no value rejects one', async () => {
+  const env = environment();
+
+  const result = await handleRequest(
+    beaconRequest({event: 'theme_changed', value: 3}),
+    env,
+    new Date('2026-09-06T09:00:00Z'),
+  );
+
+  assert.equal(result.status, 400);
+});
+
+test('a dwell longer than an hour is rejected as a forgotten tab', async () => {
+  const env = environment();
+
+  const result = await handleRequest(
+    beaconRequest({event: 'section_dwell', value: 3601}),
+    env,
+    new Date('2026-09-06T09:00:00Z'),
+  );
+
+  assert.equal(result.status, 400);
+});
+
+test('the digest payload carries counters and totals at the top level', async () => {
+  const posted = [];
+  const env = environment({DIGEST_WEBHOOK_URL: 'https://hooks.example/digest'});
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    posted.push(JSON.parse(init.body));
+    return new Response('{}', {status: 200});
+  };
+
+  try {
+    await handleRequest(
+      beaconRequest({event: 'scroll_depth', value: 3, campaign: null}),
+      env,
+      new Date('2026-09-06T09:00:00Z'),
+    );
+    // 12:00 in London is 11:00 UTC while British Summer Time is in effect.
+    await sendLondonNoonDigest(env, new Date('2026-09-06T11:00:00Z'));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.equal(posted.length, 1);
+  assert.ok(Array.isArray(posted[0].counters), 'counters must be an array');
+  assert.ok(Array.isArray(posted[0].totals), 'totals must be an array');
+  assert.ok(posted[0].generatedAt);
 });

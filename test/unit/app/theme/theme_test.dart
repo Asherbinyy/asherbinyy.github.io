@@ -16,7 +16,7 @@ void main() {
         expect(nocturneTokens.hairline, const Color(0xFF1C2530));
         expect(nocturneTokens.hairlineStrong, const Color(0xFF2C3846));
         expect(nocturneTokens.beacon, const Color(0xFFF2A83B));
-        expect(nocturneTokens.beaconDim, const Color(0xFF7E5720));
+        expect(nocturneTokens.beaconDim, const Color(0xFF875D22));
         expect(nocturneTokens.beaconGlow, const Color(0xFFFFD48A));
         expect(nocturneTokens.instrument, const Color(0xFFC6D2E0));
         expect(nocturneTokens.instrumentMid, const Color(0xFF8A99AB));
@@ -25,7 +25,7 @@ void main() {
         expect(nocturneTokens.verified, const Color(0xFFC6D2E0));
         expect(nocturneTokens.textPrimary, const Color(0xFFE9EEF5));
         expect(nocturneTokens.textSecondary, const Color(0xFF93A3B5));
-        expect(nocturneTokens.textMuted, const Color(0xFF57687B));
+        expect(nocturneTokens.textMuted, const Color(0xFF70849A));
 
         expect(nocturneTokens.weightRegular, Tokens.weightRegular);
         expect(nocturneTokens.weightMedium, Tokens.weightMedium);
@@ -40,17 +40,17 @@ void main() {
       expect(daybreakTokens.surfaceRaised, const Color(0xFFFFFFFF));
       expect(daybreakTokens.hairline, const Color(0xFFCFC7B8));
       expect(daybreakTokens.hairlineStrong, const Color(0xFFA79C89));
-      expect(daybreakTokens.beacon, const Color(0xFFA8620C));
-      expect(daybreakTokens.beaconDim, const Color(0xFFC9A878));
+      expect(daybreakTokens.beacon, const Color(0xFF95570B));
+      expect(daybreakTokens.beaconDim, const Color(0xFFA37B41));
       expect(daybreakTokens.beaconGlow, const Color(0xFF7A4506));
       expect(daybreakTokens.instrument, const Color(0xFF3A4654));
-      expect(daybreakTokens.instrumentMid, const Color(0xFF6B7887));
-      expect(daybreakTokens.instrumentDim, const Color(0xFFA79C89));
+      expect(daybreakTokens.instrumentMid, const Color(0xFF5B6773));
+      expect(daybreakTokens.instrumentDim, const Color(0xFF8E806A));
       expect(daybreakTokens.alert, const Color(0xFFA32A22));
       expect(daybreakTokens.verified, const Color(0xFF3A4654));
       expect(daybreakTokens.textPrimary, const Color(0xFF12171E));
       expect(daybreakTokens.textSecondary, const Color(0xFF4A5766));
-      expect(daybreakTokens.textMuted, const Color(0xFF778395));
+      expect(daybreakTokens.textMuted, const Color(0xFF5C6676));
     });
 
     test('copyWith retains original values when fields are null', () {

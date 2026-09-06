@@ -8,7 +8,7 @@ than burying it in a worklog nobody re-reads.
 Worklogs record what happened in a session. **This file records what is still
 true.** If the two disagree, this file is the one to fix.
 
-Last reviewed: 2026-09-06, at the Milestone 1 merge.
+Last reviewed: 2026-09-06, at the end of Milestone 2's build.
 
 ---
 
@@ -29,8 +29,8 @@ numbers and translations, and every row below is one of those.
 | 1.8 | **The CV PDF.** `profile.cvFile` is null, so the hero's second action reads "Read the CV" and opens the static HTML instead of downloading. | No downloadable CV | `/brief` parity with the spec |
 | 1.9 | **The portrait.** `profile.portrait` is null. Brief in `01-DESIGN-SYSTEM.md` §10. | `/about` cannot be built to spec | `/about` |
 | 1.10 | **Screenshots** for Mokaf, AZ Courses and City Loom. | Device frames have nothing to scrub | 2.1 |
-| 1.11 | **Case study prose** — three studies, context → problem → approach → outcome. The roadmap says explicitly that an agent cannot write these and will invent them if asked. | `/work/:slug` has no content | 2.1 |
-| 1.12 | **n8n endpoint and a Resend account** for the digest. The Worker already has a `DIGEST_WEBHOOK_URL` secret and a noon Europe/London trigger waiting for one. | Digest dormant | 2.6 |
+| 1.11 | **Case study prose** — three studies, context → problem → approach → outcome. The roadmap says explicitly that an agent cannot write these and will invent them if asked. **The screen is built and tested; `assets/content/studies/` is empty on purpose.** Drop a `{slug}.json` in and it renders with no code change. | `/work/:slug` says "not written yet" for every slug | — |
+| 1.12 | **n8n instance and a Resend account** for the digest. Everything buildable is built: the Worker's noon trigger, the payload, and the importable workflow with its summary and message in `automation/digest-workflow.json`. What remains is creating the two accounts, importing the workflow, adding the Resend credential and running `wrangler secret put DIGEST_WEBHOOK_URL`. Steps in `automation/README.md`. | Digest dormant, not broken | Nothing — 2.6's repository half is done |
 | 1.13 | **Calendly URL** is null in `profile.json`. | No booking link | — |
 
 ---
@@ -43,6 +43,9 @@ numbers and translations, and every row below is one of those.
 | 2.2 | **Six countries, not five.** `02-SCREEN-SPECS.md`'s hero diagram draws a "5 countries" panel, but `00-PROJECT-BRIEF.md` §2 and §3 and the `/brief` block all say six and name them: Egypt, Saudi Arabia, Armenia, Qatar, Canada, the UK. | The diagram is the outlier. The doc should be corrected to six. |
 | 2.3 | **Stat labels are English-only.** `LocalizedText.resolve` falls back to English rather than inventing Arabic. | `AGENTS.md` §3. Rolls up into 1.6. |
 | 2.4 | **The ledger heading counts the content, not the docs.** It says eleven because eleven exist. | Rolls up into 1.2. |
+| 2.5 | **No placeholder case-study prose was shipped.** The approved plan was "machinery plus clearly-marked placeholder entries". The machinery is complete and proven against fixtures in `test/widget/work/case_study_test.dart`, but nothing was written into `assets/content/studies/`: placeholder prose about real client work would be a claim the owner never made, on a page a recruiter reads as fact, and `AGENTS.md` §3 forbids exactly that. The production screen says "not written yet" instead. | Reverse this by writing the three studies; no code changes. |
+| 2.6 | **Which three case studies.** `07-CONTENT-SCHEMA.md` recommended Mokaf, AZ Courses and **Tripster**; `02-SCREEN-SPECS.md` and `09-ROADMAP.md` both say Mokaf, AZ Courses and **City Loom**, and give City Loom its own section and the embedded prototype. The two agreeing documents were treated as current and 07 now records the discrepancy. | Confirm City Loom is the third. |
+| 2.7 | **`studies/{slug}.json` gained an optional `prototype` field.** `02-SCREEN-SPECS.md` requires City Loom's live embedded prototype and its honest status line; no schema field carried either. Documented in `07-CONTENT-SCHEMA.md`. | — |
 
 ---
 
@@ -57,21 +60,29 @@ numbers and translations, and every row below is one of those.
 | 3.5 | **`InteractiveViewer` keeps its default boundary behaviour** on the propagation map, so direct panning only becomes useful once zoomed. | From the propagation-map session. |
 | 3.6 | **The acquisition sequence's once-per-tab behaviour is unobserved in a browser.** The VM test target cannot emulate a hard reload; the conditional web implementation is only proven by the WASM build compiling. | Needs the deployed site. |
 | 3.7 | **The build emits a missing Material/Cupertino icon-font warning.** The app bundles and uses neither package. | Cosmetic, long-standing. |
+| 3.8 | **`05-TESTING.md`'s other accessibility tests are unimplemented.** Contrast is now covered exhaustively by `test/unit/app/theme/contrast_test.dart`, but `meetsGuideline(androidTapTargetGuideline)`, the "every interactive element exposes a semantic label" sweep, and full keyboard traversal on `/`, `/work` and `/privacy` have no tests. | Roadmap 3.3 owns these. Recorded here so 3.3 does not have to rediscover the gap. |
+| 3.10 | **The console's code-split lands in the JS output, not the WasmGC one.** `fvm flutter build web --wasm` emits `main.dart.js_1.part.js` — a real 9.2KB deferred chunk on the JavaScript fallback path — but a single `main.dart.wasm` with no separate part. So a browser on the WasmGC path downloads the dashboard whether or not it ever reaches the gate. Roadmap 2.5's "code-split" is met on one of the two outputs. | Not fixable from application code; it is a WasmGC deferred-loading limitation. Re-check when the SDK gains split output. |
+| 3.11 | **The console token is held in memory only.** Deliberate: it is a bearer credential for the analytics store, and a site whose argument is about not writing to visitors' devices should not make an exception for its own secret. The cost is re-entering it once per tab, paid only by the owner. | Change only if the owner asks. |
+| 3.9 | **`--hairline-strong` is below 3:1 in both themes** — 1.69 in Nocturne, 2.32 in Daybreak. It was deliberately left out of the contrast suite: it draws structural rules and panel edges, which WCAG 1.4.11 treats as decoration rather than information identifying a component, and where an edge does carry state the focus ring carries it. | A judgement call, not an oversight. Revisit in 3.3 if the audit disagrees. |
 
 ---
 
-## 4. Blocked behind the deploy, not behind code
+## 4. Verified after the Milestone 1 deploy
 
-These could not be verified before Milestone 1 reached `main`, because `main`
-is what publishes. They are the first things to check once it has.
+Milestone 1 merged as `75b536c` and published on 2026-09-06. Run 34033338777
+ran `verify`, `goldens`, `build` and `deploy` — the last two for the first time
+ever. All four succeeded.
 
-| # | Item |
-|---|---|
-| 4.1 | **The Lighthouse gate has never executed.** It is wired into the build job asserting performance ≥ 0.85 and accessibility ≥ 0.9 on `/cv` and `/brief`, but it only runs on `main`. Until it does, it is an untested assertion. |
-| 4.2 | **Deep links have never been tested on the live host.** `/work` entered directly depends on the `404.html` fallback that GitHub Pages fails silently on. |
-| 4.3 | **The analytics beacon has never transported anything.** The Worker is deployed and tested, but the release build only supplies the production endpoint on a Pages release, so nothing has ever been sent end to end. |
-| 4.4 | **The favicon has never been seen in light and dark browser chrome.** The `--void` background makes this a real check, per roadmap 1.6b. |
-| 4.5 | **No Open Graph image exists.** The plan was to capture the settled acquisition frame as the social preview. |
+| # | Item | Status |
+|---|---|---|
+| 4.1 | **The Lighthouse gate.** | **Closed.** It executed for the first time and passed, asserting performance ≥ 0.85 and accessibility ≥ 0.9 on `/cv` and `/brief` in the desktop preset. It is no longer an untested assertion. |
+| 4.2 | **Deep links on the live host.** | **Mostly closed.** `/work` serves the `404.html` fallback, which is the full hand-authored app shell with `<base href="/">`, so the app boots and `go_router` resolves the path client-side. The HTTP **status** is 404, which is inherent to GitHub Pages' SPA fallback and cannot be changed on Pages — it is exactly why `/cv` and `/brief` are real static files returning 200 to crawlers. What remains is confirming in a browser that the route actually renders, which is step 3 of the phone check. |
+| 4.3 | **The analytics beacon.** | **Mostly closed.** The Worker is live and enforcing its contract: a POST without the site origin returns 403, and one carrying `Origin: https://asherbinyy.github.io` is accepted past the origin gate and 400s on a malformed payload. The release build supplies the endpoint via `--dart-define` at `.github/workflows/ci.yml:147`. A *valid* beacon was deliberately **not** sent — it would write a counter for a page view that never happened and put false data in the owner's own analytics. Confirm from a real browser visit instead. |
+| 4.4 | **The favicon in light and dark browser chrome.** | **Open.** The `--void` background makes this a real check. Fold it into the phone check. |
+| 4.5 | **No Open Graph image exists.** | **Open.** The plan was to capture the settled acquisition frame as the social preview. |
+
+Live and returning 200: `/`, `/cv`, `/brief`, `/.nojekyll`, `/robots.txt`,
+`/sitemap.xml`.
 
 ---
 
@@ -101,5 +112,6 @@ acquisition sequence on a cold load and then a reload, to confirm it runs once
 per tab (3.6).
 
 **Status: never performed.** Milestone 1 was merged on the owner's explicit
-instruction without it, and it should be the first thing done against the live
-site.
+instruction without it. The site is now live at
+<https://asherbinyy.github.io>, so the check is no longer blocked — it is the
+first thing to do, and it also closes 4.2, 4.3 and 4.4.

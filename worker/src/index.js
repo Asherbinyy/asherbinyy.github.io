@@ -1,5 +1,6 @@
 const saltKey = 'system|salt';
 const counterPrefix = 'counter|';
+const totalPrefix = 'total|';
 const visitorPrefix = 'visitor|';
 const digestPrefix = 'system|digest|';
 const saltLifetimeMs = 24 * 60 * 60 * 1000;
@@ -13,6 +14,18 @@ const allowedEvents = new Set([
   'cv_opened',
   'language_changed',
   'theme_changed',
+  'scroll_depth',
+  'section_dwell',
+  'error_reported',
+]);
+
+/// Events that carry a numeric `value`, and the range each one accepts.
+const valuedEvents = new Map([
+  // A quartile, 1 to 4.
+  ['scroll_depth', [1, 4]],
+  // Whole seconds on a route. Capped at an hour: anything longer is a tab left
+  // open, not a reading, and storing it would make that visit distinctive.
+  ['section_dwell', [2, 3600]],
 ]);
 
 export default {
@@ -53,11 +66,17 @@ export async function handleRequest(request, env, now = new Date()) {
     }
     return receiveBeacon(request, env, now, headers);
   }
+  if (url.pathname === '/v1/writing' && request.method === 'GET') {
+    if (origin !== env.SITE_ORIGIN) {
+      return response({error: 'Origin not allowed'}, 403, headers);
+    }
+    return relayWriting(env, now, headers);
+  }
   if (url.pathname === '/v1/aggregates' && request.method === 'GET') {
     if (!authorised(request, env.CONSOLE_TOKEN)) {
       return response({error: 'Unauthorised'}, 401, headers);
     }
-    return response({counters: await aggregateSnapshot(env)}, 200, headers);
+    return response(await aggregateSnapshot(env), 200, headers);
   }
   return response({error: 'Not found'}, 404, headers);
 }
@@ -92,6 +111,19 @@ async function receiveBeacon(request, env, now, headers) {
   ];
   await increment(env.ANALYTICS, key(counterPrefix, dimensions), now);
 
+  // The session identifier is used to deduplicate within a tab and is then
+  // discarded: it is never a stored dimension, so no counter can be traced
+  // back to one viewer's tab. Section 4 allows the identifier to exist for the
+  // life of a tab; nothing says it has to be written down.
+  if (beacon.value !== null) {
+    await accumulate(
+      env.ANALYTICS,
+      key(totalPrefix, [date, beacon.event, beacon.route]),
+      beacon.value,
+      now,
+    );
+  }
+
   if (beacon.event === 'route_view') {
     const salt = await currentSalt(env, now);
     const hash = await visitorHash(
@@ -124,6 +156,61 @@ async function receiveBeacon(request, env, now, headers) {
   return response({accepted: true}, 202, headers);
 }
 
+/// How long a fetched feed is served from KV before Medium is asked again.
+const WRITING_TTL_SECONDS = 3600;
+
+/// Relays the owner's Medium feed, which the browser cannot fetch itself.
+///
+/// Medium serves no `access-control-allow-origin`, so a first-party relay is
+/// the only way a canvas app on another origin can read it. The response is
+/// the feed verbatim: parsing belongs to the client, which already carries an
+/// XML parser for it, and a Worker that reshaped the feed would be a second
+/// place for that shape to drift.
+///
+/// Nothing about the viewer reaches Medium. This runs server-side with no
+/// forwarded headers, so the request carries the Worker's identity, not
+/// theirs — which also means the relay is not analytics and needs no consent.
+export async function relayWriting(env, now, headers, fetchImpl = fetch) {
+  const feedUrl = env.WRITING_FEED_URL;
+  if (typeof feedUrl !== 'string' || !feedUrl.startsWith('https://')) {
+    return response({error: 'No feed is configured'}, 503, headers);
+  }
+
+  const cached = await env.ANALYTICS.get(WRITING_CACHE_KEY);
+  if (cached !== null) {
+    return feedResponse(cached, headers, 'hit');
+  }
+
+  let body;
+  try {
+    const result = await fetchImpl(feedUrl, {
+      headers: {accept: 'application/rss+xml, application/xml, text/xml'},
+    });
+    if (!result.ok) throw new Error(`Feed responded ${result.status}`);
+    body = await result.text();
+  } catch {
+    // Section 5 of the architecture: a feed failure hides the writing section
+    // rather than showing an error, so an empty 200 is wrong here — the client
+    // needs to be able to tell "nothing published" from "could not ask".
+    return response({error: 'Feed unavailable'}, 502, headers);
+  }
+
+  await env.ANALYTICS.put(WRITING_CACHE_KEY, body, {
+    expiration: Math.floor(now.getTime() / 1000) + WRITING_TTL_SECONDS,
+  });
+  return feedResponse(body, headers, 'miss');
+}
+
+const WRITING_CACHE_KEY = 'writing:feed';
+
+function feedResponse(body, headers, cacheState) {
+  const feedHeaders = new Headers(headers);
+  feedHeaders.set('content-type', 'application/xml; charset=utf-8');
+  feedHeaders.set('cache-control', `public, max-age=${WRITING_TTL_SECONDS}`);
+  feedHeaders.set('x-nocturne-cache', cacheState);
+  return new Response(body, {status: 200, headers: feedHeaders});
+}
+
 export function validateBeacon(input) {
   if (!plainObject(input)) throw new TypeError('Beacon must be an object');
   const expected = new Set([
@@ -132,6 +219,8 @@ export function validateBeacon(input) {
     'deviceClass',
     'referrerHost',
     'campaign',
+    'sessionId',
+    'value',
   ]);
   if (Object.keys(input).some((field) => !expected.has(field))) {
     throw new TypeError('Unexpected beacon field');
@@ -157,7 +246,36 @@ export function validateBeacon(input) {
     deviceClass: input.deviceClass,
     referrerHost,
     campaign,
+    sessionId: validSessionId(input.event, input.sessionId),
+    value: validValue(input.event, input.value),
   };
+}
+
+/// A Tier 1 session identifier: 32 hex characters, minted in the browser tab.
+///
+/// Rejected outright on `route_view`, which is Tier 0 and must never carry an
+/// identifier. A malformed one is an error rather than a silent drop, because
+/// a client sending the wrong shape is a bug worth surfacing.
+function validSessionId(event, value) {
+  if (value === null || value === undefined) return null;
+  if (event === 'route_view') {
+    throw new TypeError('Tier 0 events carry no session identifier');
+  }
+  if (typeof value !== 'string' || !/^[0-9a-f]{32}$/.test(value)) {
+    throw new TypeError('Invalid session identifier');
+  }
+  return value;
+}
+
+/// The one number an event may carry, range-checked per event.
+function validValue(event, value) {
+  if (value === null || value === undefined) return null;
+  const range = valuedEvents.get(event);
+  if (range === undefined) throw new TypeError('Event carries no value');
+  if (!Number.isInteger(value) || value < range[0] || value > range[1]) {
+    throw new TypeError('Value out of range');
+  }
+  return value;
 }
 
 export async function currentSalt(env, now = new Date()) {
@@ -215,19 +333,32 @@ export async function visitorHash(salt, address, agent, siteId) {
 }
 
 export async function aggregateSnapshot(env) {
-  const counters = [];
+  return {
+    counters: await readRows(env, counterPrefix, 'count'),
+    // Running sums for the events that carry a number, so the console can
+    // divide totals by counts for a mean without any per-visit row existing.
+    totals: await readRows(env, totalPrefix, 'total'),
+  };
+}
+
+/// Reads every key under [prefix], splitting its dimensions back out.
+async function readRows(env, prefix, field) {
+  const rows = [];
   let cursor;
   do {
-    const page = await env.ANALYTICS.list({prefix: counterPrefix, cursor});
+    const page = await env.ANALYTICS.list({prefix, cursor});
     for (const entry of page.keys) {
-      counters.push({
-        dimensions: entry.name.slice(counterPrefix.length).split('|'),
-        count: Number(await env.ANALYTICS.get(entry.name)) || 0,
+      rows.push({
+        dimensions: entry.name
+          .slice(prefix.length)
+          .split('|')
+          .map((value) => decodeURIComponent(value)),
+        [field]: Number(await env.ANALYTICS.get(entry.name)) || 0,
       });
     }
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
-  return counters;
+  return rows;
 }
 
 export async function sendLondonNoonDigest(env, now = new Date()) {
@@ -247,12 +378,27 @@ export async function sendLondonNoonDigest(env, now = new Date()) {
   if ((await env.ANALYTICS.get(sentKey)) !== null) return false;
   await postJson(env.DIGEST_WEBHOOK_URL, {
     generatedAt: now.toISOString(),
-    counters: await aggregateSnapshot(env),
+    // Spread, not nested: the snapshot is already `{counters, totals}`, and
+    // wrapping it again would put a `counters.counters` in the payload the
+    // digest workflow reads.
+    ...(await aggregateSnapshot(env)),
   });
   await env.ANALYTICS.put(sentKey, '1', {
     expirationTtl: shortRetentionSeconds,
   });
   return true;
+}
+
+/// Adds [amount] to a running total, for events that carry a number.
+///
+/// Kept beside the plain counter so the console can divide one by the other
+/// and get a mean — total seconds over dwell events is the median-ish figure
+/// the dashboard shows — without ever storing a per-visit row.
+async function accumulate(store, totalKey, amount, now) {
+  const current = Number(await store.get(totalKey)) || 0;
+  await store.put(totalKey, String(current + amount), {
+    expiration: retentionExpiry(now),
+  });
 }
 
 async function increment(store, counterKey, now) {

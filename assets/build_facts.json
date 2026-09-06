@@ -1,0 +1,10 @@
+{
+  "generatedAt": "2026-09-06",
+  "coveragePercent": 90.88,
+  "coveredLines": 4496,
+  "totalLines": 4947,
+  "dartTests": 537,
+  "workerTests": 25,
+  "lighthousePerformanceFloor": 0.85,
+  "lighthouseAccessibilityFloor": 0.9
+}

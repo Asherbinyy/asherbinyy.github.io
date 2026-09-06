@@ -1,3 +1,4 @@
+import 'package:nocturne/core/analytics/browser_analytics_context.dart';
 import 'package:nocturne/core/analytics/consent.dart';
 import 'package:nocturne/core/analytics/events.dart';
 
@@ -18,8 +19,9 @@ class AnalyticsClient {
   /// The transport is positional so it can stay private: a named parameter
   /// cannot be, and a public transport would let a caller send around the
   /// consent checks below.
-  AnalyticsClient(this._send, {ConsentTier? tier})
-    : tier = tier ?? ConsentTier.unresolved;
+  AnalyticsClient(this._send, {ConsentTier? tier, String Function()? sessionId})
+    : tier = tier ?? ConsentTier.unresolved,
+      _sessionId = sessionId ?? sessionIdForTab;
 
   final BeaconSender _send;
 
@@ -33,14 +35,41 @@ class AnalyticsClient {
   ///
   /// Returns whether anything was sent, so a test can assert silence rather
   /// than infer it.
-  Future<bool> record(AnalyticsBeacon beacon) async {
-    if (!_permits(beacon.event)) return false;
-    await _send(beacon);
+  Future<bool> record(AnalyticsBeacon event) async {
+    if (!permits(event.event)) return false;
+    await _send(_identified(event));
     return true;
   }
 
+  /// Attaches the tab's session identifier to Tier 1 events, and only those.
+  ///
+  /// Minting it here rather than at the call site is what guarantees no
+  /// identifier can exist for a viewer who has not granted Tier 1: the only
+  /// path to `sessionId()` runs through a tier check one line above.
+  AnalyticsBeacon _identified(AnalyticsBeacon event) {
+    if (!tier.allowsSessionEvents || event.event == AnalyticsEvent.routeView) {
+      return event;
+    }
+    return (
+      event: event.event,
+      route: event.route,
+      deviceClass: event.deviceClass,
+      referrerHost: event.referrerHost,
+      campaign: event.campaign,
+      sessionId: event.sessionId ?? _sessionId(),
+      value: event.value,
+    );
+  }
+
+  /// Injected so a VM test can assert the identifier without a browser.
+  final String Function() _sessionId;
+
   /// Whether [event] may be collected under the current tier.
-  bool _permits(AnalyticsEvent event) {
+  ///
+  /// Public so `/how-it-was-built` can *measure* the rules rather than restate
+  /// them: a second hand-written description of what is collected would be a
+  /// claim about this code, and the two would eventually disagree.
+  bool permits(AnalyticsEvent event) {
     if (!tier.allowsAggregate) return false;
     // Route views are the Tier 0 counter. Everything else is a session event
     // and needs an affirmative grant.

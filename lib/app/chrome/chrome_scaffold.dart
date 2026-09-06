@@ -151,9 +151,13 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
                           background: isRecruiterMode
                               ? null
                               : widget.backgroundBuilder?.call(_scroll),
-                          child: isRecruiterMode
-                              ? const RecruiterView()
-                              : widget.child,
+                          child: ChromeScrollScope(
+                            progress: _progress,
+                            controller: _scroll,
+                            child: isRecruiterMode
+                                ? const RecruiterView()
+                                : widget.child,
+                          ),
                         ),
                       ),
                     ),
@@ -190,6 +194,44 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
 }
 
 enum _RevealEdge { top, bottom, start }
+
+/// Publishes the page's scroll progress to the routed content below it.
+///
+/// The rail already listens to this notifier, so a screen that needs scroll
+/// position — the case study's pinned device frame, for instance — reads the
+/// same value rather than attaching a second listener to the same controller.
+/// It is a `ValueNotifier` rather than an inherited `double` on purpose: a
+/// rebuild of the whole routed subtree on every scroll frame is what the
+/// trace's and the map's frame budgets cannot afford.
+///
+/// A `ScrollNotification` would not do: routed content sits *inside* the
+/// scroll view, and notifications travel outward from the scrollable, so a
+/// listener under it never sees them.
+class ChromeScrollScope extends InheritedWidget {
+  /// Wraps [child] with the page's scroll [progress].
+  const ChromeScrollScope({
+    required this.progress,
+    required this.controller,
+    required super.child,
+    super.key,
+  });
+
+  /// Scroll offset over max extent, clamped to 0 when the page does not scroll.
+  final ValueNotifier<double> progress;
+
+  /// The page's scroll controller, for content that needs pixels rather than
+  /// a fraction — the case study's pinned device frame, which has to hold a
+  /// position in the viewport rather than pick an index.
+  final ScrollController controller;
+
+  /// The nearest scope, or null outside the chrome — as on `/cv` and `/brief`.
+  static ChromeScrollScope? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<ChromeScrollScope>();
+
+  @override
+  bool updateShouldNotify(ChromeScrollScope oldWidget) =>
+      progress != oldWidget.progress || controller != oldWidget.controller;
+}
 
 /// Keeps chrome laid out at its final size while drawing it in from an edge.
 class _ChromeReveal extends StatelessWidget {

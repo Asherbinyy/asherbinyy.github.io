@@ -13,8 +13,7 @@ import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/app/app_route.dart';
-import 'package:nocturne/core/platform/static_route.dart';
-import 'package:nocturne/core/widgets/beacon_button.dart';
+import 'package:nocturne/features/station/presentation/widgets/cv_button.dart';
 import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
@@ -166,10 +165,7 @@ class _Unavailable extends StatelessWidget {
     children: [
       CarrierEmptyState(direction: context.l10n.heroContentUnavailable),
       SizedBox(height: context.tokens.space24),
-      BeaconButton(
-        label: context.l10n.heroReadTheCv,
-        onPressed: () => openStaticRoute(AppRoute.cv.path),
-      ),
+      const CvButton(route: AppRoute.station),
     ],
   );
 }

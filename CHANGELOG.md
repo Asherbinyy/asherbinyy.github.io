@@ -3,6 +3,38 @@
 Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 `v1.0.0`.
 
+## [Unreleased]
+
+Milestone 2, "Depth", on `phase/2-depth`. Not yet published.
+
+### Added
+
+- **`/writing`** — the Medium feed, relayed through the analytics Worker
+  because Medium sends no CORS header, cached for an hour, and hidden entirely
+  rather than apologising when it cannot be read.
+- **`/about`** — identity, an education table with modules ranked by mark, and
+  the three most recent articles.
+- **`/work/:slug`** — case studies with a device frame pinned beside the
+  narrative, and City Loom's prototype behind a click-to-load poster. No study
+  content ships yet; the page says so.
+- **Tier 1 analytics** — session events behind an explicit opt-in, with a
+  tab-scoped identifier that is never stored, and scroll depth and dwell
+  reported once on leaving rather than continuously.
+- **`/console`** — the auth-gated dashboard, code-split so a public visitor
+  downloads only the gate.
+- **`/how-it-was-built`** — every measurement generated from the build's own
+  artifacts, and a collection readout derived from the code that enforces it.
+- **The daily digest workflow**, importable into n8n, awaiting the owner's
+  accounts.
+- Daybreak brought to WCAG AA, along with two Nocturne values that were below
+  it on the live site.
+
+### Fixed
+
+- The digest payload double-nested its counters after `/console` needed totals.
+- The engagement reporter threw during teardown, reading a disposed container.
+- The footer overflowed by 148px on a phone once it carried a second link.
+
 ## [0.1.0] — 2026-09-06
 
 Milestone 1, "Ground station online". First publish. Dark theme, English and

@@ -69,5 +69,239 @@
   "privacyCurrentRejected": "الحالة: لا يُجمع شيء",
   "privacyCurrentUnset": "الحالة: الضروري فقط، إلى أن تختار",
   "privacyRetention": "تُحفظ الأعداد الإجمالية 24 شهرًا. أما أحداث الجلسة، إن فعّلتها، فتُحفظ 90 يومًا ولا تُربط بين الزيارات.",
-  "privacyContact": "أحمد الشربيني هو المتحكم بالبيانات. لمعرفة ما هو محفوظ أو لطلب حذفه، راسل {email}."
+  "privacyContact": "أحمد الشربيني هو المتحكم بالبيانات. لمعرفة ما هو محفوظ أو لطلب حذفه، راسل {email}.",
+  "writingHeading": "الكتابة",
+  "@writingHeading": {
+    "description": "Writing screen: heading"
+  },
+  "writingSubheading": "منشور على Medium. كل مقال يفتح هناك.",
+  "@writingSubheading": {
+    "description": "Writing screen: subheading"
+  },
+  "writingUnavailable": "لا يوجد ما يُعرض حاليًا.",
+  "@writingUnavailable": {
+    "description": "Writing screen: shown when the feed yields nothing"
+  },
+  "writingOpenArticle": "افتح «{title}» على Medium",
+  "@writingOpenArticle": {
+    "description": "Writing screen: article link label",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutHeading": "نبذة",
+  "@aboutHeading": {
+    "description": "About screen: heading"
+  },
+  "aboutEducation": "التعليم",
+  "@aboutEducation": {
+    "description": "About screen: education section heading"
+  },
+  "aboutWriting": "الكتابة",
+  "@aboutWriting": {
+    "description": "About screen: writing section heading"
+  },
+  "aboutPortraitPending": "الصورة قيد الإعداد",
+  "@aboutPortraitPending": {
+    "description": "About screen: the reserved portrait frame"
+  },
+  "caseStudyScreensPending": "اللقطات قيد الإعداد",
+  "@caseStudyScreensPending": {
+    "description": "Case study: reserved device frame with no screenshots yet"
+  },
+  "caseStudyContext": "السياق",
+  "@caseStudyContext": {
+    "description": "Case study: section heading"
+  },
+  "caseStudyProblem": "المشكلة",
+  "@caseStudyProblem": {
+    "description": "Case study: section heading"
+  },
+  "caseStudyApproach": "المقاربة",
+  "@caseStudyApproach": {
+    "description": "Case study: section heading"
+  },
+  "caseStudyOutcome": "النتيجة",
+  "@caseStudyOutcome": {
+    "description": "Case study: section heading"
+  },
+  "caseStudyStack": "التقنيات",
+  "@caseStudyStack": {
+    "description": "Case study: technology list heading"
+  },
+  "caseStudyUnavailable": "لم تُكتب دراسة الحالة هذه بعد.",
+  "@caseStudyUnavailable": {
+    "description": "Case study: no study file exists for the slug"
+  },
+  "caseStudyBackToWork": "العودة إلى الأعمال",
+  "@caseStudyBackToWork": {
+    "description": "Case study: link back to the ledger"
+  },
+  "caseStudyLoadPrototype": "تحميل النموذج التجريبي",
+  "@caseStudyLoadPrototype": {
+    "description": "Case study: click-to-load control for the embedded prototype"
+  },
+  "caseStudyPrototypeWeight": "يُحمّل نموذجًا تفاعليًا من موقع آخر.",
+  "@caseStudyPrototypeWeight": {
+    "description": "Case study: what the click-to-load control will do"
+  },
+  "consoleHeading": "آخر ٣٠ يومًا",
+  "@consoleHeading": {
+    "description": "Console: heading"
+  },
+  "consoleTokenPrompt": "أدخل رمز لوحة التحكم.",
+  "@consoleTokenPrompt": {
+    "description": "Console: sign-in prompt"
+  },
+  "consoleTokenLabel": "رمز لوحة التحكم",
+  "@consoleTokenLabel": {
+    "description": "Console: token field label"
+  },
+  "consoleSignIn": "فتح لوحة التحكم",
+  "@consoleSignIn": {
+    "description": "Console: sign-in action"
+  },
+  "consoleRejected": "لم يُقبل هذا الرمز.",
+  "@consoleRejected": {
+    "description": "Console: rejected token"
+  },
+  "consoleUnavailable": "تعذّرت قراءة مخزن التحليلات.",
+  "@consoleUnavailable": {
+    "description": "Console: endpoint failure"
+  },
+  "consoleNothingYet": "لا شيء مُجمَّع في هذه الفترة.",
+  "@consoleNothingYet": {
+    "description": "Console: empty window"
+  },
+  "consoleViews": "مشاهدات",
+  "@consoleViews": {
+    "description": "Console: stat tile label"
+  },
+  "consoleUnique": "زائر يوميًا",
+  "@consoleUnique": {
+    "description": "Console: stat tile label"
+  },
+  "consoleCvOpens": "السيرة الذاتية",
+  "@consoleCvOpens": {
+    "description": "Console: stat tile label"
+  },
+  "consoleMeanDwell": "متوسط البقاء",
+  "@consoleMeanDwell": {
+    "description": "Console: stat tile label"
+  },
+  "consoleCampaigns": "الطلبات",
+  "@consoleCampaigns": {
+    "description": "Console: campaign table heading"
+  },
+  "consoleColumnViews": "المشاهدات",
+  "@consoleColumnViews": {
+    "description": "Console: campaign column"
+  },
+  "consoleColumnCv": "السيرة",
+  "@consoleColumnCv": {
+    "description": "Console: campaign column"
+  },
+  "consoleColumnLastSeen": "آخر ظهور",
+  "@consoleColumnLastSeen": {
+    "description": "Console: campaign column"
+  },
+  "consoleNoCampaigns": "لا توجد حملات بعد.",
+  "@consoleNoCampaigns": {
+    "description": "Console: no campaign rows"
+  },
+  "consoleSignOut": "إغلاق لوحة التحكم",
+  "@consoleSignOut": {
+    "description": "Console: clears the token"
+  },
+  "consoleDailyViews": "المشاهدات يوميًا",
+  "@consoleDailyViews": {
+    "description": "Console: sparkline label"
+  },
+  "navHowItWasBuilt": "كيف بُني",
+  "@navHowItWasBuilt": {
+    "description": "Nav and title: the colophon page"
+  },
+  "colophonIntro": "هذه الصفحة مُولَّدة من المستودع الذي تصفه. كل رقم أدناه مقروء من مخرجات البناء، لا مكتوب يدويًا.",
+  "@colophonIntro": {
+    "description": "Colophon: opening line"
+  },
+  "colophonMeasured": "قياسات",
+  "@colophonMeasured": {
+    "description": "Colophon: measurements section heading"
+  },
+  "colophonCoverage": "تغطية الأسطر",
+  "@colophonCoverage": {
+    "description": "Colophon: stat label"
+  },
+  "colophonTests": "اختبارًا",
+  "@colophonTests": {
+    "description": "Colophon: stat label"
+  },
+  "colophonWorkerTests": "اختبارات الخادم",
+  "@colophonWorkerTests": {
+    "description": "Colophon: stat label"
+  },
+  "colophonLighthouse": "يفشل البناء إن قلّ أداء Lighthouse عن {performance} أو الوصولية عن {accessibility} في الصفحتين المفهرستين.",
+  "@colophonLighthouse": {
+    "description": "Colophon: Lighthouse floors",
+    "placeholders": {
+      "performance": {
+        "type": "String"
+      },
+      "accessibility": {
+        "type": "String"
+      }
+    }
+  },
+  "colophonGeneratedOn": "وُلّدت في {date}",
+  "@colophonGeneratedOn": {
+    "description": "Colophon: generation date",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "colophonCollection": "ما يُجمع",
+  "@colophonCollection": {
+    "description": "Colophon: collection readout heading"
+  },
+  "colophonCollectionIntro": "هذا الجدول مشتق من الكود الذي ينفّذه، لا مكتوب بجانبه. ويقارن اختبار بينهما.",
+  "@colophonCollectionIntro": {
+    "description": "Colophon: collection readout intro"
+  },
+  "colophonTierNone": "أبدًا",
+  "@colophonTierNone": {
+    "description": "Colophon: an event nothing permits"
+  },
+  "colophonTierAggregate": "يُحصى دون تعريف",
+  "@colophonTierAggregate": {
+    "description": "Colophon: Tier 0"
+  },
+  "colophonTierSession": "فقط بموافقتك",
+  "@colophonTierSession": {
+    "description": "Colophon: Tier 1"
+  },
+  "colophonNeverHeading": "ما لا يُجمع أبدًا",
+  "@colophonNeverHeading": {
+    "description": "Colophon: never-collected heading"
+  },
+  "colophonNever": "لا يُخزَّن أي عنوان IP. لا كوكيز، ولا بصمات، ولا تسجيل للجلسات، ولا استنتاج ديموغرافي، ولا متتبعات خارجية. تُحدَّد الدولة على الخادم ويُهمل العنوان في نفس الاستدعاء.",
+  "@colophonNever": {
+    "description": "Colophon: never-collected prose"
+  },
+  "colophonArchitecture": "البنية",
+  "@colophonArchitecture": {
+    "description": "Colophon: architecture heading"
+  },
+  "colophonArchitectureBody": "يرسم Flutter Web على لوحة لا تقرأها محركات البحث. لذلك تُولَّد السيرة الذاتية وصفحة الموجز كـ HTML عادي خارج التطبيق، فتكون الصفحتان المطلوب إيجادهما قابلتين للفهرسة وتعملان بدون JavaScript.",
+  "@colophonArchitectureBody": {
+    "description": "Colophon: architecture prose"
+  },
+  "colophonUnavailable": "قياسات البناء غير متاحة.",
+  "@colophonUnavailable": {
+    "description": "Colophon: facts failed to load"
+  }
 }
