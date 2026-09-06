@@ -125,7 +125,11 @@ void main() {
     });
 
     test('has status text', () {
-      expect(cvHtml, contains('predicted Distinction'));
+      // The CV records the award as confirmed, so the status line no longer
+      // hedges. It still comes from profile.json rather than being written
+      // here, so a later change to the content flows through.
+      expect(cvHtml, contains('Distinction'));
+      expect(cvHtml, isNot(contains('predicted Distinction')));
     });
 
     test('has experience section with career roles', () {
