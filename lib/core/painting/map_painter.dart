@@ -207,14 +207,37 @@ class MapPainter extends CustomPainter {
         );
       }
 
-      canvas.drawCircle(
-        centre,
-        radius,
-        Paint()
-          ..color = isSelected ? activeColour : nodeColour
-          ..style = isSelected ? PaintingStyle.fill : PaintingStyle.stroke
-          ..strokeWidth = hairlineWidth,
+      // A cartouche, not a dot. `00-PROJECT-BRIEF.md` §3: each stop on the
+      // atlas is a name enclosed, which is what the sign meant. A circle drawn
+      // on a map is a pin; this is a place with someone's history in it.
+      final paint = Paint()
+        ..color = isSelected ? activeColour : nodeColour
+        ..style = isSelected ? PaintingStyle.fill : PaintingStyle.stroke
+        ..strokeWidth = hairlineWidth;
+
+      final loop = RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: centre,
+          width: radius * 2 * Tokens.stationCartoucheRatio,
+          height: radius * 2,
+        ),
+        Radius.circular(radius),
       );
+      canvas.drawRRect(loop, paint);
+
+      // The tie bar closes it. Only on the selected stop: at the unselected
+      // size it would be a pixel of noise on a coastline, and the shape
+      // already reads as an enclosure without it.
+      if (isSelected) {
+        canvas.drawLine(
+          Offset(loop.right, centre.dy - radius * 0.55),
+          Offset(loop.right, centre.dy + radius * 0.55),
+          Paint()
+            ..color = activeColour
+            ..strokeWidth = hairlineWidth
+            ..strokeCap = StrokeCap.round,
+        );
+      }
     }
   }
 

@@ -6,7 +6,6 @@ import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
-import 'package:nocturne/core/painting/carrier_painter.dart';
 import 'package:nocturne/features/station/domain/acquisition_controller.dart';
 
 /// The one non-triggered animation on the site.
@@ -240,7 +239,8 @@ class _ScanLinePainter extends CustomPainter {
       ..strokeWidth = hairlineWidth * 2
       ..strokeCap = StrokeCap.round;
 
-    // Beat one is a mark at the centre; beat two extends it to the full width.
+    // Beat one is the seal: a mark at the centre. Beat two breaks it, and the
+    // line widens into the slit of light a door makes as it opens.
     final half = (hairlineWidth * 2 * tick) + (size.width / 2 * sweep);
     if (half <= 0) return;
 
@@ -250,15 +250,30 @@ class _ScanLinePainter extends CustomPainter {
       paint,
     );
 
-    // Beat three: the flat line resolves into the carrier the trace is built
-    // from, so the sequence hands directly to the page's own waveform.
+    // Beat three: light enters. The slit becomes a pool spreading from it,
+    // which is the same torch that lights the wall the page hands to -- so the
+    // sequence resolves into the site's own device rather than a flourish that
+    // appears once and is never seen again.
     if (sweep < 1 || settle <= 0) return;
-    CarrierPainter(
-      phase: 0,
-      colour: colour.withValues(alpha: 1 - settle),
-      strokeWidth: hairlineWidth * 2,
-      textDirection: textDirection,
-    ).paint(canvas, size);
+    final reach = size.width * settle;
+    if (reach <= 0) return;
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader =
+            RadialGradient(
+              colors: [
+                colour.withValues(alpha: (1 - settle) * Tokens.openingGlow),
+                colour.withValues(alpha: 0),
+              ],
+            ).createShader(
+              Rect.fromCenter(
+                center: centre,
+                width: reach * 2,
+                height: reach * 2,
+              ),
+            ),
+    );
   }
 
   @override

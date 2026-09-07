@@ -136,7 +136,7 @@
   "@acquisitionSkip": {
     "description": "Accessible name for the control that ends the opening sequence."
   },
-  "acquisitionLabel": "Acquiring signal",
+  "acquisitionLabel": "Opening",
   "@acquisitionLabel": {
     "description": "Announced while the opening sequence runs."
   },

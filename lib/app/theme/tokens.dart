@@ -380,6 +380,20 @@ abstract final class Tokens {
   /// The mark: 2px stroke at its native 32px square, 24px in the header.
   static const double markNativeSize = 32, markStroke = 2, markHeaderSize = 24;
 
+  /// Peak brightness of the light entering during the opening sequence.
+  ///
+  /// Low: it is a door opening in a dark room, not a flash. The whole point of
+  /// the beat is that the page arrives out of the dark.
+  static const double openingGlow = 0.28;
+
+  /// How much wider than tall a station's cartouche sits on the atlas.
+  ///
+  /// Far shorter than the name cartouche in the header, which encloses six
+  /// signs. This encloses nothing — it is the shape read at a glance, and past
+  /// about this ratio it stops reading as an enclosure and starts reading as a
+  /// dash on a coastline.
+  static const double stationCartoucheRatio = 1.7;
+
   /// The torch's reach over the wall, as a fraction of the visible frame's
   /// longest side.
   ///
