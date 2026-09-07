@@ -19,6 +19,7 @@ import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
 import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
 import 'package:nocturne/features/about/presentation/widgets/education_table.dart';
+import 'package:nocturne/features/about/presentation/widgets/interests_grid.dart';
 import 'package:nocturne/features/about/presentation/widgets/portrait_frame.dart';
 import 'package:nocturne/features/writing/presentation/widgets/writing_list.dart';
 
@@ -109,6 +110,11 @@ class _About extends StatelessWidget {
         Text(l10n.aboutEducation, style: context.type.heading),
         SizedBox(height: tokens.space16),
         EducationTable(education: education),
+        SizedBox(height: tokens.space48),
+        // After the credentials, before the contact details: someone who has
+        // read this far has the evidence and is deciding whether they want to
+        // work with him, which is the question this section answers.
+        const InterestsGrid(),
         SizedBox(height: tokens.space48),
         Text(l10n.aboutContact, style: context.type.heading),
         SizedBox(height: tokens.space16),

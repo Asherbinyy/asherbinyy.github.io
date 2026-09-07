@@ -38,12 +38,25 @@ class TransmissionPanel extends StatelessWidget {
     final summary = role.summary;
 
     return InstrumentPanel(
-      fill: tokens.surfaceRaised,
+      // `surfaceRaised` is near-white on papyrus, which is why the owner read
+      // this as a plain white card: the panel had no edge of its own against
+      // the page. `surface` sits a step down from the page in Deshret and a
+      // step up in Kemet, so the panel reads as a panel in both.
+      fill: tokens.surface,
       padding: EdgeInsets.all(tokens.space24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // A gold rule above the name, short of the column. The same device
+          // the hero uses under the name, so a selected stop announces itself
+          // in the site's own vocabulary rather than with a heavier border.
+          SizedBox(
+            width: tokens.space48,
+            height: tokens.hairlineWidth * 2,
+            child: ColoredBox(color: tokens.beacon),
+          ),
+          SizedBox(height: tokens.space12),
           Text(
             company ?? role.city,
             style: type.heading.copyWith(color: tokens.beacon),

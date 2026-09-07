@@ -1,6 +1,7 @@
 import 'package:nocturne/content/models/apps.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/content/models/education.dart';
+import 'package:nocturne/content/models/interests.dart';
 import 'package:nocturne/content/models/localized_text.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/content/models/study.dart';
@@ -84,6 +85,7 @@ abstract final class ContentParser {
       }
       if (app.role case final LocalizedText copy) _localized(copy);
       if (app.metric case final String copy) _text(copy);
+      if (app.screenshot case final String path) _asset(path);
     }
     return value;
   }
@@ -103,7 +105,22 @@ abstract final class ContentParser {
       for (final module in entry.modules) {
         _localized(module.name);
         _range(module.mark, 100);
+        if (module.evidence case final Evidence evidence) {
+          _asset(evidence.src);
+          _localized(evidence.caption);
+        }
       }
+    }
+    return value;
+  }
+
+  /// Rejects duplicate interests and empty copy.
+  static Interests interests(Map<String, dynamic> json) {
+    final value = Interests.fromJson(json);
+    _unique(value.interests.map((interest) => interest.id));
+    for (final interest in value.interests) {
+      _localized(interest.label);
+      if (interest.note case final LocalizedText note) _localized(note);
     }
     return value;
   }

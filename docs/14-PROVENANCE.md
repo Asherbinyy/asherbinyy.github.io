@@ -8,7 +8,7 @@ trust. It exists because the owner asked, reasonably, why the site was making
 things up — and the answer turned out to be that it mostly was not, but nothing
 in the repository could demonstrate that.
 
-Last reviewed: 2026-09-07, after the owner's decisions and a store-link sweep.
+Last reviewed: 2026-09-07, at the close of Milestone 4.
 
 ---
 
@@ -106,21 +106,21 @@ Jul 2023. `career.json` follows the CV. **§3.5.**
 
 | # | Needed | Blocks |
 |---|---|---|
-| **3.1** | **Guardy.** Dates, engagement type (freelance/contract), and what was built in v1. **Store listing verified 2026-09-07** via the iTunes lookup API: *Guardy*, seller **Guardy GmbH**, Navigation category, first released **17 July 2024**, currently v3.0.1. Product verified at **PUB** guardyapp.de — personal-safety app with live location sharing, live streaming and community alerts. The 2024 release date is consistent with the owner's account of building v1 as a freelancer. What is still needed is his engagement dates and what he specifically built. | 4.2, and §2.1 |
+| ~~3.1~~ | **Closed.** The owner described the work on 2026-09-07: showcase and shop features, cloud functions, structural and UI improvements, and bug fixes. Listing verified live — Guardy GmbH, Navigation, first released 2024-07-17, now v3.0.1. **He did not give engagement dates**, so Guardy ships as an application rather than a career stop: an application needs no date range and a map stop does. Germany is now his sixth country. Original entry: **Guardy.** Dates, engagement type (freelance/contract), and what was built in v1. **Store listing verified 2026-09-07** via the iTunes lookup API: *Guardy*, seller **Guardy GmbH**, Navigation category, first released **17 July 2024**, currently v3.0.1. Product verified at **PUB** guardyapp.de — personal-safety app with live location sharing, live streaming and community alerts. The 2024 release date is consistent with the owner's account of building v1 as a freelancer. What is still needed is his engagement dates and what he specifically built. | 4.2, and §2.1 |
 | **3.2** | **AZ Courses downloads** — 15,000 or 8,000. | 4.1 |
-| **3.3** | **The 74% → 75%** — which module or component. And which modules count as "top performing", or a cutoff. | 4.6 |
-| **3.4** | **Dissertation** — withheld until published. Confirm what, if anything, may be said meanwhile. | 4.6 |
-| **3.5** | **CI Company end date** — April or July 2023. | 4.1 |
-| **3.6** | **Tiara Beauty** — freelance? dates? what was built? Currently in `apps.json` with a store link and no role. | 4.2 |
-| **3.7** | **Origins.** Born in Saudi Arabia — which city. Raised in Egypt — Mansoura, and from what year. Left Egypt 2025 at 28. Manchester 2025–present. Birth year is inferable as ~1997 but **inference is not a source**. | 4.3 |
+| ~~3.3~~ | **Closed.** The 74 was MPDD, already recorded at 75. The owner set the publish line at 80, so `/about` shows four of seven modules and `/cv` keeps the full transcript. Original entry: **The 74% → 75%** — which module or component. And which modules count as "top performing", or a cutoff. | 4.6 |
+| ~~3.4~~ | **Closed.** The topic stays, findings and paper do not, until it is published. Original entry: **Dissertation** — withheld until published. Confirm what, if anything, may be said meanwhile. | 4.6 |
+| ~~3.5~~ | **Closed.** April 2023, the CV's figure. LinkedIn still shows July 2023; correcting it there is the owner's to do. Original entry: **CI Company end date** — April or July 2023. | 4.1 |
+| ~~3.6~~ | **Closed.** Freelance, late 2024, built with one other developer. Dates not recorded to the month because the owner does not remember them, and `apps.json` needs none. Original entry: **Tiara Beauty** — freelance? dates? what was built? Currently in `apps.json` with a store link and no role. | 4.2 |
+| ~~3.7~~ | **Closed, and narrowed.** The owner withdrew Saudi Arabia: he is from **Mansoura, Egypt**, and that is all the site says. The journey now opens at Mansoura University in 2015 and closes at Salford in 2026 — both already in `education.json`, so the map gained an origin and a present **without a single new claim** and without needing a birth year nobody sourced. Original entry: **Origins.** Born in Saudi Arabia — which city. Raised in Egypt — Mansoura, and from what year. Left Egypt 2025 at 28. Manchester 2025–present. Birth year is inferable as ~1997 but **inference is not a source**. | 4.3 |
 | ~~3.8~~ | **Resolved 2026-09-07.** The owner's rule is **live store links only**. A sweep of the App Store found no live listing for Meswak, Spix, Moawda, Kafu, Weze, Jumper or Absher, so most of the sixteen are excluded by that rule rather than by judgement. See §4. | — |
-| **3.9** | **Hobbies.** Stated: gym, football, padel, TV (*Better Call Saul*), reading, e-sports (FIFA, Valorant). Needed: anything to avoid, and whether a favourite book or team should appear. | 4.4 |
+| ~~3.9~~ | **Closed.** Gym, football, padel, reading, television (*Better Call Saul*), e-sports (FIFA and Valorant). In `interests.json`, in his own terms, with nothing added. Original entry: **Hobbies.** Stated: gym, football, padel, TV (*Better Call Saul*), reading, e-sports (FIFA, Valorant). Needed: anything to avoid, and whether a favourite book or team should appear. | 4.4 |
 | **3.10** | **Name recording** — the owner saying "Sherbini". Owner to supply. | 4.7 |
 | **3.11** | **App screenshots** — Mokaf, AZ Courses, City Loom, and any others. Long outstanding as `11-OPEN-ISSUES.md` 1.10. | 4.13, 2.1 |
-| **3.12** | **CV PDF** — may `main resume.pdf` be committed to `assets/`? It carries a phone number already published in `profile.json`. | 4.12 |
-| **3.13** | **Portrait** — `supporting files/profile/` holds two candidates. Which, and may it be committed? | 4.4 |
+| ~~3.12~~ | **Closed.** Committed to `assets/docs/`, `profile.cvFile` is set, and the hero's second action now reads *Download the CV*. Original entry: **CV PDF** — may `main resume.pdf` be committed to `assets/`? It carries a phone number already published in `profile.json`. | 4.12 |
+| ~~3.13~~ | **Closed.** The studio frame, matching the shot brief. Cropped to 4:5, 107KB. Original entry: **Portrait** — `supporting files/profile/` holds two candidates. Which, and may it be committed? | 4.4 |
 | **3.14** | **Cartouche transliteration** — š-r-b-i-n-i needs a check by someone who reads Egyptian (`12-MOTIF-LIBRARY.md` §2). | 5.5 |
-| **3.15** | **Evri.** Still the one role the CV does not cover, open since milestone 1 as `11-OPEN-ISSUES.md` 1.7. Started 2025-11 per `career.json`. | 4.2 |
+| ~~3.15~~ | **Closed by removal.** The owner instructed on 2026-09-07 to drop Evri entirely. It was the one role his CV never covered and had been open since milestone 1. Original entry: **Evri.** Still the one role the CV does not cover, open since milestone 1 as `11-OPEN-ISSUES.md` 1.7. Started 2025-11 per `career.json`. | 4.2 |
 
 ---
 
@@ -161,6 +161,27 @@ Two things worth the owner's attention:
 
 - **"Crazy Idea" is the employer the CV calls "CI Company."** `career.json` uses "CI Company". LinkedIn shows "Crazy Idea" publicly. One of the two should win, and the site should not show a name the owner's own LinkedIn contradicts.
 - **Easy Go is an open-source Flutter package**, published as self-employed work. It is the only open-source artifact in the whole record and it is currently invisible on a portfolio for a Flutter engineer. Worth surfacing on its own terms.
+
+---
+
+## 3b. Added in Milestone 4, and where it came from
+
+| Claim | Source |
+|---|---|
+| Guardy's role text | **OWN**, 2026-09-07, transcribed not summarised |
+| Guardy is a German product | **PUB** guardyapp.de and the App Store listing, both fetched 2026-09-07 |
+| Tiara Beauty is freelance, built with one other developer | **OWN**, 2026-09-07 |
+| The journey opens at Mansoura University, 2015–2020 | **CV1**, already in `education.json` |
+| The journey closes at Salford, 2025–2026 | **CV1**, already in `education.json` |
+| Six interests, and the two specifics | **OWN**, 2026-09-07, verbatim |
+| Power BI dashboard beside the 94 | Owner's coursework, supplied and cleared 2026-09-07 |
+| Research poster beside the 80 | Owner's coursework, supplied and cleared 2026-09-07. **Cropped**: the original carries his name and student number in a header band, and a matriculation number is an identifier with no reason to be on a public page. The caption carries the title instead. |
+| The portrait | Owner's photograph, cleared 2026-09-07 |
+| The CV PDF | `main resume.pdf`, cleared 2026-09-07 |
+
+Nothing in this milestone was inferred. Where a fact was missing — Guardy's
+engagement dates, Tiara's months, a birth year — the feature was shaped around
+the gap rather than the gap being filled.
 
 ---
 

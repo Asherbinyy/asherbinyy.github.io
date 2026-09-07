@@ -46,9 +46,31 @@ class EducationModule with _$EducationModule {
   const factory EducationModule({
     required LocalizedText name,
     required double mark,
+    Evidence? evidence,
   }) = _EducationModule;
 
   /// Decodes the documented JSON shape.
   factory EducationModule.fromJson(Map<String, dynamic> json) =>
       _$EducationModuleFromJson(json);
+}
+
+/// A piece of coursework the owner is willing to show.
+///
+/// A mark is a number the reader has to take on trust. The artefact behind it
+/// is the thing that makes it evidence rather than a claim, which is the whole
+/// argument of `14-PROVENANCE.md` applied to the transcript.
+///
+/// Absent on every module where the owner has not supplied one, and nothing
+/// is inferred: a module without evidence renders its mark exactly as before.
+@freezed
+class Evidence with _$Evidence {
+  /// Creates an immutable Evidence record.
+  const factory Evidence({
+    required String src,
+    required LocalizedText caption,
+  }) = _Evidence;
+
+  /// Decodes the documented JSON shape.
+  factory Evidence.fromJson(Map<String, dynamic> json) =>
+      _$EvidenceFromJson(json);
 }

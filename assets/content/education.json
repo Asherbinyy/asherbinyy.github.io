@@ -22,7 +22,14 @@
             "en": "Business Data Insights & Analytics",
             "ar": "تحليلات ورؤى بيانات الأعمال"
           },
-          "mark": 94
+          "mark": 94,
+          "evidence": {
+            "src": "assets/media/bdia-dashboard.jpg",
+            "caption": {
+              "en": "Power BI dashboard built for the module",
+              "ar": "لوحة معلومات Power BI أُنجزت ضمن المقرر"
+            }
+          }
         },
         {
           "name": {
@@ -43,7 +50,14 @@
             "en": "Responsible Technologies",
             "ar": "التقنيات المسؤولة"
           },
-          "mark": 80
+          "mark": 80,
+          "evidence": {
+            "src": "assets/media/rt-poster.jpg",
+            "caption": {
+              "en": "Research poster: the AI e-waste crisis",
+              "ar": "ملصق بحثي: أزمة النفايات الإلكترونية للذكاء الاصطناعي"
+            }
+          }
         },
         {
           "name": {

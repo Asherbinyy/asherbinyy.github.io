@@ -45,7 +45,16 @@ void main() {
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       expect(find.text(l10n.heroSeeTheWork), findsOneWidget);
-      expect(find.text(l10n.heroReadTheCv), findsOneWidget);
+      // The label names its outcome: "Download" now that profile.cvFile
+      // supplies a PDF, "Read" where it does not and the static HTML page is
+      // what opens. Asserted as one or the other rather than pinned to the
+      // current content, so supplying or withdrawing the file is a content
+      // decision and not a failing test.
+      expect(
+        find.text(l10n.heroDownloadTheCv).evaluate().length +
+            find.text(l10n.heroReadTheCv).evaluate().length,
+        1,
+      );
       // Scoped to the hero: the consent banner carries three of its own.
       expect(
         find.descendant(

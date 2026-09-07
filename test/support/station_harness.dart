@@ -70,6 +70,7 @@ Future<ProviderContainer> pumpStation(
     await container.read(careerProvider.future);
     await container.read(appsProvider.future);
     await container.read(educationProvider.future);
+    await container.read(interestsProvider.future);
     if (initialRoute == AppRoute.signal) {
       await container.read(coastlineRingsProvider.future);
     }

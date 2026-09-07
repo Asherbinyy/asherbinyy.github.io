@@ -36,7 +36,7 @@
     "linktree": "https://linktr.ee/ahmedElsherbini",
     "calendly": null
   },
-  "cvFile": null,
+  "cvFile": "assets/docs/ahmed-elsherbini-cv.pdf",
   "portrait": {
     "src": "assets/media/portrait.jpg",
     "isPlaceholder": false

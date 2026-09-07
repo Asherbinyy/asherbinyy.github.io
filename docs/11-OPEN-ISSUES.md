@@ -8,7 +8,7 @@ than burying it in a worklog nobody re-reads.
 Worklogs record what happened in a session. **This file records what is still
 true.** If the two disagree, this file is the one to fix.
 
-Last reviewed: 2026-09-07, after tasks 4.8, 4.9 and 4.10.
+Last reviewed: 2026-09-07, at the close of Milestone 4.
 
 ---
 
@@ -37,15 +37,15 @@ rows that predate the change and have not yet been folded in.
 |---|---|---|---|
 | ~~0b.1~~ | **Closed at planning.** The README now says the aggregate tier writes nothing, and that theme, language and Recruiter Mode persist as user-requested preferences, which PECR exempts. Original text: **"Nothing is stored on the visitor's device."** Theme, language and Recruiter Mode have persisted through `shared_preference_store.dart` since milestone 1. The sentence is about the analytics tier but does not say so, and reads as a claim about the whole site. | A privacy claim that is false as written, on a site whose argument is its privacy posture | 4.1 |
 | ~~0b.2~~ | **Closed 4.8.** `SelectionArea` wraps the content column. It deliberately excludes the header, rail and footer so a drag beginning on a control does not become a text drag; three tests hold that boundary in both directions. |
-| 0b.3 | **"Six countries" overstates the CV**, which names five countries of delivery plus the UK as residence. Guardy would make it genuinely six. | An inflated claim on the hero, the stat panel and `/brief` | 4.1, 4.2 |
+| ~~0b.3~~ | **Closed.** Guardy makes Germany a genuine sixth, and Evri's removal took the UK out of the working count. The five the CV names plus Germany. Original: **"Six countries" overstates the CV**, which names five countries of delivery plus the UK as residence. Guardy would make it genuinely six. | An inflated claim on the hero, the stat panel and `/brief` | 4.1, 4.2 |
 | ~~0b.4~~ | **Closed.** The owner confirmed the CV's 15,000+ is current and the LinkedIn entry is stale. The site is unchanged; `14-PROVENANCE.md` §2.2 records it so it is not re-opened. |
 | ~~0b.5~~ | **Closed.** The owner chose the CV's "CI Company". The public records still disagree; updating LinkedIn would close it from the other side, which is his call, not an agent's. |
-| 0b.6 | **CI Company end date** — CV says 04/2023, LinkedIn says Jul 2023. | A three-month gap across a job boundary | 4.1 |
+| ~~0b.6~~ | **Closed.** April 2023. Original: **CI Company end date** — CV says 04/2023, LinkedIn says Jul 2023. | A three-month gap across a job boundary | 4.1 |
 | ~~0b.7~~ | **Closed 4.9.** Removed, and nothing replaced it. The test asserting it was inverted rather than deleted, so a future agent finding the plumbing intact also finds the reason it went. **Still open for the owner:** the footer's remaining line reads "Manchester". His objection named the city as well as the latitude, but a footer location is ordinary and true, so it was left rather than removed on an inference. |
-| 0b.8 | **The chronology scrubber has no legible affordance.** Nothing indicates it can be dragged. | The map's primary touch control is undiscoverable | 4.3 |
-| 0b.9 | **The transmission panel reads as a plain card**, particularly in the light theme. | The map's content surface looks unfinished | 4.3 |
-| 0b.10 | **`/writing` draws procedural art while real cover images exist** for all six articles. | The best-looking content on the site is hidden | 4.5 |
-| 0b.11 | **Easy Go, an open-source Flutter package**, is absent from the site. It is the only open-source artifact in the record. | A Flutter engineer's portfolio shows no packages | 4.2 |
+| ~~0b.8~~ | **Closed 4.3.** The rail is continuous instead of six disconnected segments, the selected stop is named above it, and a step control sits at each end — which is the part that makes it obviously operable on a phone, with a mouse and from the keyboard. Original: **The chronology scrubber has no legible affordance.** Nothing indicates it can be dragged. | The map's primary touch control is undiscoverable | 4.3 |
+| ~~0b.9~~ | **Closed 4.3.** It filled with `surfaceRaised`, which is near-white on papyrus, so it had no edge against the page. It now fills with `surface` and carries a short gold rule above the name. Original: **The transmission panel reads as a plain card**, particularly in the light theme. | The map's content surface looks unfinished | 4.3 |
+| ~~0b.10~~ | **Closed 4.5**, pending the Worker deploy in 0b.12. Original: **`/writing` draws procedural art while real cover images exist** for all six articles. | The best-looking content on the site is hidden | 4.5 |
+| 0b.11 | **Easy Go, an open-source Flutter package**, is absent from the site. It is the only open-source artifact in the record. **Not resolved by 4.2**: the owner's publishing rule for the sixteen LinkedIn projects is live store links only, and a pub.dev package has no store listing, so the rule excludes it by accident rather than by intent. Worth a decision of its own. | A Flutter engineer's portfolio shows no packages | Owner |
 | 0b.12 | **`/v1/cover` is written and tested but not deployed.** The client asks the relay for covers; until the Worker ships, that request 404s and every card falls back to its procedural mark — the pre-milestone-4 appearance, with no error. Deploy with `npx wrangler deploy` from `worker/`. | `/writing` shows procedural art rather than real covers | Owner deploying the Worker |
 
 ---
@@ -77,6 +77,18 @@ that opening `/writing` issues no request to Medium carrying the viewer's IP or
 referrer. It allowlists Medium's two CDN hosts, refuses anything that is not an
 image, caps the response at 2MB and passes through no upstream header but the
 content type. **It is not yet deployed** — see 0b.12.
+
+---
+
+## 0c. Opened during Milestone 4
+
+| # | Item | Notes |
+|---|---|---|
+| 0c.1 | **Guardy has no engagement dates**, so it ships as an application rather than a stop on the map. Germany therefore appears in the ledger and in the countries claim but not on the atlas. | Supplying start and end months would let it become a stop. `14-PROVENANCE.md` §3b. |
+| 0c.2 | **Malboos lost its featured slot to Guardy.** The parser caps featured entries at six and Malboos is the only one with no role description — a bare name and a link. An editorial call an agent made; reversing it is one flag in `apps.json`. | Owner may disagree |
+| 0c.3 | **The research poster is cropped** to remove a header band carrying the owner's name and student number. The caption carries the title instead. | A matriculation number has no reason to be on a public page |
+| 0c.4 | **`assets/media/apps/` is empty.** The screenshot pipeline is built and documented; no screenshots have been supplied. Every row still draws its procedural card, which is the designed absence rather than a defect. | Rolls up into 1.10 |
+| 0c.5 | **The interests section is not in `02-SCREEN-SPECS.md`.** Nor are the evidence thumbnails, the redesigned scrubber, or `/ascent`. That document still describes the ground station throughout. | Deferred deliberately — see the milestone-4 worklogs |
 
 ---
 

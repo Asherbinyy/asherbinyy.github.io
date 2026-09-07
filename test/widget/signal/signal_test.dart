@@ -162,8 +162,11 @@ void main() {
     testWidgets('the scrubber selects a station', (tester) async {
       await _pumpSignal(tester);
 
+      // The centre, not 20px from the left edge: milestone 4 put a step
+      // button at each end, so the old point now lands on a control rather
+      // than on the rail.
       final scrubber = tester.getRect(find.byType(ChronologyScrubber));
-      await tester.tapAt(scrubber.centerLeft + const Offset(20, 0));
+      await tester.tapAt(scrubber.center);
       await pumpFrames(tester);
 
       expect(
@@ -171,6 +174,80 @@ void main() {
             .widget<PropagationMap>(find.byType(PropagationMap))
             .selectedIndex,
         greaterThanOrEqualTo(0),
+      );
+    });
+
+    testWidgets('the rail joins the stops into one line', (tester) async {
+      await _pumpSignal(tester);
+
+      // The rail is the whole point of the redesign and it is the one part
+      // with no text to assert on, so it is checked by its geometry. It
+      // rendered zero pixels wide on the first pass -- a SizedBox with only a
+      // height inside a Stack -- and every stop floated unconnected, which is
+      // precisely the appearance the owner reported.
+      final scrubber = tester.getRect(find.byType(ChronologyScrubber));
+      final rails = find.descendant(
+        of: find.byType(ChronologyScrubber),
+        matching: find.byType(ColoredBox),
+      );
+
+      final widest = tester
+          .widgetList<ColoredBox>(rails)
+          .indexed
+          .map((entry) => tester.getSize(rails.at(entry.$1)).width)
+          .fold<double>(0, (a, b) => a > b ? a : b);
+
+      expect(
+        widest,
+        greaterThan(scrubber.width / 2),
+        reason: 'the rail should span the control, not collapse to nothing',
+      );
+    });
+
+    testWidgets('the step controls walk the journey in order', (tester) async {
+      await _pumpSignal(tester);
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+
+      int selected() => tester
+          .widget<PropagationMap>(find.byType(PropagationMap))
+          .selectedIndex;
+
+      // Nothing is selected to begin with, so the first press must land on the
+      // first stop rather than doing nothing.
+      expect(selected(), -1);
+      await tester.tap(find.bySemanticsLabel(l10n.signalNextStop));
+      await pumpFrames(tester);
+      expect(selected(), 0);
+
+      await tester.tap(find.bySemanticsLabel(l10n.signalNextStop));
+      await pumpFrames(tester);
+      expect(selected(), 1);
+
+      await tester.tap(find.bySemanticsLabel(l10n.signalPreviousStop));
+      await pumpFrames(tester);
+      expect(selected(), 0);
+    });
+
+    testWidgets('the scrubber names the stop it has selected', (tester) async {
+      await _pumpSignal(tester);
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+
+      // Before anything is chosen it says so, rather than showing a blank
+      // line the viewer has to interpret.
+      expect(find.text(l10n.signalScrubberHint), findsOneWidget);
+
+      await tester.tap(find.bySemanticsLabel(l10n.signalNextStop));
+      await pumpFrames(tester);
+
+      // The first stop is Mansoura University, which the content names.
+      final first = bundledStops().first;
+      final expected = (first['company'] ?? first['city']) as String;
+      expect(
+        find.descendant(
+          of: find.byType(ChronologyScrubber),
+          matching: find.text(expected),
+        ),
+        findsOneWidget,
       );
     });
 

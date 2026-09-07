@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/education.dart';
+import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/widgets/beacon_button.dart';
+import 'package:nocturne/core/widgets/focus_ring.dart';
 
 /// Education as a compact table: institution, award, dates, status.
 ///
@@ -117,26 +122,200 @@ class _Module extends StatelessWidget {
     final tokens = context.tokens;
     final type = context.type;
 
+    final evidence = module.evidence;
+
     return Padding(
       padding: EdgeInsets.symmetric(vertical: tokens.space4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Text(
-              module.name.resolve(context.channel),
-              style: type.bodyS.copyWith(color: tokens.textSecondary),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Expanded(
+                child: Text(
+                  module.name.resolve(context.channel),
+                  style: type.bodyS.copyWith(color: tokens.textSecondary),
+                ),
+              ),
+              SizedBox(width: tokens.space16),
+              Text(
+                // Marks are whole numbers in the supplied content; the type
+                // scale puts tabular figures on numeric styles so the column
+                // aligns.
+                module.mark.toStringAsFixed(0),
+                style: type.telemetry.copyWith(color: tokens.instrument),
+              ),
+            ],
+          ),
+          if (evidence != null) ...[
+            SizedBox(height: tokens.space8),
+            _EvidenceThumbnail(evidence: evidence),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The artefact behind a mark, as a thumbnail that opens full size.
+///
+/// A mark is a number a reader has to take on trust; the coursework behind it
+/// is what turns it into evidence. This is `14-PROVENANCE.md`'s argument
+/// applied to the transcript — and the reason only two modules carry one is
+/// that only two artefacts were supplied, not that the rest were filtered.
+class _EvidenceThumbnail extends StatefulWidget {
+  const _EvidenceThumbnail({required this.evidence});
+
+  final Evidence evidence;
+
+  /// Declared, never inferred.
+  static const double width = 220;
+
+  /// A 16:9-ish plate. Tall enough to tell a dashboard from a poster, small
+  /// enough that a transcript does not become a gallery.
+  static const double height = 124;
+
+  @override
+  State<_EvidenceThumbnail> createState() => _EvidenceThumbnailState();
+}
+
+class _EvidenceThumbnailState extends State<_EvidenceThumbnail> {
+  final WidgetStatesController _states = WidgetStatesController();
+
+  @override
+  void dispose() {
+    _states.dispose();
+    super.dispose();
+  }
+
+  void _open() {
+    final caption = widget.evidence.caption.resolve(context.channel);
+    unawaited(
+      showDialog<void>(
+        context: context,
+        // The artefact is the point, so it gets the viewport rather than a
+        // polite little box in the middle of it.
+        builder: (context) =>
+            _EvidenceDialog(src: widget.evidence.src, caption: caption),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final caption = widget.evidence.caption.resolve(context.channel);
+
+    return ListenableBuilder(
+      listenable: _states,
+      builder: (context, _) => Semantics(
+        button: true,
+        label: context.l10n.aboutEvidenceOpen(caption),
+        child: FocusRing(
+          isFocused: _states.value.contains(WidgetState.focused),
+          child: InkWell(
+            onTap: _open,
+            statesController: _states,
+            hoverColor: Colors.transparent,
+            mouseCursor: context.platform.isPointer
+                ? SystemMouseCursors.click
+                : MouseCursor.defer,
+            child: ExcludeSemantics(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: _states.value.contains(WidgetState.hovered)
+                            ? tokens.beacon
+                            : tokens.hairline,
+                        width: tokens.hairlineWidth,
+                      ),
+                    ),
+                    child: Image.asset(
+                      widget.evidence.src,
+                      width: _EvidenceThumbnail.width,
+                      height: _EvidenceThumbnail.height,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      // A missing artefact leaves the mark standing alone
+                      // rather than a broken-image glyph beside it.
+                      errorBuilder: (context, error, stack) =>
+                          const SizedBox.shrink(),
+                    ),
+                  ),
+                  SizedBox(height: tokens.space4),
+                  SizedBox(
+                    width: _EvidenceThumbnail.width,
+                    child: Text(
+                      caption,
+                      style: context.type.telemetryS.copyWith(
+                        color: tokens.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          SizedBox(width: tokens.space16),
-          Text(
-            // Marks are whole numbers in the supplied content; the type scale
-            // puts tabular figures on numeric styles so the column aligns.
-            module.mark.toStringAsFixed(0),
-            style: type.telemetry.copyWith(color: tokens.instrument),
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The artefact at full size, over a dimmed page.
+class _EvidenceDialog extends StatelessWidget {
+  const _EvidenceDialog({required this.src, required this.caption});
+
+  final String src;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return Dialog(
+      backgroundColor: tokens.surface,
+      insetPadding: EdgeInsets.all(tokens.space24),
+      child: Padding(
+        padding: EdgeInsets.all(tokens.space16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Flexible(
+              // A poster is taller than any viewport, so it scrolls rather
+              // than shrinking to illegibility.
+              child: SingleChildScrollView(
+                child: Image.asset(src, fit: BoxFit.contain),
+              ),
+            ),
+            SizedBox(height: tokens.space12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    caption,
+                    style: context.type.bodyS.copyWith(
+                      color: tokens.textSecondary,
+                    ),
+                  ),
+                ),
+                SizedBox(width: tokens.space16),
+                BeaconButton(
+                  label: context.l10n.aboutEvidenceClose,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

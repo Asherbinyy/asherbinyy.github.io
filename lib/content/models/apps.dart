@@ -79,6 +79,13 @@ class Apps with _$Apps {
 }
 
 /// An application record; absent metrics and links remain absent.
+///
+/// [screenshot] is a path into `assets/media/apps/`. Where it is absent the
+/// row draws the procedural station card instead, which is a designed
+/// treatment rather than a gap — so the ledger looks finished whether the
+/// owner has supplied a screenshot or not, and supplying one is a one-line
+/// content edit rather than a code change. Convention in
+/// `assets/media/apps/README.md`.
 @freezed
 class ShippedApp with _$ShippedApp {
   /// Creates an immutable ShippedApp record.
@@ -92,6 +99,7 @@ class ShippedApp with _$ShippedApp {
     String? metric,
     String? country,
     Engagement? engagement,
+    String? screenshot,
     @Default(false) bool featured,
   }) = _ShippedApp;
 

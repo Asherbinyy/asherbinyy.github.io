@@ -5,6 +5,7 @@ import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/content/models/apps.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/content/models/education.dart';
+import 'package:nocturne/content/models/interests.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/content/providers.dart';
 
@@ -45,3 +46,8 @@ Future<ContentResult<Education>> education(EducationRef ref) =>
 @Riverpod(keepAlive: true)
 Future<ContentResult<Career>> career(CareerRef ref) =>
     ref.watch(contentRepositoryProvider).career();
+
+/// What the owner does when he is not working.
+@Riverpod(keepAlive: true)
+Future<ContentResult<Interests>> interests(InterestsRef ref) =>
+    ref.watch(contentRepositoryProvider).interests();

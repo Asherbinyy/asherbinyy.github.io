@@ -23,6 +23,8 @@ This index is the fast path instead.
 | File | What it settled |
 |---|---|
 | `2026-09-07-01-milestone-four-planning.md` | Direction change. Docs rewritten for the Egyptian concept, palettes solved, milestones 4–6 specified. |
+| `2026-09-07-02-palette-selection-footer.md` | Kemet and Deshret shipped, text made selectable, footer coordinate removed. Store links re-verified. |
+| `2026-09-07-03-milestone-four-completion.md` | Off duty, coursework evidence, the scrubber redesign, the CV PDF, the screenshot pipeline, and the provenance test. **Milestone 4 complete.** |
 
 ## Milestone 3 — Edge · `v0.2.x`
 

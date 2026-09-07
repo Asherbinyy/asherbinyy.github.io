@@ -192,6 +192,36 @@ void main() {
       expect(tester.getSize(find.byType(StationCard)), const Size(320, 200));
     });
 
+    testWidgets('a name long enough to wrap never overflows its card', (
+      tester,
+    ) async {
+      // The label draws up to two lines, and the height threshold that decides
+      // whether to draw it at all reserved one. Every card between the two
+      // overflowed the moment a name wrapped -- latent from milestone 1 until
+      // the interests grid landed on it at 104px in milestone 4.
+      //
+      // Swept rather than pinned to the one height that failed: the threshold
+      // is computed from a fluid type scale, so the band that breaks moves
+      // with the viewport and a single sample would miss it again.
+      for (var height = 40.0; height <= 240.0; height += 4) {
+        await tester.pumpWidget(
+          LoadingHarness(
+            child: StationCard(
+              seedId: 'wrapping',
+              name: 'A name quite long enough to need two lines',
+              width: 168,
+              height: height,
+            ),
+          ),
+        );
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'overflowed at ${height}px',
+        );
+      }
+    });
+
     testWidgets('renders the country when the content records one', (
       tester,
     ) async {

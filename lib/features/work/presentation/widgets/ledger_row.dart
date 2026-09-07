@@ -15,6 +15,7 @@ import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/core/widgets/loading/station_card.dart';
+import 'package:nocturne/core/widgets/loading/three_stage_image.dart';
 
 /// One shipped application, as a row on the ledger.
 ///
@@ -158,11 +159,13 @@ class _LedgerRowState extends State<LedgerRow> {
   }
 }
 
-/// The application's preview.
+/// The application's preview: its screenshot, or the procedural card.
 ///
-/// No screenshots exist yet, so this is the procedural station card built in
-/// task 1.4b — a designed treatment rather than a gap, and it becomes a real
-/// screenshot the moment one is supplied.
+/// The card is the designed treatment for an application with no screenshot,
+/// built in task 1.4b — a considered absence rather than a gap. Milestone 4
+/// added the other half: a `screenshot` path in the content swaps it for the
+/// real thing, at identical geometry, so the ledger never shifts and the owner
+/// can fill the grid in one-line edits as screenshots arrive.
 class _Preview extends StatelessWidget {
   const _Preview({required this.app, required this.origin, required this.size});
 
@@ -171,17 +174,34 @@ class _Preview extends StatelessWidget {
   final double size;
 
   @override
-  Widget build(BuildContext context) => ExcludeSemantics(
-    child: StationCard(
+  Widget build(BuildContext context) {
+    final width = size * context.tokens.mapAspectRatio;
+    final card = StationCard(
       seedId: app.id,
       name: app.name,
-      width: size * context.tokens.mapAspectRatio,
+      width: width,
       height: size,
       country: origin?.country,
       latitude: origin?.latitude,
       longitude: origin?.longitude,
-    ),
-  );
+    );
+    final screenshot = app.screenshot;
+
+    return ExcludeSemantics(
+      child: screenshot == null
+          ? card
+          : ThreeStageImage(
+              image: AssetImage(screenshot),
+              width: width,
+              height: size,
+              // A path that points at nothing falls back to the card rather
+              // than a broken-image glyph, so a typo in content degrades to
+              // the previous appearance instead of a visible defect.
+              fallback: card,
+              semanticLabel: app.name,
+            ),
+    );
+  }
 }
 
 /// The row's store links, or a plain statement that there is no listing.

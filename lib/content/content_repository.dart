@@ -5,6 +5,7 @@ import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/content/models/apps.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/content/models/education.dart';
+import 'package:nocturne/content/models/interests.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/content/models/study.dart';
 
@@ -32,6 +33,10 @@ class ContentRepository {
   /// Loads qualifications without inferring completion status.
   Future<ContentResult<Education>> education() =>
       _load('education.json', ContentParser.education);
+
+  /// Loads what the owner does when he is not working.
+  Future<ContentResult<Interests>> interests() =>
+      _load('interests.json', ContentParser.interests);
 
   /// Rejects slugs that could escape the studies directory.
   Future<ContentResult<Study>> study(String slug) {

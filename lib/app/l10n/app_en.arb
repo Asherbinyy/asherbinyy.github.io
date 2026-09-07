@@ -116,6 +116,10 @@
   "@heroSeeTheWork": {
     "description": "Primary hero call to action, navigating to the work ledger."
   },
+  "heroDownloadTheCv": "Download the CV",
+  "@heroDownloadTheCv": {
+    "description": "Secondary hero call to action, downloading the CV as a PDF."
+  },
   "heroReadTheCv": "Read the CV",
   "@heroReadTheCv": {
     "description": "Secondary hero call to action, opening the static HTML CV."
@@ -167,6 +171,18 @@
         "type": "String"
       }
     }
+  },
+  "signalPreviousStop": "Previous stop",
+  "@signalPreviousStop": {
+    "description": "Map scrubber: steps back one stop"
+  },
+  "signalNextStop": "Next stop",
+  "@signalNextStop": {
+    "description": "Map scrubber: steps forward one stop"
+  },
+  "signalScrubberHint": "Choose a stop",
+  "@signalScrubberHint": {
+    "description": "Map scrubber: shown before a stop is selected"
   },
   "signalScrubberLabel": "Career chronology",
   "@signalScrubberLabel": {
@@ -410,6 +426,19 @@
   "consoleDailyViews": "Views per day",
   "@consoleDailyViews": {
     "description": "Console: sparkline label"
+  },
+  "aboutEvidenceOpen": "Open: {caption}",
+  "@aboutEvidenceOpen": {
+    "description": "About screen: opens a coursework artefact",
+    "placeholders": { "caption": { "type": "String" } }
+  },
+  "aboutEvidenceClose": "Close",
+  "@aboutEvidenceClose": {
+    "description": "About screen: closes the artefact view"
+  },
+  "aboutOffDuty": "Off duty",
+  "@aboutOffDuty": {
+    "description": "About screen: the heading over the owner's interests"
   },
   "aboutContact": "Contact",
   "@aboutContact": {
