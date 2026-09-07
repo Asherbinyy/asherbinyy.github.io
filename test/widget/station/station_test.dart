@@ -28,7 +28,10 @@ void main() {
     ) async {
       await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
 
-      expect(find.text('Ahmed Elsherbini'), findsOneWidget);
+      // Every in-app surface shows `profile.displayName`. The legal name is
+      // reserved for /cv and for structured metadata -- see Profile.shownName.
+      expect(find.text('Sherbini'), findsOneWidget);
+      expect(find.text('Ahmed Elsherbini'), findsNothing);
       expect(
         find.text(
           'Mobile engineer. 25+ applications shipped across six countries.',
@@ -171,8 +174,9 @@ void main() {
         ),
       );
 
-      // The fallback carries the owner's real name, so this is a hero, not an
-      // error state.
+      // The fallback carries the owner's own name, so this is a hero, not an
+      // error state. fallback.json has no displayName, so this also proves
+      // shownName falls back to the legal name rather than rendering nothing.
       expect(find.byType(HeroContent), findsOneWidget);
       expect(find.text('Ahmed Elsherbini'), findsOneWidget);
       expect(find.byType(CarrierEmptyState), findsNothing);
@@ -236,7 +240,7 @@ void main() {
       await pumpFrames(tester);
 
       expect(container.read(acquisitionPlayedProvider), isTrue);
-      expect(find.text('Ahmed Elsherbini'), findsOneWidget);
+      expect(find.text('Sherbini'), findsOneWidget);
     });
 
     testWidgets('a pointer press skips it too', (tester) async {
@@ -309,7 +313,7 @@ void main() {
       await tester.pump(Tokens.instant);
 
       expect(container.read(acquisitionPlayedProvider), isTrue);
-      expect(find.text('Ahmed Elsherbini'), findsOneWidget);
+      expect(find.text('Sherbini'), findsOneWidget);
     });
 
     testWidgets('no other route carries the sequence', (tester) async {

@@ -58,8 +58,8 @@ class RouteTitle extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeControllerProvider);
     final name = switch (ref.watch(profileProvider).valueOrNull) {
-      ContentReady(:final data) => data.name.resolve(locale),
-      ContentFallback(:final profile) => profile.name.resolve(locale),
+      ContentReady(:final data) => data.shownName.resolve(locale),
+      ContentFallback(:final profile) => profile.shownName.resolve(locale),
       _ => null,
     };
 

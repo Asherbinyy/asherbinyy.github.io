@@ -48,7 +48,7 @@ class HeroContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _AcquiredName(
-          name: profile.name.resolve(locale),
+          name: profile.shownName.resolve(locale),
           style: type.displayXl,
           reveal: acquisitionReveal,
         ),

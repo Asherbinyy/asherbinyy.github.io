@@ -10,6 +10,22 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+
+import 'package:nocturne/app/theme/tokens.dart';
+
+/// A token as the six-digit uppercase hex the generator writes.
+///
+/// The static pages hand-write their palette as CSS custom properties, because
+/// they are deliberately outside Flutter. That makes them the one surface that
+/// can silently fall out of step with `tokens.dart` -- and it did, when the
+/// Kemet and Deshret palettes shipped and these pages kept the milestone-1
+/// colours. Deriving the expectation from the token means the next palette
+/// change fails here instead of shipping two different sites.
+String _hex(Color colour) {
+  final rgb = colour.toARGB32() & 0xFFFFFF;
+  return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
+}
 
 void main() {
   late String cvHtml;
@@ -54,14 +70,14 @@ void main() {
         cvHtml,
         contains(
           'name="theme-color" media="(prefers-color-scheme: dark)" '
-          'content="#05070A"',
+          'content="${_hex(nocturneTokens.void_)}"',
         ),
       );
       expect(
         cvHtml,
         contains(
           'name="theme-color" media="(prefers-color-scheme: light)" '
-          'content="#F1EDE4"',
+          'content="${_hex(daybreakTokens.void_)}"',
         ),
       );
       expect(cvHtml, contains('name="description"'));
@@ -197,8 +213,11 @@ void main() {
 
     test('has inline CSS with design tokens', () {
       expect(cvHtml, contains('<style>'));
-      expect(cvHtml, contains('--void:#05070A'));
-      expect(cvHtml, contains('--beacon:#F2A83B'));
+      expect(cvHtml, contains('--void:${_hex(nocturneTokens.void_)}'));
+      expect(cvHtml, contains('--beacon:${_hex(nocturneTokens.beacon)}'));
+      // The light block too: it drifted unnoticed once already.
+      expect(cvHtml, contains('--void:${_hex(daybreakTokens.void_)}'));
+      expect(cvHtml, contains('--beacon:${_hex(daybreakTokens.beacon)}'));
     });
 
     test('has no JavaScript', () {
@@ -347,19 +366,44 @@ void main() {
         expect(page.$2(), contains('@media(prefers-color-scheme:light)'));
       });
 
-      test('${page.$1} carries the Daybreak palette for light', () {
-        // The corrected values, not the first draft: #95570B rather than
-        // #A8620C, which failed AA on paper.
-        expect(page.$2(), contains('--beacon:#95570B'));
-        expect(page.$2(), contains('--text-muted:#5C6676'));
+      test('${page.$1} carries the Deshret palette for light', () {
+        expect(page.$2(), contains('--beacon:${_hex(daybreakTokens.beacon)}'));
+        expect(
+          page.$2(),
+          contains('--text-muted:${_hex(daybreakTokens.textMuted)}'),
+        );
       });
 
-      test('${page.$1} carries the corrected Nocturne palette', () {
-        // This file shipped the pre-correction values until Milestone 3:
-        // --text-muted was #57687B, which measured 3.53:1 on the page.
-        expect(page.$2(), contains('--text-muted:#70849A'));
-        expect(page.$2(), isNot(contains('#57687B')));
-        expect(page.$2(), isNot(contains('#7E5720')));
+      test('${page.$1} carries the Kemet palette', () {
+        expect(
+          page.$2(),
+          contains('--text-muted:${_hex(nocturneTokens.textMuted)}'),
+        );
+      });
+
+      test('${page.$1} carries no superseded palette value', () {
+        // Two generations of dead values. The milestone-1 drafts that failed
+        // AA (#57687B measured 3.53:1, #7E5720 likewise), and the whole
+        // milestone-1-to-3 amber palette these pages kept for one commit
+        // after tokens.dart moved to Kemet. Both classes of mistake are the
+        // same mistake -- a hand-written copy of a value that has an owner --
+        // so they are guarded together.
+        for (final dead in [
+          '#57687B',
+          '#7E5720',
+          '#05070A',
+          '#F1EDE4',
+          '#F2A83B',
+          '#95570B',
+          '#C6D2E0',
+          '#70849A',
+        ]) {
+          expect(
+            page.$2(),
+            isNot(contains(dead)),
+            reason: '$dead is a superseded palette value',
+          );
+        }
       });
     }
   });

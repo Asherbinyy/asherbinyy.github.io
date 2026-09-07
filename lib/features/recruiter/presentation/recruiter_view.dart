@@ -98,7 +98,7 @@ class _Brief extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(profile.name.resolve(locale), style: type.displayL),
+        Text(profile.shownName.resolve(locale), style: type.displayL),
         SizedBox(height: tokens.space8),
         ConstrainedBox(
           constraints: BoxConstraints(maxWidth: type.measureFor(type.bodyL)),
