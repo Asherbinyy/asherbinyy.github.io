@@ -1,18 +1,20 @@
+import 'dart:math' as math;
+
 import 'package:flutter/rendering.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
-import 'package:nocturne/core/painting/carrier_wave.dart';
+import 'package:nocturne/core/painting/ankh_geometry.dart';
 
-/// The mark: one waveform burst, frozen at its peak.
+/// The mark: an ankh.
 ///
-/// Design-system section 12 requires the mark to be a frame lifted from the
-/// trace's own curve rather than designed independently, so that the two can
-/// never drift. It samples [CarrierWave.burstEnvelope] directly — a single
-/// positive lobe on a flat baseline, two curves, which is what keeps it legible
-/// down to 16px where a busier shape collapses into noise.
+/// Design-system section 12 and `12-MOTIF-LIBRARY.md` #4. It was a frame
+/// lifted from the telemetry trace's own curve while the concept was signal;
+/// milestone 5 replaces the concept, so the mark changes with it.
 ///
-/// Task 1.6b exports `assets/brand/mark.svg` and the favicon set from this same
-/// function rather than tracing this painter by hand.
+/// The geometry is [AnkhGeometry], shared with `tool/generate_mark.dart` so
+/// the rendered mark, `assets/brand/mark.svg` and the favicon set cannot
+/// disagree. The old mark wrote its curve out twice, in the painter and in the
+/// generator, with nothing to catch a drift between them.
 class MarkPainter extends CustomPainter {
   /// [strokeWidth] normally comes from [strokeFor] so the mark keeps its
   /// specified weight at whatever size it is drawn.
@@ -25,7 +27,7 @@ class MarkPainter extends CustomPainter {
   static double strokeFor(double size) =>
       size / Tokens.markNativeSize * Tokens.markStroke;
 
-  /// The mark is the one place amber appears with no content around it.
+  /// The mark is the one place gold appears with no content around it.
   final Color colour;
 
   /// Stroke width at the rendered size.
@@ -35,39 +37,32 @@ class MarkPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
 
-    final amplitude = size.height - strokeWidth;
-    final baseline = size.height - strokeWidth / 2;
-    final samples = size.width.ceil();
+    // Square, centred: the sign has a fixed aspect and stretching it to a
+    // non-square box would thicken one axis of the stroke and not the other.
+    final extent = math.min(size.width, size.height);
+    final origin = Offset(
+      (size.width - extent) / 2,
+      (size.height - extent) / 2,
+    );
+
+    final paint = Paint()
+      ..color = colour
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
     final path = Path();
-
-    // The window spans the burst plus the flat carrier either side of it, so
-    // the mark reads as a burst on a line rather than as a bare hill.
-    const span = Tokens.carrierBurstWidth * Tokens.markCurveSigmas * 2;
-    const start = 0.5 - span / 2;
-
-    for (var i = 0; i <= samples; i++) {
-      final fraction = i / samples;
-      final lobe = CarrierWave.burstEnvelope(
-        position: start + fraction * span,
-        centre: 0.5,
-      );
-      final point = Offset(fraction * size.width, baseline - lobe * amplitude);
-      if (i == 0) {
-        path.moveTo(point.dx, point.dy);
-      } else {
-        path.lineTo(point.dx, point.dy);
+    for (final stroke in AnkhGeometry.strokes(
+      size: extent,
+      strokeWidth: strokeWidth,
+    )) {
+      path.moveTo(origin.dx + stroke.first.x, origin.dy + stroke.first.y);
+      for (final point in stroke.skip(1)) {
+        path.lineTo(origin.dx + point.x, origin.dy + point.y);
       }
     }
-
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = colour
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeJoin = StrokeJoin.round
-        ..strokeCap = StrokeCap.round,
-    );
+    canvas.drawPath(path, paint);
   }
 
   @override
