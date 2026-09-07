@@ -1,17 +1,27 @@
+import 'dart:math' as math;
+
 import 'package:flutter/rendering.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/painting/glyph_paths.dart';
 import 'package:nocturne/core/painting/projection.dart';
 import 'package:nocturne/core/painting/station_seed.dart';
 
 /// A node in a procedural constellation, in canvas coordinates.
 typedef StationNode = ({Offset centre, bool isBeacon});
 
-/// Draws the constellation behind a station card.
+/// Draws the seal impression behind a station card.
 ///
-/// Section 11 uses this wherever an application has no screenshot: the same
-/// node-and-hairline vocabulary as the propagation map, at card scale, so a
+/// Section 11 uses this wherever an application has no screenshot, so a
 /// missing asset reads as a designed treatment rather than a gap.
+/// `12-MOTIF-LIBRARY.md` #8: a unique mark stamped for a unique thing, which
+/// is what a seal was for and what a card with no screenshot needs.
+///
+/// It drew a constellation while the concept was signal. The **geometry is
+/// unchanged** — the same deterministic marks from the same seed, so a card is
+/// still identical across loads and the tests that prove it never had to be
+/// touched. What changed is that the marks are now stamped inside a ring
+/// rather than joined into a star chart.
 class StationCardPainter extends CustomPainter {
   /// [seedId] must be the application id so the card never shifts between
   /// loads; [latitude] and [longitude] place the beacon node where the work
@@ -100,9 +110,28 @@ class StationCardPainter extends CustomPainter {
     final nodes = nodesFor(size);
     if (nodes.isEmpty) return;
 
-    // Each node links to its nearest neighbour. This gives a connected-looking
-    // constellation at a fraction of the strokes a full graph would draw, and
-    // it never produces the tangle that random pairing does.
+    // The seal's ring. Drawn first and inset from the card, so the marks sit
+    // inside an impression rather than floating on a panel.
+    final inset = math.min(size.width, size.height) * _ringInset;
+    final ring = Rect.fromLTRB(
+      inset,
+      inset,
+      size.width - inset,
+      size.height - inset,
+    );
+    final ringPaint = Paint()
+      ..color = linkColour
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = hairlineWidth;
+    canvas
+      ..drawOval(ring, ringPaint)
+      // A second ring, tight inside the first. One line reads as a border;
+      // two read as a stamp pressed into a surface.
+      ..drawOval(ring.deflate(Tokens.space4), ringPaint);
+
+    // Each mark links to its nearest neighbour. A connected impression at a
+    // fraction of the strokes a full graph would draw, and it never produces
+    // the tangle random pairing does.
     final link = Paint()
       ..color = linkColour
       ..style = PaintingStyle.stroke
@@ -138,7 +167,40 @@ class StationCardPainter extends CustomPainter {
         Paint()..color = node.isBeacon ? beaconColour : nodeColour,
       );
     }
+
+    // One sign in the seal's mouth, chosen by the same seed. It is what makes
+    // an impression read as a device rather than as a diagram, and it is
+    // deterministic like everything else here.
+    final seed = StationSeed('seal.$seedId');
+    final glyphBox = math.min(ring.width, ring.height) * _glyphShare;
+    if (glyphBox <= 0) return;
+    final glyph =
+        EgyptianGlyph.values[seed.nextInt(EgyptianGlyph.values.length)];
+    final origin = ring.center.translate(-glyphBox / 2, -glyphBox / 2);
+    final path = Path();
+    for (final stroke in GlyphPaths.strokes(glyph, glyphBox)) {
+      path.moveTo(origin.dx + stroke.first.x, origin.dy + stroke.first.y);
+      for (final point in stroke.skip(1)) {
+        path.lineTo(origin.dx + point.x, origin.dy + point.y);
+      }
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = beaconColour
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = hairlineWidth * 1.5
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
   }
+
+  /// How far the seal's ring sits inside the card, as a fraction of its
+  /// shorter side.
+  static const double _ringInset = 0.06;
+
+  /// The sign's share of the ring.
+  static const double _glyphShare = 0.34;
 
   @override
   bool shouldRepaint(StationCardPainter oldDelegate) =>

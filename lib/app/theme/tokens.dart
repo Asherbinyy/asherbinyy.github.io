@@ -380,6 +380,39 @@ abstract final class Tokens {
   /// The mark: 2px stroke at its native 32px square, 24px in the header.
   static const double markNativeSize = 32, markStroke = 2, markHeaderSize = 24;
 
+  /// Peak brightness of the light entering during the opening sequence.
+  ///
+  /// Low: it is a door opening in a dark room, not a flash. The whole point of
+  /// the beat is that the page arrives out of the dark.
+  static const double openingGlow = 0.28;
+
+  /// How much wider than tall a station's cartouche sits on the atlas.
+  ///
+  /// Far shorter than the name cartouche in the header, which encloses six
+  /// signs. This encloses nothing — it is the shape read at a glance, and past
+  /// about this ratio it stops reading as an enclosure and starts reading as a
+  /// dash on a coastline.
+  static const double stationCartoucheRatio = 1.7;
+
+  /// The torch's reach over the wall, as a fraction of the visible frame's
+  /// longest side.
+  ///
+  /// It tightens as the reading settles and spreads as it is lost, so a fast
+  /// scroll washes the wall in weak light rather than lighting a small part of
+  /// it brightly — which is the difference between "unreadable" and "hidden".
+  static const double wallTorchSpread = 1.15, wallTorchFocus = 0.62;
+
+  /// How much the torch breathes at rest, as a fraction of its radius.
+  static const double wallTorchBreath = 0.04;
+
+  /// How much of a plain register's run carries signs.
+  ///
+  /// Short of full, so a career line reads as denser than the wall around it.
+  static const double wallRestFill = 0.55;
+
+  /// Distance between signs on an inscribed line.
+  static const double wallSignPitch = 26;
+
   /// The cursor wake: how long a mote lives, how many may live at once, and
   /// how large one starts.
   ///

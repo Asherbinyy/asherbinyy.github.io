@@ -8,7 +8,7 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
-import 'package:nocturne/core/painting/trace_painter.dart';
+import 'package:nocturne/core/painting/wall_painter.dart';
 import 'package:nocturne/features/trace/domain/trace_controller.dart';
 import 'package:nocturne/features/trace/domain/trace_geometry.dart';
 import 'package:nocturne/features/trace/domain/trace_state.dart';
@@ -270,16 +270,16 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
                   children: [
                     RepaintBoundary(
                       child: CustomPaint(
-                        painter: TracePainter(
+                        painter: WallPainter(
                           bursts: bursts,
                           phase: frame.phase,
                           coherence: isSettled ? 1 : frame.coherence,
                           scrollOffset: frame.offset,
                           viewportHeight: constraints.maxHeight,
-                          traceHeight: traceHeight,
+                          wallHeight: traceHeight,
                           restColour: tokens.instrumentDim,
                           lockedColour: tokens.instrument,
-                          peakColour: tokens.beaconGlow,
+                          peakColour: tokens.beacon,
                           strokeWidth: tokens.hairlineWidth,
                         ),
                       ),
