@@ -4,7 +4,26 @@ Every task in build order. One task per agent session. Each has a definition of 
 
 Milestones are sequenced, not scheduled. Each ends in a deployable state.
 
-**Branching.** Each milestone is one branch — `phase/1-ground-station`, `phase/2-depth`, `phase/3-edge` — cut from `main`. Every task in the milestone is committed onto that branch. When the milestone is complete, it goes to `main` by PR, and merging to `main` publishes the site. Nothing reaches `main` mid-milestone. Full detail in `08-GIT-AND-CI.md`.
+**Branching.** Each milestone is one branch — `phase/1-ground-station`, `phase/2-depth`, `phase/3-edge`, `phase/4-provenance`, `phase/5-kemet`, `phase/6-ascent` — cut from `main`. Every task in the milestone is committed onto that branch. When the milestone is complete, it goes to `main` by PR, and merging to `main` publishes the site. Nothing reaches `main` mid-milestone. Full detail in `08-GIT-AND-CI.md`.
+
+---
+
+## Status, 2026-09-07
+
+**Milestones 1–3 have shipped.** `v0.1.0` and `v0.2.0` are tagged and live at
+<https://asherbinyy.github.io>. Their task lists are kept below as history —
+they are not work queues any more, and `11-OPEN-ISSUES.md` is the authority on
+what remains open from them.
+
+**Milestones 4–6 are the current work**, and they follow a change of direction
+the owner set on 2026-09-07: the site keeps its engineering and loses its
+concept. The ground-station identity is replaced by an Egyptian one, drawn from
+the fact that the owner is Egyptian rather than from his first degree, and the
+portfolio grows a person — origins, hobbies, real writing, a game — instead of
+a résumé rendered in a nice font.
+
+Read `00-PROJECT-BRIEF.md` for the concept, `12-MOTIF-LIBRARY.md` before any
+visual work, and `14-PROVENANCE.md` before touching any claim about the owner.
 
 **Task order for Milestone 1: 1.1, then 1.12, then 1.2 onward.** CI is pulled forward deliberately — a deploy pipeline that has never run is not a pipeline, and the GitHub Pages failure modes (`.nojekyll`, `404.html`) are silent. Discover them on day one, not at the merge.
 
@@ -180,19 +199,297 @@ Branch: `phase/3-edge`
 
 ---
 
+# Milestone 4 — Provenance
+
+Branch: `phase/4-provenance` · Tag `v0.3.0`
+
+**Everything true, and a person behind it — on the existing visual language.**
+No motifs, no glyphs, no game. This milestone exists so the site stops making a
+claim it cannot source and starts showing someone with a life, and it ships
+before a single pyramid is drawn. If the project stalled here it would still be
+a better portfolio than it is today.
+
+The one exception to "no visual work" is the palette, task 4.10, and the reason
+is in that task.
+
+### 4.1 The claim audit
+
+Every figure and claim on the site checked against `14-PROVENANCE.md`, and the
+ledger completed. Fix the two that are wrong: the six-countries overstatement
+(§2.1) and the AZ Courses download conflict (§2.2). Correct the README's
+"nothing is stored on the visitor's device" — theme, language and Recruiter
+Mode have persisted since milestone 1, so the sentence is false as written.
+
+**Done when:** every number rendered anywhere on the site has a row in
+`14-PROVENANCE.md`; a test asserts the ledger covers every numeric string in
+`assets/content/`; the README's storage claim matches what the code does.
+
+### 4.2 Career and project depth
+
+Add Guardy (§3.1), resolve Tiara (§3.6), and publish whichever of the sixteen
+LinkedIn projects the owner clears (§3.8). Surface **Easy Go** — the owner's
+open-source Flutter package, currently invisible — on its own terms. Settle
+"CI Company" versus "Crazy Idea". Give the ledger a real count instead of a
+number the docs and the content disagree about.
+
+**Done when:** every published project traces to a source row; every store link
+resolves, verified by hand; `apps.json` and the ledger heading agree; nothing is
+published that the owner has not cleared.
+
+### 4.3 The journey
+
+The map currently starts at the first job. It should start at a birth.
+
+Rebuild the chronology as: **born, Saudi Arabia → raised, Egypt → the working
+years → Manchester, 2025**. The map painter and projection are unchanged; this
+is content plus two new stop kinds.
+
+Then fix the two things the owner named. The chronology scrubber
+(`chronology_scrubber.dart`) does not communicate that it can be dragged —
+replace it with a control whose affordance is legible without instruction. And
+the transmission panel (`transmission_panel.dart`) sits on a flat raised
+surface that reads as a plain white card in Deshret; give it a treatment.
+
+**Done when:** stops render in life order with birth and upbringing present;
+the navigation control is understood without a hint, verified on touch and
+keyboard; panels no longer read as default cards in either theme; goldens pass.
+
+### 4.4 Off duty
+
+A section for the person: gym, football, padel, reading, television
+(*Better Call Saul*), e-sports (FIFA, Valorant). Interactive rather than a
+bulleted list — the owner's words were "as if I am taking them into my world".
+
+Constraints: it is one section, not a second site; it obeys the same motion and
+accessibility rules as everything else; and per `AGENTS.md` §3 it says only what
+the owner said (§3.9). Portrait lands here if cleared (§3.13).
+
+**Done when:** the section renders on `/about` at all four breakpoints; every
+interaction has a keyboard path and a reduced-motion path; no claim without a
+provenance row.
+
+### 4.5 Writing, properly
+
+`/writing` draws procedural constellations because it had no images. It has
+images — every Medium article ships a cover. Render real cards using them,
+hotlinked from the feed, through the existing three-stage image resolve so a
+slow or failed image degrades rather than breaks.
+
+**Done when:** all six articles render with their real covers; a failed image
+falls back to the procedural card rather than a gap; no layout shift on resolve;
+images are hotlinked, not committed.
+
+### 4.6 Education, trimmed
+
+Show top-performing modules only, not all seven. Resolve the 74/75 question
+(§3.3) and the dissertation's status (§3.4).
+
+**Done when:** the table shows the agreed subset with the agreed marks; the
+dissertation appears only as the owner permits.
+
+### 4.7 The name
+
+Render **Sherbini** everywhere except `/cv`, which keeps the full legal name for
+ATS parsers. Add a play control beneath it for a recording of the owner saying
+it. The control renders nothing at all until the recording exists (§3.10) —
+never a dead button.
+
+**Done when:** every surface except `/cv` says Sherbini; the player is labelled,
+keyboard-operable, and absent when the file is; `/cv` and `/brief` still carry
+the full name in their JSON-LD.
+
+### 4.8 Selectable text
+
+The site renders to canvas, so text cannot be selected or copied — a real
+defect for anyone trying to copy an email address. `SelectionArea` exists in
+`material_ui` 1.1.1 (verified 2026-09-07) and is the fix.
+
+**Done when:** body text, contact details and the ledger are selectable on
+desktop and on touch; selection does not break the trace, the map or any
+`CustomPainter`; a widget test covers it.
+
+### 4.9 The footer
+
+Drop the coordinate readout. The owner does not want to be introduced by a
+latitude.
+
+**Done when:** the footer carries no coordinates; the freed space is either used
+or removed cleanly at every breakpoint.
+
+### 4.10 The Kemet and Deshret palettes
+
+Ships in milestone 4, not 5, for three reasons: the owner's complaint that the
+dark theme is too dark is a live defect; the change is 36 lines in
+`tokens.dart` plus the contrast suite; and doing it now means milestone 5 never
+has to repaint anything twice.
+
+Values are solved and recorded in `01-DESIGN-SYSTEM.md` §2 — both palettes pass
+every assertion in the existing contrast suite. Add `faience` and `faienceDim`
+tokens and their contrast rows.
+
+**Done when:** both themes carry the new values; `contrast_test.dart` passes
+with faience included; every golden is regenerated and reviewed by eye, not
+just accepted; gold coverage stays under 8%.
+
+### 4.11 Arabic content
+
+Fill every `ar:` field in `assets/content/`. Interface strings are already
+complete — 98 of 98 keys — so this is content only, which is why Arabic reads
+as half-finished today.
+
+Per the owner's instruction of 2026-09-07 this ships without waiting for review.
+Write `docs/AR-REVIEW.md` with every string, English beside Arabic, so
+corrections are a checklist rather than a hunt through JSON.
+
+**Done when:** no `ar: null` remains in content; both locales render at every
+breakpoint with correct RTL; `AR-REVIEW.md` covers every string.
+
+### 4.12 `/cv`
+
+Either restyle the static page or replace it with the real PDF (§3.12). It stays
+hand-written HTML with JSON-LD either way — it is the indexable surface and the
+one page an ATS reads, and that constraint outranks how it looks.
+
+**Done when:** the page renders with JavaScript disabled; JSON-LD validates;
+Lighthouse ≥ 85; `profile.cvFile` is populated if a PDF ships.
+
+### 4.13 Screenshots
+
+A path for the owner to add app screenshots without an agent: a documented
+directory, a naming convention, and a manifest the work grid reads. Closes
+`11-OPEN-ISSUES.md` 1.10, open since milestone 1.
+
+**Done when:** dropping a correctly-named file into the directory makes it
+appear with no code change; a missing screenshot still falls back to the
+procedural card; the convention is documented in `07-CONTENT-SCHEMA.md`.
+
+### 4.14 Release
+
+Docs reconciled, `11-OPEN-ISSUES.md` refreshed, CHANGELOG written, tag
+`v0.3.0`. **The real-phone check finally runs** — `05-TESTING.md` has required
+it before every merge to `main` since milestone 1 and it has never been done.
+
+---
+
+# Milestone 5 — Kemet
+
+Branch: `phase/5-kemet` · Tag `v1.0.0`
+
+**The redesign.** Read `12-MOTIF-LIBRARY.md` first; it is a closed inventory
+and the guard against this becoming a gift-shop website.
+
+The palette already shipped in 4.10, so this milestone is entirely about form.
+
+### 5.1 Motif primitives
+The painters behind inventory items 1–15: cartouche, register, ankh, obelisk,
+scarab, seal, feather, djed, mastaba, wedjat, sarcophagus, register tick. Plus
+the seven glyph paths for §2's cartouche. Built before any screen consumes
+them, so no screen invents its own — the same discipline as task 1.4b.
+**Done when:** every primitive has a golden in both themes and both directions,
+each is unit-tested for determinism where seeded, and none allocates per frame.
+
+### 5.2 The glyph fields
+`tool/generate_fields.dart` emits one 256×256 tile per route into
+`assets/motifs/`. **Done when:** fields cost 0ms per frame after first paint,
+measured in a real profile; tiles seam invisibly; Recruiter Mode has none.
+
+### 5.3 The wall
+The signature element. The telemetry trace becomes an inscription revealed by
+torchlight as the viewer scrolls — fast scroll smears the light and the glyphs
+stay unreadable, slow down and a register resolves and its role becomes legible.
+Reuses the existing velocity engine, anchor registry and geometry; only the
+paint changes. **Allow more than one session.**
+**Done when:** all three states behave per `02-SCREEN-SPECS.md`, frame cost
+under 4ms, the painter early-returns off-screen, `shouldRepaint` is correct,
+reduced motion renders static with every label visible, amplitude and torch
+falloff maths unit-tested.
+
+### 5.4 The papyrus atlas
+`/signal` becomes a drawn map on papyrus: cartouche stops, a route line instead
+of arcs. Projection and coastline data unchanged. **Done when:** frame cost
+under 6ms; keyboard traversal and the 4.3 navigation control still work.
+
+### 5.5 Chrome
+Cartouche name treatment, glyph-column rail, ankh mark and favicon set.
+**Done when:** the ankh is legible at 16px; the favicon works in light and dark
+browser chrome; the Latin name is present at every breakpoint; the accessible
+name is `Sherbini`, never a glyph.
+
+### 5.6 Cards and hover
+Work and article cards become seal impressions; hover gets a real reaction. The
+owner asked for the grid to be fun.
+**Done when:** hover has a keyboard-focus equivalent, a touch equivalent and a
+reduced-motion path; cards stay deterministic per id.
+
+### 5.7 The cursor trail
+Per `12-MOTIF-LIBRARY.md` §5. The system cursor is never replaced.
+**Done when:** under 1ms per frame, capped at 24 particles, pointer-only, off
+under reduced motion and in Recruiter Mode, stops on blur.
+
+### 5.8 The opening
+The acquisition sequence becomes a tomb opening — a seal broken, torchlight
+entering. Same rules: once per session, skippable by any input, 200ms fade under
+reduced motion, no layout shift.
+
+### 5.9 `/cv` and `/brief`
+Restyled to match, still hand-written HTML, still JS-optional, still ATS-first.
+
+### 5.10 Verification
+Contrast across every new surface, full keyboard and screen-reader audit, frame
+profiles for wall, map, fields and cursor in a real browser — closing
+`11-OPEN-ISSUES.md` §3.2, open since milestone 1. Every golden regenerated.
+
+---
+
+# Milestone 6 — The Ascent
+
+Branch: `phase/6-ascent` · Tag `v1.1.0`
+
+The game. Full specification in `13-GAME-DESIGN.md` — read it before starting;
+it settles the form, the purpose, the audio budget, the accessibility floor and
+the WasmGC bundling constraint that rules out a game engine package.
+
+### 6.1 Engine and controls
+One painter, one ticker, axis-aligned collision. No new packages. Keyboard,
+touch and mouse through the platform service.
+**Done when:** 60fps on a mid-range Android phone in a real profile; the ticker
+stops on blur and on route exit, proven by a test.
+
+### 6.2 Registers and content
+Altitude bands unlock facts read from `assets/content/`.
+**Done when:** a test proves the game surfaces no string absent from the content
+layer; every fact links out to where it lives on the site.
+
+### 6.3 Audio
+Six samples, CC0 or public domain, sourced in `14-PROVENANCE.md`, fetched at
+runtime, under 120KB total, mutable, persisted, never before a gesture.
+
+### 6.4 Accessibility
+Full keyboard play, practice mode reaching the summit, a labelled canvas, and
+every fact readable without playing.
+
+### 6.5 The offline variant
+A self-contained canvas script in `web/` for `404.html`. Not the Flutter game —
+the page has to work when the bundle does not.
+
+### 6.6 Verification
+The four commands, a real-device profile, and the phone check.
+
+---
+
 ## Outside the repository
 
-Do these alongside the build, not after:
+Owner actions. None of these can be done by an agent — `AGENTS.md` §3.
 
-- [ ] Install FVM and the pinned SDK — `fvm install 3.47.2`
-- [ ] Download the four font families, then run `tool/fonts.sh` to subset them
-- [ ] Create the repo named `asherbinyy.github.io`, enable Pages with source "GitHub Actions"
-- [ ] Create a Cloudflare account for the analytics Worker — free tier, no card
-- [ ] Register a domain when convenient — not a blocker, see `08-GIT-AND-CI.md`
-- [ ] Resend account for the digest (Milestone 2)
+The authoritative list is **`14-PROVENANCE.md` §3**, which records what is
+needed, what it blocks, and what has already been verified. It supersedes the
+milestone-1 checklist that stood here.
+
+Still true from that original list:
+
 - [ ] Take the portrait — brief in `01-DESIGN-SYSTEM.md` §10
 - [ ] Capture screenshots: Mokaf, AZ Courses, City Loom
-- [ ] Write Arabic content for `profile.json`, `career.json`, `apps.json`
-- [ ] Verify all twelve store links resolve
-- [ ] Fix the CV inconsistencies flagged separately
-- [ ] Write the three case studies in English before 2.1 — the agent cannot invent these, and inventing them is exactly what it will do if the content is missing
+- [ ] Write the three case studies — an agent cannot, and will invent them if asked
+- [ ] n8n and Resend accounts for the digest — steps in `automation/README.md`
+- [x] Repo, Pages, Cloudflare account, FVM, fonts — done in milestone 1
+- [x] Arabic content — agent-written in 4.11 on the owner's instruction, pending his review in `docs/AR-REVIEW.md`

@@ -8,7 +8,44 @@ than burying it in a worklog nobody re-reads.
 Worklogs record what happened in a session. **This file records what is still
 true.** If the two disagree, this file is the one to fix.
 
-Last reviewed: 2026-09-06, after deploying the Milestone 2 Worker.
+Last reviewed: 2026-09-07, at the start of Milestone 4.
+
+---
+
+## 0a. Direction changed on 2026-09-07
+
+The owner replaced the site's concept. "Ground Station" is retired; the identity
+is now Egyptian — `00-PROJECT-BRIEF.md` §3 and `12-MOTIF-LIBRARY.md`. Milestones
+4, 5 and 6 in `09-ROADMAP.md` carry the work.
+
+Three standing rules changed with it, and an agent working from memory of the
+old ones will be wrong:
+
+1. **The amber-only palette rule is gone**, replaced by four pigments each locked to one job — `AGENTS.md` §6, `01-DESIGN-SYSTEM.md` §2. This is not a loosening; a fifth hue is still forbidden and faience may never appear at rest.
+2. **Every number now needs a provenance row** in `14-PROVENANCE.md` before it ships.
+3. **Motifs are a closed inventory.** Not in `12-MOTIF-LIBRARY.md`, not on the site.
+
+Content and claim gaps are no longer tracked in §1 below. **`14-PROVENANCE.md`
+§3 is the authority** on what is needed from the owner; §1 here is kept for the
+rows that predate the change and have not yet been folded in.
+
+---
+
+## 0b. Found on 2026-09-07, not yet fixed
+
+| # | Item | Consequence | Fixed by |
+|---|---|---|---|
+| 0b.1 | **The README claims "Nothing is stored on the visitor's device."** Theme, language and Recruiter Mode have persisted through `shared_preference_store.dart` since milestone 1. The sentence is about the analytics tier but does not say so, and reads as a claim about the whole site. | A privacy claim that is false as written, on a site whose argument is its privacy posture | 4.1 |
+| 0b.2 | **Text cannot be selected or copied.** Flutter renders to canvas. A visitor cannot copy the email address off the page. `SelectionArea` exists in `material_ui` 1.1.1 — verified 2026-09-07. | A basic web affordance is missing | 4.8 |
+| 0b.3 | **"Six countries" overstates the CV**, which names five countries of delivery plus the UK as residence. Guardy would make it genuinely six. | An inflated claim on the hero, the stat panel and `/brief` | 4.1, 4.2 |
+| 0b.4 | **AZ Courses downloads conflict** — 15,000 on the CV, 8,000 on LinkedIn, 15,000 on the site. | Two public figures for one app | 4.1 |
+| 0b.5 | **"CI Company" versus "Crazy Idea."** `career.json` uses the CV's name; the owner's public LinkedIn shows the other. | The site contradicts the owner's own profile | 4.2 |
+| 0b.6 | **CI Company end date** — CV says 04/2023, LinkedIn says Jul 2023. | A three-month gap across a job boundary | 4.1 |
+| 0b.7 | **The footer carries a coordinate readout.** The owner does not want it. | — | 4.9 |
+| 0b.8 | **The chronology scrubber has no legible affordance.** Nothing indicates it can be dragged. | The map's primary touch control is undiscoverable | 4.3 |
+| 0b.9 | **The transmission panel reads as a plain card**, particularly in the light theme. | The map's content surface looks unfinished | 4.3 |
+| 0b.10 | **`/writing` draws procedural art while real cover images exist** for all six articles. | The best-looking content on the site is hidden | 4.5 |
+| 0b.11 | **Easy Go, an open-source Flutter package**, is absent from the site. It is the only open-source artifact in the record. | A Flutter engineer's portfolio shows no packages | 4.2 |
 
 ---
 

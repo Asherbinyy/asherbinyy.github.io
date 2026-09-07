@@ -9,6 +9,8 @@ Multiple different agents work on this project. The worklog is how you find out 
 ## 1. Before you start
 
 1. Read `docs/00-PROJECT-BRIEF.md`, `docs/01-DESIGN-SYSTEM.md`, `docs/03-ARCHITECTURE.md` and `docs/04-FLUTTER-STANDARDS.md`.
+   If the work is visual, also read `docs/12-MOTIF-LIBRARY.md`. If it touches
+   anything the site claims about the owner, also read `docs/14-PROVENANCE.md`.
 2. Read `docs/11-OPEN-ISSUES.md`. Worklogs say what happened; that file says
    what is still true. Close a row there when you close the item.
 3. Read the **three most recent** files in `docs/worklog/`.
@@ -40,7 +42,7 @@ If information is missing, **stop and ask.** Do not fill the gap with something 
 You must never fabricate:
 
 - **Content.** Career details, dates, employers, metrics, case study text, Arabic translations. If `assets/content/` lacks something, say so and stop. This site makes claims about a real person to real employers, and a plausible invented metric is one interview question away from being exposed.
-- **Numbers.** Download counts, percentage improvements, performance figures, team sizes. Every number on this site must be traceable to something the owner supplied.
+- **Numbers.** Download counts, percentage improvements, performance figures, team sizes. Every number on this site must be traceable to something the owner supplied — and from milestone 4 onward, "traceable" means **it has a row in `docs/14-PROVENANCE.md` naming its source**. A number without a provenance row does not ship, even if you are confident it is right. The owner has already had to ask why the site was making figures up; the ledger exists so that question has a one-line answer.
 - **Package versions or APIs.** If you are unsure whether a method exists in this version, check. A confidently wrong API call wastes a whole session.
 - **Test results.** Never report a command as passing without running it. Never describe work as done when it is partial.
 - **Prior context.** If the worklogs do not say why something was done a certain way, say the worklogs do not say. Do not reconstruct a plausible reason.
@@ -76,7 +78,7 @@ Use this template exactly:
 # YYYY-MM-DD-NN — <short title>
 
 **Agent:** <model / tool name>
-**Milestone:** <1 | 2 | 3>
+**Milestone:** <1 | 2 | 3 | 4 | 5 | 6>
 **Started from:** <commit sha or previous worklog filename>
 
 ## Goal
@@ -132,9 +134,13 @@ The single most useful thing to do next, and why.
 
 **FVM.** The SDK is pinned by `.fvmrc`. **Every Flutter and Dart command runs through `fvm`** — `fvm flutter test`, `fvm dart format`, `fvm dart run build_runner`. A bare `flutter` command invokes whatever version is on the machine's PATH, so its result tells you nothing about whether the code works on the pinned version. Never edit `.fvmrc` as a side effect of another task.
 
-**Flutter version.** This project targets Flutter 3.47 / Dart 3.13 and uses the standalone `material_ui` and `cupertino_ui` packages. `package:flutter/material.dart` is deprecated and banned here. If you catch yourself importing it out of habit, run `fvm dart fix --apply --code=migrate_design_widgets` and note it in the worklog.
+**Flutter version.** This project targets Flutter 3.47 / Dart 3.13 and uses the standalone `material_ui` package (never `cupertino_ui` — see Platform). `package:flutter/material.dart` is deprecated and banned here. If you catch yourself importing it out of habit, run `fvm dart fix --apply --code=migrate_design_widgets` and note it in the worklog.
 
-**Palette.** Amber is the only chroma in this design system. Never introduce a second hue — not for success states, not for chart series, not for categories. See `docs/01-DESIGN-SYSTEM.md` §2.
+**Palette.** Four pigments, each locked to exactly one job: **gold** is the person, live state and every control the viewer can act on; **faience** is interaction feedback only; **carnelian** is errors only; everything else is graded limestone and ink. Never introduce a fifth hue — not for success states, not for chart series, not for categories. Success is monochrome. See `docs/01-DESIGN-SYSTEM.md` §2.
+
+This rule replaced the amber-only rule of milestones 1–3. It is not a licence to add colour: a pigment used outside its job is a bug, gold coverage stays under ~8% of any viewport, and faience must never appear at rest.
+
+**Motifs are a closed set.** `docs/12-MOTIF-LIBRARY.md` is an inventory, not a source of inspiration. If a motif is not in that file it does not go on the site. Every motif must be doing structural work; ornament applied to a surface with no reason for it gets cut. The failure mode of this theme is a gift-shop website, and it is one careless flourish away at all times.
 
 **Code standards.** `docs/04-FLUTTER-STANDARDS.md` is enforceable, not advisory. Widgets are classes, never functions. No raw values in feature code. Enums over string constants. Exhaustive switches with no `default`.
 

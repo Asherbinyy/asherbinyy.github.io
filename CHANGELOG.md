@@ -5,6 +5,33 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### Changed
+
+- **Direction.** The ground-station concept is retired in favour of an Egyptian
+  one, drawn from where the owner is from rather than from his first degree.
+  Milestones 4 (Provenance), 5 (Kemet) and 6 (The Ascent) in
+  `docs/09-ROADMAP.md`. No feature code has changed yet — this release carries
+  documentation only.
+- **The palette rule.** Amber-only is replaced by four pigments each locked to
+  one job: gold for the person and every action, faience for interaction
+  feedback, carnelian for errors, graded limestone and ink for everything else.
+  A fifth hue remains forbidden. Both the Kemet and Deshret palettes are solved
+  against the existing contrast suite rather than chosen by eye.
+
+### Added
+
+- `docs/14-PROVENANCE.md` — every claim the site makes about the owner, mapped
+  to the source it came from. A number without a row does not ship.
+- `docs/12-MOTIF-LIBRARY.md` — the closed motif inventory and the rules that
+  keep the theme from becoming costume.
+- `docs/13-GAME-DESIGN.md` — The Ascent.
+
+### Fixed
+
+- The README's privacy claim said nothing is stored on the visitor's device.
+  Theme, language and Recruiter Mode have persisted since milestone 1; the
+  sentence now says what the code actually does.
+
 ## [0.2.0] — 2026-09-06
 
 Milestone 2, "Depth". Published to GitHub Pages and tagged `v0.2.0`.
