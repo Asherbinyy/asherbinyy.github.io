@@ -23,7 +23,8 @@
       "store": {},
       "role": "Smart parking — real-time maps, QR, TAP / Apple Pay / STC Pay",
       "domain": "Mobility",
-      "featured": true
+      "featured": true,
+      "country": "QA"
     },
     {
       "id": "az-courses",
@@ -64,6 +65,22 @@
         "ios": "https://apps.apple.com/us/app/malboos/id6736588728"
       },
       "domain": "Retail",
+      "featured": false
+    },
+    {
+      "id": "guardy",
+      "name": "Guardy",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/de/app/guardy/id6504706012"
+      },
+      "role": "Showcase and shop features, cloud functions, structural and UI improvements, and bug fixes",
+      "domain": "Safety",
+      "country": "DE",
+      "engagement": "freelance",
       "featured": true
     },
     {
@@ -76,7 +93,10 @@
         "ios": "https://apps.apple.com/us/app/tiara-beauty/id6502843404"
       },
       "domain": "Services",
-      "featured": true
+      "featured": true,
+      "role": "Freelance build with one other developer",
+      "engagement": "freelance",
+      "country": "SA"
     },
     {
       "id": "tekrar",

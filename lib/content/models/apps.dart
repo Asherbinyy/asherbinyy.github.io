@@ -44,6 +44,26 @@ enum WorkDomain {
   /// Consumer as supplied by the content schema.
   @JsonValue('Consumer')
   consumer,
+
+  /// Safety as supplied by the content schema.
+  @JsonValue('Safety')
+  safety,
+}
+
+/// How the owner was engaged on a piece of work.
+///
+/// Absent where the content does not say. Present on the freelance work
+/// because "shipped 25+ applications" reads differently once a reader can see
+/// which of them he was hired directly to build, and that distinction is the
+/// owner's to claim rather than one a reader should have to infer.
+enum Engagement {
+  /// Engaged directly by the client, outside any employer.
+  @JsonValue('freelance')
+  freelance,
+
+  /// Fixed-term engagement through a company.
+  @JsonValue('contract')
+  contract,
 }
 
 /// Applications in source order; featured membership drives Recruiter Mode.
@@ -69,6 +89,7 @@ class ShippedApp with _$ShippedApp {
     String? role,
     String? metric,
     String? country,
+    Engagement? engagement,
     @Default(false) bool featured,
   }) = _ShippedApp;
 

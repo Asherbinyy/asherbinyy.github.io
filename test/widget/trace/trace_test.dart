@@ -37,9 +37,11 @@ void main() {
 
     final trace = tester.widget<TelemetryTrace>(find.byType(TelemetryTrace));
 
-    // career.json carries six stations.
-    expect(trace.bursts, hasLength(6));
-    expect(trace.labels, hasLength(6));
+    // Counted from the journey, so adding or removing a stop does not leave
+    // this asserting a stale total.
+    final stops = bundledStops().length;
+    expect(trace.bursts, hasLength(stops));
+    expect(trace.labels, hasLength(stops));
   });
 
   for (final reducedMotion in [false, true]) {
@@ -69,15 +71,21 @@ void main() {
     final trace = tester.widget<TelemetryTrace>(find.byType(TelemetryTrace));
     final labels = trace.labels;
 
-    // Employers now come from the owner's CV, so a burst names the company.
-    expect(labels['ci-company']?.title, 'CI Company');
-    expect(labels['hwzn-tech']?.title, 'Hwzn Tech');
-    // Evri is the one role the CV does not cover, so it still falls back to
-    // its city rather than to an invented employer.
-    expect(labels['evri']?.title, 'Manchester');
-    expect(labels['evri']?.meta, contains('GB'));
-    for (final label in labels.values) {
-      expect(label.title, isNotEmpty);
+    // Every burst names what the content names it: the company where there is
+    // one, the city where there is not. Asserted against the journey rather
+    // than against a hand-picked pair, so a stop added to content without a
+    // label fails here.
+    for (final stop in bundledStops()) {
+      final id = stop['id'] as String;
+      final label = labels[id];
+      expect(label, isNotNull, reason: id);
+      expect(
+        label!.title,
+        stop['company'] ?? stop['city'],
+        reason: '$id should name its company, or its city where it has none',
+      );
+      expect(label.meta, contains(stop['country']), reason: id);
+      expect(label.title, isNotEmpty, reason: id);
     }
   });
 

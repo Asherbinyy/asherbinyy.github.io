@@ -42,31 +42,49 @@ void main() {
       await _pumpSignal(tester);
 
       final map = tester.widget<PropagationMap>(find.byType(PropagationMap));
-      expect(map.stations, hasLength(6));
+      // Counted from the journey rather than written here. Milestone 4 added
+      // the two study stops and removed Evri, and a literal would have had to
+      // be edited for each.
+      expect(map.stations, hasLength(bundledStops().length));
       expect(map.selectedIndex, -1);
     });
 
-    testWidgets('Evri is a minor node, present but not featured', (
+    testWidgets('a stop the content gives no weight is drawn minor', (
       tester,
     ) async {
       await _pumpSignal(tester);
 
       final map = tester.widget<PropagationMap>(find.byType(PropagationMap));
-      final evri = map.stations.firstWhere((s) => s.id == 'evri');
-      final ci = map.stations.firstWhere((s) => s.id == 'ci-company');
 
-      expect(evri.isMinor, isTrue);
-      expect(ci.isMinor, isFalse);
+      // The rule, not one station: a stop carrying neither a burst weight nor
+      // any shipped application is drawn small. This asserted Evri until
+      // milestone 4 removed that role, which is exactly why it now checks
+      // every stop against the content instead of naming one.
+      for (final stop in bundledStops()) {
+        final station = map.stations.firstWhere((s) => s.id == stop['id']);
+        final hasWeight = stop['traceWeight'] != null;
+        final hasApps = (stop['appIds'] as List<dynamic>? ?? []).isNotEmpty;
+        expect(
+          station.isMinor,
+          !hasWeight && !hasApps,
+          reason: '${stop['id']}',
+        );
+      }
     });
 
     testWidgets('carries the coordinates the content states', (tester) async {
       await _pumpSignal(tester);
 
       final map = tester.widget<PropagationMap>(find.byType(PropagationMap));
-      final manchester = map.stations.firstWhere((s) => s.id == 'evri');
 
-      expect(manchester.latitude, 53.4808);
-      expect(manchester.longitude, -2.2426);
+      // Every stop, against the coordinates the content states -- rather than
+      // one station's pair copied into the test.
+      for (final stop in bundledStops()) {
+        final station = map.stations.firstWhere((s) => s.id == stop['id']);
+        final coords = (stop['coords'] as List<dynamic>).cast<num>();
+        expect(station.latitude, coords[0], reason: '${stop['id']}');
+        expect(station.longitude, coords[1], reason: '${stop['id']}');
+      }
     });
 
     testWidgets('renders bundled land outlines without a map request', (
@@ -163,7 +181,12 @@ void main() {
         find.byType(ChronologyScrubber),
       );
 
-      expect(scrubber.marks, ['2021', '2023', '2023', '2024', '2025', '2025']);
+      expect(
+        scrubber.marks,
+        bundledStops()
+            .map((stop) => (stop['start'] as String).split('-').first)
+            .toList(),
+      );
     });
   });
 
@@ -171,8 +194,17 @@ void main() {
     testWidgets('shows only what the content records', (tester) async {
       await _pumpSignal(tester);
       await tester.tap(find.byType(PropagationMap));
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      await pumpFrames(tester);
+
+      // Walk to CI Company by its position in the content. Selection starts at
+      // -1, so reaching index i takes i + 1 presses. This pressed once and
+      // assumed CI Company sat first, which stopped being true when the
+      // journey gained a study stop ahead of the first job.
+      final index = bundledStops().indexWhere((s) => s['id'] == 'ci-company');
+      expect(index, isNonNegative);
+      for (var i = 0; i <= index; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await pumpFrames(tester);
+      }
 
       // CI Company is the one role with a company, a summary and a stack.
       expect(find.text('CI Company'), findsWidgets);
@@ -185,7 +217,6 @@ void main() {
     ) async {
       await _pumpSignal(tester);
       await tester.tap(find.byType(PropagationMap));
-      // Third station is hwzn-tech, which records no company name.
       for (var i = 0; i < 3; i++) {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await pumpFrames(tester);

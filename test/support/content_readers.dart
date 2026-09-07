@@ -28,3 +28,27 @@ Future<String> corruptContent(String path) async => '{ not json';
 
 /// Encodes an object as the bundle would serve it.
 String asAsset(Object value) => jsonEncode(value);
+
+/// The owner's real content, decoded.
+///
+/// Lets a test assert against what `assets/content/` actually says instead of
+/// against a number copied out of it. Copied counts have twice now survived a
+/// content change by quietly becoming impossible to fail — an eleven-card
+/// assertion that a twelfth app makes wrong, and a featured-slot flag that
+/// stopped adding a seventh entry once the ledger reordered.
+Map<String, dynamic> bundledJson(String path) =>
+    jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+
+/// Every application in the owner's ledger, in source order.
+List<Map<String, dynamic>> bundledApps() =>
+    (bundledJson('assets/content/apps.json')['apps'] as List<dynamic>)
+        .cast<Map<String, dynamic>>();
+
+/// Every stop on the owner's journey, in source order.
+List<Map<String, dynamic>> bundledStops() =>
+    (bundledJson('assets/content/career.json')['roles'] as List<dynamic>)
+        .cast<Map<String, dynamic>>();
+
+/// The store map of one ledger entry.
+Map<String, dynamic> storeOf(Map<String, dynamic> app) =>
+    app['store'] as Map<String, dynamic>? ?? const {};

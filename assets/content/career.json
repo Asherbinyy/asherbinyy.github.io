@@ -1,6 +1,23 @@
 {
   "roles": [
     {
+      "id": "mansoura-university",
+      "kind": "study",
+      "country": "EG",
+      "city": "Mansoura",
+      "coords": [
+        31.0409,
+        31.3785
+      ],
+      "start": "2015-09",
+      "end": "2020-08",
+      "company": "Mansoura University",
+      "title": {
+        "en": "BEng Communications & Electronics Engineering",
+        "ar": null
+      }
+    },
+    {
       "id": "ci-company",
       "company": "CI Company",
       "title": {
@@ -32,7 +49,8 @@
         "snunu",
         "mostaqbaly"
       ],
-      "traceWeight": 0.9
+      "traceWeight": 0.9,
+      "kind": "role"
     },
     {
       "id": "minextstep",
@@ -53,7 +71,8 @@
       "summary": {
         "en": "Led end-to-end design and delivery of mobile and web applications, owning architecture, Flutter development, API integration and user experience. Full time to January 2024, part time from April 2025.",
         "ar": null
-      }
+      },
+      "kind": "role"
     },
     {
       "id": "hwzn-tech",
@@ -73,7 +92,8 @@
       "summary": {
         "en": "Led Flutter development and implemented CI/CD workflows, reducing development time by 50% and delivery time by a further 20%.",
         "ar": null
-      }
+      },
+      "kind": "role"
     },
     {
       "id": "ar-plus-plus",
@@ -93,7 +113,8 @@
       "summary": {
         "en": "Migrated a legacy Android application to Flutter, improving performance by 20%. Added unit, integration and widget testing, reducing bug rates by 30%.",
         "ar": null
-      }
+      },
+      "kind": "role"
     },
     {
       "id": "techlabs",
@@ -113,18 +134,29 @@
       "summary": {
         "en": "Built Mokaf, a Flutter smart-parking application with real-time maps, QR scanning and Google Maps navigation, integrating TAP, Apple Pay and STC Pay. MVP delivered in under eight weeks.",
         "ar": null
-      }
+      },
+      "kind": "role"
     },
     {
-      "id": "evri",
+      "id": "university-of-salford",
+      "kind": "study",
       "country": "GB",
       "city": "Manchester",
       "coords": [
         53.4808,
         -2.2426
       ],
-      "start": "2025-11",
-      "end": null
+      "start": "2025-09",
+      "end": "2026-09",
+      "company": "University of Salford",
+      "title": {
+        "en": "MSc Managing Innovation & Information Technology",
+        "ar": null
+      },
+      "summary": {
+        "en": "Graduated with Distinction.",
+        "ar": null
+      }
     }
   ]
 }

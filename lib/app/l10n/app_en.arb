@@ -36,6 +36,10 @@
   "@workDomainMarketplace": {
     "description": "Application category label for the Marketplace domain."
   },
+  "workDomainSafety": "Safety",
+  "@workDomainSafety": {
+    "description": "Work grid: the Safety domain"
+  },
   "workDomainConsumer": "Consumer",
   "@workDomainConsumer": {
     "description": "Application category label for the Consumer domain."
@@ -107,10 +111,6 @@
   "traceLock": "lock",
   "@traceLock": {
     "description": "Rail indicator: the signal has resolved and locked."
-  },
-  "footerLocation": "Manchester",
-  "@footerLocation": {
-    "description": "The owner's city, shown in the footer."
   },
   "heroSeeTheWork": "See the work",
   "@heroSeeTheWork": {

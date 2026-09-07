@@ -25,9 +25,9 @@ void main() {
         initialRoute: AppRoute.work,
       );
 
-      // apps.json lists eleven. The schema's intended twelfth is missing, and
-      // inventing one would be a claim the owner never made.
-      expect(find.byType(WorkCard), findsNWidgets(11));
+      // Counted from the ledger rather than written here, so adding an
+      // application to content cannot leave this test asserting the old total.
+      expect(find.byType(WorkCard), findsNWidgets(bundledApps().length));
     });
 
     testWidgets('leads with the strongest evidence it has', (tester) async {
@@ -55,7 +55,9 @@ void main() {
       // Mokaf has no supplied listing; Snunu's listing is dead; AZ Exams has
       // no independently verified URL. The ledger says so instead of linking
       // to a dead or ambiguous destination.
-      expect(find.text(l10n.workNoStoreLink), findsNWidgets(3));
+      final unlisted = bundledApps().where((a) => storeOf(a).isEmpty).length;
+      expect(unlisted, greaterThan(0));
+      expect(find.text(l10n.workNoStoreLink), findsNWidgets(unlisted));
     });
 
     testWidgets('offers a store link for every listing the content has', (
@@ -68,9 +70,11 @@ void main() {
       );
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
-      // Eight verified iOS listings and one unique Google Play listing.
-      expect(find.text(l10n.workAppStore), findsNWidgets(8));
-      expect(find.text(l10n.workGooglePlay), findsOneWidget);
+      final apps = bundledApps();
+      final ios = apps.where((a) => storeOf(a).containsKey('ios')).length;
+      final android = apps.where((a) => storeOf(a).containsKey('android'));
+      expect(find.text(l10n.workAppStore), findsNWidgets(ios));
+      expect(find.text(l10n.workGooglePlay), findsNWidgets(android.length));
     });
 
     testWidgets('lays every card out on a phone without overflowing', (
@@ -83,7 +87,7 @@ void main() {
         initialRoute: AppRoute.work,
       );
 
-      expect(find.byType(WorkCard), findsNWidgets(11));
+      expect(find.byType(WorkCard), findsNWidgets(bundledApps().length));
       expect(tester.takeException(), isNull);
     });
 
@@ -125,20 +129,23 @@ void main() {
         preferences: {PreferenceKey.recruiterMode.storageKey: 'on'},
       );
 
-      // The six featured applications, from the same JSON the static page
-      // reads, so the two cannot drift.
-      for (final name in [
-        'Tripster',
-        'Mokaf',
-        'AZ Courses',
-        'Enjoy',
-        'Malboos',
-        'Tiara Beauty',
-      ]) {
-        expect(find.text(name), findsOneWidget, reason: name);
+      // The featured applications, read from the same JSON the static page
+      // reads, so the two cannot drift -- and so changing which six are
+      // featured does not require editing this list by hand.
+      final apps = bundledApps();
+      final featured = apps.where((a) => a['featured'] == true).toList();
+      final unfeatured = apps.where((a) => a['featured'] != true).toList();
+      expect(featured, hasLength(6));
+      for (final app in featured) {
+        expect(
+          find.text(app['name'] as String),
+          findsOneWidget,
+          reason: '$app',
+        );
       }
-      // And not the unfeatured ones.
-      expect(find.text('Tekrar'), findsNothing);
+      for (final app in unfeatured) {
+        expect(find.text(app['name'] as String), findsNothing, reason: '$app');
+      }
     });
 
     testWidgets('carries no trace and no rail', (tester) async {

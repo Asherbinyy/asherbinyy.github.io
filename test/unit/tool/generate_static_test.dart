@@ -243,20 +243,33 @@ void main() {
     });
 
     test('has only featured apps (6 maximum)', () {
-      // Featured apps.
-      expect(briefHtml, contains('Tripster'));
-      expect(briefHtml, contains('Mokaf'));
-      expect(briefHtml, contains('AZ Courses'));
-      expect(briefHtml, contains('Enjoy'));
-      expect(briefHtml, contains('Malboos'));
-      expect(briefHtml, contains('Tiara Beauty'));
+      // Read from the ledger rather than listed here: which six are featured
+      // is an editorial choice the owner makes in JSON, and a hand-written
+      // copy of it turns his edit into a failing build for no reason.
+      final apps =
+          (jsonDecode(
+                File('${_projectRoot()}/assets/content/apps.json')
+                    .readAsStringSync(),
+              ) as Map<String, dynamic>)['apps']
+              as List<dynamic>;
 
-      // Non-featured apps should NOT appear.
-      expect(briefHtml, isNot(contains('Tekrar')));
-      expect(briefHtml, isNot(contains('Wasset')));
-      expect(briefHtml, isNot(contains('Snunu')));
-      expect(briefHtml, isNot(contains('Mostaqbaly')));
-      expect(briefHtml, isNot(contains('AZ Exams')));
+      final featured = apps
+          .cast<Map<String, dynamic>>()
+          .where((a) => a['featured'] == true)
+          .toList();
+      expect(featured, hasLength(lessThanOrEqualTo(6)));
+
+      for (final app in featured) {
+        expect(briefHtml, contains(app['name']), reason: '${app['id']}');
+      }
+      for (final app in apps.cast<Map<String, dynamic>>()) {
+        if (app['featured'] == true) continue;
+        expect(
+          briefHtml,
+          isNot(contains(app['name'])),
+          reason: '${app['id']} is not featured',
+        );
+      }
     });
 
     test('has education summary', () {
