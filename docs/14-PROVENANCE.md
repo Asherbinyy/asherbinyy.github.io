@@ -147,7 +147,7 @@ rediscover them and assume they were missed.
 | SMS — bulk messaging platform | Feb 2023 – May 2023 | Crazy Idea |
 | Enjoy — e-scooter and bicycle rental, Saudi Arabia | Jan 2022 – Apr 2023 | Crazy Idea |
 | Spix — parcel shipping | Dec 2022 – Apr 2023 | Crazy Idea |
-| **Easy Go — a Flutter navigation package** | Dec 2022 – Jan 2023 | **Self-employed** |
+| **Easy Go — a Flutter navigation package** | Dec 2022 – Jan 2023 | **Self-employed** — **now published**, see §3c |
 | Moawda — classified-ads marketplace | Nov 2022 – Jan 2023 | Crazy Idea |
 | Courses Exams | Sep 2022 – Dec 2022 | Crazy Idea |
 | Kafu — second-hand marketplace | Oct 2022 – Dec 2022 | Crazy Idea |
@@ -182,6 +182,32 @@ Two things worth the owner's attention:
 Nothing in this milestone was inferred. Where a fact was missing — Guardy's
 engagement dates, Tiara's months, a birth year — the feature was shaped around
 the gap rather than the gap being filled.
+
+---
+
+## 3c. Easy Go
+
+Published on the owner's instruction of 2026-09-07, after he supplied the link.
+
+| Field | Source |
+|---|---|
+| Listing | **PUB** <https://pub.dev/packages/easy_go>, verified live 2026-09-07: v1.0.1, MIT |
+| What it does | The package's own description: routing and navigation, custom page transitions, named routes, data passing |
+| Self-employed | **LI-X**, the owner's own attribution |
+
+**Two things the owner should know.** pub.dev lists the author as *Ahmed
+Elsherbiny* at `ahmed.elsherbiny2020@gmail.com` — a different spelling of the
+surname and a different address from the one on this site. It is plainly his
+package and he supplied the link, but a recruiter comparing the two will see
+the mismatch, and only he can correct the pub.dev side. Second, the listing is
+marked **unverified uploader**; claiming a verified publisher domain would
+strengthen it.
+
+**No engagement figures are published.** pub.dev reports likes, pub points and
+a download count; none appears on the site. They are small numbers that would
+weaken a genuinely strong fact — that he has shipped an open-source package at
+all — and `AGENTS.md` §3 does not require a figure to be published merely
+because it exists.
 
 ---
 

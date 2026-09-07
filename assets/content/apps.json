@@ -166,6 +166,23 @@
       ],
       "store": {},
       "domain": "Education"
+    },
+    {
+      "id": "easy-go",
+      "name": "Easy Go",
+      "platforms": [
+        "pub"
+      ],
+      "store": {
+        "pub": "https://pub.dev/packages/easy_go"
+      },
+      "role": {
+        "en": "Open-source Flutter package for routing and navigation — custom page transitions, named routes and data passing",
+        "ar": "حزمة Flutter مفتوحة المصدر للتنقّل بين الصفحات — انتقالات مخصّصة ومسارات مُسمّاة وتمرير البيانات"
+      },
+      "domain": "Open source",
+      "engagement": "freelance",
+      "featured": false
     }
   ]
 }
