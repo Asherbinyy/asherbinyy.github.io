@@ -142,14 +142,19 @@ void main() {
       expect(find.text('shipped'), findsOneWidget);
     });
 
-    testWidgets('the footer reads the current station coordinate', (
-      tester,
-    ) async {
+    testWidgets('the footer carries no coordinate readout', (tester) async {
       await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
 
-      // Evri is the one career role with no end date, and career.json puts
-      // Manchester at 53.4808.
-      expect(find.text('lat 53.4808'), findsOneWidget);
+      // This test asserted the opposite until milestone 4. The footer derived
+      // a latitude from the one career role with no end date -- Evri, which
+      // career.json puts at 53.4808 -- and printed it at the trailing edge.
+      // Task 4.9 removed it on the owner's instruction: being introduced by a
+      // map reference is the opposite of what the site is now for.
+      //
+      // Inverted rather than deleted. A removed feature with no test is a
+      // feature a future agent reinstates, having found the painter still
+      // there and no record of why it went.
+      expect(find.textContaining('lat '), findsNothing);
       expect(find.byType(AppFooter), findsOneWidget);
     });
   });

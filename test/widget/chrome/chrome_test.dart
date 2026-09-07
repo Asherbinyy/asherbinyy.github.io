@@ -21,6 +21,49 @@ import '../../support/chrome_harness.dart';
 import '../../support/pump.dart';
 
 void main() {
+  group('text selection', () {
+    // Flutter paints text to a canvas, so selection does not come for free the
+    // way it does in a document. Without the SelectionArea in the content
+    // column a visitor cannot copy anything on the page, including the owner's
+    // email address. This test is the guard on that, because the failure is
+    // invisible in a screenshot and nothing else would catch its removal.
+    testWidgets('the content column is selectable', (tester) async {
+      await pumpChrome(tester, breakpoint: ChromeBreakpoint.expanded);
+
+      expect(find.byType(SelectionArea), findsOneWidget);
+    });
+
+    testWidgets('page content sits inside the selectable region', (
+      tester,
+    ) async {
+      await pumpChrome(tester, breakpoint: ChromeBreakpoint.expanded);
+
+      expect(
+        find.descendant(
+          of: find.byType(SelectionArea),
+          matching: find.byType(StationScreen),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the chrome stays outside it, so control drags are not text '
+        'drags', (tester) async {
+      await pumpChrome(tester, breakpoint: ChromeBreakpoint.expanded);
+
+      for (final chrome in [AppHeader, AppNav, AppFooter]) {
+        expect(
+          find.descendant(
+            of: find.byType(SelectionArea),
+            matching: find.byType(chrome),
+          ),
+          findsNothing,
+          reason: '$chrome should not be inside the selectable region',
+        );
+      }
+    });
+  });
+
   group('breakpoints', () {
     for (final breakpoint in ChromeBreakpoint.values) {
       testWidgets('renders at ${breakpoint.name}', (tester) async {
