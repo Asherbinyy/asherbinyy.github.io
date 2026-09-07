@@ -401,6 +401,9 @@ extension ThemeTokenValues on ThemeTokens {
   /// Shared markHeaderSize token.
   double get markHeaderSize => Tokens.markHeaderSize;
 
+  /// Shared cursorTrailRadius token.
+  double get cursorTrailRadius => Tokens.cursorTrailRadius;
+
   /// Shared glyphFieldOpacity token.
   double get glyphFieldOpacity => Tokens.glyphFieldOpacity;
 

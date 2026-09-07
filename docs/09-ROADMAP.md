@@ -448,7 +448,6 @@ Restyled to match, still hand-written HTML, still JS-optional, still ATS-first.
 Contrast across every new surface, full keyboard and screen-reader audit, frame
 profiles for wall, map, fields and cursor in a real browser — closing
 `11-OPEN-ISSUES.md` §3.2, open since milestone 1. Every golden regenerated.
-
 ---
 
 # Milestone 6 — The Ascent

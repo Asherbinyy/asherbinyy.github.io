@@ -380,6 +380,17 @@ abstract final class Tokens {
   /// The mark: 2px stroke at its native 32px square, 24px in the header.
   static const double markNativeSize = 32, markStroke = 2, markHeaderSize = 24;
 
+  /// The cursor wake: how long a mote lives, how many may live at once, and
+  /// how large one starts.
+  ///
+  /// The cap is the performance budget expressed as a number rather than an
+  /// intention: a fast drag across a wide viewport would otherwise accumulate
+  /// hundreds of circles. `12-MOTIF-LIBRARY.md` §5 fixes it at 24.
+  static const int cursorTrailLifeMs = 520, cursorTrailMaxMotes = 24;
+
+  /// A mote's radius at birth.
+  static const double cursorTrailRadius = 3;
+
   /// Opacity of the inscription field behind every page.
   ///
   /// One step above the 3% texture beneath it, so the two read as separate

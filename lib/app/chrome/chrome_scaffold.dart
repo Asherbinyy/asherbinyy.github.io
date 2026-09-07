@@ -10,6 +10,7 @@ import 'package:nocturne/app/chrome/app_nav.dart';
 import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/features/recruiter/presentation/recruiter_view.dart';
 import 'package:nocturne/core/painting/glyph_field_painter.dart';
+import 'package:nocturne/core/widgets/cursor_trail.dart';
 import 'package:nocturne/core/painting/grain_painter.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/theme_controller.dart';
@@ -96,79 +97,83 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
 
     return Scaffold(
       backgroundColor: tokens.void_,
-      body: _Grained(
-        route: widget.route,
-        isRecruiterMode: isRecruiterMode,
-        child: FocusTraversalGroup(
-          // Reading order is header, then content, then footer, in both
-          // directions; the ordering policy follows Directionality rather than
-          // being reversed by hand.
-          policy: ReadingOrderTraversalPolicy(),
-          child: Column(
-            children: [
-              _ChromeReveal(
-                animation: widget.chromeReveal,
-                edge: _RevealEdge.top,
-                child: AppHeader(current: widget.route),
-              ),
-              if (!AppHeader.hasInlineNav(context) && !isRecruiterMode)
+      body: CursorTrail(
+        // Recruiter Mode is a quiet document; nothing decorative runs in it.
+        isEnabled: !isRecruiterMode,
+        child: _Grained(
+          route: widget.route,
+          isRecruiterMode: isRecruiterMode,
+          child: FocusTraversalGroup(
+            // Reading order is header, then content, then footer, in both
+            // directions; the ordering policy follows Directionality rather
+            // than being reversed by hand.
+            policy: ReadingOrderTraversalPolicy(),
+            child: Column(
+              children: [
                 _ChromeReveal(
                   animation: widget.chromeReveal,
                   edge: _RevealEdge.top,
-                  child: _NavRow(current: widget.route),
+                  child: AppHeader(current: widget.route),
                 ),
-              if (!hasRail && !isRecruiterMode)
-                _ChromeReveal(
-                  animation: widget.chromeReveal,
-                  edge: _RevealEdge.top,
-                  child: _CollapsedProgress(progress: _progress),
-                ),
-              Expanded(
-                child: Row(
-                  children: [
-                    if (hasRail)
-                      _ChromeReveal(
-                        animation: widget.chromeReveal,
-                        edge: _RevealEdge.start,
-                        child: ValueListenableBuilder<double>(
-                          valueListenable: _progress,
-                          builder: (context, progress, _) => AppRail(
-                            sectionName: _sectionName(context),
-                            progress: progress,
+                if (!AppHeader.hasInlineNav(context) && !isRecruiterMode)
+                  _ChromeReveal(
+                    animation: widget.chromeReveal,
+                    edge: _RevealEdge.top,
+                    child: _NavRow(current: widget.route),
+                  ),
+                if (!hasRail && !isRecruiterMode)
+                  _ChromeReveal(
+                    animation: widget.chromeReveal,
+                    edge: _RevealEdge.top,
+                    child: _CollapsedProgress(progress: _progress),
+                  ),
+                Expanded(
+                  child: Row(
+                    children: [
+                      if (hasRail)
+                        _ChromeReveal(
+                          animation: widget.chromeReveal,
+                          edge: _RevealEdge.start,
+                          child: ValueListenableBuilder<double>(
+                            valueListenable: _progress,
+                            builder: (context, progress, _) => AppRail(
+                              sectionName: _sectionName(context),
+                              progress: progress,
+                            ),
                           ),
                         ),
-                      ),
-                    Expanded(
-                      child: FadeTransition(
-                        opacity:
-                            widget.contentReveal ??
-                            const AlwaysStoppedAnimation(1),
-                        child: _ContentColumn(
-                          controller: _scroll,
-                          // Recruiter Mode has no trace: section 5 of the brief
-                          // says no map, no trace, no motion.
-                          background: isRecruiterMode
-                              ? null
-                              : widget.backgroundBuilder?.call(_scroll),
-                          child: ChromeScrollScope(
-                            progress: _progress,
+                      Expanded(
+                        child: FadeTransition(
+                          opacity:
+                              widget.contentReveal ??
+                              const AlwaysStoppedAnimation(1),
+                          child: _ContentColumn(
                             controller: _scroll,
-                            child: isRecruiterMode
-                                ? const RecruiterView()
-                                : widget.child,
+                            // Recruiter Mode has no trace: section 5 of
+                            // the brief says no map, no trace, no motion.
+                            background: isRecruiterMode
+                                ? null
+                                : widget.backgroundBuilder?.call(_scroll),
+                            child: ChromeScrollScope(
+                              progress: _progress,
+                              controller: _scroll,
+                              child: isRecruiterMode
+                                  ? const RecruiterView()
+                                  : widget.child,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              _ChromeReveal(
-                animation: widget.chromeReveal,
-                edge: _RevealEdge.bottom,
-                child: const _Footer(),
-              ),
-            ],
+                _ChromeReveal(
+                  animation: widget.chromeReveal,
+                  edge: _RevealEdge.bottom,
+                  child: const _Footer(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
