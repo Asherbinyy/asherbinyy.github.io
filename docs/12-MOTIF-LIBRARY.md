@@ -79,14 +79,14 @@ spell *Ptolemy* and *Cleopatra* phonetically with exactly these signs, so
 transliterating a modern name this way is the historically correct practice
 rather than a pastiche of one.
 
-| Sound | Gardiner | Sign | Unicode |
-|---|---|---|---|
-| š (sh) | N37 | pool | U+13216 |
-| r | D21 | mouth | U+130A7 |
-| b | D58 | foot | U+13101 |
-| i | M17 | reed | U+131CB |
-| n | N35 | water | U+13216 → U+131F0 |
-| i | M17 | reed | U+131CB |
+| Sound | Gardiner | Sign |
+|---|---|---|
+| š (sh) | N37 | pool |
+| r | D21 | mouth |
+| b | D58 | foot |
+| i | M17 | reed |
+| n | N35 | water |
+| i | M17 | reed |
 
 **š – r – b – i – n – i.**
 
@@ -96,7 +96,9 @@ Rules for this, and they are tight:
 - The cartouche spells this name and nothing else. It is not a generator. No other string is ever rendered in glyphs.
 - The Latin word **Sherbini** is always present beside or beneath the cartouche at every breakpoint. The glyphs are an ornament with provenance, never the only way to read the name.
 - The accessible name of the element is the Latin name. Screen readers get `Sherbini`, never a glyph description.
-- **Before this ships, the transliteration gets checked by someone who reads Egyptian.** It is recorded in `14-PROVENANCE.md` as unverified until then. Everything else on this site is sourced; this must be too.
+- **The sign choices are verified.** N37 = š, D21 = r, D58 = b, M17 = i, N35 = n are the standard uniliteral values in Gardiner's list. What is *not* verified is the spelling decision: a scribe might equally have written the final vowels with the double reed (M17A, *y*) rather than the single reed, giving š-r-b-y-n-y. Both are defensible; neither is checkable by an agent.
+- **A codepoint column was removed from this table.** It listed Unicode values for the six signs, two of which were wrong and four of which were never checked — in the file whose entire job is to stop unverified things reaching the site. The glyphs are drawn as vector paths in `glyph_paths.dart` and no code ever needed the codepoints, so the column was decoration pretending to be data.
+- Recorded in `14-PROVENANCE.md` §3.14, still open for a reader of Egyptian to confirm the spelling.
 
 ---
 

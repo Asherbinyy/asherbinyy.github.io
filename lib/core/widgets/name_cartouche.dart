@@ -21,13 +21,30 @@ import 'package:nocturne/core/painting/cartouche_painter.dart';
 /// is sourced; this has to be too, and it ships marked rather than assumed.
 class NameCartouche extends StatelessWidget {
   /// [name] is the Latin name, which is what is announced and what is read.
-  const NameCartouche({required this.name, required this.height, super.key});
+  const NameCartouche({
+    required this.name,
+    required this.height,
+    this.showName = true,
+    super.key,
+  });
 
   /// The owner's name in Latin script.
   final String name;
 
   /// The cartouche's height. Width follows from the aspect ratio.
   final double height;
+
+  /// Whether this widget renders the Latin name itself.
+  ///
+  /// Set false **only** where the caller already renders the same name
+  /// immediately adjacent — the hero does, at display-xl, directly beneath.
+  /// Rule 1 is that the Latin name is present at every breakpoint, not that
+  /// this particular widget is the thing that draws it, and drawing it twice
+  /// in the hero would be worse than not drawing it here.
+  ///
+  /// The accessible label carries the name either way, so a screen reader is
+  /// never handed a nameless ornament.
+  final bool showName;
 
   @override
   Widget build(BuildContext context) {
@@ -57,12 +74,14 @@ class NameCartouche extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: tokens.space8),
-            // Rule 1, and it is not optional. The glyphs are ornament with
-            // provenance; this is how the name is actually read. It shipped
-            // missing on the first pass, which is exactly the failure the rule
-            // exists to prevent.
-            Text(name, style: context.type.displayM),
+            if (showName) ...[
+              SizedBox(height: tokens.space8),
+              // Rule 1, and it is not optional. The glyphs are ornament with
+              // provenance; this is how the name is actually read. It shipped
+              // missing on the first pass, which is exactly the failure the
+              // rule exists to prevent.
+              Text(name, style: context.type.displayM),
+            ],
           ],
         ),
       ),

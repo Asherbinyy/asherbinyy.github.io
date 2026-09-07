@@ -400,4 +400,7 @@ extension ThemeTokenValues on ThemeTokens {
 
   /// Shared markHeaderSize token.
   double get markHeaderSize => Tokens.markHeaderSize;
+
+  /// Shared cartoucheHeroHeight token.
+  double get cartoucheHeroHeight => Tokens.cartoucheHeroHeight;
 }

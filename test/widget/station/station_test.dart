@@ -13,6 +13,7 @@ import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/features/station/domain/acquisition_controller.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/features/station/presentation/widgets/acquisition_sequence.dart';
+import 'package:nocturne/core/widgets/name_cartouche.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
 import 'package:nocturne/features/station/presentation/widgets/stat_panel.dart';
 
@@ -38,6 +39,30 @@ void main() {
         ),
         findsOneWidget,
       );
+    });
+
+    testWidgets('introduces the name with a cartouche, and still spells it', (
+      tester,
+    ) async {
+      await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
+
+      expect(find.byType(NameCartouche), findsOneWidget);
+
+      // 12-MOTIF-LIBRARY.md section 2 rule 1: the Latin name is present at
+      // every breakpoint. The hero draws it rather than the cartouche, which
+      // is why the widget's own rendering is suppressed there -- and why this
+      // asserts the name is on screen rather than asserting who drew it.
+      expect(find.text('Sherbini'), findsOneWidget);
+
+      // Rule 2: a screen reader is handed the name, never six signs.
+      expect(find.bySemanticsLabel('Sherbini'), findsWidgets);
+    });
+
+    testWidgets('the cartouche never spells a name twice over', (tester) async {
+      await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
+
+      // The hero and the cartouche both know the name; only one may draw it.
+      expect(find.text('Sherbini'), findsOneWidget);
     });
 
     testWidgets('carries both calls to action', (tester) async {

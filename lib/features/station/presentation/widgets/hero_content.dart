@@ -10,6 +10,7 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
+import 'package:nocturne/core/widgets/name_cartouche.dart';
 import 'package:nocturne/features/station/presentation/widgets/stat_panel.dart';
 
 /// The settled hero.
@@ -47,6 +48,15 @@ class HeroContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // The cartouche introduces the name rather than replacing it. Its own
+        // Latin rendering is suppressed because the name follows immediately
+        // below at display-xl, and the acquisition reveal belongs to that.
+        NameCartouche(
+          name: profile.shownName.resolve(locale),
+          height: tokens.cartoucheHeroHeight,
+          showName: false,
+        ),
+        SizedBox(height: tokens.space12),
         _AcquiredName(
           name: profile.shownName.resolve(locale),
           style: type.displayXl,
