@@ -73,6 +73,15 @@ const List<_Role> _textRoles = [
     surfaces: _allSurfaces,
     target: Wcag.aaNormalText,
   ),
+  // Faience carries links and hovered labels, so it is read as text and owes
+  // the text ratio. Section 2 gives it one job; this is what makes the job
+  // survivable for someone reading it.
+  (
+    name: 'faience (links, hovered and focused labels)',
+    colour: _faience,
+    surfaces: _allSurfaces,
+    target: Wcag.aaNormalText,
+  ),
 ];
 
 /// Non-text roles: boundaries and meaningful graphics, which owe 3:1.
@@ -94,6 +103,12 @@ const List<_Role> _nonTextRoles = [
     surfaces: _allSurfaces,
     target: Wcag.aaNonText,
   ),
+  (
+    name: 'faience-dim (inactive interactive affordance)',
+    colour: _faienceDim,
+    surfaces: _allSurfaces,
+    target: Wcag.aaNonText,
+  ),
 ];
 
 Color _textPrimary(ThemeTokens t) => t.textPrimary;
@@ -105,9 +120,11 @@ Color _instrumentDim(ThemeTokens t) => t.instrumentDim;
 Color _beacon(ThemeTokens t) => t.beacon;
 Color _beaconDim(ThemeTokens t) => t.beaconDim;
 Color _alert(ThemeTokens t) => t.alert;
+Color _faience(ThemeTokens t) => t.faience;
+Color _faienceDim(ThemeTokens t) => t.faienceDim;
 
 void main() {
-  const themes = {'Nocturne': nocturneTokens, 'Daybreak': daybreakTokens};
+  const themes = {'Kemet': nocturneTokens, 'Deshret': daybreakTokens};
 
   group('palette contrast', () {
     for (final MapEntry(key: themeName, value: tokens) in themes.entries) {
@@ -125,7 +142,7 @@ void main() {
           });
         }
 
-        // The primary call to action inverts: section 2 reserves amber for
+        // The primary call to action inverts: section 2 reserves gold for
         // what the viewer can act on, so BeaconButton fills with `beacon` and
         // labels in `void_`. The pair that matters is therefore the label on
         // the fill, not the fill on the page.
@@ -155,19 +172,19 @@ void main() {
     // second artifact — a technical drawing on paper — not an inverted dark
     // theme." A straight inversion would put each Daybreak surface at the
     // complement of its Nocturne counterpart; a warm paper stock does not.
-    test('Daybreak is warm where an inversion would be neutral', () {
+    test('Deshret is warm where an inversion would be neutral', () {
       // Paper carries more red than blue. Inverting Nocturne's blue-black void
       // would instead yield a base whose blue channel led.
       expect(
         daybreakTokens.void_.r,
         greaterThan(daybreakTokens.void_.b),
-        reason: 'Daybreak --void should read as warm paper, not inverted ink',
+        reason: 'Deshret --void should read as warm papyrus, not inverted ink',
       );
       expect(nocturneTokens.void_.b, greaterThan(nocturneTokens.void_.r));
     });
 
     test(
-      'Daybreak raises toward white while Nocturne raises toward light ink',
+      'Deshret raises toward papyrus white while Kemet raises toward light ink',
       () {
         // Elevation moves in opposite directions, which an inversion would not
         // preserve: Nocturne lifts panels off the void, Daybreak lifts them to
@@ -183,13 +200,26 @@ void main() {
       },
     );
 
-    test('amber is darkened for paper rather than reused', () {
+    // The owner's complaint at the start of milestone 4 was that the dark
+    // theme read as too dark. That was answered with a measurement rather than
+    // a feeling, so it gets a test rather than a note in a worklog.
+    test('Kemet sits off pure black', () {
+      expect(
+        nocturneTokens.void_.computeLuminance(),
+        greaterThan(0.006),
+        reason:
+            'the milestone-1 base was 0.0021 and read as flat black; the Black '
+            'Land is river silt, not void',
+      );
+    });
+
+    test('gold is darkened for papyrus rather than reused', () {
       expect(
         daybreakTokens.beacon.computeLuminance(),
         lessThan(nocturneTokens.beacon.computeLuminance()),
         reason:
-            'section 2 calls the Daybreak beacon "darkened for contrast '
-            'on paper"',
+            'section 2 calls the Deshret gold "darkened for contrast '
+            'on papyrus"',
       );
     });
   });

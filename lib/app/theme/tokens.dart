@@ -371,42 +371,58 @@ abstract final class Tokens {
   static const double markNativeSize = 32, markStroke = 2, markHeaderSize = 24;
 }
 
-/// Nocturne palette from design-system section 2.
+/// Kemet palette from design-system section 2 — the Black Land.
+///
+/// Every value was solved rather than chosen: each role was moved on lightness
+/// alone, hue and saturation untouched, until it met its WCAG floor on all
+/// three surfaces. `contrast_test.dart` is what makes that true; changing a
+/// value here means running it, not eyeballing the result.
 const nocturneTokens = ThemeTokens(
-  void_: Color(0xFF05070A),
-  surface: Color(0xFF0B0F16),
-  surfaceRaised: Color(0xFF131A24),
-  hairline: Color(0xFF1C2530),
-  hairlineStrong: Color(0xFF2C3846),
-  beacon: Color(0xFFF2A83B),
-  beaconDim: Color(0xFF875D22),
-  beaconGlow: Color(0xFFFFD48A),
-  instrument: Color(0xFFC6D2E0),
-  instrumentMid: Color(0xFF8A99AB),
-  instrumentDim: Color(0xFF5A6878),
-  alert: Color(0xFFE4574E),
-  verified: Color(0xFFC6D2E0),
-  textPrimary: Color(0xFFE9EEF5),
-  textSecondary: Color(0xFF93A3B5),
-  textMuted: Color(0xFF70849A),
+  // Lifted off black on the owner's instruction — 4.4x the relative luminance
+  // of the milestone-1 value, and blue-led, because the Black Land is river
+  // silt rather than void.
+  void_: Color(0xFF121826),
+  surface: Color(0xFF1A2233),
+  surfaceRaised: Color(0xFF232D40),
+  hairline: Color(0xFF2E3A50),
+  hairlineStrong: Color(0xFF3F4D66),
+  beacon: Color(0xFFE3A93F),
+  beaconDim: Color(0xFF92702E),
+  beaconGlow: Color(0xFFFFD98A),
+  faience: Color(0xFF45B8B2),
+  faienceDim: Color(0xFF2D827D),
+  instrument: Color(0xFFCBD6E6),
+  instrumentMid: Color(0xFF93A2B8),
+  instrumentDim: Color(0xFF69788F),
+  alert: Color(0xFFE3716C),
+  verified: Color(0xFFCBD6E6),
+  textPrimary: Color(0xFFEDF1F8),
+  textSecondary: Color(0xFFA8B4C6),
+  textMuted: Color(0xFF8895A8),
 );
 
-/// Daybreak palette from design-system section 2.
+/// Deshret palette from design-system section 2 — the Red Land.
+///
+/// A second artifact on papyrus, not an inversion of Kemet. Solved the same
+/// way, and needing more of the work, because dark ink on warm paper has less
+/// headroom than light ink on near-black.
 const daybreakTokens = ThemeTokens(
-  void_: Color(0xFFF1EDE4),
-  surface: Color(0xFFE8E3D8),
-  surfaceRaised: Color(0xFFFFFFFF),
-  hairline: Color(0xFFCFC7B8),
-  hairlineStrong: Color(0xFFA79C89),
-  beacon: Color(0xFF95570B),
-  beaconDim: Color(0xFFA37B41),
-  beaconGlow: Color(0xFF7A4506),
-  instrument: Color(0xFF3A4654),
-  instrumentMid: Color(0xFF5B6773),
-  instrumentDim: Color(0xFF8E806A),
-  alert: Color(0xFFA32A22),
-  verified: Color(0xFF3A4654),
-  textPrimary: Color(0xFF12171E),
-  textSecondary: Color(0xFF4A5766),
-  textMuted: Color(0xFF5C6676),
+  void_: Color(0xFFF2E9D8),
+  surface: Color(0xFFE9DEC8),
+  surfaceRaised: Color(0xFFFCF7EC),
+  hairline: Color(0xFFD6C8AC),
+  hairlineStrong: Color(0xFFAD9C7C),
+  beacon: Color(0xFF885912),
+  beaconDim: Color(0xFF9C7534),
+  beaconGlow: Color(0xFF6F4409),
+  faience: Color(0xFF1C6B68),
+  faienceDim: Color(0xFF2E8481),
+  instrument: Color(0xFF37424F),
+  instrumentMid: Color(0xFF586472),
+  instrumentDim: Color(0xFF8A7C63),
+  alert: Color(0xFF9C2E26),
+  verified: Color(0xFF37424F),
+  textPrimary: Color(0xFF13181F),
+  textSecondary: Color(0xFF48545F),
+  textMuted: Color(0xFF5A6470),
 );

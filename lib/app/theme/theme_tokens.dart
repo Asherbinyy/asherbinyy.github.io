@@ -13,6 +13,8 @@ class ThemeTokens extends ThemeExtension<ThemeTokens> {
     required this.beacon,
     required this.beaconDim,
     required this.beaconGlow,
+    required this.faience,
+    required this.faienceDim,
     required this.instrument,
     required this.instrumentMid,
     required this.instrumentDim,
@@ -46,6 +48,17 @@ class ThemeTokens extends ThemeExtension<ThemeTokens> {
 
   /// Semantic palette role: beaconGlow.
   final Color beaconGlow;
+
+  /// Interaction feedback, and nothing else.
+  ///
+  /// Design system section 2 gives each of the four pigments exactly one job
+  /// and this one owns hover, focus, links and in-game state. It must never
+  /// appear at rest: a faience pixel on screen while the viewer is not
+  /// hovering, focusing or playing is a bug, not a decorative choice.
+  final Color faience;
+
+  /// Faience at rest: an interactive affordance that is currently inactive.
+  final Color faienceDim;
 
   /// Semantic palette role: instrument.
   final Color instrument;
@@ -93,6 +106,8 @@ class ThemeTokens extends ThemeExtension<ThemeTokens> {
     Color? beacon,
     Color? beaconDim,
     Color? beaconGlow,
+    Color? faience,
+    Color? faienceDim,
     Color? instrument,
     Color? instrumentMid,
     Color? instrumentDim,
@@ -110,6 +125,8 @@ class ThemeTokens extends ThemeExtension<ThemeTokens> {
     beacon: beacon ?? this.beacon,
     beaconDim: beaconDim ?? this.beaconDim,
     beaconGlow: beaconGlow ?? this.beaconGlow,
+    faience: faience ?? this.faience,
+    faienceDim: faienceDim ?? this.faienceDim,
     instrument: instrument ?? this.instrument,
     instrumentMid: instrumentMid ?? this.instrumentMid,
     instrumentDim: instrumentDim ?? this.instrumentDim,
@@ -134,6 +151,8 @@ class ThemeTokens extends ThemeExtension<ThemeTokens> {
       beacon: Color.lerp(beacon, other.beacon, t) ?? beacon,
       beaconDim: Color.lerp(beaconDim, other.beaconDim, t) ?? beaconDim,
       beaconGlow: Color.lerp(beaconGlow, other.beaconGlow, t) ?? beaconGlow,
+      faience: Color.lerp(faience, other.faience, t) ?? faience,
+      faienceDim: Color.lerp(faienceDim, other.faienceDim, t) ?? faienceDim,
       instrument: Color.lerp(instrument, other.instrument, t) ?? instrument,
       instrumentMid:
           Color.lerp(instrumentMid, other.instrumentMid, t) ?? instrumentMid,
@@ -154,7 +173,7 @@ extension ThemeTokenContext on BuildContext {
   /// Tokens installed by either Nocturne theme.
   ThemeTokens get tokens {
     final result = Theme.of(this).extension<ThemeTokens>();
-    if (result == null) throw StateError('Nocturne theme tokens are missing.');
+    if (result == null) throw StateError('Theme tokens are missing.');
     return result;
   }
 }
