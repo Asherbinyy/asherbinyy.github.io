@@ -91,7 +91,18 @@ endpoint configuration limitation is recorded in 0b.10.
 | 0c.4 | **`assets/media/apps/` is empty.** The screenshot pipeline is built and documented; no screenshots have been supplied. Every row still draws its procedural card, which is the designed absence rather than a defect. | Rolls up into 1.10 |
 | 0c.6 | **The trace cannot fully clear the text on a phone.** It is confined to a 28% trailing strip and its labels are dropped, which fixes the collision the owner reported, but a 360px viewport has a full-width text column and a waveform cannot be disjoint from it. **A decision for milestone 5:** the wall replaces this paint, and it should decide whether the signature element exists on compact at all rather than inheriting a compromise. | Owner reported it 2026-09-07 |
 | 0c.7 | **"The trace only reaches before Manchester."** Reported by the owner on a phone. Not reproduced from the code: all seven stops receive anchors, the last is the Salford entry, and the career sequence is the last thing on the page. Possibly the measured-anchor path failing on a phone and falling back to provisional spacing, which insets the last burst to 7/8 of the range. **Needs one look at the rebuilt preview to confirm before it is chased further** — no fix was guessed at. | Owner to confirm |
-| 0c.5 | **The interests section is not in `02-SCREEN-SPECS.md`.** Nor are the evidence thumbnails, the redesigned scrubber, or `/ascent`. That document still describes the ground station throughout. | Deferred deliberately — see the milestone-4 worklogs |
+| 0c.5 | **`02-SCREEN-SPECS.md` is behind the code.** Partly addressed: it now opens with a status block naming every screen it does not describe and pointing at the documents that are current. The body still describes the ground station and is being rewritten screen by screen as each is rebuilt in milestone 5 — writing it ahead of the work is how it would go stale twice. `07-CONTENT-SCHEMA.md` **is** current as of 2026-09-07. | Rolls through milestone 5 |
+
+---
+
+## 0d. Milestone 5, open
+
+| # | Item | Notes |
+|---|---|---|
+| 0d.1 | **The wall (5.3), the atlas (5.4), seal cards (5.6), the cursor (5.7) and the opening (5.8) are not built.** The trace still draws the waveform and `/signal` is still the propagation map. | Roadmap §5 |
+| 0d.2 | **The glyph fields use five signs.** The inventory exists to spell the owner's name; drawing more means verifying more. Routes differ by seeded arrangement rather than by sign, which `12-MOTIF-LIBRARY.md` §4 now says plainly. Widening the inventory is a deliberate decision, not a gap to fill quietly. | Owner may want more variety |
+| 0d.3 | **Frame cost for the glyph field has not been measured in a browser.** The tile is recorded once and replayed, and a test proves repeated paints add no cache entries — but "0ms after first paint" is an argument from the design, not a profile. Folds into 5.10 with the trace and map budgets, open since milestone 1. | Needs Chrome DevTools |
+| 0d.4 | **PR #12 was merged while its `verify` job was failing.** An agent ran `gh pr checks \| grep … && gh pr merge`, the grep exited 0 on the failing lines, and the merge fired. Nothing was published — the workflow gates `build` and `deploy` behind `verify`, both skipped — and PR #13 repaired `main`. Recorded because the lesson is general: **never chain a merge behind a command whose exit code does not mean what you are checking for.** | Closed, kept as a warning |
 
 ---
 

@@ -1,8 +1,45 @@
-# Screen Specifications — NOCTURNE
+# Screen Specifications — KEMET
 
-Tokens alone do not produce a good design. An agent handed only a palette will produce a competent, forgettable layout — centred hero, three cards, footer. This document specifies composition so it doesn't have to guess.
-
-Read alongside `01-DESIGN-SYSTEM.md`. Where they conflict, the design system wins on values and this document wins on arrangement.
+> ## Status, 2026-09-07 — read this first
+>
+> **This document is behind the code.** It was written for the ground-station
+> concept and still describes it throughout: the telemetry trace, the
+> propagation map, amber as the only chroma. Milestone 4 changed several
+> screens and milestone 5 is replacing the visual language wholesale.
+>
+> Where this file and the code disagree, **the code is right and this file is
+> stale.** It is being rewritten screen by screen as each is rebuilt in
+> milestone 5, rather than all at once ahead of the work — a specification
+> written for screens that do not exist yet is how a document gets stale twice.
+>
+> Until then, these are current and authoritative:
+>
+> | For | Read |
+> |---|---|
+> | The concept | `00-PROJECT-BRIEF.md` §3 |
+> | Colour, type, motion | `01-DESIGN-SYSTEM.md` |
+> | Every motif, and what may not be drawn | `12-MOTIF-LIBRARY.md` |
+> | What the content can hold | `07-CONTENT-SCHEMA.md` |
+> | What is actually true right now | `11-OPEN-ISSUES.md` |
+>
+> ### What this file does not yet describe
+>
+> Added in milestone 4 and shipped:
+>
+> - **Off duty** on `/about` — the owner's interests, six tiles, deliberately outside the tab order because a tile has nowhere to go.
+> - **Coursework evidence** — cards beneath the transcript that open full size.
+> - **The chronology control** on `/signal` — a continuous rail, the selected stop named above it, a step control at each end. The six unconnected dots this file describes are gone.
+> - **The trace on a phone** — confined to a trailing strip with its titles dropped. A compromise, not a design; see `11-OPEN-ISSUES.md` 0c.6.
+>
+> Added in milestone 5 so far:
+>
+> - **The ankh** as the mark, replacing the waveform frame this file specifies.
+> - **The cartouche** above the hero name, spelling *Sherbini* in uniliteral signs.
+> - **Inscription fields** behind every route, one arrangement each.
+>
+> Specified but not built: the wall (5.3), the atlas (5.4), seal cards (5.6),
+> the cursor (5.7), the opening (5.8), and `/ascent` (milestone 6,
+> `13-GAME-DESIGN.md`).
 
 ---
 
