@@ -17,6 +17,10 @@ final Article anArticle = (
   title: 'Shipping Flutter to the web',
   url: Uri.parse('https://sherbini.medium.com/shipping-flutter'),
   published: DateTime.utc(2026, 9, 5),
+  // No cover: these tests are about the list, and a null cover keeps the card
+  // on its procedural mark rather than reaching for a NetworkImage the test
+  // environment would have to serve.
+  cover: null,
   tags: const ['flutter', 'web'],
 );
 
@@ -35,7 +39,8 @@ void main() {
             title: 'A second post',
             url: Uri.parse('https://sherbini.medium.com/second'),
             published: DateTime.utc(2026, 8),
-            tags: const [],
+            cover: null,
+            tags: const <String>[],
           ),
         ]),
       );

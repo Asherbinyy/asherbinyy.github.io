@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
@@ -10,18 +11,22 @@ import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/core/widgets/loading/station_card.dart';
+import 'package:nocturne/core/widgets/loading/three_stage_image.dart';
+import 'package:nocturne/features/writing/data/writing_providers.dart';
 import 'package:nocturne/features/writing/domain/article.dart';
 
 /// One published article, as a visual card that opens Medium.
 ///
-/// The artwork is the same procedural constellation the work grid uses, seeded
-/// from the article's own URL — so every article has a distinct mark, drawn in
-/// the site's vocabulary, with no image asset to commission or ship.
+/// The artwork is the article's own cover, relayed through this origin so the
+/// browser never asks Medium for it. Where the feed carries no cover, or the
+/// image cannot be fetched, it falls back to the procedural constellation the
+/// work grid uses, seeded from the article's own URL — so every article has a
+/// distinct mark either way and the layout never shifts between the two.
 ///
 /// Unlike a work card, the whole surface is the link: an article has exactly
 /// one destination, so splitting the card into a decorative half and an
 /// actionable one would invent a distinction the content does not have.
-class ArticleCard extends StatefulWidget {
+class ArticleCard extends ConsumerStatefulWidget {
   /// Renders [article] and links out to it.
   const ArticleCard({required this.article, super.key});
 
@@ -35,10 +40,10 @@ class ArticleCard extends StatefulWidget {
   static const double artHeight = 180;
 
   @override
-  State<ArticleCard> createState() => _ArticleCardState();
+  ConsumerState<ArticleCard> createState() => _ArticleCardState();
 }
 
-class _ArticleCardState extends State<ArticleCard> {
+class _ArticleCardState extends ConsumerState<ArticleCard> {
   final WidgetStatesController _states = WidgetStatesController();
 
   @override
@@ -89,12 +94,7 @@ class _ArticleCardState extends State<ArticleCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    StationCard(
-                      seedId: _seed,
-                      name: widget.article.title,
-                      width: ArticleCard.width,
-                      height: ArticleCard.artHeight,
-                    ),
+                    _Art(article: widget.article, seed: _seed),
                     SizedBox(height: tokens.space8),
                     Text(
                       _meta(),
@@ -109,6 +109,11 @@ class _ArticleCardState extends State<ArticleCard> {
       ),
     );
   }
+
+  /// The cover where one resolves, the procedural mark where it does not.
+  ///
+  /// Both render at exactly [ArticleCard.artHeight], so which one appears is
+  /// invisible to the layout and a slow image never moves the row beneath it.
 
   /// Date and tags on one telemetry line.
   ///
@@ -126,5 +131,34 @@ class _ArticleCardState extends State<ArticleCard> {
     final tags = widget.article.tags.take(2).join(' · ');
 
     return [if (date != null) date, if (tags.isNotEmpty) tags].join('   ');
+  }
+}
+
+/// The card's artwork: the relayed cover, or the procedural mark.
+class _Art extends ConsumerWidget {
+  const _Art({required this.article, required this.seed});
+
+  final Article article;
+  final String seed;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mark = StationCard(
+      seedId: seed,
+      name: article.title,
+      width: ArticleCard.width,
+      height: ArticleCard.artHeight,
+    );
+
+    final proxied = ref.watch(coverProxyProvider)(article.cover);
+    if (proxied == null) return mark;
+
+    return ThreeStageImage(
+      image: NetworkImage(proxied.toString()),
+      width: ArticleCard.width,
+      height: ArticleCard.artHeight,
+      fallback: mark,
+      semanticLabel: article.title,
+    );
   }
 }

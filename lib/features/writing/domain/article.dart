@@ -12,4 +12,12 @@ typedef Article = ({
   Uri url,
   DateTime? published,
   List<String> tags,
+
+  /// The article's cover image on Medium's CDN, where the feed carries one.
+  ///
+  /// This is the upstream URL, not something the browser ever requests
+  /// directly — see `coverProxy` in `writing_providers.dart`. Keeping the
+  /// original here rather than a pre-built proxy URL means the relay's shape
+  /// is a presentation concern and the feed stays the feed.
+  Uri? cover,
 });

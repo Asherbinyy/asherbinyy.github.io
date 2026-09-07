@@ -5,6 +5,7 @@ import worker, {
   aggregateSnapshot,
   currentSalt,
   handleRequest,
+  relayCover,
   relayWriting,
   rotateSalt,
   sendLondonNoonDigest,
@@ -492,4 +493,101 @@ test('the digest payload carries counters and totals at the top level', async ()
   assert.ok(Array.isArray(posted[0].counters), 'counters must be an array');
   assert.ok(Array.isArray(posted[0].totals), 'totals must be an array');
   assert.ok(posted[0].generatedAt);
+});
+
+// --- /v1/cover -------------------------------------------------------------
+//
+// The covers come through this Worker for the same reason the feed does: so
+// that visiting /writing issues no request carrying the viewer's IP to Medium.
+// These tests are mostly about the endpoint NOT being an open proxy, since its
+// target arrives in a query string.
+
+const okImage = (type = 'image/jpeg', bytes = 1024) =>
+  new Response('x'.repeat(bytes), {
+    status: 200,
+    headers: {'content-type': type, 'content-length': String(bytes)},
+  });
+
+test('a cover on an allowed host is streamed through this origin', async () => {
+  const response = await relayCover(
+    'https://miro.medium.com/v2/resize:fit:1400/abc.jpeg',
+    new Headers(),
+    async () => okImage(),
+  );
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'image/jpeg');
+  assert.match(response.headers.get('cache-control'), /max-age=86400/);
+});
+
+test('a cover on any other host is refused', async () => {
+  for (const src of [
+    'https://evil.example/pixel.png',
+    'https://medium.com.evil.example/a.png',
+    'https://internal.local/secret.png',
+  ]) {
+    const response = await relayCover(src, new Headers(), async () => {
+      throw new Error('must not be fetched');
+    });
+    assert.equal(response.status, 403, src);
+  }
+});
+
+test('a non-https cover is refused', async () => {
+  const response = await relayCover(
+    'http://miro.medium.com/a.jpeg',
+    new Headers(),
+    async () => okImage(),
+  );
+  assert.equal(response.status, 403);
+});
+
+test('a missing or unparseable src is a bad request', async () => {
+  assert.equal((await relayCover(null, new Headers())).status, 400);
+  assert.equal((await relayCover('not a url', new Headers())).status, 400);
+});
+
+test('an allowed host serving something other than an image is refused', async () => {
+  const response = await relayCover(
+    'https://miro.medium.com/a.jpeg',
+    new Headers(),
+    async () => okImage('text/html'),
+  );
+  assert.equal(response.status, 415);
+});
+
+test('an oversized cover is refused before it is streamed', async () => {
+  const response = await relayCover(
+    'https://miro.medium.com/a.jpeg',
+    new Headers(),
+    async () =>
+      new Response('x', {
+        status: 200,
+        headers: {
+          'content-type': 'image/jpeg',
+          'content-length': String(9_000_000),
+        },
+      }),
+  );
+  assert.equal(response.status, 413);
+});
+
+test('an upstream failure is a gateway error, not an empty image', async () => {
+  const response = await relayCover(
+    'https://miro.medium.com/a.jpeg',
+    new Headers(),
+    async () => new Response('', {status: 500}),
+  );
+  assert.equal(response.status, 502);
+});
+
+test('a cover request from another origin is refused', async () => {
+  const response = await handleRequest(
+    new Request(
+      'https://relay.example/v1/cover?src=https%3A%2F%2Fmiro.medium.com%2Fa.jpeg',
+      {headers: {origin: 'https://not-the-site.example'}},
+    ),
+    {ANALYTICS: new MemoryKv(), SITE_ORIGIN: siteOrigin, CONSOLE_TOKEN: consoleToken},
+    new Date(),
+  );
+  assert.equal(response.status, 403);
 });

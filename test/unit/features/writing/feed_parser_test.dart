@@ -6,7 +6,8 @@ const String _contentNs = 'http://purl.org/rss/1.0/modules/content/';
 
 String feed(String items) =>
     '<?xml version="1.0" encoding="UTF-8"?> '
-    '<rss version="2.0" xmlns:content="$_contentNs"> '
+    '<rss version="2.0" xmlns:content="$_contentNs" '
+    'xmlns:media="http://search.yahoo.com/mrss/"> '
     '<channel><title>Ahmed Elsherbini</title>$items</channel> '
     '</rss>';
 
@@ -15,20 +16,61 @@ String item({
   String link = 'https://sherbini.medium.com/a-post-1234',
   String? pubDate = 'Sat, 05 Sep 2026 08:30:00 GMT',
   List<String> categories = const [],
+  String? encoded,
+  String? mediaUrl,
 }) {
   final date = pubDate == null ? '' : '<pubDate>$pubDate</pubDate>';
   final tags = categories.map((c) => '<category>$c</category>').join();
   // Whitespace between elements is insignificant in XML, which is what lets
   // these read as separate lines without the parser seeing a difference.
+  final body = encoded == null
+      ? ''
+      : '<content:encoded><![CDATA[$encoded]]></content:encoded>';
+  final media = mediaUrl == null ? '' : '<media:content url="$mediaUrl"/>';
   return '<item> '
       '<title>$title</title> '
       '<link>$link</link> '
-      '$date $tags '
+      '$date $tags $body $media '
       '</item>';
 }
 
 void main() {
   group('parsing a Medium feed', () {
+    const cdn = 'https://miro.medium.com/v2/resize:fit:1400/abc.jpeg';
+
+    test('takes the cover from the media element when present', () {
+      final articles = parseFeed(feed(item(mediaUrl: cdn)));
+      expect(articles.single.cover, Uri.parse(cdn));
+    });
+
+    test('falls back to the first image in the encoded body', () {
+      const second = 'https://miro.medium.com/second.png';
+      const figure = '<figure><img alt="cover" src="$cdn" /></figure>';
+      const rest = '<p>Body text</p><img src="$second">';
+      final articles = parseFeed(feed(item(encoded: '$figure$rest')));
+      expect(articles.single.cover, Uri.parse(cdn));
+    });
+
+    test('an item with no image has no cover', () {
+      final articles = parseFeed(feed(item(encoded: '<p>Just words.</p>')));
+      expect(articles.single.cover, isNull);
+    });
+
+    test('a non-https or relative image source is refused', () {
+      // The relay allowlists the host, but the parser must not hand it a
+      // javascript: or data: URL to begin with -- defence at both ends,
+      // because the feed is third-party input.
+      for (final src in [
+        'javascript:alert(1)',
+        '/relative/cover.png',
+        'http://miro.medium.com/insecure.png',
+        'data:image/png;base64,AAAA',
+      ]) {
+        final articles = parseFeed(feed(item(encoded: '<img src="$src">')));
+        expect(articles.single.cover, isNull, reason: src);
+      }
+    });
+
     test('reads title, link, date and tags from an item', () {
       final articles = parseFeed(
         feed(item(categories: const ['flutter', 'testing'])),
@@ -78,20 +120,27 @@ void main() {
       expect(articles, isEmpty);
     });
 
-    test('ignores the encoded body entirely', () {
+    test('takes nothing but an image source from the encoded body', () {
+      const script = '<script>bad()</script>';
+      const prose = '<p>Prose that must not appear.</p>';
+      const hostile = '<![CDATA[$script$prose]]>';
       final articles = parseFeed(
         feed(
           '<item><title>A post</title> '
           '<link>https://sherbini.medium.com/a</link> '
-          '<content:encoded>'
-          '<![CDATA[<script>bad()</script>]]>'
-          '</content:encoded> '
+          '<content:encoded>$hostile</content:encoded> '
           '</item>',
         ),
       );
 
-      // The record has no field that could carry it, which is the point.
+      // This asserted the body was ignored entirely, which stopped being true
+      // in milestone 4: the cover is found by scanning it. The guarantee that
+      // matters is unchanged and is what is asserted now -- the body is never
+      // parsed as markup or rendered, and no field on the record can carry it.
+      // Only an `img src` is lifted out, and only after passing _url.
       expect(articles.single.title, 'A post');
+      expect(articles.single.cover, isNull);
+      expect(articles.single.tags, isEmpty);
     });
 
     test('returns nothing for a feed with no items', () {

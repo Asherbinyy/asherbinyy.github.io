@@ -46,6 +46,7 @@ rows that predate the change and have not yet been folded in.
 | 0b.9 | **The transmission panel reads as a plain card**, particularly in the light theme. | The map's content surface looks unfinished | 4.3 |
 | 0b.10 | **`/writing` draws procedural art while real cover images exist** for all six articles. | The best-looking content on the site is hidden | 4.5 |
 | 0b.11 | **Easy Go, an open-source Flutter package**, is absent from the site. It is the only open-source artifact in the record. | A Flutter engineer's portfolio shows no packages | 4.2 |
+| 0b.12 | **`/v1/cover` is written and tested but not deployed.** The client asks the relay for covers; until the Worker ships, that request 404s and every card falls back to its procedural mark — the pre-milestone-4 appearance, with no error. Deploy with `npx wrangler deploy` from `worker/`. | `/writing` shows procedural art rather than real covers | Owner deploying the Worker |
 
 ---
 
@@ -69,6 +70,13 @@ build that *is* collecting, so it cannot rot. Restoring collection is one
 
 The deployed Worker is untouched and still serves `/v1/writing`, which is
 content rather than analytics and carries nothing about the viewer.
+
+**Milestone 4 added `/v1/cover` to the same Worker**, for the same reason and
+with the same posture: article cover images are relayed through this origin so
+that opening `/writing` issues no request to Medium carrying the viewer's IP or
+referrer. It allowlists Medium's two CDN hosts, refuses anything that is not an
+image, caps the response at 2MB and passes through no upstream header but the
+content type. **It is not yet deployed** — see 0b.12.
 
 ---
 

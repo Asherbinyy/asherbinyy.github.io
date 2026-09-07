@@ -16,6 +16,27 @@ final writingEndpointProvider = Provider<Uri?>((ref) {
   return analytics?.replace(path: '/v1/writing');
 });
 
+/// Turns a Medium cover URL into one this origin serves.
+///
+/// The browser never requests Medium directly. Visiting `/writing` would
+/// otherwise issue one third-party request per article, each carrying the
+/// viewer's IP and referrer to Medium's CDN — which is precisely the data flow
+/// this site's argument says it does not have, and `AGENTS.md` §6 puts that
+/// constraint above any feature.
+///
+/// Returns null when there is no relay, so a build with no endpoint falls back
+/// to the procedural card rather than reaching the network anyway.
+final coverProxyProvider = Provider<Uri? Function(Uri?)>((ref) {
+  final analytics = ref.watch(analyticsEndpointProvider);
+  return (Uri? cover) {
+    if (analytics == null || cover == null) return null;
+    return analytics.replace(
+      path: '/v1/cover',
+      queryParameters: {'src': cover.toString()},
+    );
+  };
+});
+
 /// Owns the repository only when an endpoint was supplied at build time.
 final writingRepositoryProvider = Provider<WritingRepository?>((ref) {
   final endpoint = ref.watch(writingEndpointProvider);

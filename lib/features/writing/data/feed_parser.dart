@@ -13,6 +13,11 @@ import 'package:nocturne/features/writing/domain/article.dart';
 /// shown with a placeholder: a writing list that links nowhere is worse than a
 /// shorter list. A body that is not XML at all throws, so the caller can tell
 /// "the feed is broken" from "the feed is empty".
+///
+/// The encoded body is scanned for one thing only — the first image source, so
+/// an article can show its own cover. That is not a retreat from the rule
+/// above: an attribute is extracted and validated as a URL, and no markup from
+/// the feed is ever parsed into nodes or rendered.
 List<Article> parseFeed(String body) {
   final document = XmlDocument.parse(body);
   final items = document.findAllElements('item');
@@ -27,6 +32,7 @@ List<Article> parseFeed(String body) {
       title: title,
       url: url,
       published: _date(_text(item, 'pubDate')),
+      cover: _cover(item),
       tags: item
           .findElements('category')
           .map((element) => element.innerText.trim())
@@ -36,6 +42,35 @@ List<Article> parseFeed(String body) {
   }
   return articles;
 }
+
+/// The first image source in the item, from the media element or the body.
+///
+/// Medium puts the cover in `content:encoded` as the first `<img>`, and some
+/// feeds also carry `media:content`. The media element is preferred because it
+/// is a declared field rather than a shape found inside markup.
+///
+/// Only the `src` attribute is read. The body is never parsed as HTML and
+/// never rendered — `_url` then rejects anything that is not an absolute HTTPS
+/// URL, and the relay rejects any host that is not Medium's CDN, so a hostile
+/// feed cannot make the browser fetch an arbitrary address.
+Uri? _cover(XmlElement item) {
+  for (final name in ['media:content', 'media:thumbnail']) {
+    final media = item.findElements(name).firstOrNull;
+    final declared = _url(media?.getAttribute('url'));
+    if (declared != null) return declared;
+  }
+
+  final encoded = item.findElements('content:encoded').firstOrNull?.innerText;
+  if (encoded == null) return null;
+  final match = _firstImage.firstMatch(encoded);
+  return _url(match?.group(1));
+}
+
+/// The `src` of the first `<img>` in a body of markup.
+final RegExp _firstImage = RegExp(
+  '<img[^>]+src=["\']([^"\']+)["\']',
+  caseSensitive: false,
+);
 
 String? _text(XmlElement item, String name) {
   final value = item.findElements(name).firstOrNull?.innerText.trim();
