@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
-import 'package:nocturne/core/painting/carrier_painter.dart';
+import 'package:nocturne/core/painting/scarab_painter.dart';
 
 /// The indeterminate loader, and the carrier-at-rest used by empty states.
 ///
@@ -75,11 +75,10 @@ class _CarrierLoaderState extends State<CarrierLoader>
             animation: _controller,
             builder: (context, _) => CustomPaint(
               size: Size(tokens.loaderWidth, tokens.loaderHeight),
-              painter: CarrierPainter(
+              painter: ScarabPainter(
+                // The disc travels with the phase, so the loader reads as
+                // something crossing rather than a looping squiggle.
                 phase: _controller.value,
-                // The burst travels with the phase, so the loader reads as a
-                // signal passing through rather than a looping squiggle.
-                burstCentre: _controller.value,
                 colour: tokens.instrumentDim,
                 strokeWidth: tokens.hairlineWidth,
                 textDirection: direction,
