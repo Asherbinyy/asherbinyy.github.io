@@ -380,7 +380,7 @@ and the guard against this becoming a gift-shop website.
 
 The palette already shipped in 4.10, so this milestone is entirely about form.
 
-### 5.1 Motif primitives
+### 5.1 Motif primitives — **partly built**
 The painters behind inventory items 1–15: cartouche, register, ankh, obelisk,
 scarab, seal, feather, djed, mastaba, wedjat, sarcophagus, register tick. Plus
 the seven glyph paths for §2's cartouche. Built before any screen consumes
@@ -388,12 +388,12 @@ them, so no screen invents its own — the same discipline as task 1.4b.
 **Done when:** every primitive has a golden in both themes and both directions,
 each is unit-tested for determinism where seeded, and none allocates per frame.
 
-### 5.2 The glyph fields
+### 5.2 The glyph fields — **built**
 `tool/generate_fields.dart` emits one 256×256 tile per route into
 `assets/motifs/`. **Done when:** fields cost 0ms per frame after first paint,
 measured in a real profile; tiles seam invisibly; Recruiter Mode has none.
 
-### 5.3 The wall
+### 5.3 The wall — **built**
 The signature element.
 
 **Two inputs from the owner's phone review, `11-OPEN-ISSUES.md` 0c.6 and 0c.7.**
@@ -419,7 +419,7 @@ falloff maths unit-tested.
 of arcs. Projection and coastline data unchanged. **Done when:** frame cost
 under 6ms; keyboard traversal and the 4.3 navigation control still work.
 
-### 5.5 Chrome
+### 5.5 Chrome — **partly built**: ankh and cartouche done, glyph-column rail not
 Cartouche name treatment, glyph-column rail, ankh mark and favicon set.
 **Done when:** the ankh is legible at 16px; the favicon works in light and dark
 browser chrome; the Latin name is present at every breakpoint; the accessible
@@ -431,7 +431,7 @@ owner asked for the grid to be fun.
 **Done when:** hover has a keyboard-focus equivalent, a touch equivalent and a
 reduced-motion path; cards stay deterministic per id.
 
-### 5.7 The cursor trail
+### 5.7 The cursor trail — **built**
 Per `12-MOTIF-LIBRARY.md` §5. The system cursor is never replaced.
 **Done when:** under 1ms per frame, capped at 24 particles, pointer-only, off
 under reduced motion and in Recruiter Mode, stops on blur.

@@ -27,8 +27,18 @@ carved outline. No bevels, no emboss, no drop shadows, no metallic gradients,
 no "shiny gold". Gold is a flat fill at `--gold`. If it looks like a trophy, it
 is wrong.
 
-**3. Never fake meaning.** Do not invent hieroglyphs, do not generate glyph
-strings as texture, and do not spell English words in glyph-shaped ornaments.
+**3. Never fake meaning.** Do not invent hieroglyphs, and do not spell English
+words in glyph-shaped ornaments.
+
+The precise rule, because two surfaces now draw runs of signs and the earlier
+wording would have banned the concept outright: **signs may be arranged
+decoratively, and nothing may present them as readable.** The site never offers
+a translation, never captions a run as saying something, and never places one
+where a reader would take it for the page's actual text. The wall's registers
+are inscription the way a carved wall is inscription; the career they stand
+beside is rendered as real text a few pixels away. The one place anything is
+spelled is the cartouche in §2, and that spells a name a scribe would have
+spelled the same way.
 Every glyph that appears on the site is a real sign from Gardiner's list, used
 either as documented ornament or in the one place the site spells something —
 the cartouche in §2. Fabricated writing on a site whose whole argument is

@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
-import 'package:nocturne/core/painting/trace_painter.dart';
+import 'package:nocturne/core/painting/wall_painter.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
 import 'package:nocturne/features/trace/domain/trace_controller.dart';
 import 'package:nocturne/features/trace/domain/trace_state.dart';
@@ -204,10 +204,10 @@ void main() {
 
 void expectCareerAnchors(WidgetTester tester, TraceAnchorRegistry registry) {
   final paintFinder = find.byWidgetPredicate(
-    (widget) => widget is CustomPaint && widget.painter is TracePainter,
+    (widget) => widget is CustomPaint && widget.painter is WallPainter,
   );
   final painter = tester.widget<CustomPaint>(paintFinder).painter;
-  if (painter is! TracePainter) fail('Expected the telemetry painter');
+  if (painter is! WallPainter) fail('Expected the wall painter');
   final trace = tester.widget<TelemetryTrace>(find.byType(TelemetryTrace));
   expect(painter.scrollOffset, trace.controller.offset);
   final traceTop = tester.getTopLeft(paintFinder).dy;
@@ -220,13 +220,13 @@ void expectCareerAnchors(WidgetTester tester, TraceAnchorRegistry registry) {
       Offset(0, anchorBox.size.height / 2),
     );
     final paintedCentre =
-        burst.anchor * painter.traceHeight - painter.scrollOffset;
+        burst.anchor * painter.wallHeight - painter.scrollOffset;
     expect(paintedCentre, closeTo(centre.dy - traceTop, 0.01));
   }
 }
 
-/// The trace's own painted surface, rather than the full-viewport widget that
+/// The wall's own painted surface, rather than the full-viewport widget that
 /// hosts it. `TelemetryTrace` fills the frame; the strip is the box inside it.
 final Finder _tracePaint = find.byWidgetPredicate(
-  (widget) => widget is CustomPaint && widget.painter is TracePainter,
+  (widget) => widget is CustomPaint && widget.painter is WallPainter,
 );

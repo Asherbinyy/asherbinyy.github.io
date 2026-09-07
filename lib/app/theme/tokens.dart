@@ -380,6 +380,25 @@ abstract final class Tokens {
   /// The mark: 2px stroke at its native 32px square, 24px in the header.
   static const double markNativeSize = 32, markStroke = 2, markHeaderSize = 24;
 
+  /// The torch's reach over the wall, as a fraction of the visible frame's
+  /// longest side.
+  ///
+  /// It tightens as the reading settles and spreads as it is lost, so a fast
+  /// scroll washes the wall in weak light rather than lighting a small part of
+  /// it brightly — which is the difference between "unreadable" and "hidden".
+  static const double wallTorchSpread = 1.15, wallTorchFocus = 0.62;
+
+  /// How much the torch breathes at rest, as a fraction of its radius.
+  static const double wallTorchBreath = 0.04;
+
+  /// How much of a plain register's run carries signs.
+  ///
+  /// Short of full, so a career line reads as denser than the wall around it.
+  static const double wallRestFill = 0.55;
+
+  /// Distance between signs on an inscribed line.
+  static const double wallSignPitch = 26;
+
   /// The cursor wake: how long a mote lives, how many may live at once, and
   /// how large one starts.
   ///
