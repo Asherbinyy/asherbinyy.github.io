@@ -58,7 +58,7 @@ class _LedgerRowState extends State<LedgerRow> {
     final type = context.type;
     final l10n = context.l10n;
     final isTouch = context.platform.isTouch;
-    final role = widget.app.role;
+    final role = widget.app.role?.resolve(context.channel);
     final metric = widget.app.metric;
 
     return ListenableBuilder(

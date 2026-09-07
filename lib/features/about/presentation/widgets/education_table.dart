@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/education.dart';
@@ -68,17 +69,21 @@ class _Entry extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            entry.award,
+            entry.award.resolve(context.channel),
             style: type.body.copyWith(color: tokens.textPrimary),
           ),
           SizedBox(height: tokens.space4),
           Text(
-            '${entry.institution}   ${entry.start} — ${entry.end}',
+            '${entry.institution.resolve(context.channel)}   '
+            '${entry.start} — ${entry.end}',
             style: type.telemetryS.copyWith(color: tokens.textMuted),
           ),
           if (entry.status case final status?) ...[
             SizedBox(height: tokens.space8),
-            Text(status, style: type.telemetryS.copyWith(color: tokens.beacon)),
+            Text(
+              status.resolve(context.channel),
+              style: type.telemetryS.copyWith(color: tokens.beacon),
+            ),
           ],
           if (modules.isNotEmpty) ...[
             SizedBox(height: tokens.space16),
@@ -90,7 +95,7 @@ class _Entry extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.only(bottom: tokens.space8),
                 child: Text(
-                  highlight,
+                  highlight.resolve(context.channel),
                   style: type.body.copyWith(color: tokens.textSecondary),
                 ),
               ),
@@ -120,7 +125,7 @@ class _Module extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              module.name,
+              module.name.resolve(context.channel),
               style: type.bodyS.copyWith(color: tokens.textSecondary),
             ),
           ),

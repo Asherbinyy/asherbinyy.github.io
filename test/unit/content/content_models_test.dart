@@ -39,8 +39,17 @@ void main() {
       expect(Apps.fromJson(a.toJson()), a);
       expect(Education.fromJson(e.toJson()), e);
       expect(p.name.resolve(AppLocale.arabic), _object(profile['name'])['ar']);
-      expect(p.positioning.resolve(AppLocale.arabic), p.positioning.en);
+      // The contract, not one field's current state: Arabic where the content
+      // supplies it, English where it does not. This asserted that positioning
+      // fell back to English, which stopped being a statement about the
+      // fallback the moment milestone 4 wrote an Arabic positioning line.
       expect(p.positioning.resolve(AppLocale.english), p.positioning.en);
+      expect(
+        p.positioning.resolve(AppLocale.arabic),
+        p.positioning.ar ?? p.positioning.en,
+      );
+      const untranslated = LocalizedText(en: 'only English');
+      expect(untranslated.resolve(AppLocale.arabic), 'only English');
       expect(() => c.roles.clear(), throwsUnsupportedError);
     },
   );

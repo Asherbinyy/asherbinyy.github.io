@@ -14,7 +14,7 @@
       "company": "Mansoura University",
       "title": {
         "en": "BEng Communications & Electronics Engineering",
-        "ar": null
+        "ar": "بكالوريوس هندسة الاتصالات والإلكترونيات"
       }
     },
     {
@@ -22,7 +22,7 @@
       "company": "CI Company",
       "title": {
         "en": "Flutter Developer & Team Leader",
-        "ar": null
+        "ar": "مطوّر Flutter وقائد فريق"
       },
       "country": "EG",
       "city": "Mansoura",
@@ -35,7 +35,7 @@
       "employment": "full-time",
       "summary": {
         "en": "Led development of 16+ Flutter applications. Mentored a team of three.",
-        "ar": null
+        "ar": "قاد تطوير أكثر من 16 تطبيقًا بـ Flutter، وأشرف على فريق من ثلاثة مطوّرين."
       },
       "stack": [
         "Flutter",
@@ -66,11 +66,11 @@
       "employment": "full-time then part-time",
       "title": {
         "en": "Mobile Application Developer",
-        "ar": null
+        "ar": "مطوّر تطبيقات موبايل"
       },
       "summary": {
         "en": "Led end-to-end design and delivery of mobile and web applications, owning architecture, Flutter development, API integration and user experience. Full time to January 2024, part time from April 2025.",
-        "ar": null
+        "ar": "قاد تصميم وتسليم تطبيقات الموبايل والويب من البداية إلى النهاية، وتولّى البنية البرمجية وتطوير Flutter وتكامل واجهات البرمجة وتجربة المستخدم. بدوام كامل حتى يناير 2024، وبدوام جزئي من أبريل 2025."
       },
       "kind": "role"
     },
@@ -87,11 +87,11 @@
       "company": "Hwzn Tech",
       "title": {
         "en": "Mobile Application Developer",
-        "ar": null
+        "ar": "مطوّر تطبيقات موبايل"
       },
       "summary": {
         "en": "Led Flutter development and implemented CI/CD workflows, reducing development time by 50% and delivery time by a further 20%.",
-        "ar": null
+        "ar": "قاد تطوير Flutter ونفّذ مسارات التكامل والنشر المستمر، فخفّض زمن التطوير بنسبة 50% وزمن التسليم بنسبة 20% إضافية."
       },
       "kind": "role"
     },
@@ -108,11 +108,11 @@
       "company": "Ar++ tech",
       "title": {
         "en": "Mobile Application Developer",
-        "ar": null
+        "ar": "مطوّر تطبيقات موبايل"
       },
       "summary": {
         "en": "Migrated a legacy Android application to Flutter, improving performance by 20%. Added unit, integration and widget testing, reducing bug rates by 30%.",
-        "ar": null
+        "ar": "نقل تطبيق أندرويد قديمًا إلى Flutter، فحسّن الأداء بنسبة 20%. وأضاف اختبارات الوحدة والتكامل والواجهات، فخفّض معدّل الأخطاء بنسبة 30%."
       },
       "kind": "role"
     },
@@ -129,11 +129,11 @@
       "company": "Techlabs Solutions",
       "title": {
         "en": "Mobile Application Developer",
-        "ar": null
+        "ar": "مطوّر تطبيقات موبايل"
       },
       "summary": {
         "en": "Built Mokaf, a Flutter smart-parking application with real-time maps, QR scanning and Google Maps navigation, integrating TAP, Apple Pay and STC Pay. MVP delivered in under eight weeks.",
-        "ar": null
+        "ar": "طوّر Mokaf لمواقف السيارات الذكية بـ Flutter، بخرائط لحظية ومسح رمز QR وملاحة عبر خرائط جوجل، مع دمج TAP وApple Pay وSTC Pay. سُلّم النموذج الأولي في أقل من ثمانية أسابيع."
       },
       "kind": "role"
     },
@@ -151,11 +151,11 @@
       "company": "University of Salford",
       "title": {
         "en": "MSc Managing Innovation & Information Technology",
-        "ar": null
+        "ar": "ماجستير إدارة الابتكار وتقنية المعلومات"
       },
       "summary": {
         "en": "Graduated with Distinction.",
-        "ar": null
+        "ar": "تخرّج بتقدير امتياز."
       }
     }
   ]

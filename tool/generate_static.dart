@@ -229,7 +229,7 @@ String _jsonLd(Map<String, dynamic> profile, Map<String, dynamic> education) {
   final entries = education['entries'] as List<dynamic>? ?? [];
   final alumniOf = <Map<String, dynamic>>[
     for (final entry in entries.cast<Map<String, dynamic>>())
-      {'@type': 'CollegeOrUniversity', 'name': entry['institution']},
+      {'@type': 'CollegeOrUniversity', 'name': _en(entry['institution'])},
   ];
 
   final knowsAbout = <String>[
@@ -483,7 +483,7 @@ void _writeCvRole(StringBuffer buf, Map<String, dynamic> role) {
 void _writeCvApp(StringBuffer buf, Map<String, dynamic> app) {
   final name = _esc(app['name'] as String? ?? '');
   final domain = _esc(app['domain'] as String? ?? '');
-  final roleDesc = _esc(app['role'] as String? ?? '');
+  final roleDesc = _esc(_en(app['role']));
   final metric = app['metric'] as String?;
   final store = app['store'] as Map<String, dynamic>? ?? {};
 
@@ -520,16 +520,18 @@ void _writeCvApp(StringBuffer buf, Map<String, dynamic> app) {
 
 /// Writes an education entry for the CV page.
 void _writeCvEducation(StringBuffer buf, Map<String, dynamic> entry) {
-  final institution = _esc(entry['institution'] as String? ?? '');
-  final award = _esc(entry['award'] as String? ?? '');
+  final institution = _esc(_en(entry['institution']));
+  final award = _esc(_en(entry['award']));
   final start = _formatDate(entry['start'] as String?);
   final end = _formatDate(entry['end'] as String?);
-  final status = entry['status'] as String?;
+  final status = entry['status'] == null ? null : _en(entry['status']);
   final overallMark = entry['overallMark'];
   final modules =
       (entry['modules'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
-  final highlights =
-      (entry['highlights'] as List<dynamic>?)?.cast<String>() ?? [];
+  final highlights = (entry['highlights'] as List<dynamic>? ?? [])
+      .map(_en)
+      .where((h) => h.isNotEmpty)
+      .toList();
 
   buf
     ..writeln('<article class="role-item">')
@@ -552,7 +554,7 @@ void _writeCvEducation(StringBuffer buf, Map<String, dynamic> entry) {
   if (modules.isNotEmpty) {
     buf.writeln('<div class="module-list">');
     for (final mod in modules) {
-      final modName = _esc(mod['name'] as String? ?? '');
+      final modName = _esc(_en(mod['name']));
       final mark = mod['mark'];
       buf.writeln(
         '<div class="module-item"><span>$modName</span><span class="module-mark">${mark ?? ''}%</span></div>',
@@ -729,9 +731,9 @@ String _generateBrief(
       ..writeln('<section>')
       ..writeln('<h2>Education</h2>');
     for (final entry in entries) {
-      final institution = _esc(entry['institution'] as String? ?? '');
-      final award = _esc(entry['award'] as String? ?? '');
-      final entryStatus = entry['status'] as String?;
+      final institution = _esc(_en(entry['institution']));
+      final award = _esc(_en(entry['award']));
+      final entryStatus = entry['status'] == null ? null : _en(entry['status']);
       final overallMark = entry['overallMark'];
       buf
         ..writeln('<article class="role-item">')

@@ -3,6 +3,8 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'package:nocturne/content/models/localized_text.dart';
+
 part 'apps.freezed.dart';
 part 'apps.g.dart';
 
@@ -86,7 +88,7 @@ class ShippedApp with _$ShippedApp {
     required List<AppPlatform> platforms,
     required Map<AppPlatform, Uri> store,
     required WorkDomain domain,
-    String? role,
+    LocalizedText? role,
     String? metric,
     String? country,
     Engagement? engagement,

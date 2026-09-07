@@ -63,7 +63,7 @@ class WorkCard extends StatelessWidget {
     final tokens = context.tokens;
     final type = context.type;
     final metric = app.metric;
-    final role = app.role;
+    final role = app.role?.resolve(context.channel);
 
     return SizedBox(
       width: width,

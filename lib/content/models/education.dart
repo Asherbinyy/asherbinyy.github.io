@@ -3,6 +3,8 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'package:nocturne/content/models/localized_text.dart';
+
 part 'education.freezed.dart';
 part 'education.g.dart';
 
@@ -22,14 +24,14 @@ class Education with _$Education {
 class EducationEntry with _$EducationEntry {
   /// Creates an immutable EducationEntry record.
   const factory EducationEntry({
-    required String institution,
-    required String award,
+    required LocalizedText institution,
+    required LocalizedText award,
     required String start,
     required String end,
-    String? status,
+    LocalizedText? status,
     double? overallMark,
     @Default(<EducationModule>[]) List<EducationModule> modules,
-    @Default(<String>[]) List<String> highlights,
+    @Default(<LocalizedText>[]) List<LocalizedText> highlights,
   }) = _EducationEntry;
 
   /// Decodes the documented JSON shape.
@@ -41,8 +43,10 @@ class EducationEntry with _$EducationEntry {
 @freezed
 class EducationModule with _$EducationModule {
   /// Creates an immutable EducationModule record.
-  const factory EducationModule({required String name, required double mark}) =
-      _EducationModule;
+  const factory EducationModule({
+    required LocalizedText name,
+    required double mark,
+  }) = _EducationModule;
 
   /// Decodes the documented JSON shape.
   factory EducationModule.fromJson(Map<String, dynamic> json) =>

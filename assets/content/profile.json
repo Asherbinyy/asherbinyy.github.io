@@ -9,20 +9,20 @@
   },
   "positioning": {
     "en": "Mobile engineer. 25+ applications shipped across six countries.",
-    "ar": null
+    "ar": "مهندس تطبيقات موبايل. أكثر من 25 تطبيقًا أُطلقت في ست دول."
   },
   "location": {
     "en": "Manchester, United Kingdom",
-    "ar": null
+    "ar": "مانشستر، المملكة المتحدة"
   },
   "status": {
     "en": "MSc Managing Innovation & IT, University of Salford — Distinction",
-    "ar": null
+    "ar": "ماجستير إدارة الابتكار وتقنية المعلومات، جامعة سالفورد — بامتياز"
   },
   "venture": {
     "label": {
       "en": "Co-founder, City Loom (early stage)",
-      "ar": null
+      "ar": "شريك مؤسس في City Loom (مرحلة مبكرة)"
     },
     "url": null
   },
@@ -46,21 +46,21 @@
       "value": "25+",
       "label": {
         "en": "shipped",
-        "ar": null
+        "ar": "تطبيق مُطلق"
       }
     },
     {
       "value": "6",
       "label": {
         "en": "countries",
-        "ar": null
+        "ar": "دول"
       }
     },
     {
       "value": "4+",
       "label": {
         "en": "years commercial",
-        "ar": null
+        "ar": "سنوات احترافية"
       }
     }
   ]

@@ -9,7 +9,10 @@
       "store": {
         "ios": "https://apps.apple.com/ru/app/id1479200934"
       },
-      "role": "Legacy Android to Flutter migration",
+      "role": {
+        "en": "Legacy Android to Flutter migration",
+        "ar": "نقل تطبيق أندرويد قديم إلى Flutter"
+      },
       "domain": "Travel",
       "featured": true
     },
@@ -21,7 +24,10 @@
         "android"
       ],
       "store": {},
-      "role": "Smart parking — real-time maps, QR, TAP / Apple Pay / STC Pay",
+      "role": {
+        "en": "Smart parking — real-time maps, QR, TAP / Apple Pay / STC Pay",
+        "ar": "مواقف ذكية — خرائط لحظية ورمز QR ومدفوعات TAP وApple Pay وSTC Pay"
+      },
       "domain": "Mobility",
       "featured": true,
       "country": "QA"
@@ -37,7 +43,10 @@
         "ios": "https://apps.apple.com/us/app/azcourses/id1592327429",
         "android": "https://play.google.com/store/apps/details?id=com.crazyidea.coursesexams"
       },
-      "role": "Redesign and rebuild — video, PDF, audio delivery",
+      "role": {
+        "en": "Redesign and rebuild — video, PDF, audio delivery",
+        "ar": "إعادة تصميم وبناء — بثّ الفيديو وملفات PDF والتسجيلات الصوتية"
+      },
       "metric": "15,000+ downloads",
       "domain": "Education",
       "featured": true
@@ -51,7 +60,10 @@
       "store": {
         "ios": "https://apps.apple.com/us/app/enjoy4/id6447956809"
       },
-      "role": "E-scooter rental — BLE QR unlock, in-app navigation",
+      "role": {
+        "en": "E-scooter rental — BLE QR unlock, in-app navigation",
+        "ar": "تأجير السكوتر الكهربائي — فتح عبر BLE ورمز QR، وملاحة داخل التطبيق"
+      },
       "domain": "Mobility",
       "featured": true
     },
@@ -77,7 +89,10 @@
       "store": {
         "ios": "https://apps.apple.com/de/app/guardy/id6504706012"
       },
-      "role": "Showcase and shop features, cloud functions, structural and UI improvements, and bug fixes",
+      "role": {
+        "en": "Showcase and shop features, cloud functions, structural and UI improvements, and bug fixes",
+        "ar": "إضافة واجهتَي العرض والمتجر، ودوالّ سحابية، وتحسينات بنيوية وواجهات، وإصلاح أخطاء"
+      },
       "domain": "Safety",
       "country": "DE",
       "engagement": "freelance",
@@ -94,7 +109,10 @@
       },
       "domain": "Services",
       "featured": true,
-      "role": "Freelance build with one other developer",
+      "role": {
+        "en": "Freelance build with one other developer",
+        "ar": "عمل حرّ بالتعاون مع مطوّر آخر"
+      },
       "engagement": "freelance",
       "country": "SA"
     },
