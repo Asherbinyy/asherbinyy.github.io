@@ -354,7 +354,17 @@ abstract final class Tokens {
   static const double traceBurstWidth = 0.045;
 
   /// Fraction of the content column the trace occupies, from the trailing edge.
-  static const double traceColumnFraction = 0.66;
+  ///
+  /// Two values, because one was wrong on a phone. At 66% of a desktop the
+  /// trace runs down the space beside a measure-limited text column and never
+  /// touches it. At 66% of a 360px phone, where the text fills the full width,
+  /// it runs straight across the copy — which is what the owner reported, along
+  /// with the burst labels colliding with the same text.
+  ///
+  /// On compact the trace keeps to a narrow strip at the trailing edge. It is
+  /// still legible as a waveform and it no longer competes with the words.
+  static const double traceColumnFraction = 0.66,
+      traceColumnFractionCompact = 0.28;
 
   /// Jitter added to the carrier when coherence is entirely lost.
   static const double traceNoiseAmplitude = 0.55;

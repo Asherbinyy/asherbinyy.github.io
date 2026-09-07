@@ -11,6 +11,7 @@ import 'package:nocturne/features/trace/domain/trace_state.dart';
 import 'package:nocturne/features/trace/presentation/station_trace.dart';
 import 'package:nocturne/features/trace/presentation/telemetry_trace.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
+import 'package:nocturne/features/trace/presentation/trace_burst_label.dart';
 
 import '../../support/chrome_harness.dart';
 import '../../support/content_readers.dart';
@@ -30,6 +31,60 @@ void main() {
     await pumpFrames(tester);
 
     expect(find.byType(StationTrace), findsNothing);
+  });
+
+  testWidgets('the trace keeps to a narrow strip on a phone', (tester) async {
+    await pumpStation(
+      tester,
+      breakpoint: ChromeBreakpoint.compact,
+      capabilities: touchBrowser,
+    );
+
+    // The owner reported the waveform and its titles running across the copy
+    // on a phone. One fraction was used at every breakpoint: 66% leaves a
+    // measure-limited desktop text column alone, and covers a 360px phone
+    // whose text fills the width.
+    //
+    // Zero overlap is not achievable at this width -- the text spans the
+    // whole viewport -- so what is asserted is that the trace is confined to
+    // a trailing strip rather than crossing the column. Geometry, not the
+    // token value, so milestone 5 can replace the painter without quietly
+    // inheriting the overlap.
+    final frame = tester.getRect(find.byType(ChromeScaffold));
+    final painted = tester.getRect(_tracePaint);
+
+    expect(painted.width, lessThan(frame.width / 2));
+    expect(
+      painted.left,
+      greaterThan(frame.width / 2),
+      reason: 'the strip should sit in the trailing half',
+    );
+  });
+
+  testWidgets('the trace drops its titles on a phone', (tester) async {
+    await pumpStation(
+      tester,
+      breakpoint: ChromeBreakpoint.compact,
+      capabilities: touchBrowser,
+    );
+
+    // The labels are drawn inside the trace column, so on a narrow strip they
+    // wrap over the copy. Each one repeats the company, dates and country the
+    // career entry beside it already prints, so dropping them costs nothing.
+    expect(find.byType(TraceBurstLabel), findsNothing);
+  });
+
+  testWidgets('the trace keeps its wide column and titles on a desktop', (
+    tester,
+  ) async {
+    await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
+
+    final frame = tester.getRect(find.byType(ChromeScaffold));
+    final painted = tester.getRect(_tracePaint);
+
+    // The strip is a phone accommodation, not the design.
+    expect(painted.width, greaterThan(frame.width / 2));
+    expect(find.byType(TraceBurstLabel), findsWidgets);
   });
 
   testWidgets('one burst per career role', (tester) async {
@@ -169,3 +224,9 @@ void expectCareerAnchors(WidgetTester tester, TraceAnchorRegistry registry) {
     expect(paintedCentre, closeTo(centre.dy - traceTop, 0.01));
   }
 }
+
+/// The trace's own painted surface, rather than the full-viewport widget that
+/// hosts it. `TelemetryTrace` fills the frame; the strip is the box inside it.
+final Finder _tracePaint = find.byWidgetPredicate(
+  (widget) => widget is CustomPaint && widget.painter is TracePainter,
+);

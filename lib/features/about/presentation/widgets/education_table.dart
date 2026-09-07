@@ -9,6 +9,7 @@ import 'package:nocturne/content/models/education.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
+import 'package:nocturne/core/widgets/instrument_panel.dart';
 
 /// Education as a compact table: institution, award, dates, status.
 ///
@@ -37,6 +38,9 @@ class EducationTable extends StatelessWidget {
   /// is the right split: an ATS reads everything, a skimming human reads the
   /// best four.
   static const double publishableMark = 80;
+
+  /// Identifies the transcript list, as distinct from the evidence row.
+  static const Key modulesKey = ValueKey('education-modules');
 
   /// Qualifications as the owner recorded them.
   final Education education;
@@ -67,6 +71,12 @@ class _Entry extends StatelessWidget {
             .toList()
           ..sort((a, b) => b.mark.compareTo(a.mark));
 
+    // Only the published modules can contribute an artefact: showing evidence
+    // for a mark the page is not printing would raise the obvious question.
+    final artefacts = modules
+        .where((module) => module.evidence != null)
+        .toList();
+
     return Padding(
       padding: EdgeInsets.only(bottom: tokens.space32),
       child: Column(
@@ -92,18 +102,48 @@ class _Entry extends StatelessWidget {
           ],
           if (modules.isNotEmpty) ...[
             SizedBox(height: tokens.space16),
-            for (final module in modules) _Module(module: module),
+            // Keyed so a test can tell the transcript apart from the evidence
+            // row beneath it. Both print marks -- deliberately, since a card
+            // gathered away from the transcript has to say what it is evidence
+            // for -- and without this the two are indistinguishable to a
+            // finder searching the whole table for "94".
+            Column(
+              key: EducationTable.modulesKey,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [for (final module in modules) _Module(module: module)],
+            ),
+          ],
+          // The artefacts sit together, side by side, rather than one under
+          // whichever module it belongs to. Stacked under their rows they
+          // pushed the marks apart and read as a column of unrelated pictures;
+          // gathered here they read as what they are -- the evidence behind
+          // the transcript above them -- and two of them fit one desktop row.
+          if (artefacts.isNotEmpty) ...[
+            SizedBox(height: tokens.space24),
+            Wrap(
+              spacing: tokens.space16,
+              runSpacing: tokens.space16,
+              children: [
+                for (final module in artefacts)
+                  _EvidenceCard(
+                    evidence: module.evidence!,
+                    module: module.name.resolve(context.channel),
+                    mark: module.mark,
+                  ),
+              ],
+            ),
           ],
           if (entry.highlights.isNotEmpty) ...[
-            SizedBox(height: tokens.space16),
-            for (final highlight in entry.highlights)
-              Padding(
-                padding: EdgeInsets.only(bottom: tokens.space8),
-                child: Text(
-                  highlight.resolve(context.channel),
-                  style: type.body.copyWith(color: tokens.textSecondary),
-                ),
-              ),
+            SizedBox(height: tokens.space24),
+            Wrap(
+              spacing: tokens.space16,
+              runSpacing: tokens.space16,
+              children: [
+                for (final highlight in entry.highlights)
+                  _HighlightCard(text: highlight.resolve(context.channel)),
+              ],
+            ),
           ],
         ],
       ),
@@ -121,8 +161,6 @@ class _Module extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final type = context.type;
-
-    final evidence = module.evidence;
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: tokens.space4),
@@ -150,39 +188,45 @@ class _Module extends StatelessWidget {
               ),
             ],
           ),
-          if (evidence != null) ...[
-            SizedBox(height: tokens.space8),
-            _EvidenceThumbnail(evidence: evidence),
-          ],
         ],
       ),
     );
   }
 }
 
-/// The artefact behind a mark, as a thumbnail that opens full size.
+/// The artefact behind a mark, as a card that opens full size.
 ///
 /// A mark is a number a reader has to take on trust; the coursework behind it
 /// is what turns it into evidence. This is `14-PROVENANCE.md`'s argument
 /// applied to the transcript — and the reason only two modules carry one is
 /// that only two artefacts were supplied, not that the rest were filtered.
-class _EvidenceThumbnail extends StatefulWidget {
-  const _EvidenceThumbnail({required this.evidence});
+///
+/// It carries its module and mark, because gathered into a row away from the
+/// transcript it would otherwise be a picture with no stated relationship to
+/// anything above it.
+class _EvidenceCard extends StatefulWidget {
+  const _EvidenceCard({
+    required this.evidence,
+    required this.module,
+    required this.mark,
+  });
 
   final Evidence evidence;
+  final String module;
+  final double mark;
 
-  /// Declared, never inferred.
-  static const double width = 220;
+  /// Declared, never inferred. Two fit a desktop row beside each other.
+  static const double width = 260;
 
-  /// A 16:9-ish plate. Tall enough to tell a dashboard from a poster, small
+  /// A 16:10 plate. Tall enough to tell a dashboard from a poster, small
   /// enough that a transcript does not become a gallery.
-  static const double height = 124;
+  static const double height = 162;
 
   @override
-  State<_EvidenceThumbnail> createState() => _EvidenceThumbnailState();
+  State<_EvidenceCard> createState() => _EvidenceCardState();
 }
 
-class _EvidenceThumbnailState extends State<_EvidenceThumbnail> {
+class _EvidenceCardState extends State<_EvidenceCard> {
   final WidgetStatesController _states = WidgetStatesController();
 
   @override
@@ -239,8 +283,8 @@ class _EvidenceThumbnailState extends State<_EvidenceThumbnail> {
                     ),
                     child: Image.asset(
                       widget.evidence.src,
-                      width: _EvidenceThumbnail.width,
-                      height: _EvidenceThumbnail.height,
+                      width: _EvidenceCard.width,
+                      height: _EvidenceCard.height,
                       fit: BoxFit.cover,
                       alignment: Alignment.topCenter,
                       // A missing artefact leaves the mark standing alone
@@ -249,14 +293,48 @@ class _EvidenceThumbnailState extends State<_EvidenceThumbnail> {
                           const SizedBox.shrink(),
                     ),
                   ),
-                  SizedBox(height: tokens.space4),
+                  SizedBox(height: tokens.space8),
                   SizedBox(
-                    width: _EvidenceThumbnail.width,
-                    child: Text(
-                      caption,
-                      style: context.type.telemetryS.copyWith(
-                        color: tokens.textMuted,
-                      ),
+                    width: _EvidenceCard.width,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // The module and its mark, so a card gathered away
+                        // from the transcript still says what it is evidence
+                        // for. The mark leads in gold: it is the claim, and
+                        // the picture beneath it is the proof.
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              widget.mark.toStringAsFixed(0),
+                              style: context.type.telemetry.copyWith(
+                                color: tokens.beacon,
+                              ),
+                            ),
+                            SizedBox(width: tokens.space8),
+                            Expanded(
+                              child: Text(
+                                widget.module,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.type.bodyS.copyWith(
+                                  color: tokens.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: tokens.space4),
+                        Text(
+                          caption,
+                          style: context.type.telemetryS.copyWith(
+                            color: tokens.textMuted,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -313,6 +391,57 @@ class _EvidenceDialog extends StatelessWidget {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One thing the owner did that a transcript cannot show.
+///
+/// The dissertation and the strategy simulation were plain paragraphs stacked
+/// under the marks, which is where the owner said the page stopped being worth
+/// looking at. They are the two most interesting facts in this section and
+/// they were the least visible things in it.
+///
+/// A card, not a link: neither has anywhere to go yet. The dissertation is
+/// unpublished by the owner's instruction, and inventing a destination for a
+/// panel that looks clickable would be worse than a panel that plainly is not.
+class _HighlightCard extends StatelessWidget {
+  const _HighlightCard({required this.text});
+
+  final String text;
+
+  /// Declared, never inferred. Matches the evidence row so the two align.
+  static const double width = 260;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return InstrumentPanel(
+      fill: tokens.surface,
+      padding: EdgeInsets.all(tokens.space16),
+      child: SizedBox(
+        width: _HighlightCard.width,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // The same short gold rule the hero and the transmission panel
+            // use, so a card here reads as part of the site rather than as a
+            // component borrowed from somewhere else.
+            SizedBox(
+              width: tokens.space32,
+              height: tokens.hairlineWidth * 2,
+              child: ColoredBox(color: tokens.beacon),
+            ),
+            SizedBox(height: tokens.space12),
+            Text(
+              text,
+              style: context.type.bodyS.copyWith(color: tokens.textSecondary),
             ),
           ],
         ),

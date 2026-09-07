@@ -394,7 +394,17 @@ each is unit-tested for determinism where seeded, and none allocates per frame.
 measured in a real profile; tiles seam invisibly; Recruiter Mode has none.
 
 ### 5.3 The wall
-The signature element. The telemetry trace becomes an inscription revealed by
+The signature element.
+
+**Two inputs from the owner's phone review, `11-OPEN-ISSUES.md` 0c.6 and 0c.7.**
+The trace ran across the copy on a phone because one column fraction was used
+at every breakpoint; milestone 4 narrowed it to a trailing strip and dropped
+its labels there, which is a compromise rather than a design. The wall must
+decide outright what the signature element does on a 360px viewport, where a
+full-width text column leaves no clear channel beside it — including the option
+that it does not appear at all and compact gets a different treatment. And the
+owner reports the trace stopping short of the last stop; confirm on a device
+before rebuilding the anchoring, since it is not reproducible from the code. The telemetry trace becomes an inscription revealed by
 torchlight as the viewer scrolls — fast scroll smears the light and the glyphs
 stay unreadable, slow down and a register resolves and its role becomes legible.
 Reuses the existing velocity engine, anchor registry and geometry; only the

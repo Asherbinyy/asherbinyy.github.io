@@ -8,7 +8,7 @@ than burying it in a worklog nobody re-reads.
 Worklogs record what happened in a session. **This file records what is still
 true.** If the two disagree, this file is the one to fix.
 
-Last reviewed: 2026-09-07, at the close of Milestone 4.
+Last reviewed: 2026-09-07, after the Milestone 4 Worker deployment.
 
 ---
 
@@ -44,9 +44,9 @@ rows that predate the change and have not yet been folded in.
 | ~~0b.7~~ | **Closed 4.9.** Removed, and nothing replaced it. The test asserting it was inverted rather than deleted, so a future agent finding the plumbing intact also finds the reason it went. **Still open for the owner:** the footer's remaining line reads "Manchester". His objection named the city as well as the latitude, but a footer location is ordinary and true, so it was left rather than removed on an inference. |
 | ~~0b.8~~ | **Closed 4.3.** The rail is continuous instead of six disconnected segments, the selected stop is named above it, and a step control sits at each end — which is the part that makes it obviously operable on a phone, with a mouse and from the keyboard. Original: **The chronology scrubber has no legible affordance.** Nothing indicates it can be dragged. | The map's primary touch control is undiscoverable | 4.3 |
 | ~~0b.9~~ | **Closed 4.3.** It filled with `surfaceRaised`, which is near-white on papyrus, so it had no edge against the page. It now fills with `surface` and carries a short gold rule above the name. Original: **The transmission panel reads as a plain card**, particularly in the light theme. | The map's content surface looks unfinished | 4.3 |
-| ~~0b.10~~ | **Closed 4.5**, pending the Worker deploy in 0b.12. Original: **`/writing` draws procedural art while real cover images exist** for all six articles. | The best-looking content on the site is hidden | 4.5 |
+| 0b.10 | **Implementation complete 4.5; Worker deployed (0b.12).** Browser verification remains open: writing and cover providers both derive from `ANALYTICS_ENDPOINT`, which the current release and local build omit. Enabling article requests independently of analytics needs a separate change. | Article covers are not enabled by the Worker deployment alone | Follow-up implementation and browser verification |
 | 0b.11 | **Easy Go, an open-source Flutter package**, is absent from the site. It is the only open-source artifact in the record. **Not resolved by 4.2**: the owner's publishing rule for the sixteen LinkedIn projects is live store links only, and a pub.dev package has no store listing, so the rule excludes it by accident rather than by intent. Worth a decision of its own. | A Flutter engineer's portfolio shows no packages | Owner |
-| 0b.12 | **`/v1/cover` is written and tested but not deployed.** The client asks the relay for covers; until the Worker ships, that request 404s and every card falls back to its procedural mark — the pre-milestone-4 appearance, with no error. Deploy with `npx wrangler deploy` from `worker/`. | `/writing` shows procedural art rather than real covers | Owner deploying the Worker |
+| ~~0b.12~~ | **Closed 2026-09-07.** Deployed from the repository root using the documented isolated Node 22 / Wrangler 4.129.0 command. Worker version `929f5eaa-54c8-433e-afec-257decbd1b12` is live at `https://nocturne-analytics.asherbinyy.workers.dev`; the owner's fake-image cover request with the configured site Origin returned **502**, confirming the route shipped. | Browser checks remain separate (0b.10) | Worker deployed and endpoint verified |
 
 ---
 
@@ -76,7 +76,8 @@ with the same posture: article cover images are relayed through this origin so
 that opening `/writing` issues no request to Medium carrying the viewer's IP or
 referrer. It allowlists Medium's two CDN hosts, refuses anything that is not an
 image, caps the response at 2MB and passes through no upstream header but the
-content type. **It is not yet deployed** — see 0b.12.
+content type. **Deployed and endpoint verified** — see 0b.12. The client-side
+endpoint configuration limitation is recorded in 0b.10.
 
 ---
 
@@ -88,6 +89,8 @@ content type. **It is not yet deployed** — see 0b.12.
 | 0c.2 | **Malboos lost its featured slot to Guardy.** The parser caps featured entries at six and Malboos is the only one with no role description — a bare name and a link. An editorial call an agent made; reversing it is one flag in `apps.json`. | Owner may disagree |
 | 0c.3 | **The research poster is cropped** to remove a header band carrying the owner's name and student number. The caption carries the title instead. | A matriculation number has no reason to be on a public page |
 | 0c.4 | **`assets/media/apps/` is empty.** The screenshot pipeline is built and documented; no screenshots have been supplied. Every row still draws its procedural card, which is the designed absence rather than a defect. | Rolls up into 1.10 |
+| 0c.6 | **The trace cannot fully clear the text on a phone.** It is confined to a 28% trailing strip and its labels are dropped, which fixes the collision the owner reported, but a 360px viewport has a full-width text column and a waveform cannot be disjoint from it. **A decision for milestone 5:** the wall replaces this paint, and it should decide whether the signature element exists on compact at all rather than inheriting a compromise. | Owner reported it 2026-09-07 |
+| 0c.7 | **"The trace only reaches before Manchester."** Reported by the owner on a phone. Not reproduced from the code: all seven stops receive anchors, the last is the Salford entry, and the career sequence is the last thing on the page. Possibly the measured-anchor path failing on a phone and falling back to provisional spacing, which insets the last burst to 7/8 of the range. **Needs one look at the rebuilt preview to confirm before it is chased further** — no fix was guessed at. | Owner to confirm |
 | 0c.5 | **The interests section is not in `02-SCREEN-SPECS.md`.** Nor are the evidence thumbnails, the redesigned scrubber, or `/ascent`. That document still describes the ground station throughout. | Deferred deliberately — see the milestone-4 worklogs |
 
 ---

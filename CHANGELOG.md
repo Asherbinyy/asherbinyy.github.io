@@ -5,6 +5,11 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### Fixed
+
+- Deployed the Milestone 4 Worker from the repository root. The `/v1/cover`
+  fake-image check returns the expected 502; Pages is deployed separately.
+
 ## [0.3.0] — 2026-09-07
 
 Milestone 4, "Provenance". Everything the site says is now sourced, and there
@@ -44,8 +49,9 @@ the Egyptian redesign is milestone 5.
 
 ### Known at release
 
-`/v1/cover` is written, tested and **not deployed**, so `/writing` still draws
-procedural marks until `npx wrangler deploy` runs from `worker/`. The Arabic
+`/v1/cover` was written and tested but **not yet deployed at milestone completion**;
+the deployment is recorded under Unreleased. Wrangler runs from the repository
+root, where `wrangler.toml` points to `worker/src/index.js`. The Arabic
 was written by an agent under an explicit waiver and has not had a native read.
 `docs/02-SCREEN-SPECS.md` and `docs/07-CONTENT-SCHEMA.md` still describe the
 ground station. Full list in `docs/11-OPEN-ISSUES.md`.

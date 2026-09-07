@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/app_route.dart';
+import 'package:nocturne/app/chrome/chrome_scaffold.dart';
+import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/features/about/presentation/widgets/education_table.dart';
 import 'package:nocturne/features/about/presentation/widgets/interests_grid.dart';
 import 'package:nocturne/features/about/presentation/widgets/portrait_frame.dart';
@@ -23,7 +25,7 @@ void main() {
       final marks = <int>[];
       for (final text in tester.widgetList<Text>(
         find.descendant(
-          of: find.byType(EducationTable),
+          of: find.byKey(EducationTable.modulesKey),
           matching: find.byType(Text),
         ),
       )) {
@@ -54,7 +56,7 @@ void main() {
       for (final withheld in ['75', '72', '70']) {
         expect(
           find.descendant(
-            of: find.byType(EducationTable),
+            of: find.byKey(EducationTable.modulesKey),
             matching: find.text(withheld),
           ),
           findsNothing,
@@ -65,7 +67,7 @@ void main() {
       for (final published in ['94', '86', '81', '80']) {
         expect(
           find.descendant(
-            of: find.byType(EducationTable),
+            of: find.byKey(EducationTable.modulesKey),
             matching: find.text(published),
           ),
           findsOneWidget,
@@ -158,7 +160,18 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(evidence);
+      // The evidence row sits below the fold on this page, so it has to be
+      // scrolled to before it can be tapped. Tapped by its accessible name
+      // rather than its caption: the card is one control and the caption is a
+      // line inside it, so the label is what a person -- and a screen reader
+      // -- actually activates.
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+      final card = find.bySemanticsLabel(
+        l10n.aboutEvidenceOpen('Power BI dashboard built for the module'),
+      );
+      await tester.ensureVisible(card);
+      await tester.pumpAndSettle();
+      await tester.tap(card);
       await tester.pumpAndSettle();
 
       // The dialog carries the artefact and a way out of it.
