@@ -110,6 +110,42 @@ endpoint configuration limitation is recorded in 0b.10.
 
 ---
 
+## 0e. The refinement pass, opened 2026-09-08
+
+The owner's direction: the site should feel like a piece of art, not a
+decorated CV. Priorities in his order are UI/UX, then a seamless experience,
+then creativity, then content quality, then presentation of work and
+personality, then performance. Testing is waived for speed; existing tests must
+still pass, because CI gates every merge on them.
+
+Done in the first sitting:
+
+| # | Item |
+|---|---|
+| 0e.1 | **Milestone 6 shipped.** `/ascent`, the climb, with facts read from the content layer and reachable without playing. Audio, the summit and the 404 variant are not built. |
+| 0e.2 | **The WebGL threshold.** `03-ARCHITECTURE.md` §4b. |
+| 0e.3 | **Em dashes removed from all presented content**, on the owner's instruction. |
+| 0e.4 | **The cartouche is deleted.** He could not verify the spelling and asked for it gone. |
+| 0e.5 | **The hero introduces a person**, not a scoreboard. The counts moved out of the greeting. |
+
+Still open, in his numbering:
+
+| # | Item |
+|---|---|
+| 0e.6 | Work page as an interactive exhibition, with a media pipeline he can fill later (his §13, §14, §17) |
+| 0e.7 | Writing as a scroll archive, pulling from Medium and his blog (§18) |
+| 0e.8 | About as a personal chamber; interests as interactions rather than words (§19, §20) |
+| 0e.9 | Signal as an unrolling papyrus map, and the clipped "choose stop" panel (§7, §8) |
+| 0e.10 | Environmental depth throughout: parallax, stone, lighting, museum photography used with restraint (§9, §30) |
+| 0e.11 | Recruiter summary redesigned (§26); platform logos for links (§27) |
+| 0e.12 | Academic content: robotics competition, the smart tank graduation project and its Excellent grade (§22). **Needs detail from the owner.** |
+| 0e.13 | Country flags including Russia via the Armenian project (§5). **Needs confirmation of how to represent it.** |
+| 0e.14 | MyNextStep to August 2025, and freelancing 2025 to now (§11). **Needs confirmation.** |
+| 0e.15 | Remove the unexplained icon beside EN/AR (§25) |
+| 0e.16 | Name audio player under the hero, awaiting his recording |
+
+---
+
 ## 1. Owner actions — content and assets
 
 Nothing here can be done by an agent. `AGENTS.md` §3 forbids inventing content,

@@ -250,6 +250,37 @@ Keep this list closed. Any addition needs a worklog justification.
 
 ---
 
+## 4b. The shell's WebGL intro
+
+`web/intro/` holds a Three.js scene that runs **before Flutter boots**, and it
+is the only JavaScript on this site that does anything.
+
+**Why it exists outside the app.** Flutter renders to a single canvas and
+cannot host a WebGL scene. The owner asked for a cinematic entrance with real
+depth; the alternatives were rebuilding the site in JavaScript, which would
+discard five milestones, or accepting a flat intro. The shell is the one place
+that can carry it, and the moment before the app mounts is when a first
+impression is made anyway.
+
+**Three.js is vendored, not linked.** `web/vendor/three.module.min.js` and its
+sibling `three.core.min.js`, version 0.180.0, MIT. This site's argument is that
+it makes no third-party request; a 700KB script fetched from a CDN on first
+paint would be the largest exception to that anywhere in the codebase. Both
+files are required: the module build re-exports from the core build, and
+omitting the second fails the import silently.
+
+**It may never cost a visitor the site.** Flutter loads in parallel, so the
+intro adds no waiting. Every failure path removes the overlay rather than
+showing a broken canvas, and a 22 second ceiling catches a stall. It runs once
+per tab, never under `prefers-reduced-motion`, and never below 380px. With
+JavaScript disabled it is a static panel with a heading and two buttons.
+
+**Budget.** The vendored library is 720KB and is only fetched when the intro
+will actually play, which is at most once per tab and never for a crawler. It
+is outside the app's own budget below because it is never loaded by a route.
+
+---
+
 ## 5. Performance budget
 
 | Metric | Budget |
