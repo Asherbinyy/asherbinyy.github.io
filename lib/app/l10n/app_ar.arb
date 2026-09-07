@@ -240,7 +240,7 @@
       }
     }
   },
-  "stationCqResponse": "تم الرد على النداء — المحطة تستقبل",
+  "stationCqResponse": "تم الرد على النداء ، المحطة تستقبل",
   "@stationCqResponse": {
     "description": "Easter egg: the response line shown when a viewer types CQ"
   },

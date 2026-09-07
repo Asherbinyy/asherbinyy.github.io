@@ -8,16 +8,16 @@
     "ar": "الشربيني"
   },
   "positioning": {
-    "en": "Mobile engineer. 25+ applications shipped across six countries.",
-    "ar": "مهندس تطبيقات موبايل. أكثر من 25 تطبيقًا أُطلقت في ست دول."
+    "en": "I build mobile products end to end, from the first idea to the release notes. Five years doing it for teams across four continents, and a master's in how technology actually gets adopted.",
+    "ar": "أبني منتجات الهاتف من أولها إلى آخرها، من الفكرة الأولى حتى ملاحظات الإصدار. خمس سنوات مع فرق في أربع قارات، وماجستير في كيفية تبنّي التقنية فعلياً."
   },
   "location": {
     "en": "Manchester, United Kingdom",
     "ar": "مانشستر، المملكة المتحدة"
   },
   "status": {
-    "en": "MSc Managing Innovation & IT, University of Salford — Distinction",
-    "ar": "ماجستير إدارة الابتكار وتقنية المعلومات، جامعة سالفورد — بامتياز"
+    "en": "MSc Managing Innovation & IT, University of Salford. Distinction",
+    "ar": "ماجستير إدارة الابتكار وتقنية المعلومات، جامعة سالفورد، بامتياز"
   },
   "venture": {
     "label": {
@@ -43,24 +43,17 @@
   },
   "stats": [
     {
-      "value": "25+",
+      "value": "5",
       "label": {
-        "en": "shipped",
-        "ar": "تطبيق مُطلق"
+        "en": "years building",
+        "ar": "سنوات في البناء"
       }
     },
     {
-      "value": "6",
+      "value": "MSc",
       "label": {
-        "en": "countries",
-        "ar": "دول"
-      }
-    },
-    {
-      "value": "4+",
-      "label": {
-        "en": "years commercial",
-        "ar": "سنوات احترافية"
+        "en": "Distinction, Salford",
+        "ar": "بامتياز، سالفورد"
       }
     }
   ]
