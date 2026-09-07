@@ -8,7 +8,7 @@ than burying it in a worklog nobody re-reads.
 Worklogs record what happened in a session. **This file records what is still
 true.** If the two disagree, this file is the one to fix.
 
-Last reviewed: 2026-09-07, at the start of Milestone 4.
+Last reviewed: 2026-09-07, after tasks 4.8, 4.9 and 4.10.
 
 ---
 
@@ -35,13 +35,13 @@ rows that predate the change and have not yet been folded in.
 
 | # | Item | Consequence | Fixed by |
 |---|---|---|---|
-| 0b.1 | **The README claims "Nothing is stored on the visitor's device."** Theme, language and Recruiter Mode have persisted through `shared_preference_store.dart` since milestone 1. The sentence is about the analytics tier but does not say so, and reads as a claim about the whole site. | A privacy claim that is false as written, on a site whose argument is its privacy posture | 4.1 |
-| 0b.2 | **Text cannot be selected or copied.** Flutter renders to canvas. A visitor cannot copy the email address off the page. `SelectionArea` exists in `material_ui` 1.1.1 — verified 2026-09-07. | A basic web affordance is missing | 4.8 |
+| ~~0b.1~~ | **Closed at planning.** The README now says the aggregate tier writes nothing, and that theme, language and Recruiter Mode persist as user-requested preferences, which PECR exempts. Original text: **"Nothing is stored on the visitor's device."** Theme, language and Recruiter Mode have persisted through `shared_preference_store.dart` since milestone 1. The sentence is about the analytics tier but does not say so, and reads as a claim about the whole site. | A privacy claim that is false as written, on a site whose argument is its privacy posture | 4.1 |
+| ~~0b.2~~ | **Closed 4.8.** `SelectionArea` wraps the content column. It deliberately excludes the header, rail and footer so a drag beginning on a control does not become a text drag; three tests hold that boundary in both directions. |
 | 0b.3 | **"Six countries" overstates the CV**, which names five countries of delivery plus the UK as residence. Guardy would make it genuinely six. | An inflated claim on the hero, the stat panel and `/brief` | 4.1, 4.2 |
-| 0b.4 | **AZ Courses downloads conflict** — 15,000 on the CV, 8,000 on LinkedIn, 15,000 on the site. | Two public figures for one app | 4.1 |
-| 0b.5 | **"CI Company" versus "Crazy Idea."** `career.json` uses the CV's name; the owner's public LinkedIn shows the other. | The site contradicts the owner's own profile | 4.2 |
+| ~~0b.4~~ | **Closed.** The owner confirmed the CV's 15,000+ is current and the LinkedIn entry is stale. The site is unchanged; `14-PROVENANCE.md` §2.2 records it so it is not re-opened. |
+| ~~0b.5~~ | **Closed.** The owner chose the CV's "CI Company". The public records still disagree; updating LinkedIn would close it from the other side, which is his call, not an agent's. |
 | 0b.6 | **CI Company end date** — CV says 04/2023, LinkedIn says Jul 2023. | A three-month gap across a job boundary | 4.1 |
-| 0b.7 | **The footer carries a coordinate readout.** The owner does not want it. | — | 4.9 |
+| ~~0b.7~~ | **Closed 4.9.** Removed, and nothing replaced it. The test asserting it was inverted rather than deleted, so a future agent finding the plumbing intact also finds the reason it went. **Still open for the owner:** the footer's remaining line reads "Manchester". His objection named the city as well as the latitude, but a footer location is ordinary and true, so it was left rather than removed on an inference. |
 | 0b.8 | **The chronology scrubber has no legible affordance.** Nothing indicates it can be dragged. | The map's primary touch control is undiscoverable | 4.3 |
 | 0b.9 | **The transmission panel reads as a plain card**, particularly in the light theme. | The map's content surface looks unfinished | 4.3 |
 | 0b.10 | **`/writing` draws procedural art while real cover images exist** for all six articles. | The best-looking content on the site is hidden | 4.5 |

@@ -8,7 +8,7 @@ trust. It exists because the owner asked, reasonably, why the site was making
 things up — and the answer turned out to be that it mostly was not, but nothing
 in the repository could demonstrate that.
 
-Last reviewed: 2026-09-07.
+Last reviewed: 2026-09-07, after the owner's decisions and a store-link sweep.
 
 ---
 
@@ -69,29 +69,36 @@ freelancer, gives a genuine sixth. **Resolution: confirm Guardy (§3.1), then
 six is true.** Until then the figure is five, or the phrasing changes to
 "across five countries, from six".
 
-### 2.2 AZ Courses downloads: 15,000 or 8,000
+### 2.2 AZ Courses downloads — RESOLVED 2026-09-07
 
-**CV2** says "over 15,000 downloads on Android and iOS". **LI-X** says "Over
-8,000 downloads on both Android and iOS platforms". The site shows 15,000+.
+**CV2** said "over 15,000 downloads"; **LI-X** said "Over 8,000". The owner
+confirmed the CV figure is current and the LinkedIn entry is stale. The site
+keeps **15,000+**, sourced to CV2.
 
-Same app, two figures the owner wrote himself, most likely at different times.
-Not resolvable from the sources. **Owner decides — §3.2.**
+Recorded so the next agent does not re-open it: the LinkedIn discrepancy is
+known and is not evidence the site is inflating anything.
 
-### 2.3 Module marks — trim and correct
+### 2.3 Module marks — PARTLY RESOLVED 2026-09-07
 
-The owner asked on 2026-09-07 to show only the top-performing modules, and to
-correct a mark of 74% to 75%. `education.json` currently holds seven modules
-and contains **no 74**. The nearest is Managing Project Deployment & Delivery at
-75, which is already the requested value.
+The owner confirmed the "74% → 75%" refers to **Managing Project Deployment &
+Delivery, already recorded at 75**. No change is needed and the module stays in
+the published set.
 
-**Unresolved: which mark is the 74.** Possibly the dissertation, which is not in
-the file. Do not guess — **§3.3.**
+Still open: which modules count as "top performing", since the owner asked for
+the table to be trimmed. Seven are recorded (94, 86, 81, 80, 75, 72, 70) and
+the request was for the strongest only. **§3.3.**
 
-### 2.4 CI Company end date
+### 2.4 CI Company — name RESOLVED, date still open
 
-**CV2** gives 10/2021 – 04/2023. **LI-P** gives Oct 2021 – Jul 2023, "1 yr 10
-mos". `career.json` follows the CV. A three-month difference across a job
-boundary is the kind of thing an interviewer notices. **Owner confirms — §3.5.**
+**Name.** The owner chose to keep **"CI Company"**, the CV's name, over the
+"Crazy Idea" shown publicly on LinkedIn. The site now matches the document that
+reaches recruiters first. Closes `11-OPEN-ISSUES.md` 0b.5.
+
+Worth the owner knowing: the two public records still disagree, and updating the
+LinkedIn entry would close it from the other side.
+
+**Date.** Unresolved. **CV2** gives 10/2021 – 04/2023; **LI-P** gives Oct 2021 –
+Jul 2023. `career.json` follows the CV. **§3.5.**
 
 ---
 
@@ -99,14 +106,14 @@ boundary is the kind of thing an interviewer notices. **Owner confirms — §3.5
 
 | # | Needed | Blocks |
 |---|---|---|
-| **3.1** | **Guardy.** Dates, engagement type (freelance/contract), and what was built in v1. Verified so far: Guardy GmbH, Düsseldorf; personal-safety app with live location sharing, live streaming and community alerts (**PUB** guardyapp.de, fetched 2026-09-07). Store listing `apps.apple.com/de/app/guardy/id6504706012` not yet verified — the fetch was rate-limited. | 4.2, and §2.1 |
+| **3.1** | **Guardy.** Dates, engagement type (freelance/contract), and what was built in v1. **Store listing verified 2026-09-07** via the iTunes lookup API: *Guardy*, seller **Guardy GmbH**, Navigation category, first released **17 July 2024**, currently v3.0.1. Product verified at **PUB** guardyapp.de — personal-safety app with live location sharing, live streaming and community alerts. The 2024 release date is consistent with the owner's account of building v1 as a freelancer. What is still needed is his engagement dates and what he specifically built. | 4.2, and §2.1 |
 | **3.2** | **AZ Courses downloads** — 15,000 or 8,000. | 4.1 |
 | **3.3** | **The 74% → 75%** — which module or component. And which modules count as "top performing", or a cutoff. | 4.6 |
 | **3.4** | **Dissertation** — withheld until published. Confirm what, if anything, may be said meanwhile. | 4.6 |
 | **3.5** | **CI Company end date** — April or July 2023. | 4.1 |
 | **3.6** | **Tiara Beauty** — freelance? dates? what was built? Currently in `apps.json` with a store link and no role. | 4.2 |
 | **3.7** | **Origins.** Born in Saudi Arabia — which city. Raised in Egypt — Mansoura, and from what year. Left Egypt 2025 at 28. Manchester 2025–present. Birth year is inferable as ~1997 but **inference is not a source**. | 4.3 |
-| **3.8** | **The 16 LinkedIn projects** (**LI-X**) — which may be published. Several are client work under a former employer and that is the owner's call, not an agent's. Full list in §4. | 4.2 |
+| ~~3.8~~ | **Resolved 2026-09-07.** The owner's rule is **live store links only**. A sweep of the App Store found no live listing for Meswak, Spix, Moawda, Kafu, Weze, Jumper or Absher, so most of the sixteen are excluded by that rule rather than by judgement. See §4. | — |
 | **3.9** | **Hobbies.** Stated: gym, football, padel, TV (*Better Call Saul*), reading, e-sports (FIFA, Valorant). Needed: anything to avoid, and whether a favourite book or team should appear. | 4.4 |
 | **3.10** | **Name recording** — the owner saying "Sherbini". Owner to supply. | 4.7 |
 | **3.11** | **App screenshots** — Mokaf, AZ Courses, City Loom, and any others. Long outstanding as `11-OPEN-ISSUES.md` 1.10. | 4.13, 2.1 |
@@ -119,8 +126,17 @@ boundary is the kind of thing an interviewer notices. **Owner confirms — §3.5
 
 ## 4. The sixteen LinkedIn projects (LI-X)
 
-Not on the site. All descriptions below are the owner's own words from
-LinkedIn, transcribed, not summarised. Publication is gated on §3.8.
+All descriptions are the owner's own words from LinkedIn, transcribed, not
+summarised.
+
+**Publication rule, set by the owner on 2026-09-07: live store links only.** A
+sweep on that date found no live App Store listing for Meswak, Spix, Moawda,
+Kafu, Weze, Jumper or Absher, so they do not ship. This is not a judgement that
+the work is unimportant — it is that a portfolio row a recruiter cannot open is
+a claim rather than evidence, which is the whole argument of this file.
+
+They stay recorded here so the record is complete and so a future agent does not
+rediscover them and assume they were missed.
 
 | Project | Dates | Attributed to |
 |---|---|---|
@@ -145,6 +161,34 @@ Two things worth the owner's attention:
 
 - **"Crazy Idea" is the employer the CV calls "CI Company."** `career.json` uses "CI Company". LinkedIn shows "Crazy Idea" publicly. One of the two should win, and the site should not show a name the owner's own LinkedIn contradicts.
 - **Easy Go is an open-source Flutter package**, published as self-employed work. It is the only open-source artifact in the whole record and it is currently invisible on a portfolio for a Flutter engineer. Worth surfacing on its own terms.
+
+---
+
+## 4b. Store-link verification, 2026-09-07
+
+Every iOS link in `apps.json` was re-checked against the iTunes lookup API in
+its own storefront. `05-TESTING.md` requires links be verified by hand; this is
+the machine sweep that says which need looking at, not a replacement for it.
+
+**All eight live links still resolve.** No rot since milestone 1.
+
+| App | Result |
+|---|---|
+| Tripster | LIVE — *Tripster: экскурсии, аудиогиды*, Mego.travel, v2.5.1 |
+| AZ Courses | LIVE — *azcourses*, Abdallah Abou El Ezz, v20.0.1 |
+| Enjoy | LIVE — *ENJOY4*, ibrahim el refaey, v1.1.1 |
+| Malboos | LIVE — *Malbos*, HWZN TECH, v1.3.2 |
+| Tiara Beauty | LIVE — *Tiara Beauty*, v1.3 |
+| Tekrar | LIVE — *Tekrar*, Manal Al Hadrami, v1.1.2 |
+| Wasset | LIVE — *Wasset*, Hawazen, v1.0 |
+| Mostaqbaly | LIVE — *mostaqbaly*, ibrahim el refaey, v1.0 |
+| Mokaf, Snunu, AZ Exams | no iOS link on record — `11-OPEN-ISSUES.md` 1.3–1.5 |
+| **Guardy** | LIVE — *Guardy*, Guardy GmbH, v3.0.1, first released 2024-07-17 |
+
+Note that the seller on several listings is the client, not the owner. That is
+normal for contract and agency work and is not evidence against the claim; it is
+also why a store link alone is not provenance for authorship, and why each app's
+role text still traces to the CV or to LinkedIn.
 
 ---
 
