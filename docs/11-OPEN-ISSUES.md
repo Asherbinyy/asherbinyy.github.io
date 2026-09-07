@@ -99,7 +99,10 @@ endpoint configuration limitation is recorded in 0b.10.
 
 | # | Item | Notes |
 |---|---|---|
-| 0d.1 | **The wall (5.3), the atlas (5.4), seal cards (5.6), the cursor (5.7) and the opening (5.8) are not built.** The trace still draws the waveform and `/signal` is still the propagation map. | Roadmap §5 |
+| ~~0d.1~~ | **Closed.** The wall, the atlas's cartouche stops, seal cards, the cursor and the opening all ship. |
+| 0d.5 | **Three of those landed partly rather than wholly**, and the roadmap says which. The atlas has cartouche stops but its ground is still the map's own graticule rather than papyrus; seal cards changed their art but not their hover behaviour; `/cv` and `/brief` carry the ankh and the palette but their layout is untouched. Each is a smaller piece of work than the one already done, and each was left rather than rushed. | Roadmap §5 |
+| 0d.6 | **The indeterminate loader is still the carrier wave.** `12-MOTIF-LIBRARY.md` #7 gives that job to the scarab. It is the last visible piece of the retired concept still on the site. | Motif #7 |
+| 0d.7 | **The glyph-column rail (5.5) is not built.** The navigation rail is unchanged. | Roadmap 5.5 |
 | 0d.2 | **The glyph fields use five signs.** The inventory exists to spell the owner's name; drawing more means verifying more. Routes differ by seeded arrangement rather than by sign, which `12-MOTIF-LIBRARY.md` §4 now says plainly. Widening the inventory is a deliberate decision, not a gap to fill quietly. | Owner may want more variety |
 | 0d.3 | **Frame cost for the glyph field has not been measured in a browser.** The tile is recorded once and replayed, and a test proves repeated paints add no cache entries — but "0ms after first paint" is an argument from the design, not a profile. Folds into 5.10 with the trace and map budgets, open since milestone 1. | Needs Chrome DevTools |
 | 0d.4 | **PR #12 was merged while its `verify` job was failing.** An agent ran `gh pr checks \| grep … && gh pr merge`, the grep exited 0 on the failing lines, and the merge fired. Nothing was published — the workflow gates `build` and `deploy` behind `verify`, both skipped — and PR #13 repaired `main`. Recorded because the lesson is general: **never chain a merge behind a command whose exit code does not mean what you are checking for.** | Closed, kept as a warning |

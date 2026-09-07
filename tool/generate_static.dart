@@ -92,6 +92,31 @@ String _shownName(Map<String, dynamic> profile) {
   return display.isEmpty ? _en(profile['name']) : display;
 }
 
+/// The site's mark, inline, as the ankh path the generator itself emits.
+///
+/// Inlined rather than linked: these pages must render with no JavaScript and
+/// ideally no second request, and an `<img>` for a 300-byte vector is a round
+/// trip for nothing. `currentColor` means it follows the page's own palette in
+/// both schemes without a second copy.
+///
+/// The path is read from `assets/brand/mark.svg` at generation time, so the
+/// static pages and the app cannot show different marks — the same reason the
+/// painter and the icon generator share `AnkhGeometry`.
+String _markSvg() {
+  final source = File('${_findProjectRoot()}/assets/brand/mark.svg');
+  if (!source.existsSync()) return '';
+  final match = RegExp('<path d="([^"]+)"')
+      .firstMatch(source.readAsStringSync());
+  if (match == null) return '';
+  const open =
+      '<svg class="mark" viewBox="0 0 32 32" width="28" height="28"'
+      ' aria-hidden="true" focusable="false">';
+  final path =
+      '<path d="${match.group(1)}" fill="none" stroke="currentColor"'
+      ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+  return '$open$path</svg>';
+}
+
 String _en(dynamic localizedText) {
   if (localizedText is Map) {
     return (localizedText['en'] ?? '') as String;
@@ -185,6 +210,7 @@ ul{list-style:none;padding:0}
 .status{font-size:14px;color:var(--text-muted);margin-bottom:24px}
 .role-item{padding:16px 0;border-bottom:1px solid var(--hairline)}
 .role-item:last-child{border-bottom:none}
+.mark{color:var(--beacon);display:block;margin-bottom:12px}
 .role-header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px}
 .company{font-weight:600;color:var(--text-primary)}
 .dates{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text-muted);white-space:nowrap}
@@ -341,6 +367,7 @@ String _generateCv(
     ..writeln('<body>')
     // Header
     ..writeln('<header>')
+    ..writeln(_markSvg())
     ..writeln('<h1>$name</h1>')
     ..writeln('<p class="positioning">$positioning</p>');
 
@@ -697,6 +724,7 @@ String _generateBrief(
     ..writeln('</head>')
     ..writeln('<body>')
     ..writeln('<header>')
+    ..writeln(_markSvg())
     ..writeln('<h1>$name</h1>')
     ..writeln('<p class="positioning">$positioning</p>');
 

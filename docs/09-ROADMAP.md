@@ -414,7 +414,7 @@ under 4ms, the painter early-returns off-screen, `shouldRepaint` is correct,
 reduced motion renders static with every label visible, amplitude and torch
 falloff maths unit-tested.
 
-### 5.4 The papyrus atlas
+### 5.4 The papyrus atlas — **partly built**: stops are cartouches; the ground is still the map's own grid
 `/signal` becomes a drawn map on papyrus: cartouche stops, a route line instead
 of arcs. Projection and coastline data unchanged. **Done when:** frame cost
 under 6ms; keyboard traversal and the 4.3 navigation control still work.
@@ -425,7 +425,7 @@ Cartouche name treatment, glyph-column rail, ankh mark and favicon set.
 browser chrome; the Latin name is present at every breakpoint; the accessible
 name is `Sherbini`, never a glyph.
 
-### 5.6 Cards and hover
+### 5.6 Cards and hover — **partly built**: cards are seal impressions; hover is unchanged
 Work and article cards become seal impressions; hover gets a real reaction. The
 owner asked for the grid to be fun.
 **Done when:** hover has a keyboard-focus equivalent, a touch equivalent and a
@@ -436,12 +436,12 @@ Per `12-MOTIF-LIBRARY.md` §5. The system cursor is never replaced.
 **Done when:** under 1ms per frame, capped at 24 particles, pointer-only, off
 under reduced motion and in Recruiter Mode, stops on blur.
 
-### 5.8 The opening
+### 5.8 The opening — **built**
 The acquisition sequence becomes a tomb opening — a seal broken, torchlight
 entering. Same rules: once per session, skippable by any input, 200ms fade under
 reduced motion, no layout shift.
 
-### 5.9 `/cv` and `/brief`
+### 5.9 `/cv` and `/brief` — **partly built**: both carry the ankh and the new palette; the layout is unchanged
 Restyled to match, still hand-written HTML, still JS-optional, still ATS-first.
 
 ### 5.10 Verification
