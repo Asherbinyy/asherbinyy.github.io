@@ -133,6 +133,7 @@ class _StoreLinks extends StatelessWidget {
             label: switch (platform) {
               AppPlatform.ios => l10n.workAppStore,
               AppPlatform.android => l10n.workGooglePlay,
+              AppPlatform.pub => l10n.workPubDev,
             },
           ),
       ],

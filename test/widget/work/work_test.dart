@@ -91,6 +91,28 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('a package is listed as pub.dev, not as a store', (
+      tester,
+    ) async {
+      await pumpStation(
+        tester,
+        breakpoint: ChromeBreakpoint.large,
+        initialRoute: AppRoute.work,
+      );
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+
+      // Easy Go is a package, not an application. It satisfies the owner's
+      // live-listing rule -- anyone can open it -- but it is not something a
+      // person installs, so it must not be offered under a store's name.
+      final packages = bundledApps()
+          .where((app) => storeOf(app).containsKey('pub'))
+          .toList();
+      expect(packages, hasLength(1));
+
+      expect(find.text(packages.single['name'] as String), findsOneWidget);
+      expect(find.text(l10n.workPubDev), findsNWidgets(packages.length));
+    });
+
     testWidgets('an unreadable ledger invents nothing', (tester) async {
       await pumpStation(
         tester,

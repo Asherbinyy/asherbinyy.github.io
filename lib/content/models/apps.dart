@@ -15,6 +15,14 @@ enum AppPlatform {
 
   /// Google Play destination.
   android,
+
+  /// pub.dev destination.
+  ///
+  /// A package rather than an application, which is why it needed its own
+  /// value: it has a public listing anyone can open, which is the owner's
+  /// rule for what ships, but it is not something a person installs on a
+  /// phone. The ledger says "pub.dev" beside it rather than a store name.
+  pub,
 }
 
 /// Work domains present in the owner's documented ledger.
@@ -50,6 +58,10 @@ enum WorkDomain {
   /// Safety as supplied by the content schema.
   @JsonValue('Safety')
   safety,
+
+  /// Open source as supplied by the content schema.
+  @JsonValue('Open source')
+  openSource,
 }
 
 /// How the owner was engaged on a piece of work.

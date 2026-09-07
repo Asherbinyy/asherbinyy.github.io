@@ -36,6 +36,14 @@
   "@workDomainMarketplace": {
     "description": "Application category label for the Marketplace domain."
   },
+  "workDomainOpenSource": "Open source",
+  "@workDomainOpenSource": {
+    "description": "Work grid: the Open source domain"
+  },
+  "workPubDev": "pub.dev",
+  "@workPubDev": {
+    "description": "Work grid: the pub.dev package listing link"
+  },
   "workDomainSafety": "Safety",
   "@workDomainSafety": {
     "description": "Work grid: the Safety domain"

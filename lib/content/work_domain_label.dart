@@ -18,5 +18,6 @@ extension WorkDomainLabel on WorkDomain {
     WorkDomain.marketplace => l10n.workDomainMarketplace,
     WorkDomain.consumer => l10n.workDomainConsumer,
     WorkDomain.safety => l10n.workDomainSafety,
+    WorkDomain.openSource => l10n.workDomainOpenSource,
   };
 }
