@@ -400,4 +400,10 @@ extension ThemeTokenValues on ThemeTokens {
 
   /// Shared markHeaderSize token.
   double get markHeaderSize => Tokens.markHeaderSize;
+
+  /// Shared glyphFieldOpacity token.
+  double get glyphFieldOpacity => Tokens.glyphFieldOpacity;
+
+  /// Shared cartoucheHeroHeight token.
+  double get cartoucheHeroHeight => Tokens.cartoucheHeroHeight;
 }

@@ -379,6 +379,20 @@ abstract final class Tokens {
 
   /// The mark: 2px stroke at its native 32px square, 24px in the header.
   static const double markNativeSize = 32, markStroke = 2, markHeaderSize = 24;
+
+  /// Opacity of the inscription field behind every page.
+  ///
+  /// One step above the 3% texture beneath it, so the two read as separate
+  /// layers rather than as one muddy surface. `12-MOTIF-LIBRARY.md` §4.
+  static const double glyphFieldOpacity = 0.04;
+
+  /// The cartouche's height where it introduces the name in the hero.
+  ///
+  /// Its width follows from `CartouchePainter.aspectRatio`, so this is the
+  /// only dimension anyone sets. Sized to sit clearly under the display-xl
+  /// name without competing with it: the sign is the ornament, the name is
+  /// the information.
+  static const double cartoucheHeroHeight = 40;
 }
 
 /// Kemet palette from design-system section 2 — the Black Land.

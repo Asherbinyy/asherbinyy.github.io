@@ -119,7 +119,7 @@ Jul 2023. `career.json` follows the CV. **§3.5.**
 | **3.11** | **App screenshots** — Mokaf, AZ Courses, City Loom, and any others. Long outstanding as `11-OPEN-ISSUES.md` 1.10. | 4.13, 2.1 |
 | ~~3.12~~ | **Closed.** Committed to `assets/docs/`, `profile.cvFile` is set, and the hero's second action now reads *Download the CV*. Original entry: **CV PDF** — may `main resume.pdf` be committed to `assets/`? It carries a phone number already published in `profile.json`. | 4.12 |
 | ~~3.13~~ | **Closed.** The studio frame, matching the shot brief. Cropped to 4:5, 107KB. Original entry: **Portrait** — `supporting files/profile/` holds two candidates. Which, and may it be committed? | 4.4 |
-| **3.14** | **Cartouche transliteration** — š-r-b-i-n-i needs a check by someone who reads Egyptian (`12-MOTIF-LIBRARY.md` §2). | 5.5 |
+| **3.14** | **Cartouche spelling.** The *sign values* are verified against Gardiner's uniliteral list — N37 = š, D21 = r, D58 = b, M17 = i, N35 = n — and are drawn from those. What is unverified is the spelling choice: the final vowels could equally take the double reed (*y*), giving š-r-b-y-n-y. Both are defensible and an agent cannot settle it. A reader of Egyptian can. | Nothing — it ships marked |
 | ~~3.15~~ | **Closed by removal.** The owner instructed on 2026-09-07 to drop Evri entirely. It was the one role his CV never covered and had been open since milestone 1. Original entry: **Evri.** Still the one role the CV does not cover, open since milestone 1 as `11-OPEN-ISSUES.md` 1.7. Started 2025-11 per `career.json`. | 4.2 |
 
 ---

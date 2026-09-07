@@ -23,6 +23,8 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:nocturne/core/painting/ankh_geometry.dart';
+
 import 'png_writer.dart';
 
 /// Burst envelope width, mirroring `Tokens.carrierBurstWidth`.
@@ -102,12 +104,21 @@ void main() {
   print('Mark and favicon set generated.');
 }
 
-/// Samples the curve into an SVG path in the mark's native 32x32 box.
+/// Emits the ankh as an SVG path in the mark's native 32x32 box.
+///
+/// One subpath per stroke. A single run would draw a line from the crossbar to
+/// the loop that is not part of the sign.
 String _svg() {
-  final points = _curve(nativeSize.toDouble(), inset: nativeStroke / 2);
-  final path = StringBuffer('M ${_n(points.first.x)} ${_n(points.first.y)}');
-  for (final point in points.skip(1)) {
-    path.write(' L ${_n(point.x)} ${_n(point.y)}');
+  final path = StringBuffer();
+  for (final stroke in AnkhGeometry.strokes(
+    size: nativeSize.toDouble(),
+    strokeWidth: nativeStroke,
+  )) {
+    if (path.isNotEmpty) path.write(' ');
+    path.write('M ${_n(stroke.first.x)} ${_n(stroke.first.y)}');
+    for (final point in stroke.skip(1)) {
+      path.write(' L ${_n(point.x)} ${_n(point.y)}');
+    }
   }
 
   return '''
@@ -121,42 +132,30 @@ String _svg() {
 /// A point on the mark's curve, in the target box's pixel coordinates.
 typedef MarkPoint = ({double x, double y});
 
-/// Samples the curve across a box of [size], inset by [inset] on all sides.
-List<MarkPoint> _curve(double size, {required double inset}) {
-  final box = size - inset * 2;
-  final samples = math.max(64, size.ceil());
-  // The window spans the burst plus the flat carrier either side of it, so the
-  // mark reads as a burst on a line rather than as a bare hill.
-  const window = burstWidth * markCurveSigmas * 2;
-  const start = 0.5 - window / 2;
-  return [
-    for (var i = 0; i <= samples; i++)
-      () {
-        final fraction = i / samples;
-        final lobe = burstEnvelope(
-          position: start + fraction * window,
-          centre: 0.5,
-        );
-        return (x: inset + fraction * box, y: inset + box - lobe * box);
-      }(),
-  ];
-}
-
-/// Renders the mark on the void field at [size], as 8-bit RGBA.
+/// Renders the mark on the ground field at [size], as 8-bit RGBA.
 ///
-/// Distance to the sampled curve, supersampled 2x2, which is enough to keep the
-/// stroke smooth. Section 12 requires the mark to stay legible at 16px, so the
-/// shape is deliberately two curves and nothing more.
+/// Distance to the sampled strokes, supersampled 2x2, which is enough to keep
+/// the stroke smooth. Section 12 requires the mark to stay legible at 16px,
+/// which is what fixes the ankh's proportions in [AnkhGeometry].
 Uint8List rasterise({required int size, required bool isMaskable}) {
   final scale = size / nativeSize;
   final stroke = nativeStroke * scale;
   // A maskable icon's content must survive a circular crop, so it is drawn
   // into the central safe zone rather than edge to edge.
   final content = isMaskable ? size * maskableSafeZone : size.toDouble();
-  final origin = (size - content) / 2;
-  final points = [
-    for (final point in _curve(content, inset: stroke / 2 + content * 0.15))
-      (x: point.x + origin, y: point.y + origin),
+  // Optical padding inside that, so the sign is not flush to the tile edge.
+  final drawn = content * _markInset;
+  final origin = (size - drawn) / 2;
+
+  final strokes = [
+    for (final polyline in AnkhGeometry.strokes(
+      size: drawn,
+      strokeWidth: stroke,
+    ))
+      [
+        for (final point in polyline)
+          (x: point.x + origin, y: point.y + origin),
+      ],
   ];
 
   final pixels = Uint8List(size * size * 4);
@@ -168,7 +167,7 @@ Uint8List rasterise({required int size, required bool isMaskable}) {
         for (var sx = 0; sx < 2; sx++) {
           final px = x + (sx + 0.5) / 2;
           final py = y + (sy + 0.5) / 2;
-          if (_distanceToCurve(points, px, py, half + 1) <= half) covered++;
+          if (_distanceToStrokes(strokes, px, py) <= half) covered++;
         }
       }
       final alpha = covered / 4;
@@ -182,43 +181,41 @@ Uint8List rasterise({required int size, required bool isMaskable}) {
   return pixels;
 }
 
+/// How much of the tile the sign occupies, leaving optical padding around it.
+const double _markInset = 0.78;
+
 int _mix(int background, int foreground, double alpha) =>
     (background + (foreground - background) * alpha).round().clamp(0, 255);
 
-/// Shortest distance from a point to the sampled polyline.
+/// Shortest distance from a point to any of the sampled strokes.
 ///
-/// Only segments whose x lies within [window] of the point are considered; the
-/// curve is a function of x, so anything further cannot be the nearest.
-double _distanceToCurve(
-  List<MarkPoint> points,
-  double px,
-  double py,
-  double window,
-) {
+/// No x-window shortcut here. The previous mark was a single curve and a
+/// function of x, so segments far in x could be skipped; an ankh is neither.
+/// Its loop has two y for most x and its stem is vertical, and that
+/// optimisation would have quietly eaten both.
+double _distanceToStrokes(List<List<MarkPoint>> strokes, double px, double py) {
   var best = double.infinity;
-  for (var i = 0; i < points.length - 1; i++) {
-    final a = points[i];
-    final b = points[i + 1];
-    if (math.max(a.x, b.x) < px - window) continue;
-    if (math.min(a.x, b.x) > px + window) break;
-    best = math.min(best, _distanceToSegment(px, py, a, b));
+  for (final points in strokes) {
+    for (var i = 0; i < points.length - 1; i++) {
+      final a = points[i];
+      final b = points[i + 1];
+      final dx = b.x - a.x;
+      final dy = b.y - a.y;
+      final lengthSquared = dx * dx + dy * dy;
+      final t = lengthSquared == 0
+          ? 0.0
+          : (((px - a.x) * dx + (py - a.y) * dy) / lengthSquared).clamp(
+              0.0,
+              1.0,
+            );
+      final cx = a.x + t * dx;
+      final cy = a.y + t * dy;
+      final distance = math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
+      if (distance < best) best = distance;
+    }
   }
   return best;
 }
-
-double _distanceToSegment(double px, double py, MarkPoint a, MarkPoint b) {
-  final dx = b.x - a.x;
-  final dy = b.y - a.y;
-  final lengthSquared = dx * dx + dy * dy;
-  if (lengthSquared == 0) return _hypot(px - a.x, py - a.y);
-  final t = (((px - a.x) * dx + (py - a.y) * dy) / lengthSquared).clamp(
-    0.0,
-    1.0,
-  );
-  return _hypot(px - (a.x + t * dx), py - (a.y + t * dy));
-}
-
-double _hypot(double x, double y) => math.sqrt(x * x + y * y);
 
 String _n(double value) => value.toStringAsFixed(3);
 
