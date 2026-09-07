@@ -134,12 +134,13 @@ combined.
 
 Specification:
 
-- One 256×256 tile per route, generated at build time by `tool/generate_fields.dart` into `assets/motifs/`.
+- One tile per route, recorded once to a `ui.Picture` and replayed across the surface. **No build-time generator and no image assets**, which is a change from the original plan here: recording a picture at runtime gives the same display-list replay that a cached bitmap would, costs no bytes in the bundle, and needs no second definition of the glyphs to fall out of step with the first.
 - Composed from the documented sign set only, at fixed rotations of 0°, laid on the register grid. No random rotation, no scatter — Egyptian inscription is columnar and aligned, and aligned tiles also seam cleanly.
 - Drawn at `--limestone-dim` over the ground at **4% opacity**, one step above the 3% texture so the two read as separate layers rather than mud.
 - The field is **behind** the texture layer, not above it.
 - Under `prefers-reduced-motion` the field is unchanged: it does not move, so there is nothing to reduce. It is disabled entirely in Recruiter Mode, which is a quiet document.
-- Each route gets a distinct field so navigation is legible at a glance, drawn from that route's own subject — the work grid's field is built from craft signs, `/signal`'s from water and land signs, and so on. The mapping lives in `02-SCREEN-SPECS.md`.
+- Each route gets a distinct field so navigation is legible at a glance. **They differ by arrangement, not by sign.** This file originally said each field would be drawn from its route's own subject — craft signs for the work grid, water and land signs for `/signal` — and that is not what shipped: the inventory in §2 is five signs, chosen because they spell the owner's name, and drawing a dozen more means verifying a dozen more. Each route seeds its own layout instead, which distinguishes the pages without adding an unverified sign to the site. Widening the inventory is a decision worth making deliberately, not a gap to be filled quietly.
+- **Signs are laid on a grid, never in a line.** §0 forbids generating glyph strings as texture, and that prohibition is about faking meaning: a horizontal run reads as a sentence, and an arbitrary one is nonsense presented as writing. A diaper of single signs at fixed spacing reads as ornament, which is what it is. Nothing in a field spells anything.
 
 **Budget: the field costs 0ms per frame after first paint.** If a profile shows
 otherwise, it is being repainted and that is a bug.

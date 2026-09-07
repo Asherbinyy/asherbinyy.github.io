@@ -9,6 +9,7 @@ import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/app_nav.dart';
 import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/features/recruiter/presentation/recruiter_view.dart';
+import 'package:nocturne/core/painting/glyph_field_painter.dart';
 import 'package:nocturne/core/painting/grain_painter.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/theme_controller.dart';
@@ -96,6 +97,8 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
     return Scaffold(
       backgroundColor: tokens.void_,
       body: _Grained(
+        route: widget.route,
+        isRecruiterMode: isRecruiterMode,
         child: FocusTraversalGroup(
           // Reading order is header, then content, then footer, in both
           // directions; the ordering policy follows Directionality rather than
@@ -314,9 +317,20 @@ class _ContentColumn extends StatelessWidget {
 /// both themes. It never animates, so it stays on under reduced motion. A
 /// `RepaintBoundary` keeps it out of the trace's and the map's repaints.
 class _Grained extends StatelessWidget {
-  const _Grained({required this.child});
+  const _Grained({
+    required this.child,
+    required this.route,
+    required this.isRecruiterMode,
+  });
 
   final Widget child;
+
+  /// Which field to draw. Each route gets its own arrangement, so a viewer
+  /// can tell one page from another before reading a word of it.
+  final AppRoute route;
+
+  /// Recruiter Mode is a quiet document and carries no field.
+  final bool isRecruiterMode;
 
   @override
   Widget build(BuildContext context) {
@@ -324,6 +338,20 @@ class _Grained extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
+        // The inscription sits under the texture, not over it: two layers, in
+        // that order, is what keeps them reading as separate rather than as
+        // one muddy surface. Recruiter Mode has neither.
+        if (!isRecruiterMode)
+          RepaintBoundary(
+            child: CustomPaint(
+              painter: GlyphFieldPainter(
+                seed: 'field.${route.name}',
+                colour: tokens.instrumentDim,
+                opacity: tokens.glyphFieldOpacity,
+                hairlineWidth: tokens.hairlineWidth,
+              ),
+            ),
+          ),
         RepaintBoundary(
           child: CustomPaint(
             painter: GrainPainter(

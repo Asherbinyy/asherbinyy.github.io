@@ -380,6 +380,12 @@ abstract final class Tokens {
   /// The mark: 2px stroke at its native 32px square, 24px in the header.
   static const double markNativeSize = 32, markStroke = 2, markHeaderSize = 24;
 
+  /// Opacity of the inscription field behind every page.
+  ///
+  /// One step above the 3% texture beneath it, so the two read as separate
+  /// layers rather than as one muddy surface. `12-MOTIF-LIBRARY.md` §4.
+  static const double glyphFieldOpacity = 0.04;
+
   /// The cartouche's height where it introduces the name in the hero.
   ///
   /// Its width follows from `CartouchePainter.aspectRatio`, so this is the
