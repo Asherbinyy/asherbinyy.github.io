@@ -33,7 +33,10 @@
     "calendly": null
   },
   "cvFile": null,
-  "portrait": null,
+  "portrait": {
+    "src": "assets/media/portrait.jpg",
+    "isPlaceholder": false
+  },
   "stats": [
     {
       "value": "25+",

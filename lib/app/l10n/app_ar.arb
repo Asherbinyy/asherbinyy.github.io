@@ -91,6 +91,7 @@
   "@aboutWriting": {
     "description": "About screen: writing section heading"
   },
+  "aboutPortraitLabel": "صورة الشربيني",
   "aboutPortraitPending": "الصورة قيد الإعداد",
   "@aboutPortraitPending": {
     "description": "About screen: the reserved portrait frame"

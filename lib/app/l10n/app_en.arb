@@ -291,6 +291,10 @@
   "@aboutWriting": {
     "description": "About screen: writing section heading"
   },
+  "aboutPortraitLabel": "Portrait of Sherbini",
+  "@aboutPortraitLabel": {
+    "description": "About screen: alt text for the resolved portrait"
+  },
   "aboutPortraitPending": "Portrait pending",
   "@aboutPortraitPending": {
     "description": "About screen: the reserved portrait frame"
