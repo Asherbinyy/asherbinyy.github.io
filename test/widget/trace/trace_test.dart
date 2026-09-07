@@ -11,6 +11,7 @@ import 'package:nocturne/features/trace/domain/trace_state.dart';
 import 'package:nocturne/features/trace/presentation/station_trace.dart';
 import 'package:nocturne/features/trace/presentation/telemetry_trace.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
+import 'package:nocturne/features/trace/presentation/trace_burst_label.dart';
 
 import '../../support/chrome_harness.dart';
 import '../../support/content_readers.dart';
@@ -32,14 +33,70 @@ void main() {
     expect(find.byType(StationTrace), findsNothing);
   });
 
+  testWidgets('the trace keeps to a narrow strip on a phone', (tester) async {
+    await pumpStation(
+      tester,
+      breakpoint: ChromeBreakpoint.compact,
+      capabilities: touchBrowser,
+    );
+
+    // The owner reported the waveform and its titles running across the copy
+    // on a phone. One fraction was used at every breakpoint: 66% leaves a
+    // measure-limited desktop text column alone, and covers a 360px phone
+    // whose text fills the width.
+    //
+    // Zero overlap is not achievable at this width -- the text spans the
+    // whole viewport -- so what is asserted is that the trace is confined to
+    // a trailing strip rather than crossing the column. Geometry, not the
+    // token value, so milestone 5 can replace the painter without quietly
+    // inheriting the overlap.
+    final frame = tester.getRect(find.byType(ChromeScaffold));
+    final painted = tester.getRect(_tracePaint);
+
+    expect(painted.width, lessThan(frame.width / 2));
+    expect(
+      painted.left,
+      greaterThan(frame.width / 2),
+      reason: 'the strip should sit in the trailing half',
+    );
+  });
+
+  testWidgets('the trace drops its titles on a phone', (tester) async {
+    await pumpStation(
+      tester,
+      breakpoint: ChromeBreakpoint.compact,
+      capabilities: touchBrowser,
+    );
+
+    // The labels are drawn inside the trace column, so on a narrow strip they
+    // wrap over the copy. Each one repeats the company, dates and country the
+    // career entry beside it already prints, so dropping them costs nothing.
+    expect(find.byType(TraceBurstLabel), findsNothing);
+  });
+
+  testWidgets('the trace keeps its wide column and titles on a desktop', (
+    tester,
+  ) async {
+    await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
+
+    final frame = tester.getRect(find.byType(ChromeScaffold));
+    final painted = tester.getRect(_tracePaint);
+
+    // The strip is a phone accommodation, not the design.
+    expect(painted.width, greaterThan(frame.width / 2));
+    expect(find.byType(TraceBurstLabel), findsWidgets);
+  });
+
   testWidgets('one burst per career role', (tester) async {
     await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
 
     final trace = tester.widget<TelemetryTrace>(find.byType(TelemetryTrace));
 
-    // career.json carries six stations.
-    expect(trace.bursts, hasLength(6));
-    expect(trace.labels, hasLength(6));
+    // Counted from the journey, so adding or removing a stop does not leave
+    // this asserting a stale total.
+    final stops = bundledStops().length;
+    expect(trace.bursts, hasLength(stops));
+    expect(trace.labels, hasLength(stops));
   });
 
   for (final reducedMotion in [false, true]) {
@@ -69,15 +126,21 @@ void main() {
     final trace = tester.widget<TelemetryTrace>(find.byType(TelemetryTrace));
     final labels = trace.labels;
 
-    // Employers now come from the owner's CV, so a burst names the company.
-    expect(labels['ci-company']?.title, 'CI Company');
-    expect(labels['hwzn-tech']?.title, 'Hwzn Tech');
-    // Evri is the one role the CV does not cover, so it still falls back to
-    // its city rather than to an invented employer.
-    expect(labels['evri']?.title, 'Manchester');
-    expect(labels['evri']?.meta, contains('GB'));
-    for (final label in labels.values) {
-      expect(label.title, isNotEmpty);
+    // Every burst names what the content names it: the company where there is
+    // one, the city where there is not. Asserted against the journey rather
+    // than against a hand-picked pair, so a stop added to content without a
+    // label fails here.
+    for (final stop in bundledStops()) {
+      final id = stop['id'] as String;
+      final label = labels[id];
+      expect(label, isNotNull, reason: id);
+      expect(
+        label!.title,
+        stop['company'] ?? stop['city'],
+        reason: '$id should name its company, or its city where it has none',
+      );
+      expect(label.meta, contains(stop['country']), reason: id);
+      expect(label.title, isNotEmpty, reason: id);
     }
   });
 
@@ -161,3 +224,9 @@ void expectCareerAnchors(WidgetTester tester, TraceAnchorRegistry registry) {
     expect(paintedCentre, closeTo(centre.dy - traceTop, 0.01));
   }
 }
+
+/// The trace's own painted surface, rather than the full-viewport widget that
+/// hosts it. `TelemetryTrace` fills the frame; the strip is the box inside it.
+final Finder _tracePaint = find.byWidgetPredicate(
+  (widget) => widget is CustomPaint && widget.painter is TracePainter,
+);

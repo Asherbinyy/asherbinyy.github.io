@@ -16,13 +16,22 @@ A portfolio built as an instrument panel. The visual language is signal telemetr
 
 The central interaction is a telemetry trace that runs the length of the page and responds to scroll velocity: scroll fast and the waveform degrades into noise, slow down and it resolves and locks, revealing the role beneath it. It rewards attention rather than demanding it.
 
+> **This is what is live today, and it is being replaced.** From 2026-09-07 the
+> concept changes: the identity becomes Egyptian, drawn from where the owner is
+> from rather than from what he studied, and the site grows a person around the
+> résumé. The engineering below survives it almost entirely — the change is
+> skin, not structure. See [`docs/00-PROJECT-BRIEF.md`](docs/00-PROJECT-BRIEF.md)
+> §3 for the concept, [`docs/09-ROADMAP.md`](docs/09-ROADMAP.md) for milestones
+> 4–6, and [`docs/12-MOTIF-LIBRARY.md`](docs/12-MOTIF-LIBRARY.md) before any
+> visual work.
+
 ## Notable decisions
 
 **Standalone design package.** Built against `material_ui` rather than the in-framework Material library, which was frozen in Flutter 3.44 and deprecates in November 2026. No `cupertino_ui` — the target is browsers, where there are no iOS system widgets to match.
 
 **Flutter Web is not indexable, so `/cv` and `/brief` are not Flutter.** CanvasKit and WASM both render to canvas, meaning search engines and ATS parsers see an empty document. Those two routes are hand-written static HTML generated from the same JSON content, so they can never drift from the app. The rest of the site is free to be as ambitious as it likes.
 
-**Cookieless analytics, built rather than installed.** No third-party tracking script — no Google Analytics, no tag manager, nothing in the network tab that isn't first-party. Unique visitors are counted with a rotating-salt hash computed server-side — the salt regenerates every 24 hours and the old one is destroyed, so identifiers are mathematically unlinkable across days. IP addresses are resolved to a coarse country and discarded in the same function invocation; they are never written or logged. Nothing is stored on the visitor's device, so PECR consent is not engaged for the aggregate tier. Session-level analytics are strictly opt-in.
+**Cookieless analytics, built rather than installed.** No third-party tracking script — no Google Analytics, no tag manager, nothing in the network tab that isn't first-party. Unique visitors are counted with a rotating-salt hash computed server-side — the salt regenerates every 24 hours and the old one is destroyed, so identifiers are mathematically unlinkable across days. IP addresses are resolved to a coarse country and discarded in the same function invocation; they are never written or logged. The aggregate tier writes nothing to the visitor's device, so PECR consent is not engaged by it. The site does store three things locally — the theme, the language and Recruiter Mode — because the visitor chose them; those are user-requested preferences, which PECR exempts, and they never leave the browser. Session-level analytics are strictly opt-in.
 
 The `/privacy` page shows a live table of every field the site can collect, its status, and the visitor's own current values — including the rows marked *never collected*.
 
@@ -64,7 +73,7 @@ lib/
   core/       tokens, platform, motion, painting, analytics, shared widgets
   content/    models and repository — content is local JSON, no CMS
   features/   station, trace, signal, work, writing, about, privacy, console
-docs/         specification and build worklog
+docs/         specification, provenance ledger, and build worklog
 web/          hand-authored shell and static routes
 ```
 

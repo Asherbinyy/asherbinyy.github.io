@@ -39,8 +39,17 @@ void main() {
       expect(Apps.fromJson(a.toJson()), a);
       expect(Education.fromJson(e.toJson()), e);
       expect(p.name.resolve(AppLocale.arabic), _object(profile['name'])['ar']);
-      expect(p.positioning.resolve(AppLocale.arabic), p.positioning.en);
+      // The contract, not one field's current state: Arabic where the content
+      // supplies it, English where it does not. This asserted that positioning
+      // fell back to English, which stopped being a statement about the
+      // fallback the moment milestone 4 wrote an Arabic positioning line.
       expect(p.positioning.resolve(AppLocale.english), p.positioning.en);
+      expect(
+        p.positioning.resolve(AppLocale.arabic),
+        p.positioning.ar ?? p.positioning.en,
+      );
+      const untranslated = LocalizedText(en: 'only English');
+      expect(untranslated.resolve(AppLocale.arabic), 'only English');
       expect(() => c.roles.clear(), throwsUnsupportedError);
     },
   );
@@ -117,7 +126,12 @@ void main() {
     });
   }
   test('career rejects a period ending before it starts', () {
-    _item(career, 'roles')['end'] = '2020-01';
+    // Deliberately absurd rather than "one year before the current first
+    // entry". This asserted 2020-01 until milestone 4, which stopped being an
+    // invalid end the moment the journey gained a 2015 study stop ahead of the
+    // first job -- so a content edit silently turned a real assertion into one
+    // that could never fail.
+    _item(career, 'roles')['end'] = '1900-01';
     expect(() => ContentParser.career(career), throwsFormatException);
   });
   test('career rejects nonchronological source order', () {
@@ -133,7 +147,13 @@ void main() {
     expect(() => ContentParser.apps(apps), throwsFormatException);
   });
   test('apps reject more than six featured entries', () {
-    _item(apps, 'apps', 6)['featured'] = true;
+    // Feature everything rather than flipping one index. Flagging index 6
+    // stopped adding a seventh the moment the ledger's order changed and that
+    // slot was already featured, which made the assertion unfailable without
+    // making it fail -- the same trap as the chronology test above.
+    for (final app in _array(apps['apps'])) {
+      _object(app)['featured'] = true;
+    }
     expect(() => ContentParser.apps(apps), throwsFormatException);
   });
   test('apps reject a store link for an undeclared platform', () {

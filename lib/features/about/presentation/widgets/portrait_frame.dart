@@ -1,25 +1,29 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/content/content_result.dart';
+import 'package:nocturne/content/asset_content.dart';
+import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
+import 'package:nocturne/core/widgets/loading/three_stage_image.dart';
 
 /// The 4:5 portrait slot from the screen spec.
 ///
-/// **`profile.portrait` is null and no image file exists in the repository.**
-/// The brief for the shot is in `01-DESIGN-SYSTEM.md` §10 and taking it is the
-/// owner's job, so this reserves the exact geometry and says plainly that the
-/// frame is empty — rather than shipping a stock face, an avatar initial, or a
-/// silhouette a viewer might mistake for the person.
+/// The owner supplied the photograph on 2026-09-07, closing an item open since
+/// milestone 1. It resolves through [ThreeStageImage] like every other image
+/// on the site, so a failed load degrades to the empty frame rather than to a
+/// broken-image glyph, and the geometry is identical either way — nothing
+/// moves whether the file resolves or not.
 ///
-/// When the portrait arrives this becomes a `ThreeStageImage` at these same
-/// dimensions, so nothing around it moves. It is a `StatelessWidget` with no
-/// provider read on purpose: there is exactly one state to render today, and a
-/// branch on a field that is always null would be dead code pretending to be
-/// a feature.
-class PortraitFrame extends StatelessWidget {
-  /// Reserves the portrait's slot.
+/// `profile.portrait` is still read rather than hard-coded. The content layer
+/// owns what the site says about the owner, and a path baked into a widget is
+/// one an owner cannot change by editing JSON.
+class PortraitFrame extends ConsumerWidget {
+  /// Reads `profile.portrait`.
   const PortraitFrame({super.key});
 
   /// Declared, never inferred — the 4:5 ratio the spec asks for.
@@ -29,10 +33,40 @@ class PortraitFrame extends StatelessWidget {
   static const double height = 350;
 
   @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final portrait = switch (ref.watch(profileProvider).valueOrNull) {
+      ContentReady<Profile>(:final data) => data.portrait,
+      _ => null,
+    };
+
+    // A portrait explicitly marked as a placeholder is not the owner, so it
+    // is not shown as him. The empty frame is the honest render.
+    if (portrait == null || portrait.isPlaceholder) return const _EmptyFrame();
+
+    return InstrumentPanel(
+      child: ThreeStageImage(
+        image: AssetImage(portrait.src),
+        width: width,
+        height: height,
+        fallback: const _EmptyFrame(),
+        semanticLabel: context.l10n.aboutPortraitLabel,
+      ),
+    );
+  }
+}
+
+/// The reserved slot, when no portrait resolves.
+///
+/// Says plainly that the frame is empty rather than shipping a stock face, an
+/// avatar initial, or a silhouette a viewer might mistake for the person.
+class _EmptyFrame extends StatelessWidget {
+  const _EmptyFrame();
+
+  @override
   Widget build(BuildContext context) => InstrumentPanel(
     child: SizedBox(
-      width: width,
-      height: height,
+      width: PortraitFrame.width,
+      height: PortraitFrame.height,
       child: Center(
         child: Padding(
           padding: EdgeInsets.all(context.tokens.space16),

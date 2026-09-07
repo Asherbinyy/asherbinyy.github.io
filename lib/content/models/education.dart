@@ -3,6 +3,8 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'package:nocturne/content/models/localized_text.dart';
+
 part 'education.freezed.dart';
 part 'education.g.dart';
 
@@ -22,14 +24,14 @@ class Education with _$Education {
 class EducationEntry with _$EducationEntry {
   /// Creates an immutable EducationEntry record.
   const factory EducationEntry({
-    required String institution,
-    required String award,
+    required LocalizedText institution,
+    required LocalizedText award,
     required String start,
     required String end,
-    String? status,
+    LocalizedText? status,
     double? overallMark,
     @Default(<EducationModule>[]) List<EducationModule> modules,
-    @Default(<String>[]) List<String> highlights,
+    @Default(<LocalizedText>[]) List<LocalizedText> highlights,
   }) = _EducationEntry;
 
   /// Decodes the documented JSON shape.
@@ -41,10 +43,34 @@ class EducationEntry with _$EducationEntry {
 @freezed
 class EducationModule with _$EducationModule {
   /// Creates an immutable EducationModule record.
-  const factory EducationModule({required String name, required double mark}) =
-      _EducationModule;
+  const factory EducationModule({
+    required LocalizedText name,
+    required double mark,
+    Evidence? evidence,
+  }) = _EducationModule;
 
   /// Decodes the documented JSON shape.
   factory EducationModule.fromJson(Map<String, dynamic> json) =>
       _$EducationModuleFromJson(json);
+}
+
+/// A piece of coursework the owner is willing to show.
+///
+/// A mark is a number the reader has to take on trust. The artefact behind it
+/// is the thing that makes it evidence rather than a claim, which is the whole
+/// argument of `14-PROVENANCE.md` applied to the transcript.
+///
+/// Absent on every module where the owner has not supplied one, and nothing
+/// is inferred: a module without evidence renders its mark exactly as before.
+@freezed
+class Evidence with _$Evidence {
+  /// Creates an immutable Evidence record.
+  const factory Evidence({
+    required String src,
+    required LocalizedText caption,
+  }) = _Evidence;
+
+  /// Decodes the documented JSON shape.
+  factory Evidence.fromJson(Map<String, dynamic> json) =>
+      _$EvidenceFromJson(json);
 }

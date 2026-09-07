@@ -8,7 +8,45 @@ than burying it in a worklog nobody re-reads.
 Worklogs record what happened in a session. **This file records what is still
 true.** If the two disagree, this file is the one to fix.
 
-Last reviewed: 2026-09-06, after deploying the Milestone 2 Worker.
+Last reviewed: 2026-09-07, after the Milestone 4 Worker deployment.
+
+---
+
+## 0a. Direction changed on 2026-09-07
+
+The owner replaced the site's concept. "Ground Station" is retired; the identity
+is now Egyptian — `00-PROJECT-BRIEF.md` §3 and `12-MOTIF-LIBRARY.md`. Milestones
+4, 5 and 6 in `09-ROADMAP.md` carry the work.
+
+Three standing rules changed with it, and an agent working from memory of the
+old ones will be wrong:
+
+1. **The amber-only palette rule is gone**, replaced by four pigments each locked to one job — `AGENTS.md` §6, `01-DESIGN-SYSTEM.md` §2. This is not a loosening; a fifth hue is still forbidden and faience may never appear at rest.
+2. **Every number now needs a provenance row** in `14-PROVENANCE.md` before it ships.
+3. **Motifs are a closed inventory.** Not in `12-MOTIF-LIBRARY.md`, not on the site.
+
+Content and claim gaps are no longer tracked in §1 below. **`14-PROVENANCE.md`
+§3 is the authority** on what is needed from the owner; §1 here is kept for the
+rows that predate the change and have not yet been folded in.
+
+---
+
+## 0b. Found on 2026-09-07, not yet fixed
+
+| # | Item | Consequence | Fixed by |
+|---|---|---|---|
+| ~~0b.1~~ | **Closed at planning.** The README now says the aggregate tier writes nothing, and that theme, language and Recruiter Mode persist as user-requested preferences, which PECR exempts. Original text: **"Nothing is stored on the visitor's device."** Theme, language and Recruiter Mode have persisted through `shared_preference_store.dart` since milestone 1. The sentence is about the analytics tier but does not say so, and reads as a claim about the whole site. | A privacy claim that is false as written, on a site whose argument is its privacy posture | 4.1 |
+| ~~0b.2~~ | **Closed 4.8.** `SelectionArea` wraps the content column. It deliberately excludes the header, rail and footer so a drag beginning on a control does not become a text drag; three tests hold that boundary in both directions. |
+| ~~0b.3~~ | **Closed.** Guardy makes Germany a genuine sixth, and Evri's removal took the UK out of the working count. The five the CV names plus Germany. Original: **"Six countries" overstates the CV**, which names five countries of delivery plus the UK as residence. Guardy would make it genuinely six. | An inflated claim on the hero, the stat panel and `/brief` | 4.1, 4.2 |
+| ~~0b.4~~ | **Closed.** The owner confirmed the CV's 15,000+ is current and the LinkedIn entry is stale. The site is unchanged; `14-PROVENANCE.md` §2.2 records it so it is not re-opened. |
+| ~~0b.5~~ | **Closed.** The owner chose the CV's "CI Company". The public records still disagree; updating LinkedIn would close it from the other side, which is his call, not an agent's. |
+| ~~0b.6~~ | **Closed.** April 2023. Original: **CI Company end date** — CV says 04/2023, LinkedIn says Jul 2023. | A three-month gap across a job boundary | 4.1 |
+| ~~0b.7~~ | **Closed 4.9.** Removed, and nothing replaced it. The test asserting it was inverted rather than deleted, so a future agent finding the plumbing intact also finds the reason it went. **Still open for the owner:** the footer's remaining line reads "Manchester". His objection named the city as well as the latitude, but a footer location is ordinary and true, so it was left rather than removed on an inference. |
+| ~~0b.8~~ | **Closed 4.3.** The rail is continuous instead of six disconnected segments, the selected stop is named above it, and a step control sits at each end — which is the part that makes it obviously operable on a phone, with a mouse and from the keyboard. Original: **The chronology scrubber has no legible affordance.** Nothing indicates it can be dragged. | The map's primary touch control is undiscoverable | 4.3 |
+| ~~0b.9~~ | **Closed 4.3.** It filled with `surfaceRaised`, which is near-white on papyrus, so it had no edge against the page. It now fills with `surface` and carries a short gold rule above the name. Original: **The transmission panel reads as a plain card**, particularly in the light theme. | The map's content surface looks unfinished | 4.3 |
+| 0b.10 | **Implementation complete 4.5; Worker deployed (0b.12).** Browser verification remains open: writing and cover providers both derive from `ANALYTICS_ENDPOINT`, which the current release and local build omit. Enabling article requests independently of analytics needs a separate change. | Article covers are not enabled by the Worker deployment alone | Follow-up implementation and browser verification |
+| ~~0b.11~~ | **Closed 2026-09-07.** The owner supplied the pub.dev link and asked for it to ship. `AppPlatform` gained `pub` and `WorkDomain` gained `openSource`: a package has a public listing anyone can open, which satisfies his live-links rule, but it is not something a person installs, so the ledger says "pub.dev" rather than a store name. **Open for the owner:** pub.dev lists a different spelling of his surname and a different email, and the uploader is unverified — see `14-PROVENANCE.md` §3c. |
+| ~~0b.12~~ | **Closed 2026-09-07.** Deployed from the repository root using the documented isolated Node 22 / Wrangler 4.129.0 command. Worker version `929f5eaa-54c8-433e-afec-257decbd1b12` is live at `https://nocturne-analytics.asherbinyy.workers.dev`; the owner's fake-image cover request with the configured site Origin returned **502**, confirming the route shipped. | Browser checks remain separate (0b.10) | Worker deployed and endpoint verified |
 
 ---
 
@@ -32,6 +70,28 @@ build that *is* collecting, so it cannot rot. Restoring collection is one
 
 The deployed Worker is untouched and still serves `/v1/writing`, which is
 content rather than analytics and carries nothing about the viewer.
+
+**Milestone 4 added `/v1/cover` to the same Worker**, for the same reason and
+with the same posture: article cover images are relayed through this origin so
+that opening `/writing` issues no request to Medium carrying the viewer's IP or
+referrer. It allowlists Medium's two CDN hosts, refuses anything that is not an
+image, caps the response at 2MB and passes through no upstream header but the
+content type. **Deployed and endpoint verified** — see 0b.12. The client-side
+endpoint configuration limitation is recorded in 0b.10.
+
+---
+
+## 0c. Opened during Milestone 4
+
+| # | Item | Notes |
+|---|---|---|
+| 0c.1 | **Guardy has no engagement dates**, so it ships as an application rather than a stop on the map. Germany therefore appears in the ledger and in the countries claim but not on the atlas. | Supplying start and end months would let it become a stop. `14-PROVENANCE.md` §3b. |
+| 0c.2 | **Malboos lost its featured slot to Guardy.** The parser caps featured entries at six and Malboos is the only one with no role description — a bare name and a link. An editorial call an agent made; reversing it is one flag in `apps.json`. | Owner may disagree |
+| 0c.3 | **The research poster is cropped** to remove a header band carrying the owner's name and student number. The caption carries the title instead. | A matriculation number has no reason to be on a public page |
+| 0c.4 | **`assets/media/apps/` is empty.** The screenshot pipeline is built and documented; no screenshots have been supplied. Every row still draws its procedural card, which is the designed absence rather than a defect. | Rolls up into 1.10 |
+| 0c.6 | **The trace cannot fully clear the text on a phone.** It is confined to a 28% trailing strip and its labels are dropped, which fixes the collision the owner reported, but a 360px viewport has a full-width text column and a waveform cannot be disjoint from it. **A decision for milestone 5:** the wall replaces this paint, and it should decide whether the signature element exists on compact at all rather than inheriting a compromise. | Owner reported it 2026-09-07 |
+| 0c.7 | **"The trace only reaches before Manchester."** Reported by the owner on a phone. Not reproduced from the code: all seven stops receive anchors, the last is the Salford entry, and the career sequence is the last thing on the page. Possibly the measured-anchor path failing on a phone and falling back to provisional spacing, which insets the last burst to 7/8 of the range. **Needs one look at the rebuilt preview to confirm before it is chased further** — no fix was guessed at. | Owner to confirm |
+| 0c.5 | **The interests section is not in `02-SCREEN-SPECS.md`.** Nor are the evidence thumbnails, the redesigned scrubber, or `/ascent`. That document still describes the ground station throughout. | Deferred deliberately — see the milestone-4 worklogs |
 
 ---
 

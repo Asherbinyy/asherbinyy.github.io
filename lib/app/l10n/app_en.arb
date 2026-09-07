@@ -36,6 +36,18 @@
   "@workDomainMarketplace": {
     "description": "Application category label for the Marketplace domain."
   },
+  "workDomainOpenSource": "Open source",
+  "@workDomainOpenSource": {
+    "description": "Work grid: the Open source domain"
+  },
+  "workPubDev": "pub.dev",
+  "@workPubDev": {
+    "description": "Work grid: the pub.dev package listing link"
+  },
+  "workDomainSafety": "Safety",
+  "@workDomainSafety": {
+    "description": "Work grid: the Safety domain"
+  },
   "workDomainConsumer": "Consumer",
   "@workDomainConsumer": {
     "description": "Application category label for the Consumer domain."
@@ -108,13 +120,13 @@
   "@traceLock": {
     "description": "Rail indicator: the signal has resolved and locked."
   },
-  "footerLocation": "Manchester",
-  "@footerLocation": {
-    "description": "The owner's city, shown in the footer."
-  },
   "heroSeeTheWork": "See the work",
   "@heroSeeTheWork": {
     "description": "Primary hero call to action, navigating to the work ledger."
+  },
+  "heroDownloadTheCv": "Download the CV",
+  "@heroDownloadTheCv": {
+    "description": "Secondary hero call to action, downloading the CV as a PDF."
   },
   "heroReadTheCv": "Read the CV",
   "@heroReadTheCv": {
@@ -167,6 +179,18 @@
         "type": "String"
       }
     }
+  },
+  "signalPreviousStop": "Previous stop",
+  "@signalPreviousStop": {
+    "description": "Map scrubber: steps back one stop"
+  },
+  "signalNextStop": "Next stop",
+  "@signalNextStop": {
+    "description": "Map scrubber: steps forward one stop"
+  },
+  "signalScrubberHint": "Choose a stop",
+  "@signalScrubberHint": {
+    "description": "Map scrubber: shown before a stop is selected"
   },
   "signalScrubberLabel": "Career chronology",
   "@signalScrubberLabel": {
@@ -291,6 +315,10 @@
   "@aboutWriting": {
     "description": "About screen: writing section heading"
   },
+  "aboutPortraitLabel": "Portrait of Sherbini",
+  "@aboutPortraitLabel": {
+    "description": "About screen: alt text for the resolved portrait"
+  },
   "aboutPortraitPending": "Portrait pending",
   "@aboutPortraitPending": {
     "description": "About screen: the reserved portrait frame"
@@ -406,6 +434,19 @@
   "consoleDailyViews": "Views per day",
   "@consoleDailyViews": {
     "description": "Console: sparkline label"
+  },
+  "aboutEvidenceOpen": "Open: {caption}",
+  "@aboutEvidenceOpen": {
+    "description": "About screen: opens a coursework artefact",
+    "placeholders": { "caption": { "type": "String" } }
+  },
+  "aboutEvidenceClose": "Close",
+  "@aboutEvidenceClose": {
+    "description": "About screen: closes the artefact view"
+  },
+  "aboutOffDuty": "Off duty",
+  "@aboutOffDuty": {
+    "description": "About screen: the heading over the owner's interests"
   },
   "aboutContact": "Contact",
   "@aboutContact": {

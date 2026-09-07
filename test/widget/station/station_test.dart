@@ -28,7 +28,10 @@ void main() {
     ) async {
       await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
 
-      expect(find.text('Ahmed Elsherbini'), findsOneWidget);
+      // Every in-app surface shows `profile.displayName`. The legal name is
+      // reserved for /cv and for structured metadata -- see Profile.shownName.
+      expect(find.text('Sherbini'), findsOneWidget);
+      expect(find.text('Ahmed Elsherbini'), findsNothing);
       expect(
         find.text(
           'Mobile engineer. 25+ applications shipped across six countries.',
@@ -42,7 +45,16 @@ void main() {
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
       expect(find.text(l10n.heroSeeTheWork), findsOneWidget);
-      expect(find.text(l10n.heroReadTheCv), findsOneWidget);
+      // The label names its outcome: "Download" now that profile.cvFile
+      // supplies a PDF, "Read" where it does not and the static HTML page is
+      // what opens. Asserted as one or the other rather than pinned to the
+      // current content, so supplying or withdrawing the file is a content
+      // decision and not a failing test.
+      expect(
+        find.text(l10n.heroDownloadTheCv).evaluate().length +
+            find.text(l10n.heroReadTheCv).evaluate().length,
+        1,
+      );
       // Scoped to the hero: the consent banner carries three of its own.
       expect(
         find.descendant(
@@ -142,14 +154,19 @@ void main() {
       expect(find.text('shipped'), findsOneWidget);
     });
 
-    testWidgets('the footer reads the current station coordinate', (
-      tester,
-    ) async {
+    testWidgets('the footer carries no coordinate readout', (tester) async {
       await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
 
-      // Evri is the one career role with no end date, and career.json puts
-      // Manchester at 53.4808.
-      expect(find.text('lat 53.4808'), findsOneWidget);
+      // This test asserted the opposite until milestone 4. The footer derived
+      // a latitude from the one career role with no end date -- Evri, which
+      // career.json puts at 53.4808 -- and printed it at the trailing edge.
+      // Task 4.9 removed it on the owner's instruction: being introduced by a
+      // map reference is the opposite of what the site is now for.
+      //
+      // Inverted rather than deleted. A removed feature with no test is a
+      // feature a future agent reinstates, having found the painter still
+      // there and no record of why it went.
+      expect(find.textContaining('lat '), findsNothing);
       expect(find.byType(AppFooter), findsOneWidget);
     });
   });
@@ -166,8 +183,9 @@ void main() {
         ),
       );
 
-      // The fallback carries the owner's real name, so this is a hero, not an
-      // error state.
+      // The fallback carries the owner's own name, so this is a hero, not an
+      // error state. fallback.json has no displayName, so this also proves
+      // shownName falls back to the legal name rather than rendering nothing.
       expect(find.byType(HeroContent), findsOneWidget);
       expect(find.text('Ahmed Elsherbini'), findsOneWidget);
       expect(find.byType(CarrierEmptyState), findsNothing);
@@ -231,7 +249,7 @@ void main() {
       await pumpFrames(tester);
 
       expect(container.read(acquisitionPlayedProvider), isTrue);
-      expect(find.text('Ahmed Elsherbini'), findsOneWidget);
+      expect(find.text('Sherbini'), findsOneWidget);
     });
 
     testWidgets('a pointer press skips it too', (tester) async {
@@ -304,7 +322,7 @@ void main() {
       await tester.pump(Tokens.instant);
 
       expect(container.read(acquisitionPlayedProvider), isTrue);
-      expect(find.text('Ahmed Elsherbini'), findsOneWidget);
+      expect(find.text('Sherbini'), findsOneWidget);
     });
 
     testWidgets('no other route carries the sequence', (tester) async {

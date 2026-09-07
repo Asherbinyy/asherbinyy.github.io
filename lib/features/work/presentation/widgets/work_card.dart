@@ -63,7 +63,7 @@ class WorkCard extends StatelessWidget {
     final tokens = context.tokens;
     final type = context.type;
     final metric = app.metric;
-    final role = app.role;
+    final role = app.role?.resolve(context.channel);
 
     return SizedBox(
       width: width,
@@ -133,6 +133,7 @@ class _StoreLinks extends StatelessWidget {
             label: switch (platform) {
               AppPlatform.ios => l10n.workAppStore,
               AppPlatform.android => l10n.workGooglePlay,
+              AppPlatform.pub => l10n.workPubDev,
             },
           ),
       ],

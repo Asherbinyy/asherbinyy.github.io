@@ -152,6 +152,10 @@ class _Map extends StatelessWidget {
             SizedBox(height: tokens.space24),
             ChronologyScrubber(
               marks: [for (final role in roles) role.start.split('-').first],
+              // The company where the content records one, the city where it
+              // does not -- the same rule the transmission panel heads with,
+              // so the scrubber names a stop the way the panel does.
+              places: [for (final role in roles) role.company ?? role.city],
               selectedIndex: index,
               onSelected: onSelected,
             ),

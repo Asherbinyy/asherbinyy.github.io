@@ -5,6 +5,57 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### Fixed
+
+- Deployed the Milestone 4 Worker from the repository root. The `/v1/cover`
+  fake-image check returns the expected 502; Pages is deployed separately.
+
+## [0.3.0] — 2026-09-07
+
+Milestone 4, "Provenance". Everything the site says is now sourced, and there
+is a person behind it. The visual language is unchanged apart from the palette;
+the Egyptian redesign is milestone 5.
+
+### Added
+
+- **Off duty** on `/about` — six interests in the owner's own words, with the specifics he named. Legible without hovering and deliberately outside the tab order, because a tile has nowhere to go.
+- **The portrait**, closing an item open since milestone 1.
+- **Coursework beside two marks** — a Power BI dashboard at 94 and a research poster at 80 — as thumbnails that open full size. A mark is a number a reader takes on trust; the artefact is what makes it evidence.
+- **Guardy**, and Tiara Beauty marked freelance. Germany is the owner's genuine sixth country.
+- **Real article covers on `/writing`**, relayed through the Worker's new `/v1/cover` so that opening the page issues no request to Medium carrying the viewer's IP.
+- **The CV as a PDF.** The hero's second action now reads *Download the CV*.
+- **A screenshot pipeline** for the work ledger — drop a file in `assets/media/apps/` and point one line of `apps.json` at it.
+- **`docs/14-PROVENANCE.md`**, mapping every claim to its source, with a test that fails if a published figure has no row.
+- **`docs/AR-REVIEW.md`**, every Arabic string beside its English.
+
+### Changed
+
+- **The palette.** Kemet and Deshret replace Nocturne and Daybreak. The dark base moved from `#05070A` to `#121826` — 4.4× the relative luminance — because the owner found it too dark. Both were solved against the contrast suite rather than chosen, and `faience` joins as the interaction pigment.
+- **Arabic is a translation, not a direction flip.** App roles, institutions, awards, academic status, module names and highlights could not hold Arabic at all; they are `LocalizedText` now. 44 strings across five documents.
+- **The name is Sherbini** everywhere a person reads it. `/cv` and every `<title>`, Open Graph tag and JSON-LD record keep the legal name, because that is what an ATS parses and what a recruiter types into a search box.
+- **The journey starts in 2015**, at Mansoura University, and ends at Salford — both already in the content, so the map gained an origin and a present with no new claim.
+- **The chronology scrubber** has a continuous rail, names the stop it has selected, and is flanked by step controls.
+- **The transmission panel** no longer reads as a plain white card on papyrus.
+- **`/about` publishes the four strongest module marks.** `education.json` keeps all seven and `/cv` still prints them.
+
+### Fixed
+
+- **Text can be selected and copied.** Flutter paints to canvas, so it could not be — including the owner's email address.
+- **The static pages had drifted from the app's palette**, serving milestone-1 amber and `#05070A` browser chrome while the app was Kemet. Their tests were hand-copied hex literals, so they agreed with the stale output; they derive from the tokens now.
+- **`StationCard` overflowed** whenever a wrapping name met a card between its one-line and two-line heights. The threshold reserved one line while the label drew two — latent since milestone 1.
+- **The README's privacy claim** said nothing is stored on the visitor's device. Theme, language and Recruiter Mode have persisted since milestone 1.
+- **"Six countries" overstated the CV**, which named five plus a UK residency.
+- Evri is removed, and the footer no longer introduces the owner by a latitude.
+
+### Known at release
+
+`/v1/cover` was written and tested but **not yet deployed at milestone completion**;
+the deployment is recorded under Unreleased. Wrangler runs from the repository
+root, where `wrangler.toml` points to `worker/src/index.js`. The Arabic
+was written by an agent under an explicit waiver and has not had a native read.
+`docs/02-SCREEN-SPECS.md` and `docs/07-CONTENT-SCHEMA.md` still describe the
+ground station. Full list in `docs/11-OPEN-ISSUES.md`.
+
 ## [0.2.0] — 2026-09-06
 
 Milestone 2, "Depth". Published to GitHub Pages and tagged `v0.2.0`.
@@ -95,3 +146,5 @@ run outside CI, because `main` is what publishes them. `docs/11-OPEN-ISSUES.md`
 [0.1.0]: https://github.com/Asherbinyy/asherbinyy.github.io/releases/tag/v0.1.0
 
 [0.2.0]: https://github.com/Asherbinyy/asherbinyy.github.io/releases/tag/v0.2.0
+
+[0.3.0]: https://github.com/Asherbinyy/asherbinyy.github.io/releases/tag/v0.3.0

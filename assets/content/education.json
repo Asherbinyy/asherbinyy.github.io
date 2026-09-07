@@ -1,50 +1,106 @@
 {
   "entries": [
     {
-      "institution": "University of Salford",
-      "award": "MSc Managing Innovation & Information Technology",
+      "institution": {
+        "en": "University of Salford",
+        "ar": "جامعة سالفورد"
+      },
+      "award": {
+        "en": "MSc Managing Innovation & Information Technology",
+        "ar": "ماجستير إدارة الابتكار وتقنية المعلومات"
+      },
       "start": "2025-09",
       "end": "2026-09",
-      "status": "Distinction",
+      "status": {
+        "en": "Distinction",
+        "ar": "امتياز"
+      },
       "overallMark": 79,
       "modules": [
         {
-          "name": "Business Data Insights & Analytics",
-          "mark": 94
+          "name": {
+            "en": "Business Data Insights & Analytics",
+            "ar": "تحليلات ورؤى بيانات الأعمال"
+          },
+          "mark": 94,
+          "evidence": {
+            "src": "assets/media/bdia-dashboard.jpg",
+            "caption": {
+              "en": "Power BI dashboard built for the module",
+              "ar": "لوحة معلومات Power BI أُنجزت ضمن المقرر"
+            }
+          }
         },
         {
-          "name": "Managing Information Systems & Transformation",
+          "name": {
+            "en": "Managing Information Systems & Transformation",
+            "ar": "إدارة نظم المعلومات والتحوّل"
+          },
           "mark": 86
         },
         {
-          "name": "Cybersecurity & Information Management",
+          "name": {
+            "en": "Cybersecurity & Information Management",
+            "ar": "الأمن السيبراني وإدارة المعلومات"
+          },
           "mark": 81
         },
         {
-          "name": "Responsible Technologies",
-          "mark": 80
+          "name": {
+            "en": "Responsible Technologies",
+            "ar": "التقنيات المسؤولة"
+          },
+          "mark": 80,
+          "evidence": {
+            "src": "assets/media/rt-poster.jpg",
+            "caption": {
+              "en": "Research poster: the AI e-waste crisis",
+              "ar": "ملصق بحثي: أزمة النفايات الإلكترونية للذكاء الاصطناعي"
+            }
+          }
         },
         {
-          "name": "Managing Project Deployment & Delivery",
+          "name": {
+            "en": "Managing Project Deployment & Delivery",
+            "ar": "إدارة تنفيذ المشاريع وتسليمها"
+          },
           "mark": 75
         },
         {
-          "name": "Research Methods for Managers",
+          "name": {
+            "en": "Research Methods for Managers",
+            "ar": "مناهج البحث للمديرين"
+          },
           "mark": 72
         },
         {
-          "name": "Managing Innovation & Creativity",
+          "name": {
+            "en": "Managing Innovation & Creativity",
+            "ar": "إدارة الابتكار والإبداع"
+          },
           "mark": 70
         }
       ],
       "highlights": [
-        "Dissertation: human oversight and accountability in generative AI adoption within Big Four consulting firms",
-        "Led a smartphone manufacturer in the Edumundo strategy simulation — 2nd of cohort"
+        {
+          "en": "Dissertation: human oversight and accountability in generative AI adoption within Big Four consulting firms",
+          "ar": "رسالة الماجستير: الإشراف البشري والمساءلة في تبنّي الذكاء الاصطناعي التوليدي داخل شركات الاستشارات الأربع الكبرى"
+        },
+        {
+          "en": "Led a smartphone manufacturer in the Edumundo strategy simulation — 2nd of cohort",
+          "ar": "قاد شركة هواتف ذكية في محاكاة Edumundo الاستراتيجية — المركز الثاني على الدفعة"
+        }
       ]
     },
     {
-      "institution": "Mansoura University",
-      "award": "BEng Communications & Electronics Engineering",
+      "institution": {
+        "en": "Mansoura University",
+        "ar": "جامعة المنصورة"
+      },
+      "award": {
+        "en": "BEng Communications & Electronics Engineering",
+        "ar": "بكالوريوس هندسة الاتصالات والإلكترونيات"
+      },
       "start": "2015-09",
       "end": "2020-08"
     }

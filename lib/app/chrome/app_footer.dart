@@ -1,32 +1,27 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
-import 'package:nocturne/app/theme/typography.dart';
-import 'package:nocturne/core/platform/platform_scope.dart';
-import 'package:nocturne/core/platform/platform_service.dart';
 
-/// The 48px footer, carrying the coordinate readout.
+/// The 48px footer: a closing rule, and nothing else.
 ///
-/// Screen spec: the viewer's resolved coarse location if consented, otherwise
-/// Manchester. Consent does not exist until task 1.10, so this always shows
-/// the fallback — which is the truthful reading, not a placeholder.
+/// It carried a coordinate readout and the owner's city until milestone 4.
+/// Task 4.9 removed the coordinate, and the owner then asked for the city to
+/// go too — a footer that introduces someone by their location reads as a form
+/// field rather than as a person, and his location is already on `/about`,
+/// `/cv` and `/brief` where a recruiter looks for it.
+///
+/// The row keeps its height and its top hairline. That is deliberate: the rule
+/// terminates the content column so a short page does not simply stop, and the
+/// reserved height is what stops the footer moving when a page grows. An empty
+/// bar is the honest result of having nothing to say here, and inventing a
+/// tagline to fill it would be exactly the kind of copy the owner objected to.
 class AppFooter extends StatelessWidget {
-  /// [coordinate] is the already-formatted readout, or null until the content
-  /// layer is wired into the app in task 1.6.
-  const AppFooter({this.coordinate, super.key});
-
-  /// The monospace coordinate string shown at the trailing edge.
-  final String? coordinate;
+  /// Creates the footer.
+  const AppFooter({super.key});
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final l10n = context.l10n;
-    final readout = coordinate;
-
-    final hasRoomForReadout =
-        context.platform.viewport.index >= ViewportClass.medium.index;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -35,44 +30,7 @@ class AppFooter extends StatelessWidget {
           top: BorderSide(color: tokens.hairline, width: tokens.hairlineWidth),
         ),
       ),
-      child: SizedBox(
-        height: tokens.footerHeight,
-        child: Padding(
-          padding: EdgeInsetsDirectional.symmetric(
-            horizontal: context.platform.gutter,
-          ),
-          child: Row(
-            children: [
-              Flexible(
-                child: Text(
-                  l10n.footerLocation,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.type.meta,
-                ),
-              ),
-
-              // Only pushes the readout to the far edge. Without one there is
-              // nothing to push, and an expanding Spacer would compete with
-              // the location text for the space it needs to ellipsize into.
-              if (readout != null && hasRoomForReadout) const Spacer(),
-              // The one place the concept winks. Quiet, muted, monospace.
-              // Omitted rather than faked while the reading is unavailable,
-              // and dropped entirely on a phone: the footer is one 48px row,
-              // and when it runs out of room a decorative flourish yields
-              // before a navigational link does.
-              if (readout != null && hasRoomForReadout)
-                Text(
-                  readout,
-                  maxLines: 1,
-                  style: context.type.telemetryS.copyWith(
-                    color: tokens.textMuted,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+      child: SizedBox(height: tokens.footerHeight, width: double.infinity),
     );
   }
 }

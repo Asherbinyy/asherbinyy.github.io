@@ -9,6 +9,9 @@
   "workDomainRetail": "تجزئة",
   "workDomainServices": "خدمات",
   "workDomainMarketplace": "سوق",
+  "workDomainOpenSource": "مفتوح المصدر",
+  "workPubDev": "pub.dev",
+  "workDomainSafety": "السلامة",
   "workDomainConsumer": "استهلاكي",
   "navStation": "المحطة",
   "navSignal": "الإشارة",
@@ -27,8 +30,8 @@
   "traceStandby": "استعداد",
   "traceScanning": "مسح",
   "traceLock": "التقاط",
-  "footerLocation": "مانشستر",
   "heroSeeTheWork": "اطّلع على الأعمال",
+  "heroDownloadTheCv": "حمّل السيرة الذاتية",
   "heroReadTheCv": "اقرأ السيرة الذاتية",
   "acquisitionSkip": "تخطّي المقدمة",
   "acquisitionLabel": "جارٍ التقاط الإشارة",
@@ -40,6 +43,9 @@
   "signalHeading": "أين جرى العمل",
   "signalMapLabel": "خريطة الانتشار. استخدم مفاتيح الأسهم للتنقّل بين المحطات.",
   "signalStationLabel": "{city}، {country}",
+  "signalPreviousStop": "المحطة السابقة",
+  "signalNextStop": "المحطة التالية",
+  "signalScrubberHint": "اختر محطة",
   "signalScrubberLabel": "التسلسل الزمني للمسيرة",
   "signalAppsShipped": "{count, plural, =1{تطبيق واحد} other{{count} تطبيقات}}",
   "signalClose": "إغلاق",
@@ -91,6 +97,7 @@
   "@aboutWriting": {
     "description": "About screen: writing section heading"
   },
+  "aboutPortraitLabel": "صورة الشربيني",
   "aboutPortraitPending": "الصورة قيد الإعداد",
   "@aboutPortraitPending": {
     "description": "About screen: the reserved portrait frame"
@@ -207,6 +214,9 @@
   "@consoleDailyViews": {
     "description": "Console: sparkline label"
   },
+  "aboutEvidenceOpen": "افتح: {caption}",
+  "aboutEvidenceClose": "إغلاق",
+  "aboutOffDuty": "خارج العمل",
   "aboutContact": "التواصل",
   "@aboutContact": {
     "description": "About: contact section heading"

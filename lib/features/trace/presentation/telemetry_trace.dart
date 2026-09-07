@@ -5,6 +5,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/trace_painter.dart';
 import 'package:nocturne/features/trace/domain/trace_controller.dart';
@@ -230,16 +232,25 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final isSettled = ReducedMotion.of(context);
+    final isCompact = context.platform.viewport == ViewportClass.compact;
 
     return IgnorePointer(
       child: LayoutBuilder(
         builder: (context, constraints) => Align(
-          // Section 6 runs the trace down the trailing two-thirds of the page,
-          // leaving the content column's own measure clear.
+          // Section 6 runs the trace down the trailing part of the page,
+          // leaving the content column's own measure clear. What "leaving it
+          // clear" costs depends on the viewport: a desktop text column stops
+          // at its measure, a phone's does not, so the fraction is asked of
+          // the platform service rather than fixed. Never branch on width
+          // here -- AGENTS.md section 6.
           alignment: AlignmentDirectional.centerEnd,
           child: SizedBox(
             key: _traceKey,
-            width: constraints.maxWidth * Tokens.traceColumnFraction,
+            width:
+                constraints.maxWidth *
+                (isCompact
+                    ? Tokens.traceColumnFractionCompact
+                    : Tokens.traceColumnFraction),
             height: constraints.maxHeight,
             child: ValueListenableBuilder<TraceFrame>(
               valueListenable: _frame,
@@ -273,17 +284,27 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
                         ),
                       ),
                     ),
-                    for (final burst in bursts)
-                      TraceBurstLabel(
-                        label: widget.labels[burst.id],
-                        top:
-                            burst.anchor * traceHeight -
-                            frame.offset -
-                            Tokens.space48,
-                        // Under reduced motion every label stays visible,
-                        // because there is no lock state to reveal them.
-                        isVisible: isSettled || lockedBurstId == burst.id,
-                      ),
+                    // No labels on a phone. They are a readout drawn inside
+                    // the trace column, which only has room for them beside a
+                    // measure-limited text column; on a narrow strip they wrap
+                    // over the copy, which is what the owner reported as the
+                    // trace and its titles overlapping the text.
+                    //
+                    // Nothing is lost by dropping them: each label repeats the
+                    // company, dates and country that the career entry it is
+                    // anchored to already prints, in full, a few pixels away.
+                    if (!isCompact)
+                      for (final burst in bursts)
+                        TraceBurstLabel(
+                          label: widget.labels[burst.id],
+                          top:
+                              burst.anchor * traceHeight -
+                              frame.offset -
+                              Tokens.space48,
+                          // Under reduced motion every label stays visible,
+                          // because there is no lock state to reveal them.
+                          isVisible: isSettled || lockedBurstId == burst.id,
+                        ),
                   ],
                 );
               },

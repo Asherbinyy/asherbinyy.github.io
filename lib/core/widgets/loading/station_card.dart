@@ -54,14 +54,24 @@ class StationCard extends StatelessWidget {
   /// Longitude of the country, when recorded.
   final double? longitude;
 
+  /// How many lines of the name the label will draw.
+  ///
+  /// Must agree with the `maxLines` on that `Text`, which is the whole point:
+  /// they disagreed until milestone 4. The threshold below reserved one line
+  /// while the label permitted two, so any card tall enough to be labelled but
+  /// shorter than two lines overflowed the moment a name wrapped. The interests
+  /// grid found it at 104px, overflowing by exactly the missing line.
+  static const int _maximumLabelLines = 2;
+
   /// The smallest card that can carry its own label.
   ///
-  /// One line of display-m plus one of telemetry-s, plus the padding either
-  /// side. Derived rather than guessed, so a change to the type scale cannot
-  /// leave a card overflowing.
+  /// Every line of display-m the label may draw, plus one of telemetry-s, plus
+  /// the padding either side. Derived rather than guessed, so a change to the
+  /// type scale cannot leave a card overflowing.
   static double _minimumLabelledHeight(NocturneTypography type) =>
       (type.displayM.fontSize ?? Tokens.displayMMin) *
-          (type.displayM.height ?? Tokens.displayMHeight) +
+          (type.displayM.height ?? Tokens.displayMHeight) *
+          _maximumLabelLines +
       (type.telemetryS.fontSize ?? Tokens.telemetrySSize) *
           (type.telemetryS.height ?? Tokens.telemetryHeight) +
       Tokens.space16 * 2;
@@ -109,7 +119,7 @@ class StationCard extends StatelessWidget {
                     Text(
                       name,
                       style: type.displayM,
-                      maxLines: 2,
+                      maxLines: _maximumLabelLines,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (telemetry.isNotEmpty)

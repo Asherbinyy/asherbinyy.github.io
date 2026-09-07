@@ -80,6 +80,18 @@ String _findProjectRoot() {
 
 /// Extracts the English text from a localized text map, falling back to an
 /// empty string.
+/// The name a human reads: `displayName` where set, else the legal `name`.
+///
+/// Only `/brief`'s heading uses this. `/cv` shows the legal name throughout,
+/// and every `<title>`, Open Graph tag and JSON-LD `Person` record on both
+/// pages keeps it too -- those are what an ATS parses and what a recruiter
+/// types into a search box, and a page that answers to "Sherbini" alone is a
+/// page that does not surface when someone searches the name on his CV.
+String _shownName(Map<String, dynamic> profile) {
+  final display = _en(profile['displayName']);
+  return display.isEmpty ? _en(profile['name']) : display;
+}
+
 String _en(dynamic localizedText) {
   if (localizedText is Map) {
     return (localizedText['en'] ?? '') as String;
@@ -143,19 +155,19 @@ String _criticalCss() => '''
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   color-scheme:dark light;
-  --void:#05070A;--surface:#0B0F16;--surface-raised:#131A24;
-  --hairline:#1C2530;--hairline-strong:#2C3846;
-  --beacon:#F2A83B;--beacon-dim:#875D22;
-  --instrument:#C6D2E0;--instrument-mid:#8A99AB;--instrument-dim:#5A6878;
-  --text-primary:#E9EEF5;--text-secondary:#93A3B5;--text-muted:#70849A;
+  --void:#121826;--surface:#1A2233;--surface-raised:#232D40;
+  --hairline:#2E3A50;--hairline-strong:#3F4D66;
+  --beacon:#E3A93F;--beacon-dim:#92702E;
+  --instrument:#CBD6E6;--instrument-mid:#93A2B8;--instrument-dim:#69788F;
+  --text-primary:#EDF1F8;--text-secondary:#A8B4C6;--text-muted:#8895A8;
 }
 @media(prefers-color-scheme:light){
   :root{
-    --void:#F1EDE4;--surface:#E8E3D8;--surface-raised:#FFFFFF;
-    --hairline:#CFC7B8;--hairline-strong:#A79C89;
-    --beacon:#95570B;--beacon-dim:#A37B41;
-    --instrument:#3A4654;--instrument-mid:#5B6773;--instrument-dim:#8E806A;
-    --text-primary:#12171E;--text-secondary:#4A5766;--text-muted:#5C6676;
+    --void:#F2E9D8;--surface:#E9DEC8;--surface-raised:#FCF7EC;
+    --hairline:#D6C8AC;--hairline-strong:#AD9C7C;
+    --beacon:#885912;--beacon-dim:#9C7534;
+    --instrument:#37424F;--instrument-mid:#586472;--instrument-dim:#8A7C63;
+    --text-primary:#13181F;--text-secondary:#48545F;--text-muted:#5A6470;
   }
 }
 html{font-size:16px;line-height:1.6;color:var(--text-primary);background:var(--void);font-family:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
@@ -217,7 +229,7 @@ String _jsonLd(Map<String, dynamic> profile, Map<String, dynamic> education) {
   final entries = education['entries'] as List<dynamic>? ?? [];
   final alumniOf = <Map<String, dynamic>>[
     for (final entry in entries.cast<Map<String, dynamic>>())
-      {'@type': 'CollegeOrUniversity', 'name': entry['institution']},
+      {'@type': 'CollegeOrUniversity', 'name': _en(entry['institution'])},
   ];
 
   final knowsAbout = <String>[
@@ -264,6 +276,9 @@ String _generateCv(
   Map<String, dynamic> apps,
   Map<String, dynamic> education,
 ) {
+  // /cv shows the legal name everywhere, with no exception. It is the page an
+  // ATS parses and the one a recruiter matches against a CV already on file,
+  // and a mismatch there is a rejected application rather than a style choice.
   final name = _esc(_en(profile['name']));
   final positioning = _esc(_en(profile['positioning']));
   final location = _esc(_en(profile['location']));
@@ -287,11 +302,11 @@ String _generateCv(
     // One per scheme, so the browser chrome matches the page it frames.
     ..writeln(
       '<meta name="theme-color" media="(prefers-color-scheme: dark)" '
-      'content="#05070A">',
+      'content="#121826">',
     )
     ..writeln(
       '<meta name="theme-color" media="(prefers-color-scheme: light)" '
-      'content="#F1EDE4">',
+      'content="#F2E9D8">',
     )
     ..writeln(
       '<meta name="description" content="$positioningAttr '
@@ -468,7 +483,7 @@ void _writeCvRole(StringBuffer buf, Map<String, dynamic> role) {
 void _writeCvApp(StringBuffer buf, Map<String, dynamic> app) {
   final name = _esc(app['name'] as String? ?? '');
   final domain = _esc(app['domain'] as String? ?? '');
-  final roleDesc = _esc(app['role'] as String? ?? '');
+  final roleDesc = _esc(_en(app['role']));
   final metric = app['metric'] as String?;
   final store = app['store'] as Map<String, dynamic>? ?? {};
 
@@ -505,16 +520,18 @@ void _writeCvApp(StringBuffer buf, Map<String, dynamic> app) {
 
 /// Writes an education entry for the CV page.
 void _writeCvEducation(StringBuffer buf, Map<String, dynamic> entry) {
-  final institution = _esc(entry['institution'] as String? ?? '');
-  final award = _esc(entry['award'] as String? ?? '');
+  final institution = _esc(_en(entry['institution']));
+  final award = _esc(_en(entry['award']));
   final start = _formatDate(entry['start'] as String?);
   final end = _formatDate(entry['end'] as String?);
-  final status = entry['status'] as String?;
+  final status = entry['status'] == null ? null : _en(entry['status']);
   final overallMark = entry['overallMark'];
   final modules =
       (entry['modules'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
-  final highlights =
-      (entry['highlights'] as List<dynamic>?)?.cast<String>() ?? [];
+  final highlights = (entry['highlights'] as List<dynamic>? ?? [])
+      .map(_en)
+      .where((h) => h.isNotEmpty)
+      .toList();
 
   buf
     ..writeln('<article class="role-item">')
@@ -537,7 +554,7 @@ void _writeCvEducation(StringBuffer buf, Map<String, dynamic> entry) {
   if (modules.isNotEmpty) {
     buf.writeln('<div class="module-list">');
     for (final mod in modules) {
-      final modName = _esc(mod['name'] as String? ?? '');
+      final modName = _esc(_en(mod['name']));
       final mark = mod['mark'];
       buf.writeln(
         '<div class="module-item"><span>$modName</span><span class="module-mark">${mark ?? ''}%</span></div>',
@@ -621,7 +638,11 @@ String _generateBrief(
   Map<String, dynamic> apps,
   Map<String, dynamic> education,
 ) {
-  final name = _esc(_en(profile['name']));
+  // The heading greets the reader with the name the owner uses; the title and
+  // every metadata tag below keep the legal one, so searching the name on his
+  // CV still lands here.
+  final name = _esc(_shownName(profile));
+  final legalName = _esc(_en(profile['name']));
   final positioning = _esc(_en(profile['positioning']));
   final location = _esc(_en(profile['location']));
   final status = _esc(_en(profile['status']));
@@ -649,16 +670,16 @@ String _generateBrief(
     // One per scheme, so the browser chrome matches the page it frames.
     ..writeln(
       '<meta name="theme-color" media="(prefers-color-scheme: dark)" '
-      'content="#05070A">',
+      'content="#121826">',
     )
     ..writeln(
       '<meta name="theme-color" media="(prefers-color-scheme: light)" '
-      'content="#F1EDE4">',
+      'content="#F2E9D8">',
     )
     ..writeln(
       '<meta name="description" content="$nameAttr — $positioningAttr">',
     )
-    ..writeln('<title>$name — Brief</title>')
+    ..writeln('<title>$legalName — Brief</title>')
     ..writeln('<link rel="icon" type="image/png" href="/favicon.png">')
     ..writeln('<link rel="canonical" href="$baseUrl/brief/">')
     // Open Graph
@@ -710,9 +731,9 @@ String _generateBrief(
       ..writeln('<section>')
       ..writeln('<h2>Education</h2>');
     for (final entry in entries) {
-      final institution = _esc(entry['institution'] as String? ?? '');
-      final award = _esc(entry['award'] as String? ?? '');
-      final entryStatus = entry['status'] as String?;
+      final institution = _esc(_en(entry['institution']));
+      final award = _esc(_en(entry['award']));
+      final entryStatus = entry['status'] == null ? null : _en(entry['status']);
       final overallMark = entry['overallMark'];
       buf
         ..writeln('<article class="role-item">')

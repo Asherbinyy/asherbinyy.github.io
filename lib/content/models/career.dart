@@ -19,6 +19,22 @@ enum EmploymentType {
   fullTimeThenPartTime,
 }
 
+/// What a stop on the journey is.
+///
+/// The map showed employment only until milestone 4, so it began at a first
+/// job and said nothing about where the person came from. These let the same
+/// painter carry a life rather than a résumé, without inventing a second
+/// content file or a second set of coordinates.
+enum StopKind {
+  /// A period of employment.
+  @JsonValue('role')
+  role,
+
+  /// A period of study.
+  @JsonValue('study')
+  study,
+}
+
 /// Chronological career transmissions. Incomplete copy stays absent.
 @freezed
 class Career with _$Career {
@@ -39,6 +55,7 @@ class CareerRole with _$CareerRole {
     required String city,
     required List<double> coords,
     required String start,
+    @Default(StopKind.role) StopKind kind,
     String? end,
     String? company,
     LocalizedText? title,

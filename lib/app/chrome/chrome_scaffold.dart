@@ -8,10 +8,7 @@ import 'package:nocturne/app/chrome/app_footer.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/app_nav.dart';
 import 'package:nocturne/app/chrome/app_rail.dart';
-import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/features/recruiter/presentation/recruiter_view.dart';
-import 'package:nocturne/content/content_result.dart';
-import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/core/painting/grain_painter.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/theme_controller.dart';
@@ -263,6 +260,18 @@ class _ChromeReveal extends StatelessWidget {
 }
 
 /// The scrolling content column between the rail and the footer.
+///
+/// Wrapped in a [SelectionArea] since milestone 4. Flutter paints text to a
+/// canvas, so without this a visitor cannot select or copy anything on the
+/// page — not a paragraph, and not the owner's own email address, which is the
+/// single most likely thing a recruiter will want to take away. That is a
+/// broken expectation of the web rather than a missing feature, so it is fixed
+/// here rather than listed as polish.
+///
+/// It wraps the content column and not the whole frame deliberately. Selection
+/// over the header, the rail and the toggles would let a drag that begins on a
+/// control turn into a text drag, and none of that chrome is text anyone wants
+/// to copy.
 class _ContentColumn extends StatelessWidget {
   const _ContentColumn({
     required this.controller,
@@ -281,14 +290,16 @@ class _ContentColumn extends StatelessWidget {
       builder: (context, constraints) => Stack(
         children: [
           if (layer != null) Positioned.fill(child: layer),
-          SingleChildScrollView(
-            controller: controller,
-            // Short pages still fill the frame, so the footer sits at the
-            // bottom of the viewport rather than floating under a half-height
-            // column.
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: child,
+          SelectionArea(
+            child: SingleChildScrollView(
+              controller: controller,
+              // Short pages still fill the frame, so the footer sits at the
+              // bottom of the viewport rather than floating under a half-height
+              // column.
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: child,
+              ),
             ),
           ),
         ],
@@ -327,32 +338,19 @@ class _Grained extends StatelessWidget {
   }
 }
 
-/// The footer, with the coordinate of the station the site transmits from.
+/// The footer.
 ///
-/// "The current station" is the career role that has not ended — a rule the
-/// content states rather than one inferred from it. The screen spec wants the
-/// viewer's own coarse location once consent exists; until task 1.10 this
-/// fallback is the truthful reading, not a placeholder.
-class _Footer extends ConsumerWidget {
+/// Milestone 4 removed the coordinate readout that sat at the trailing edge.
+/// It derived a latitude from whichever career role had not ended, which was
+/// truthful but introduced the owner by a map reference — his objection, and a
+/// fair one for a site whose milestone-4 goal is that there is a person here.
+/// Nothing replaced it: the footer is one 48px row and the honest response to
+/// a flourish that was not working is to remove it, not to substitute another.
+class _Footer extends StatelessWidget {
   const _Footer();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final career = ref.watch(careerProvider).valueOrNull;
-    final coordinate = switch (career) {
-      ContentReady(:final data) => _latitudeOf(data),
-      _ => null,
-    };
-    return AppFooter(coordinate: coordinate);
-  }
-
-  static String? _latitudeOf(Career career) {
-    for (final role in career.roles) {
-      if (role.end != null || role.coords.length < 2) continue;
-      return 'lat ${role.coords.first.toStringAsFixed(4)}';
-    }
-    return null;
-  }
+  Widget build(BuildContext context) => const AppFooter();
 }
 
 /// The route links, on their own row when they do not fit in the header.

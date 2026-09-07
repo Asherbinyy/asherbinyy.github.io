@@ -72,6 +72,12 @@ export async function handleRequest(request, env, now = new Date()) {
     }
     return relayWriting(env, now, headers);
   }
+  if (url.pathname === '/v1/cover' && request.method === 'GET') {
+    if (origin !== env.SITE_ORIGIN) {
+      return response({error: 'Origin not allowed'}, 403, headers);
+    }
+    return relayCover(url.searchParams.get('src'), headers);
+  }
   if (url.pathname === '/v1/aggregates' && request.method === 'GET') {
     if (!authorised(request, env.CONSOLE_TOKEN)) {
       return response({error: 'Unauthorised'}, 401, headers);
@@ -199,6 +205,72 @@ export async function relayWriting(env, now, headers, fetchImpl = fetch) {
     expiration: Math.floor(now.getTime() / 1000) + WRITING_TTL_SECONDS,
   });
   return feedResponse(body, headers, 'miss');
+}
+
+/// Hosts whose images this relay will fetch.
+///
+/// An allowlist rather than "any https URL". The `src` arrives from a query
+/// string, so without one this endpoint is an open proxy that anyone could
+/// point at any host, from the owner's Cloudflare account.
+const COVER_HOSTS = new Set([
+  'cdn-images-1.medium.com',
+  'miro.medium.com',
+]);
+
+const COVER_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/avif',
+]);
+
+const COVER_MAX_BYTES = 2_000_000;
+const COVER_TTL_SECONDS = 86_400;
+
+/// Streams one article cover through this origin.
+///
+/// The feed is already relayed so that nothing about the viewer reaches
+/// Medium. Hotlinking the covers straight from Medium's CDN would undo exactly
+/// that: every visitor to /writing would issue six third-party requests
+/// carrying their IP and referrer, which is the data flow this site's whole
+/// argument says it does not have. So the images come through here too.
+export async function relayCover(src, headers, fetchImpl = fetch) {
+  if (!src) return response({error: 'Missing src'}, 400, headers);
+
+  let target;
+  try {
+    target = new URL(src);
+  } catch {
+    return response({error: 'Invalid src'}, 400, headers);
+  }
+  if (target.protocol !== 'https:' || !COVER_HOSTS.has(target.hostname)) {
+    return response({error: 'Host not allowed'}, 403, headers);
+  }
+
+  let result;
+  try {
+    result = await fetchImpl(target.toString(), {headers: {accept: 'image/*'}});
+    if (!result.ok) throw new Error(`Cover responded ${result.status}`);
+  } catch {
+    return response({error: 'Cover unavailable'}, 502, headers);
+  }
+
+  const type = (result.headers.get('content-type') ?? '').split(';')[0].trim();
+  if (!COVER_TYPES.has(type)) {
+    return response({error: 'Not an image'}, 415, headers);
+  }
+  const declared = Number(result.headers.get('content-length') ?? 0);
+  if (declared > COVER_MAX_BYTES) {
+    return response({error: 'Cover too large'}, 413, headers);
+  }
+
+  const coverHeaders = new Headers(headers);
+  coverHeaders.set('content-type', type);
+  coverHeaders.set('cache-control', `public, max-age=${COVER_TTL_SECONDS}`);
+  // Nothing about the upstream response is passed through beyond the bytes and
+  // their type: no cookies, no ETag tied to Medium, no upstream cache tags.
+  return new Response(result.body, {status: 200, headers: coverHeaders});
 }
 
 const WRITING_CACHE_KEY = 'writing:feed';

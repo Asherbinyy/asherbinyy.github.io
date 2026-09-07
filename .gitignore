@@ -69,3 +69,10 @@ key.properties
 
 # Standalone pattern: the documented inline comment is literal to Git.
 pubspec.lock
+
+# Owner-supplied source material: CV with personal contact details, university
+# coursework, LinkedIn and Medium screenshots, personal photographs. Individual
+# assets may be copied into assets/ when a feature needs them; the directory
+# itself never enters version control. Sources are catalogued in
+# docs/14-PROVENANCE.md §0.
+supporting files/

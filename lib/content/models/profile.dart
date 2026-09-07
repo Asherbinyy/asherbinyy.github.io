@@ -9,6 +9,16 @@ part 'profile.freezed.dart';
 part 'profile.g.dart';
 
 /// Identity and contact shared by the application and indexable pages.
+///
+/// [name] is the legal name and [displayName] is what the owner is called.
+/// They are separate fields rather than one, because the two have genuinely
+/// different jobs: an ATS parser and a JSON-LD `Person` record need the name
+/// on his passport, and a visitor reading the page should meet the name he
+/// actually uses. Collapsing them would mean choosing which of those to break.
+///
+/// Every visible surface prefers [displayName] and falls back to [name].
+/// `/cv` and all structured metadata use [name] unconditionally -- see
+/// `tool/generate_static.dart`.
 @freezed
 class Profile with _$Profile {
   /// Creates an immutable Profile record.
@@ -16,6 +26,7 @@ class Profile with _$Profile {
     required LocalizedText name,
     required LocalizedText positioning,
     required Contact contact,
+    LocalizedText? displayName,
     LocalizedText? location,
     LocalizedText? status,
     Venture? venture,
@@ -24,9 +35,18 @@ class Profile with _$Profile {
     @Default(<ProfileStat>[]) List<ProfileStat> stats,
   }) = _Profile;
 
+  const Profile._();
+
   /// Decodes the documented JSON shape.
   factory Profile.fromJson(Map<String, dynamic> json) =>
       _$ProfileFromJson(json);
+
+  /// What to show a reader: [displayName] where the owner set one, else [name].
+  ///
+  /// Exists so no call site has to remember the rule. A surface that wants the
+  /// legal name asks for [name] deliberately, which makes the two places that
+  /// do -- `/cv` and the JSON-LD -- read as decisions rather than oversights.
+  LocalizedText get shownName => displayName ?? name;
 }
 
 /// One of the hero's instrument panels.

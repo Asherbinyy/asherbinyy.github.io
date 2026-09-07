@@ -36,7 +36,7 @@ void main() {
         initialRoute: AppRoute.writing,
       );
 
-      expect(effectiveTitle(tester), contains('Ahmed Elsherbini'));
+      expect(effectiveTitle(tester), contains('Sherbini'));
     });
 
     testWidgets('never blanks the shell title while content is unavailable', (
@@ -76,7 +76,7 @@ void main() {
       await pumpFrames(tester);
 
       expect(effectiveTitle(tester), isNot(onStation));
-      expect(effectiveTitle(tester), contains('Ahmed Elsherbini'));
+      expect(effectiveTitle(tester), contains('Sherbini'));
     });
   });
 }

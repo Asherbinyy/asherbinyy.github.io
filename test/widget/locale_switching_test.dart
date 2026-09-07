@@ -38,8 +38,12 @@ void main() {
       expect(GoRouter.of(active), same(router));
       expect(router.routeInformationProvider.value.uri.path, '/work/fixture');
       // The chrome's own copy must follow the channel, not just the direction.
-      // The footer is present at every width, unlike the route links.
-      expect(find.text(active.l10n.footerLocation), findsOneWidget);
+      // The mark's accessible name is the check: it is present at every width,
+      // unlike the route links, and it survived the footer being emptied in
+      // milestone 4 -- the footer's city used to carry this assertion, which
+      // made a test of localisation depend on a piece of copy that turned out
+      // to be removable.
+      expect(find.bySemanticsLabel(active.l10n.markLink), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
   });

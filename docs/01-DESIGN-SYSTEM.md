@@ -6,108 +6,131 @@ Authoritative. Any value not listed here is a bug. No raw hex, no magic numbers,
 
 ## 1. Principles
 
-**Instrument, not interface.** The reference object is a monitoring console: hairlines, corner ticks, registration marks, calibrated scales. Not cards on a page.
+**The wall, not the interface.** The reference object is a painted tomb wall: registers, a canonical grid, incised outlines, pigment laid in flat fields. Not cards on a page. Egyptian wall art is the oldest surviving design system in the world and it is stricter than most shipped today — proportion grid, fixed palette, rigid register structure, a defined glyph inventory. This project treats it as a specification, not a mood board.
 
-**One colour.** Amber is the only chroma on the site. Everything else — including all telemetry, data and live values — is rendered in graded cool monochrome. This is the central discipline of the system and the thing most likely to be eroded by a well-meaning agent. A near-black page with one bright accent is the commonest generated dark theme; a near-black page with *two* is worse, not better. Restricting the palette to a single hue on a monochrome field is what makes the amber carry weight.
+**Four pigments, each with one job.** Egyptian palettes were limited by the minerals available: gold leaf, lapis lazuli, Egyptian blue and faience, carnelian, ochre, carbon black, gypsum white. That constraint is inherited here as a rule, not a look. Gold is the person and every action. Faience is interaction feedback. Carnelian is error. Everything else is graded limestone and ink. A pigment used outside its job is a bug, not a preference. See section 2.
 
-**Amber is reserved.** It marks the person, live state, and anything the viewer can act on. Nothing decorative is ever amber. If everything is highlighted, nothing is.
+**Ornament earns its place or it is kitsch.** The failure mode of this theme is a gift-shop website: sandstone gradients, Papyrus font, gold bevels, a sphinx in the corner. The guard against it is that every motif must be doing structural work — a cartouche because it encloses a name, a register because it separates eras, a glyph column because it is a navigation rail. Decoration applied to a surface that has no reason for it gets cut. See `12-MOTIF-LIBRARY.md`, which is a closed inventory: if a motif is not in that file it does not go on the site.
 
-**Dark is the identity, not a mode.** Daybreak is a genuine second artifact — a technical drawing on paper — not an inverted dark theme.
+**Dark is the identity, not a mode.** Kemet — *the Black Land*, the Nile silt — is the primary artifact. Deshret — *the Red Land*, the desert beyond it — is a genuine second artifact on papyrus, not an inverted dark theme.
 
-**Motion answers actions.** One orchestrated non-triggered moment exists on the site: the acquisition sequence on first load. Everything else responds to the viewer. No fade-and-slide-up on section entry.
+**Motion answers actions.** One orchestrated non-triggered moment exists on the site: the opening sequence on first load. Everything else responds to the viewer. No fade-and-slide-up on section entry.
 
-**Radius encodes hierarchy.** Structural panels are square. Only controls the viewer can touch are rounded. Uniform radius is a tell; here it carries information.
+**Radius encodes hierarchy.** Structural panels are square, as incised stone is square. Only controls the viewer can touch are rounded. Uniform radius is a tell; here it carries information.
 
 ---
 
 ## 2. Colour
 
-### Nocturne (primary theme)
+### The four pigments
+
+| Pigment | Job | Never used for |
+|---|---|---|
+| **Gold** | The person. Live state. Every control the viewer can act on. | Decoration of any kind |
+| **Faience** | Interaction feedback only — hover, focus, links, in-game state | Static content, headings, categories |
+| **Carnelian** | Errors. At most once per session. | Warnings, emphasis, "important" |
+| **Limestone / ink** | Everything else — all text, all data, all telemetry, all structure | — |
+
+This replaces the single-chroma amber rule that governed milestones 1–3. It is not a loosening. Amber-only was one pigment with several jobs; this is four pigments each locked to exactly one, which is a stricter statement and a testable one. **A fifth hue may not be introduced for any reason** — not for a success state, not for a chart series, not for a tag category. If two things need distinguishing, use weight, size, position, or a glyph.
+
+Success in particular does not get a colour. `verified` resolves to the limestone ramp: confirmation is a change in weight, a glyph, or a state label. Green would be a fifth pigment and this system does not have one.
+
+### Kemet (primary theme)
+
+The Black Land. Lapis-tinted night, never pure black.
 
 ```
---void              #05070A   page base — deep blue-black, never pure black
---surface           #0B0F16   panels
---surface-raised    #131A24   elevated panels, modals
---hairline          #1C2530   1px structural rules, panel edges
---hairline-strong   #2C3846   active/hovered edges
+--void              #121826   page base — lifted off black, blue-led
+--surface           #1A2233   panels
+--surface-raised    #232D40   elevated panels, modals
+--hairline          #2E3A50   1px structural rules, panel edges
+--hairline-strong   #3F4D66   active/hovered edges
 
---beacon            #F2A83B   THE ONLY CHROMA. Name, live state, CTAs, focus, active
---beacon-dim        #875D22   at rest: corner ticks, inactive marks
---beacon-glow       #FFD48A   trace peak under lock, hover highlight
+--gold              #E3A93F   THE PERSON. Live state, CTAs, focus, active
+--gold-dim          #92702E   at rest: register ticks, inactive marks
+--gold-glow         #FFD98A   peak under torchlight, hover fill
 
---instrument        #C6D2E0   telemetry values, live readouts, the trace under lock
---instrument-mid    #8A99AB   secondary data, axis labels
---instrument-dim    #5A6878   gridlines, inactive data, the trace at rest
+--faience           #45B8B2   INTERACTION ONLY. Hover, links, game state
+--faience-dim       #2D827D   inactive interactive affordance
 
---alert             #E4574E   errors only. At most once per session
---verified          #C6D2E0   success is monochrome — a state change, not a colour
+--limestone         #CBD6E6   values, live readouts, the wall under torchlight
+--limestone-mid     #93A2B8   secondary data, axis labels
+--limestone-dim     #69788F   gridlines, inactive data, the wall at rest
 
---text-primary      #E9EEF5
---text-secondary    #93A3B5
---text-muted        #70849A   metadata, timestamps, disabled
+--carnelian         #E3716C   errors only
+--verified          #CBD6E6   success is monochrome — a state change, not a hue
+
+--text-primary      #EDF1F8
+--text-secondary    #A8B4C6
+--text-muted        #8895A8   metadata, timestamps, disabled
 ```
 
-Note `--verified`: success states do not get their own colour. Confirmation is expressed through a change in weight, an icon, or a state label — not by turning something green. Green would be a second chroma and the system does not have one.
+**On the base being lighter.** Milestones 1–3 used `#05070A`, which the owner found too dark. `#121826` has 4.4× the relative luminance and carries a lapis cast, which is both the requested correction and the correct pigment: the Black Land is silt, not void.
 
-### Daybreak (secondary theme)
+### Deshret (secondary theme)
 
-Technical drawing on paper. Not an inversion.
+The Red Land. Papyrus and desert light. Not an inversion.
 
 ```
---void              #F1EDE4   warm paper
---surface           #E8E3D8
---surface-raised    #FFFFFF
---hairline          #CFC7B8
---hairline-strong   #A79C89
+--void              #F2E9D8   papyrus
+--surface           #E9DEC8
+--surface-raised    #FCF7EC
+--hairline          #D6C8AC
+--hairline-strong   #AD9C7C
 
---beacon            #95570B   darkened for contrast on paper
---beacon-dim        #A37B41
---beacon-glow       #7A4506
+--gold              #885912   darkened for contrast on papyrus
+--gold-dim          #9C7534
+--gold-glow         #6F4409
 
---instrument        #3A4654
---instrument-mid    #5B6773
---instrument-dim    #8E806A
+--faience           #1C6B68
+--faience-dim       #2E8481
 
---alert             #A32A22
---verified          #3A4654
+--limestone         #37424F
+--limestone-mid     #586472
+--limestone-dim     #8A7C63
 
---text-primary      #12171E
---text-secondary    #4A5766
---text-muted        #5C6676
+--carnelian         #9C2E26
+--verified          #37424F
+
+--text-primary      #13181F
+--text-secondary    #48545F
+--text-muted        #5A6470
 ```
 
-### Grain
+### Token naming
 
-Both themes carry a static film grain at 3% opacity over the base, rendered once as a tiled texture — not animated, not per-frame. This is what stops the dark theme reading as flat default black. Disabled when `prefers-reduced-motion` is set only if it is ever animated; static grain always stays.
+The Dart token names do **not** change in milestone 5. `beacon` continues to name the gold role, `instrument` the limestone ramp, `alert` the carnelian, `void_` the ground. Renaming ~190 files' worth of references to express a theme change would produce an enormous diff carrying no behavioural change and would bury the actual redesign inside it. The mapping is recorded once, here:
+
+| Doc name | Dart token |
+|---|---|
+| gold / gold-dim / gold-glow | `beacon` / `beaconDim` / `beaconGlow` |
+| faience / faience-dim | `faience` / `faienceDim` *(added in 5.1)* |
+| limestone / -mid / -dim | `instrument` / `instrumentMid` / `instrumentDim` |
+| carnelian | `alert` |
+| ground | `void_` |
+
+### Texture
+
+Both themes carry a static texture at 3% opacity over the base, rendered once as a tiled image and never per-frame: limestone tooth under Kemet, papyrus fibre under Deshret. This is what stops either theme reading as a flat fill. It replaces the film grain of milestones 1–3 and reuses `grain_painter.dart` unchanged apart from its source texture.
 
 ### Rules
 
-- **No second hue may be introduced for any reason.** Not for success, not for a chart series, not for a tag category. If two things need distinguishing, use weight, size, position or an icon. An agent that adds green, blue or red outside `--alert` has broken the system.
-- Charts and data visualisations are monochrome ramps from `--instrument-dim` to `--instrument`, with at most one series in `--beacon` — the one the viewer is meant to read first.
-- No gradients as decoration. Gradients only where they represent a real falloff — signal strength, trace amplitude.
-- No coloured shadows. Elevation is expressed through `--hairline-strong` edges and background shift, not blur.
-- Amber coverage should stay under roughly 5% of any viewport. If a screen looks amber, it is wrong.
+- **No fifth hue, for any reason.** An agent that adds green, purple or a second blue outside these four pigments has broken the system.
+- Charts and data visualisations are monochrome limestone ramps, with at most one series in gold — the one the viewer is meant to read first.
+- No gradients as decoration. Gradients only where they represent a real falloff — torchlight, depth into the wall, signal amplitude.
+- No coloured shadows, no bevels, no emboss. Elevation is a `--hairline-strong` edge and a background shift. Gold bevel is the single fastest way to make this theme look cheap.
+- **Gold coverage stays under roughly 8% of any viewport.** If a screen looks gold, it is wrong. The limit is higher than milestone 1's 5% because gold now carries the name treatment and the register ticks, and lower than it feels like it should be.
+- **Faience never appears at rest.** If a faience pixel is on screen and the viewer is not hovering, focusing or playing, it is a bug.
 
 ### Contrast is a constraint on this palette, not a review step
 
-Every value above is verified against WCAG 2.1 AA by
-`test/unit/app/theme/contrast_test.dart`, which checks each role against every
-surface it is painted on: 4.5:1 for text, 3:1 for gridlines, inactive data and
-corner ticks. Nothing in the type scale reaches WCAG's large-text allowance —
-the largest role carrying a non-primary colour is `heading` at 22px, and the
-threshold is 24px — so the 4.5:1 figure applies everywhere text is coloured.
+Every value above is verified by `test/unit/app/theme/contrast_test.dart`, which checks each role against every surface it is painted on: 4.5:1 for text, 3:1 for gridlines, inactive data and register ticks. Nothing in the type scale reaches WCAG's large-text allowance — the largest role carrying a non-primary colour is `heading` at 22px and the threshold is 24px — so 4.5:1 applies everywhere text is coloured.
 
-The primary call to action is checked as its label on its own fill rather than
-as amber on the page, because `BeaconButton` fills with `--beacon` and labels
-in `--void`.
+The primary call to action is checked as its label on its own fill rather than as gold on the page, because `BeaconButton` fills with gold and labels in the ground colour.
 
-Seven values were darkened or lightened against their first draft to reach
-these floors, each by a lightness move that left its hue and saturation alone:
-Daybreak's `--beacon`, `--beacon-dim`, `--instrument-mid`, `--instrument-dim`
-and `--text-muted`, and Nocturne's `--text-muted` and `--beacon-dim`. Daybreak
-needed most of the work because dark ink on warm paper has less headroom than
-light ink on near-black. **Adding or changing a colour here means running that
-test**, not eyeballing it.
+Both palettes were solved rather than picked: each role was moved on lightness alone, preserving hue and saturation, until it met its floor on all three surfaces. The worst margins in the shipped set are `text-muted` at 4.54:1 on Kemet's raised surface and `gold` at 4.52:1 on Deshret's surface. **Changing any value here means running that test**, not eyeballing it.
+
+The `faience` and `faience-dim` roles are added to the suite in task 5.1. `hairline` and `hairline-strong` remain deliberately outside it, for the reason recorded in `11-OPEN-ISSUES.md` §3.9.
 
 ---
 

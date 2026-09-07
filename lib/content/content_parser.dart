@@ -1,6 +1,7 @@
 import 'package:nocturne/content/models/apps.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/content/models/education.dart';
+import 'package:nocturne/content/models/interests.dart';
 import 'package:nocturne/content/models/localized_text.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/content/models/study.dart';
@@ -82,8 +83,9 @@ abstract final class ContentParser {
       if (app.store.values.any((link) => !storeLinks.add(link))) {
         throw const FormatException('Duplicate public store link');
       }
-      if (app.role case final String copy) _text(copy);
+      if (app.role case final LocalizedText copy) _localized(copy);
       if (app.metric case final String copy) _text(copy);
+      if (app.screenshot case final String path) _asset(path);
     }
     return value;
   }
@@ -92,14 +94,33 @@ abstract final class ContentParser {
   static Education education(Map<String, dynamic> json) {
     final value = Education.fromJson(json);
     for (final entry in value.entries) {
-      _text(entry.institution);
-      _text(entry.award);
+      _localized(entry.institution);
+      _localized(entry.award);
+      if (entry.status case final LocalizedText copy) _localized(copy);
+      for (final highlight in entry.highlights) {
+        _localized(highlight);
+      }
       _period(entry.start, entry.end);
       if (entry.overallMark case final double mark) _range(mark, 100);
       for (final module in entry.modules) {
-        _text(module.name);
+        _localized(module.name);
         _range(module.mark, 100);
+        if (module.evidence case final Evidence evidence) {
+          _asset(evidence.src);
+          _localized(evidence.caption);
+        }
       }
+    }
+    return value;
+  }
+
+  /// Rejects duplicate interests and empty copy.
+  static Interests interests(Map<String, dynamic> json) {
+    final value = Interests.fromJson(json);
+    _unique(value.interests.map((interest) => interest.id));
+    for (final interest in value.interests) {
+      _localized(interest.label);
+      if (interest.note case final LocalizedText note) _localized(note);
     }
     return value;
   }
