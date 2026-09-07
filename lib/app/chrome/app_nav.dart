@@ -30,7 +30,10 @@ enum NavDestination {
   writing(AppRoute.writing),
 
   /// Background and contact.
-  about(AppRoute.about);
+  about(AppRoute.about),
+
+  /// The climb.
+  ascent(AppRoute.ascent);
 
   const NavDestination(this.route);
 
@@ -44,6 +47,7 @@ enum NavDestination {
     NavDestination.work => l10n.navWork,
     NavDestination.writing => l10n.navWriting,
     NavDestination.about => l10n.navAbout,
+    NavDestination.ascent => l10n.navAscent,
   };
 }
 

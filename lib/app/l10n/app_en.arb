@@ -68,6 +68,10 @@
   "@navWriting": {
     "description": "Header link to the writing feed."
   },
+  "navAscent": "Ascent",
+  "@navAscent": {
+    "description": "Navigation label for the climb"
+  },
   "navAbout": "About",
   "@navAbout": {
     "description": "Header link to the about page."
@@ -443,6 +447,43 @@
   "aboutEvidenceClose": "Close",
   "@aboutEvidenceClose": {
     "description": "About screen: closes the artefact view"
+  },
+  "ascentHeading": "The Ascent",
+  "@ascentHeading": {
+    "description": "The game route heading"
+  },
+  "ascentIntro": "A climb up the inside of an obelisk. Every band you pass uncovers something real from this site. Steer with the arrow keys, a drag, or the pointer.",
+  "@ascentIntro": {
+    "description": "The game route standfirst"
+  },
+  "ascentReady": "Press begin",
+  "@ascentReady": {
+    "description": "Shown on the playfield before a run starts"
+  },
+  "ascentBegin": "Begin the climb",
+  "@ascentBegin": {
+    "description": "Starts a standard run"
+  },
+  "ascentAgain": "Climb again",
+  "@ascentAgain": {
+    "description": "Starts another run after one ends"
+  },
+  "ascentPractice": "Practice, no falling",
+  "@ascentPractice": {
+    "description": "Starts a run that cannot be lost"
+  },
+  "ascentAltitude": "{metres} m",
+  "@ascentAltitude": {
+    "description": "Altitude readout in metres",
+    "placeholders": { "metres": { "type": "int" } }
+  },
+  "ascentUncovered": "What the climb uncovers",
+  "@ascentUncovered": {
+    "description": "Heading over the list of facts the climb reveals"
+  },
+  "ascentCanvasLabel": "The climb, drawn on a canvas. Everything it uncovers is listed in text below, and every entry links to where it lives on the site.",
+  "@ascentCanvasLabel": {
+    "description": "Accessible name for the game canvas"
   },
   "aboutOffDuty": "Off duty",
   "@aboutOffDuty": {

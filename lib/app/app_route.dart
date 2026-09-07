@@ -18,6 +18,9 @@ enum AppRoute {
   /// Background and contact.
   about('/about'),
 
+  /// The climb. `13-GAME-DESIGN.md`.
+  ascent('/ascent'),
+
   /// Dashboard placeholder; no dashboard or data exists yet.
   console('/console'),
 
