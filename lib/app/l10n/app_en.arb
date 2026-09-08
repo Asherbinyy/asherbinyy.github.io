@@ -464,6 +464,23 @@
   "@courtyardPlay": {
     "description": "Starts the climb"
   },
+  "ascentRestart": "Restart",
+  "@ascentRestart": {
+    "description": "Restarts a run already in progress"
+  },
+  "ascentSoundOn": "Sound on",
+  "@ascentSoundOn": {
+    "description": "Unmutes the climb"
+  },
+  "ascentSoundOff": "Sound off",
+  "@ascentSoundOff": {
+    "description": "Mutes the climb"
+  },
+  "ascentBest": "best {metres} m",
+  "@ascentBest": {
+    "description": "Best altitude reached on this device",
+    "placeholders": { "metres": { "type": "int" } }
+  },
   "ascentHeading": "The Ascent",
   "@ascentHeading": {
     "description": "The game route heading"

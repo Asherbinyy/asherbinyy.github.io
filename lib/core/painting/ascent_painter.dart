@@ -14,9 +14,11 @@ class AscentPainter extends CustomPainter {
   /// Paints [world] in the palette it is handed.
   const AscentPainter({
     required this.world,
+    required this.entrance,
     required this.stone,
     required this.cracked,
     required this.gold,
+    required this.glow,
     required this.wall,
     required this.strokeWidth,
     required this.isReducedMotion,
@@ -24,6 +26,9 @@ class AscentPainter extends CustomPainter {
 
   /// The world to draw.
   final AscentWorld world;
+
+  /// The opening, 0 to 1: the shaft lighting up as a run begins.
+  final double entrance;
 
   /// Dressed stone.
   final Color stone;
@@ -33,6 +38,9 @@ class AscentPainter extends CustomPainter {
 
   /// The climber, and the register bands.
   final Color gold;
+
+  /// The brighter gold the scarab's sun carries.
+  final Color glow;
 
   /// The shaft wall behind everything.
   final Color wall;
@@ -88,6 +96,28 @@ class AscentPainter extends CustomPainter {
     }
 
     _paintClimber(canvas, size, screenY(world.climberY));
+
+    // The opening: light travels up the shaft as a run begins, so the game
+    // arrives rather than appearing. Drawn last, over everything, and gone by
+    // the time the first ledge matters.
+    if (entrance >= 1) return;
+    final swept = size.height * (1 - entrance) * 1.2;
+    canvas
+      ..drawRect(
+        Rect.fromLTWH(0, 0, size.width, size.height - swept + 0.5),
+        Paint()..color = glow.withValues(alpha: (1 - entrance) * 0.16),
+      )
+      ..drawRect(
+        Rect.fromLTWH(0, size.height - swept, size.width, swept),
+        Paint()..color = wall.withValues(alpha: 0.92),
+      )
+      ..drawLine(
+        Offset(0, size.height - swept),
+        Offset(size.width, size.height - swept),
+        Paint()
+          ..color = glow
+          ..strokeWidth = strokeWidth * 2,
+      );
   }
 
   /// The shaft wall: courses of stone, with inscription on some of them.
@@ -177,29 +207,92 @@ class AscentPainter extends CustomPainter {
     );
   }
 
+  /// The climber: a scarab carrying the sun up the shaft.
+  ///
+  /// Khepri rolls the sun from horizon to horizon, which is the same thing the
+  /// player is doing, so the character was already in the motif library rather
+  /// than needing inventing. It reads at 20 pixels because it is a silhouette
+  /// with one bright disc: the disc is what the eye tracks and the body is
+  /// what makes it a creature rather than a dot.
   void _paintClimber(Canvas canvas, Size size, double y) {
-    final radius = math.max(strokeWidth * 3, size.width * 0.022);
-    final centre = Offset(world.climberX * size.width, y - radius);
+    final scale = math.max(strokeWidth * 3, size.width * 0.030);
+    final centre = Offset(world.climberX * size.width, y - scale);
+    final rising = world.velocity > 0;
 
-    // The climber is the sun being carried up. Filled, because it is the one
-    // thing the player must never lose track of.
-    canvas.drawCircle(centre, radius, Paint()..color = gold);
+    final body = Paint()..color = stone;
+    final ink = Paint()
+      ..color = wall
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
 
-    if (isReducedMotion) return;
-    // A short wake below, so upward travel is legible at speed.
-    canvas.drawLine(
-      centre,
-      centre.translate(0, radius * 2.2),
-      Paint()
-        ..color = gold.withValues(alpha: 0.35)
-        ..strokeWidth = strokeWidth * 2
-        ..strokeCap = StrokeCap.round,
+    // Six legs, swept back when rising and braced when falling, which is the
+    // whole animation and costs six lines.
+    final sweep = rising ? 0.55 : -0.2;
+    for (final side in [-1, 1]) {
+      for (var i = 0; i < 3; i++) {
+        final origin = centre.translate(
+          side * scale * 0.5,
+          (i - 1) * scale * 0.34,
+        );
+        canvas.drawLine(
+          origin,
+          origin.translate(side * scale * 0.85, scale * (0.42 + sweep * 0.4)),
+          Paint()
+            ..color = stone
+            ..strokeWidth = strokeWidth * 1.4
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+    }
+
+    // The shell: an oval with the central seam a scarab's elytra have.
+    final shell = Rect.fromCenter(
+      center: centre,
+      width: scale * 1.45,
+      height: scale * 1.75,
     );
+    canvas
+      ..drawOval(shell, body)
+      ..drawOval(shell, ink)
+      ..drawLine(shell.topCenter, shell.bottomCenter, ink)
+      // The head plate, notched, at the leading edge.
+      ..drawArc(
+        Rect.fromCenter(
+          center: centre.translate(0, -scale * 0.82),
+          width: scale * 1.15,
+          height: scale * 0.8,
+        ),
+        math.pi,
+        math.pi,
+        true,
+        body,
+      );
+
+    // The sun it carries. The one filled bright thing on screen, and the
+    // reason the player never loses track of where they are.
+    final sun = centre.translate(0, -scale * 1.55);
+    if (isReducedMotion) {
+      canvas.drawCircle(sun, scale * 0.62, Paint()..color = glow);
+      return;
+    }
+
+    // A short wake below, so upward travel is legible at speed.
+    canvas
+      ..drawCircle(sun, scale * 0.62, Paint()..color = glow)
+      ..drawLine(
+        centre.translate(0, scale),
+        centre.translate(0, scale * 2.4),
+        Paint()
+          ..color = gold.withValues(alpha: 0.3)
+          ..strokeWidth = strokeWidth * 2
+          ..strokeCap = StrokeCap.round,
+      );
   }
 
   @override
   bool shouldRepaint(AscentPainter oldDelegate) =>
       !identical(oldDelegate.world, world) ||
+      oldDelegate.entrance != entrance ||
       oldDelegate.stone != stone ||
       oldDelegate.gold != gold ||
       oldDelegate.wall != wall ||

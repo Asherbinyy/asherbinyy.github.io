@@ -8,6 +8,7 @@ environment:
   flutter: ">=3.47.2"
 
 dependencies:
+  audioplayers: ^6.1.0         # game sound effects only
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -44,6 +45,7 @@ flutter:
     - assets/maps/
     - assets/media/
     - assets/docs/
+    - assets/audio/
   fonts:
     - family: Space Grotesk
       fonts:

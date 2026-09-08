@@ -105,6 +105,7 @@ class AscentWorld {
     required this.isOver,
     required this.nextLedgeId,
     required this.registersPassed,
+    this.brokeLedge = false,
   });
 
   /// A fresh run.
@@ -162,9 +163,14 @@ class AscentWorld {
   /// Identity for the next ledge generated.
   final int nextLedgeId;
 
-  /// How many register bands have been passed, which is how many facts have
-  /// been unlocked.
+  /// How many register bands have been passed.
   final int registersPassed;
+
+  /// Whether a ledge gave way on the step that produced this world.
+  ///
+  /// Reported rather than played: the world stays a pure value with no idea a
+  /// speaker exists, and presentation decides what a broken ledge sounds like.
+  final bool brokeLedge;
 
   /// Metres between ledges.
   static const double ledgeGap = 2.6;
@@ -205,6 +211,7 @@ class AscentWorld {
     var y = climberY + speed * dt;
 
     final live = [for (final ledge in ledges) ledge.advance(dt)];
+    var broke = false;
 
     // Only ever falling, and only from above: a climber rising through a ledge
     // passes it, which is what makes the ascent readable rather than a trap.
@@ -217,7 +224,10 @@ class AscentWorld {
 
         y = ledge.y;
         speed = _bounce;
-        if (ledge.kind == LedgeKind.cracked) live[i] = ledge.broken;
+        if (ledge.kind == LedgeKind.cracked) {
+          live[i] = ledge.broken;
+          broke = true;
+        }
         break;
       }
     }
@@ -260,6 +270,7 @@ class AscentWorld {
         altitude: reached,
         nextLedgeId: nextId,
         registersPassed: registers,
+        brokeLedge: broke,
       );
     }
 
@@ -272,6 +283,7 @@ class AscentWorld {
       isOver: fallen,
       nextLedgeId: nextId,
       registersPassed: registers,
+      brokeLedge: broke,
     );
   }
 
@@ -310,6 +322,7 @@ class AscentWorld {
     bool? isOver,
     int? nextLedgeId,
     int? registersPassed,
+    bool brokeLedge = false,
   }) => AscentWorld(
     ledges: ledges ?? this.ledges,
     climberX: climberX ?? this.climberX,
@@ -321,5 +334,6 @@ class AscentWorld {
     isOver: isOver ?? this.isOver,
     nextLedgeId: nextLedgeId ?? this.nextLedgeId,
     registersPassed: registersPassed ?? this.registersPassed,
+    brokeLedge: brokeLedge,
   );
 }

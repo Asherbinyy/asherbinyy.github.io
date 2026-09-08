@@ -58,20 +58,24 @@ export async function mountThreshold() {
   };
   scene.onFinished = finish;
 
-  const enter = () => scene.open();
-  const skip = () => finish();
-
-  host.querySelector('.threshold__enter')?.addEventListener('click', enter);
-  host.querySelector('.threshold__skip')?.addEventListener('click', skip);
-  // Any key that is not an obvious skip opens the door, so a visitor who
-  // presses something reasonable gets the sequence rather than nothing.
-  window.addEventListener('keydown', (event) => {
-    if (finished) return;
-    if (event.key === 'Escape') return skip();
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      enter();
+  // It opens itself. The owner asked for no Enter and no Skip: the sequence is
+  // the arrival, not a thing to opt into, and a door with a button beside it
+  // reading "skip the door" undercuts the whole moment.
+  //
+  // The beat before it starts is deliberate. Opening on frame one means the
+  // viewer never sees what is being opened.
+  window.setTimeout(() => {
+    if (!finished) {
+      host.classList.add('threshold--opening');
+      scene.open();
     }
+  }, 1500);
+
+  // Escape still works, deliberately without being advertised. Trapping
+  // someone in a non-dismissible overlay is an accessibility failure however
+  // short it is, and anyone who wants out already tries this key.
+  window.addEventListener('keydown', (event) => {
+    if (!finished && event.key === 'Escape') finish();
   });
 
   const resize = () => scene.resize();
