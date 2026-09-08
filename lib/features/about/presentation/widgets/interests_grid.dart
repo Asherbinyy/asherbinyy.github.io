@@ -11,7 +11,7 @@ import 'package:nocturne/content/models/interests.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
-import 'package:nocturne/core/widgets/loading/station_card.dart';
+import 'package:nocturne/core/painting/interest_painter.dart';
 
 /// Off duty — what the owner does when he is not working.
 ///
@@ -57,31 +57,62 @@ class InterestsGrid extends ConsumerWidget {
   }
 }
 
-/// One interest: its procedural mark, its name, and the specific he named.
+/// One interest: its scene, its name, and the specific he named.
 ///
-/// Deliberately not focusable and not tappable. There is nowhere for a tile to
-/// go, so putting it in the tab order would add six stops a keyboard user has
-/// to pass through to reach the contact links, in exchange for an emphasis
-/// they cannot see the point of. Hover is decoration for pointer users; every
-/// word is on screen without it.
+/// The first version of this was a word in a box, and the owner's objection
+/// was exactly right: "gym" told nobody anything. Each tile now plays a small
+/// scene that carries the meaning, and the label confirms it rather than
+/// carrying it alone.
+///
+/// Unlike the first version, these **are** focusable. There was nothing to do
+/// then, so being in the tab order was six stops for nothing; now the tile is
+/// the interaction, and a keyboard has to be able to reach it. Everything is
+/// still legible without touching anything: the scene rests in a readable
+/// state and the words are always on screen.
 class _Tile extends StatefulWidget {
   const _Tile({required this.interest});
 
   final Interest interest;
 
-  /// Declared, never inferred. Narrower than a work card: these are labels,
-  /// not case studies, and four fit a desktop row where three cards would.
+  /// Declared, never inferred.
   static const double width = 168;
 
-  /// The mark's height. Square would read as an avatar; this reads as a plate.
-  static const double artHeight = 104;
+  /// The scene's height.
+  static const double artHeight = 116;
 
   @override
   State<_Tile> createState() => _TileState();
 }
 
-class _TileState extends State<_Tile> {
-  bool _isHovered = false;
+class _TileState extends State<_Tile> with SingleTickerProviderStateMixin {
+  late final AnimationController _play = AnimationController(
+    vsync: this,
+    duration: Motion.considered,
+  );
+  bool _isActive = false;
+
+  @override
+  void dispose() {
+    _play.dispose();
+    super.dispose();
+  }
+
+  void _setActive({required bool active}) {
+    if (_isActive == active) return;
+    setState(() => _isActive = active);
+    if (!mounted) return;
+    // Under reduced motion the scene jumps to its played state rather than
+    // animating: the information is the position, not the travel.
+    if (ReducedMotion.of(context)) {
+      _play.value = active ? 1 : 0;
+      return;
+    }
+    if (active) {
+      _play.forward();
+    } else {
+      _play.reverse();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,30 +127,51 @@ class _TileState extends State<_Tile> {
       // are two unrelated announcements.
       container: true,
       label: note == null ? label : '$label. $note',
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: ExcludeSemantics(
-          child: SizedBox(
-            width: _Tile.width,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _Plate(interest: widget.interest, isActive: _isHovered),
-                SizedBox(height: tokens.space8),
-                Text(
-                  label,
-                  style: type.body.copyWith(
-                    color: _isHovered ? tokens.beacon : tokens.textPrimary,
+      child: FocusableActionDetector(
+        onShowHoverHighlight: (value) => _setActive(active: value),
+        onShowFocusHighlight: (value) => _setActive(active: value),
+        mouseCursor: SystemMouseCursors.basic,
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              _play
+                ..reset()
+                ..forward();
+              return null;
+            },
+          ),
+        },
+        child: GestureDetector(
+          // Touch has no hover, so a tap plays the scene once.
+          onTap: () => _play
+            ..reset()
+            ..forward(),
+          child: ExcludeSemantics(
+            child: SizedBox(
+              width: _Tile.width,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _Plate(
+                    interest: widget.interest,
+                    play: _play,
+                    isActive: _isActive,
                   ),
-                ),
-                if (note != null)
+                  SizedBox(height: tokens.space8),
                   Text(
-                    note,
-                    style: type.telemetryS.copyWith(color: tokens.textMuted),
+                    label,
+                    style: type.body.copyWith(
+                      color: _isActive ? tokens.beacon : tokens.textPrimary,
+                    ),
                   ),
-              ],
+                  if (note != null)
+                    Text(
+                      note,
+                      style: type.telemetryS.copyWith(color: tokens.textMuted),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -128,17 +180,16 @@ class _TileState extends State<_Tile> {
   }
 }
 
-/// The mark, with an edge that answers a pointer.
-///
-/// The art is the same deterministic constellation the work grid and the
-/// writing index draw, seeded from the interest's own id — so each is distinct,
-/// stable across builds, drawn in the site's own vocabulary, and costs no
-/// image asset. Reusing it here is what keeps this section part of the site
-/// rather than a scrapbook pasted into it.
+/// The scene, with an edge that answers a pointer.
 class _Plate extends StatelessWidget {
-  const _Plate({required this.interest, required this.isActive});
+  const _Plate({
+    required this.interest,
+    required this.play,
+    required this.isActive,
+  });
 
   final Interest interest;
+  final Animation<double> play;
   final bool isActive;
 
   @override
@@ -146,20 +197,32 @@ class _Plate extends StatelessWidget {
     final tokens = context.tokens;
 
     return AnimatedContainer(
-      // The one thing motion does here is confirm the pointer found the tile.
       duration: ReducedMotion.duration(context, Motion.quick),
       curve: MotionCurves.emphasized,
       decoration: BoxDecoration(
+        color: tokens.surface,
         border: Border.all(
           color: isActive ? tokens.beacon : tokens.hairline,
           width: tokens.hairlineWidth,
         ),
       ),
-      child: StationCard(
-        seedId: interest.id,
-        name: interest.label.en,
+      child: SizedBox(
         width: _Tile.width,
         height: _Tile.artHeight,
+        child: RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: play,
+            builder: (context, _) => CustomPaint(
+              painter: InterestPainter(
+                scene: InterestScene.of(interest.id),
+                progress: MotionCurves.emphasized.transform(play.value),
+                ink: tokens.instrumentMid,
+                gold: tokens.beacon,
+                strokeWidth: tokens.hairlineWidth * 1.6,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
