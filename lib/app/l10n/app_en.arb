@@ -500,6 +500,14 @@
   "@ascentKeys": {
     "description": "Keyboard controls, shown on a pointer browser"
   },
+  "ascentLeave": "Leave",
+  "@ascentLeave": {
+    "description": "Closes the full-screen game"
+  },
+  "ascentRecord": "A new best",
+  "@ascentRecord": {
+    "description": "Shown when a run beat the stored best"
+  },
   "ascentHeading": "The Ascent",
   "@ascentHeading": {
     "description": "The game route heading"

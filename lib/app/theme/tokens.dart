@@ -47,6 +47,14 @@ abstract final class Tokens {
   /// Design-system value for expandedBreakpoint.
   static const double expandedBreakpoint = 1024;
 
+  /// The widest the content frame is allowed to become.
+  ///
+  /// Pages were laid out from the leading edge with no ceiling, so above about
+  /// 1600px the content sat against the left of the window with a third of the
+  /// screen empty beside it. This caps the frame and centres it; paragraphs
+  /// still cap at their own reading measure inside it.
+  static const double contentMaxWidth = 1320;
+
   /// Design-system value for largeBreakpoint.
   static const double largeBreakpoint = 1440;
 

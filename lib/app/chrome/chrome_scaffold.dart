@@ -297,7 +297,21 @@ class _ContentColumn extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) => Stack(
         children: [
-          if (layer != null) Positioned.fill(child: layer),
+          // The wall shares the content's frame rather than the window's.
+          // Filling the viewport while the copy is centred inside a cap puts
+          // the two in different coordinate systems, and the wall starts
+          // drawing over the paragraph again on a wide monitor.
+          if (layer != null)
+            Positioned.fill(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: Tokens.contentMaxWidth,
+                  ),
+                  child: layer,
+                ),
+              ),
+            ),
           SelectionArea(
             child: SingleChildScrollView(
               controller: controller,
@@ -306,7 +320,23 @@ class _ContentColumn extends StatelessWidget {
               // column.
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: child,
+                // Capped and centred on a wide monitor. Every page was laid
+                // out from the leading edge with no ceiling, so at 1080p and
+                // above the content sat against the left of the window with a
+                // third of the screen empty beside it, which is the "not
+                // centred on desktop" the owner reported.
+                //
+                // The cap is the frame, not the measure: paragraphs still cap
+                // at their own reading width inside it. What this stops is the
+                // frame itself growing until the page has no shape.
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: Tokens.contentMaxWidth,
+                    ),
+                    child: child,
+                  ),
+                ),
               ),
             ),
           ),

@@ -9,7 +9,7 @@ import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/features/about/presentation/widgets/interests_grid.dart';
-import 'package:nocturne/features/courtyard/game/presentation/ascent_screen.dart';
+import 'package:nocturne/features/courtyard/game/presentation/ascent_stage.dart';
 
 /// `/courtyard` — everything that is not work.
 ///
@@ -30,8 +30,6 @@ class CourtyardScreen extends ConsumerStatefulWidget {
 }
 
 class _CourtyardScreenState extends ConsumerState<CourtyardScreen> {
-  bool _isPlaying = false;
-
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -59,10 +57,10 @@ class _CourtyardScreenState extends ConsumerState<CourtyardScreen> {
             ),
           ),
           SizedBox(height: tokens.space32),
-          if (_isPlaying)
-            const AscentScreen()
-          else
-            _GameInvitation(onPlay: () => setState(() => _isPlaying = true)),
+          // The climb opens full screen rather than unfolding inside the page.
+          // A game embedded in a document competes with it for the keyboard,
+          // for the width, and for the reader's attention, and loses all three.
+          _GameInvitation(onPlay: () => AscentStage.open(context)),
           SizedBox(height: tokens.space48),
           const InterestsGrid(),
         ],
