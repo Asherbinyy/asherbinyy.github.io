@@ -47,6 +47,16 @@ abstract final class Tokens {
   /// Design-system value for expandedBreakpoint.
   static const double expandedBreakpoint = 1024;
 
+  /// How much of the screen a secondary surface may occupy.
+  ///
+  /// A bottom sheet is anchored to an edge and can take more; a dialog is
+  /// centred and needs air around it. Both scroll inside the cap rather than
+  /// clipping, which is what they did before.
+  static const double sheetMaxHeightFraction = 0.86;
+
+  /// How much of the screen a centred dialog may occupy.
+  static const double dialogMaxHeightFraction = 0.8;
+
   /// The widest the content frame is allowed to become.
   ///
   /// Pages were laid out from the leading edge with no ceiling, so above about
