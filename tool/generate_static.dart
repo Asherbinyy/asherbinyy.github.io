@@ -336,14 +336,14 @@ String _generateCv(
     )
     ..writeln(
       '<meta name="description" content="$positioningAttr '
-      '${locationAttr.isNotEmpty ? '— $locationAttr' : ''}">',
+      '${locationAttr.isNotEmpty ? '· $locationAttr' : ''}">',
     )
-    ..writeln('<title>$name — CV</title>')
+    ..writeln('<title>$name, CV</title>')
     ..writeln('<link rel="icon" type="image/png" href="/favicon.png">')
     ..writeln('<link rel="canonical" href="$baseUrl/cv/">')
     // Open Graph
     ..writeln('<meta property="og:type" content="profile">')
-    ..writeln('<meta property="og:title" content="$nameAttr — CV">')
+    ..writeln('<meta property="og:title" content="$nameAttr, CV">')
     ..writeln('<meta property="og:description" content="$positioningAttr">')
     ..writeln('<meta property="og:url" content="$baseUrl/cv/">')
     ..writeln(
@@ -352,7 +352,7 @@ String _generateCv(
     )
     // Twitter Card
     ..writeln('<meta name="twitter:card" content="summary">')
-    ..writeln('<meta name="twitter:title" content="$nameAttr — CV">')
+    ..writeln('<meta name="twitter:title" content="$nameAttr, CV">')
     ..writeln('<meta name="twitter:description" content="$positioningAttr">')
     ..writeln('<style>')
     ..write(_criticalCss())
@@ -703,15 +703,13 @@ String _generateBrief(
       '<meta name="theme-color" media="(prefers-color-scheme: light)" '
       'content="#F2E9D8">',
     )
-    ..writeln(
-      '<meta name="description" content="$nameAttr — $positioningAttr">',
-    )
-    ..writeln('<title>$legalName — Brief</title>')
+    ..writeln('<meta name="description" content="$nameAttr. $positioningAttr">')
+    ..writeln('<title>$legalName, Brief</title>')
     ..writeln('<link rel="icon" type="image/png" href="/favicon.png">')
     ..writeln('<link rel="canonical" href="$baseUrl/brief/">')
     // Open Graph
     ..writeln('<meta property="og:type" content="profile">')
-    ..writeln('<meta property="og:title" content="$nameAttr — Brief">')
+    ..writeln('<meta property="og:title" content="$nameAttr, Brief">')
     ..writeln('<meta property="og:description" content="$positioningAttr">')
     ..writeln('<meta property="og:url" content="$baseUrl/brief/">')
     ..writeln(
