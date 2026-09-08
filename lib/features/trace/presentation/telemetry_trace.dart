@@ -1,10 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
+
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
@@ -228,6 +232,23 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
     });
   }
 
+  /// How wide the wall may be without touching the content column.
+  double _columnWidth(
+    BuildContext context,
+    double available, {
+    required bool isCompact,
+  }) {
+    if (isCompact) return available * Tokens.traceColumnFractionCompact;
+    final reserved =
+        context.platform.gutter +
+        context.type.measureFor(context.type.body) +
+        Tokens.space48;
+    final remaining = available - reserved;
+    final floor = available * Tokens.traceColumnFractionMinimum;
+    final ceiling = available * Tokens.traceColumnFraction;
+    return math.min(ceiling, math.max(floor, remaining));
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -237,20 +258,26 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
     return IgnorePointer(
       child: LayoutBuilder(
         builder: (context, constraints) => Align(
-          // Section 6 runs the trace down the trailing part of the page,
-          // leaving the content column's own measure clear. What "leaving it
-          // clear" costs depends on the viewport: a desktop text column stops
-          // at its measure, a phone's does not, so the fraction is asked of
-          // the platform service rather than fixed. Never branch on width
-          // here -- AGENTS.md section 6.
+          // The wall runs down the trailing part of the page, and must never
+          // reach the content column. A fixed fraction cannot promise that:
+          // at 1024px the trailing 66 per cent began at x=348 while the hero
+          // text ran to x=636, so register rules and signs were drawn straight
+          // through the copy. The owner reported it as overlapping content and
+          // he was right.
+          //
+          // So it is computed instead. The wall takes whatever is left after
+          // the gutter, the body measure and a clear gap, and never less than
+          // a minimum -- below which it would be a sliver rather than a wall,
+          // and on a phone it keeps its own narrow strip because a phone's
+          // text column has no measure to clear.
           alignment: AlignmentDirectional.centerEnd,
           child: SizedBox(
             key: _traceKey,
-            width:
-                constraints.maxWidth *
-                (isCompact
-                    ? Tokens.traceColumnFractionCompact
-                    : Tokens.traceColumnFraction),
+            width: _columnWidth(
+              context,
+              constraints.maxWidth,
+              isCompact: isCompact,
+            ),
             height: constraints.maxHeight,
             child: ValueListenableBuilder<TraceFrame>(
               valueListenable: _frame,

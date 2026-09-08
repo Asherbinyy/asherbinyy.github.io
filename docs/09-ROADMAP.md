@@ -486,6 +486,34 @@ The four commands, a real-device profile, and the phone check.
 
 ---
 
+# Milestone 7 — Admin and media
+
+Branch: `phase/7-admin` · Tag `v1.2.0`
+
+**The owner edits his own site.** Full specification in
+`15-ADMIN-AND-MEDIA.md`, including the three questions only he can answer.
+
+Content is compiled into the bundle today, which was right and is documented
+as right in `00-PROJECT-BRIEF.md` §7. Two things ended it: media cannot live in
+a JSON file, and he wants to add a project from a phone without opening an
+editor.
+
+The shape is a second content source read at runtime from the Worker that
+already exists, with **the bundle kept as the fallback**. If the service is
+down, misconfigured or deleted, the site renders exactly what it renders today.
+That is the first task rather than the last, because it is the difference
+between a portfolio that can break while he is asleep and one that cannot.
+
+### 7.1 The content source, with the bundle as fallback
+### 7.2 Media storage on R2, validated at the edge
+### 7.3 Auth: one owner, one token, rotatable
+### 7.4 The panel at `/admin`
+### 7.5 Provenance carried into the editor
+
+Definitions of done for each are in `15-ADMIN-AND-MEDIA.md` §4.
+
+---
+
 ## Outside the repository
 
 Owner actions. None of these can be done by an agent — `AGENTS.md` §3.

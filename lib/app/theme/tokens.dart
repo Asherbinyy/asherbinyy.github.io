@@ -353,6 +353,12 @@ abstract final class Tokens {
   /// amplitude would never be seen.
   static const double traceBurstWidth = 0.045;
 
+  /// The narrowest the wall may become on a wide viewport.
+  ///
+  /// Below this it stops reading as a wall and becomes a sliver of rules at
+  /// the edge of the page.
+  static const double traceColumnFractionMinimum = 0.30;
+
   /// Fraction of the content column the trace occupies, from the trailing edge.
   ///
   /// Two values, because one was wrong on a phone. At 66% of a desktop the

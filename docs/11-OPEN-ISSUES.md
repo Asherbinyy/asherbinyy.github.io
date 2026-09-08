@@ -132,7 +132,8 @@ Still open, in his numbering:
 
 | # | Item |
 |---|---|
-| 0e.6 | Work page as an interactive exhibition, with a media pipeline he can fill later (his §13, §14, §17) |
+| ~~0e.5b~~ | **Closed.** The hero overlapped the wall on a laptop. The wall took a fixed trailing fraction, so at 1024px it began at x=348 while the copy ran to x=636 and register rules were drawn through the paragraph. Its width is computed from the body measure now, and a sweep across five widths guards it. The hero copy was also cut from seven lines to one: the five years and the master's were already on the panels beneath it. |
+| 0e.6 | Work page as an interactive exhibition, with a media pipeline he can fill later (his §13, §14, §17). **Partly superseded by milestone 7**, which owns the media half. |
 | 0e.7 | Writing as a scroll archive, pulling from Medium and his blog (§18) |
 | 0e.8 | About as a personal chamber; interests as interactions rather than words (§19, §20) |
 | 0e.9 | Signal as an unrolling papyrus map, and the clipped "choose stop" panel (§7, §8) |
@@ -143,6 +144,9 @@ Still open, in his numbering:
 | 0e.14 | MyNextStep to August 2025, and freelancing 2025 to now (§11). **Needs confirmation.** |
 | 0e.15 | Remove the unexplained icon beside EN/AR (§25) |
 | 0e.16 | Name audio player under the hero, awaiting his recording |
+| 0e.17 | **The climb does not feel like Ice Tower and is awkward on a desktop browser.** The owner's report. The mechanics are right; what is missing is density, pace and a control that suits a mouse. Not yet addressed. |
+| 0e.18 | **Placeholder imagery throughout.** Real photography is wanted now, with uploads later. The upload half is milestone 7; the photography half is still open. |
+| 0e.19 | **The Cloudflare Worker needs no deploy.** Checked 2026-09-08: nothing under `worker/` has changed since version `929f5eaa`, `/v1/writing` returns 200 and `/v1/cover` relays a real Medium image at 200. Deploying from this session is impossible anyway without `CLOUDFLARE_API_TOKEN`, which is recorded here so the next agent does not retry it blind. |
 
 ---
 

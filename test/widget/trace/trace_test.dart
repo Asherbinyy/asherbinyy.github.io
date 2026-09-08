@@ -200,6 +200,47 @@ void main() {
     expect(find.byType(TelemetryTrace), findsNothing);
     expect(tester.takeException(), isNull);
   });
+  group('the wall never reaches the copy', () {
+    // The owner reported overlapping content on a laptop twice. At 1024px the
+    // trailing 66 per cent began at x=348 while the hero text ran to x=636, so
+    // register rules and signs were drawn straight through the paragraph.
+    //
+    // Swept rather than pinned to the one width that failed: the wall's width
+    // is computed from the body measure, which is itself derived from the type
+    // scale, so the failing band moves with the viewport.
+    for (final width in [1024.0, 1280.0, 1440.0, 1600.0, 1920.0]) {
+      testWidgets('at ${width.toInt()}px', (tester) async {
+        tester.view
+          ..devicePixelRatio = 1
+          ..physicalSize = Size(width, 900);
+        addTearDown(tester.view.reset);
+
+        await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
+        await pumpFrames(tester);
+
+        final wall = tester.getRect(
+          find.byWidgetPredicate(
+            (widget) => widget is CustomPaint && widget.painter is WallPainter,
+          ),
+        );
+        // The hero's own box is full width -- it is a Column aligned to the
+        // start -- so the thing to measure is the copy inside it, which is
+        // capped to the body measure. Comparing against the box would pass
+        // nothing and fail everything.
+        final positioning =
+            (bundledJson('assets/content/profile.json')['positioning']
+                    as Map<String, dynamic>)['en']
+                as String;
+        final copy = tester.getRect(find.text(positioning));
+
+        expect(
+          wall.left,
+          greaterThanOrEqualTo(copy.right),
+          reason: 'the wall starts inside the hero copy at ${width.toInt()}px',
+        );
+      });
+    }
+  });
 }
 
 void expectCareerAnchors(WidgetTester tester, TraceAnchorRegistry registry) {
