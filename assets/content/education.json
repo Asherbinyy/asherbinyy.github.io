@@ -87,8 +87,8 @@
           "ar": "رسالة الماجستير: الإشراف البشري والمساءلة في تبنّي الذكاء الاصطناعي التوليدي داخل شركات الاستشارات الأربع الكبرى"
         },
         {
-          "en": "Led a smartphone manufacturer in the Edumundo strategy simulation — 2nd of cohort",
-          "ar": "قاد شركة هواتف ذكية في محاكاة Edumundo الاستراتيجية — المركز الثاني على الدفعة"
+          "en": "Led a smartphone manufacturer in the Edumundo strategy simulation, placing 2nd of the cohort",
+          "ar": "قاد شركة هواتف ذكية في محاكاة Edumundo الاستراتيجية، وحلّ في المركز الثاني على الدفعة"
         }
       ]
     },
@@ -102,7 +102,17 @@
         "ar": "بكالوريوس هندسة الاتصالات والإلكترونيات"
       },
       "start": "2015-09",
-      "end": "2020-08"
+      "end": "2020-08",
+      "highlights": [
+        {
+          "en": "Graduation project: a smart tank. Graded Excellent.",
+          "ar": "مشروع التخرّج: دبّابة ذكية. بتقدير ممتاز."
+        },
+        {
+          "en": "Third place in an inter-university robotics competition, in first year.",
+          "ar": "المركز الثالث في مسابقة روبوتات بين الجامعات، في السنة الأولى."
+        }
+      ]
     }
   ]
 }

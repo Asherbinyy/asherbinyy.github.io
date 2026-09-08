@@ -76,3 +76,7 @@ pubspec.lock
 # itself never enters version control. Sources are catalogued in
 # docs/14-PROVENANCE.md §0.
 supporting files/
+
+# Headless-browser scratch used to verify the WebGL intro. Never committed.
+web/probe*.html
+web/shot.html

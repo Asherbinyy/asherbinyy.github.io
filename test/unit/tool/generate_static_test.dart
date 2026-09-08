@@ -137,7 +137,17 @@ void main() {
     });
 
     test('has positioning text', () {
-      expect(cvHtml, contains('25+ applications shipped across six countries'));
+      // Read from the content rather than pinned to a sentence. The line is
+      // the owner's own copy and he rewrites it; a literal here just breaks
+      // every time he does, which is what it did.
+      final profile = jsonDecode(
+        File('${_projectRoot()}/assets/content/profile.json')
+            .readAsStringSync(),
+      ) as Map<String, dynamic>;
+      final positioning =
+          (profile['positioning'] as Map<String, dynamic>)['en'] as String;
+      expect(positioning, isNotEmpty);
+      expect(cvHtml, contains(positioning));
     });
 
     test('has status text', () {

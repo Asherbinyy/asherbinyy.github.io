@@ -444,6 +444,80 @@
   "@aboutEvidenceClose": {
     "description": "About screen: closes the artefact view"
   },
+  "navCourtyard": "Courtyard",
+  "@navCourtyard": {
+    "description": "Navigation label for the courtyard"
+  },
+  "courtyardHeading": "The Courtyard",
+  "@courtyardHeading": {
+    "description": "Courtyard heading"
+  },
+  "courtyardIntro": "Tomb walls gave as much space to the life someone lived as to the titles they held. This is that half: what I do when I am not shipping.",
+  "@courtyardIntro": {
+    "description": "Courtyard standfirst"
+  },
+  "courtyardGamePitch": "A climb up the inside of an obelisk. Every band you pass uncovers something real from this site, so it is the CV read the hard way.",
+  "@courtyardGamePitch": {
+    "description": "The line offering the climb before it is started"
+  },
+  "courtyardPlay": "Play",
+  "@courtyardPlay": {
+    "description": "Starts the climb"
+  },
+  "ascentRestart": "Restart",
+  "@ascentRestart": {
+    "description": "Restarts a run already in progress"
+  },
+  "ascentSoundOn": "Sound on",
+  "@ascentSoundOn": {
+    "description": "Unmutes the climb"
+  },
+  "ascentSoundOff": "Sound off",
+  "@ascentSoundOff": {
+    "description": "Mutes the climb"
+  },
+  "ascentBest": "best {metres} m",
+  "@ascentBest": {
+    "description": "Best altitude reached on this device",
+    "placeholders": { "metres": { "type": "int" } }
+  },
+  "ascentHeading": "The Ascent",
+  "@ascentHeading": {
+    "description": "The game route heading"
+  },
+  "ascentIntro": "A climb up the inside of an obelisk. Every band you pass uncovers something real from this site. Steer with the arrow keys, a drag, or the pointer.",
+  "@ascentIntro": {
+    "description": "The game route standfirst"
+  },
+  "ascentReady": "Press begin",
+  "@ascentReady": {
+    "description": "Shown on the playfield before a run starts"
+  },
+  "ascentBegin": "Begin the climb",
+  "@ascentBegin": {
+    "description": "Starts a standard run"
+  },
+  "ascentAgain": "Climb again",
+  "@ascentAgain": {
+    "description": "Starts another run after one ends"
+  },
+  "ascentPractice": "Practice, no falling",
+  "@ascentPractice": {
+    "description": "Starts a run that cannot be lost"
+  },
+  "ascentAltitude": "{metres} m",
+  "@ascentAltitude": {
+    "description": "Altitude readout in metres",
+    "placeholders": { "metres": { "type": "int" } }
+  },
+  "ascentUncovered": "What the climb uncovers",
+  "@ascentUncovered": {
+    "description": "Heading over the list of facts the climb reveals"
+  },
+  "ascentCanvasLabel": "The climb, drawn on a canvas. Everything it uncovers is listed in text below, and every entry links to where it lives on the site.",
+  "@ascentCanvasLabel": {
+    "description": "Accessible name for the game canvas"
+  },
   "aboutOffDuty": "Off duty",
   "@aboutOffDuty": {
     "description": "About screen: the heading over the owner's interests"
@@ -461,7 +535,7 @@
       }
     }
   },
-  "stationCqResponse": "CQ answered — station receiving",
+  "stationCqResponse": "CQ answered, station receiving",
   "@stationCqResponse": {
     "description": "Easter egg: the response line shown when a viewer types CQ"
   },

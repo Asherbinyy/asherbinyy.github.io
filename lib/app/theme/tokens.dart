@@ -413,6 +413,12 @@ abstract final class Tokens {
   /// Distance between signs on an inscribed line.
   static const double wallSignPitch = 26;
 
+  /// The widest the climb's playfield is allowed to become.
+  ///
+  /// A shaft that fills a desktop window is a shaft nobody can see the walls
+  /// of, and the steering becomes imprecise at that width.
+  static const double ascentMaxWidth = 520;
+
   /// The cursor wake: how long a mote lives, how many may live at once, and
   /// how large one starts.
   ///

@@ -17,6 +17,23 @@
       "featured": true
     },
     {
+      "id": "minextstep",
+      "name": "MiNextStep",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "store": {},
+      "role": {
+        "en": "Built the MVP: role-based access, curated feeds, mentorship programmes, chat and event management. Invitation-only onboarding and role-specific content lifted retention by 50 per cent.",
+        "ar": "بناء النسخة الأولى: صلاحيات حسب الدور، ومحتوى منسّق، وبرامج إرشاد، ومحادثات وإدارة فعاليات. رفع الدخول بالدعوة والمحتوى المخصّص الاحتفاظ بالمستخدمين 50 بالمئة."
+      },
+      "metric": "50% retention lift",
+      "domain": "Services",
+      "country": "CA",
+      "featured": true
+    },
+    {
       "id": "mokaf",
       "name": "Mokaf",
       "platforms": [
@@ -25,8 +42,8 @@
       ],
       "store": {},
       "role": {
-        "en": "Smart parking — real-time maps, QR, TAP / Apple Pay / STC Pay",
-        "ar": "مواقف ذكية — خرائط لحظية ورمز QR ومدفوعات TAP وApple Pay وSTC Pay"
+        "en": "Smart parking with real-time maps, QR entry and TAP, Apple Pay and STC Pay",
+        "ar": "مواقف ذكية بخرائط لحظية ورمز QR ومدفوعات TAP وApple Pay وSTC Pay"
       },
       "domain": "Mobility",
       "featured": true,
@@ -44,40 +61,12 @@
         "android": "https://play.google.com/store/apps/details?id=com.crazyidea.coursesexams"
       },
       "role": {
-        "en": "Redesign and rebuild — video, PDF, audio delivery",
-        "ar": "إعادة تصميم وبناء — بثّ الفيديو وملفات PDF والتسجيلات الصوتية"
+        "en": "Redesigned and rebuilt around video, PDF and audio delivery",
+        "ar": "إعادة تصميم وبناء حول بثّ الفيديو وملفات PDF والتسجيلات الصوتية"
       },
       "metric": "15,000+ downloads",
       "domain": "Education",
       "featured": true
-    },
-    {
-      "id": "enjoy",
-      "name": "Enjoy",
-      "platforms": [
-        "ios"
-      ],
-      "store": {
-        "ios": "https://apps.apple.com/us/app/enjoy4/id6447956809"
-      },
-      "role": {
-        "en": "E-scooter rental — BLE QR unlock, in-app navigation",
-        "ar": "تأجير السكوتر الكهربائي — فتح عبر BLE ورمز QR، وملاحة داخل التطبيق"
-      },
-      "domain": "Mobility",
-      "featured": true
-    },
-    {
-      "id": "malboos",
-      "name": "Malboos",
-      "platforms": [
-        "ios"
-      ],
-      "store": {
-        "ios": "https://apps.apple.com/us/app/malboos/id6736588728"
-      },
-      "domain": "Retail",
-      "featured": false
     },
     {
       "id": "guardy",
@@ -99,6 +88,34 @@
       "featured": true
     },
     {
+      "id": "enjoy",
+      "name": "Enjoy",
+      "platforms": [
+        "ios"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/us/app/enjoy4/id6447956809"
+      },
+      "role": {
+        "en": "E-scooter rental with BLE and QR unlocking, and in-app navigation",
+        "ar": "تأجير السكوتر الكهربائي بفتح عبر BLE ورمز QR وملاحة داخل التطبيق"
+      },
+      "domain": "Mobility",
+      "featured": true
+    },
+    {
+      "id": "malboos",
+      "name": "Malboos",
+      "platforms": [
+        "ios"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/us/app/malboos/id6736588728"
+      },
+      "domain": "Retail",
+      "featured": false
+    },
+    {
       "id": "tiara-beauty",
       "name": "Tiara Beauty",
       "platforms": [
@@ -108,7 +125,7 @@
         "ios": "https://apps.apple.com/us/app/tiara-beauty/id6502843404"
       },
       "domain": "Services",
-      "featured": true,
+      "featured": false,
       "role": {
         "en": "Freelance build with one other developer",
         "ar": "عمل حرّ بالتعاون مع مطوّر آخر"
@@ -177,8 +194,8 @@
         "pub": "https://pub.dev/packages/easy_go"
       },
       "role": {
-        "en": "Open-source Flutter package for routing and navigation — custom page transitions, named routes and data passing",
-        "ar": "حزمة Flutter مفتوحة المصدر للتنقّل بين الصفحات — انتقالات مخصّصة ومسارات مُسمّاة وتمرير البيانات"
+        "en": "Open-source Flutter package for routing and navigation, with custom page transitions, named routes and data passing",
+        "ar": "حزمة Flutter مفتوحة المصدر للتنقّل بين الصفحات، بانتقالات مخصّصة ومسارات مُسمّاة وتمرير البيانات"
       },
       "domain": "Open source",
       "engagement": "freelance",

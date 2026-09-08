@@ -72,7 +72,10 @@
         "en": "Led end-to-end design and delivery of mobile and web applications, owning architecture, Flutter development, API integration and user experience. Full time to January 2024, part time from April 2025.",
         "ar": "قاد تصميم وتسليم تطبيقات الموبايل والويب من البداية إلى النهاية، وتولّى البنية البرمجية وتطوير Flutter وتكامل واجهات البرمجة وتجربة المستخدم. بدوام كامل حتى يناير 2024، وبدوام جزئي من أبريل 2025."
       },
-      "kind": "role"
+      "kind": "role",
+      "appIds": [
+        "minextstep"
+      ]
     },
     {
       "id": "hwzn-tech",
@@ -111,10 +114,13 @@
         "ar": "مطوّر تطبيقات موبايل"
       },
       "summary": {
-        "en": "Migrated a legacy Android application to Flutter, improving performance by 20%. Added unit, integration and widget testing, reducing bug rates by 30%.",
-        "ar": "نقل تطبيق أندرويد قديمًا إلى Flutter، فحسّن الأداء بنسبة 20%. وأضاف اختبارات الوحدة والتكامل والواجهات، فخفّض معدّل الأخطاء بنسبة 30%."
+        "en": "Rebuilt Tripster, a Russian travel marketplace, from a legacy Android app into Flutter, working with the client team in Russia. Performance up 20 per cent, and unit, integration and widget testing brought bug rates down 30 per cent.",
+        "ar": "أعاد بناء Tripster، وهو سوق سفر روسي، من تطبيق أندرويد قديم إلى Flutter، بالعمل مع فريق العميل في روسيا. تحسّن الأداء بنسبة 20 بالمئة، وخفّض الاختبار بأنواعه معدّل الأخطاء 30 بالمئة."
       },
-      "kind": "role"
+      "kind": "role",
+      "appIds": [
+        "tripster"
+      ]
     },
     {
       "id": "techlabs",

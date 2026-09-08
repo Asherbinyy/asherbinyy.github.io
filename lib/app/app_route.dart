@@ -18,6 +18,9 @@ enum AppRoute {
   /// Background and contact.
   about('/about'),
 
+  /// Everything that is not work: the interests, and the climb.
+  courtyard('/courtyard'),
+
   /// Dashboard placeholder; no dashboard or data exists yet.
   console('/console'),
 

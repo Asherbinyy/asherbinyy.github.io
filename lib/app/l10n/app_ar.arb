@@ -216,6 +216,24 @@
   },
   "aboutEvidenceOpen": "افتح: {caption}",
   "aboutEvidenceClose": "إغلاق",
+  "navCourtyard": "الفناء",
+  "courtyardHeading": "الفناء",
+  "courtyardIntro": "أعطت جدران المقابر للحياة التي عاشها المرء مساحة توازي ألقابه. هذا هو ذلك النصف: ما أفعله حين لا أكون أطلق تطبيقاً.",
+  "courtyardGamePitch": "تسلّق داخل مسلّة. كل شريط تتجاوزه يكشف شيئاً حقيقياً من هذا الموقع، فهو السيرة الذاتية بالطريق الصعب.",
+  "courtyardPlay": "العب",
+  "ascentRestart": "إعادة",
+  "ascentSoundOn": "تشغيل الصوت",
+  "ascentSoundOff": "كتم الصوت",
+  "ascentBest": "الأفضل {metres} م",
+  "ascentHeading": "الصعود",
+  "ascentIntro": "تسلّق داخل مسلّة. كل شريط تتجاوزه يكشف شيئاً حقيقياً من هذا الموقع. وجّه بالأسهم أو بالسحب أو بالمؤشر.",
+  "ascentReady": "اضغط للبدء",
+  "ascentBegin": "ابدأ التسلّق",
+  "ascentAgain": "تسلّق مرة أخرى",
+  "ascentPractice": "تدريب بلا سقوط",
+  "ascentAltitude": "{metres} م",
+  "ascentUncovered": "ما يكشفه الصعود",
+  "ascentCanvasLabel": "التسلّق مرسوم على لوحة. كل ما يكشفه مذكور نصاً بالأسفل، وكل مدخل يقود إلى موضعه في الموقع.",
   "aboutOffDuty": "خارج العمل",
   "aboutContact": "التواصل",
   "@aboutContact": {
@@ -230,7 +248,7 @@
       }
     }
   },
-  "stationCqResponse": "تم الرد على النداء — المحطة تستقبل",
+  "stationCqResponse": "تم الرد على النداء ، المحطة تستقبل",
   "@stationCqResponse": {
     "description": "Easter egg: the response line shown when a viewer types CQ"
   },

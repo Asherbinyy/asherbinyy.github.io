@@ -210,6 +210,17 @@ because it exists.
 
 ---
 
+## 3d. Third-party code
+
+| What | Version | Licence | Where |
+|---|---|---|---|
+| Three.js | 0.180.0 | MIT | `web/vendor/three.module.min.js`, `web/vendor/three.core.min.js` |
+
+Vendored rather than linked, for the reason in `03-ARCHITECTURE.md` §4b. It is
+the only third-party runtime code on the site.
+
+---
+
 ## 4b. Store-link verification, 2026-09-07
 
 Every iOS link in `apps.json` was re-checked against the iTunes lookup API in
