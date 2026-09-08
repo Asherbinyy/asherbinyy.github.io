@@ -76,9 +76,9 @@
   "@markLink": {
     "description": "Accessible name for the mark, which links to the home route."
   },
-  "recruiterModeGlyph": "⬡",
+  "recruiterModeGlyph": "Brief",
   "@recruiterModeGlyph": {
-    "description": "Visible glyph on the Recruiter Mode control. Not translated."
+    "description": "Visible label on the Recruiter Mode control. A word, not a glyph: it was a hexagon, and nobody could know that pressing it would collapse the site into a summary."
   },
   "recruiterModeOn": "Recruiter mode is on. Turn it off.",
   "@recruiterModeOn": {
@@ -209,16 +209,11 @@
   "@signalClose": {
     "description": "Closes the transmission panel."
   },
-  "workHeading": "{count, plural, =1{One shipped application} other{{count} shipped applications}}",
+  "workHeading": "The Treasury",
   "@workHeading": {
-    "description": "Heading on the work ledger, counting the applications listed.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
+    "description": "Heading on the work page. A name, not a count: it read \"13 shipped applications\", which is a statistic rather than a title and one every other page already carries."
   },
-  "workSubheading": "Everything below is live and publicly linkable.",
+  "workSubheading": "Products taken from a first conversation to a release, and kept running afterwards. Some built alone, most with a team, all of them shipped.",
   "@workSubheading": {
     "description": "Standfirst under the work ledger heading."
   },
