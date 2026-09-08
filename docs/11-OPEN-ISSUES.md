@@ -138,7 +138,7 @@ Still open, in his numbering:
 | 0e.8 | About as a personal chamber (§19). **Interests as interactions (§20) is closed:** each tile plays a small scene rather than being a word in a box. The lift goes overhead, the ball arcs to goal, the rally crosses and returns, the scroll opens with its writing, the scales tip, the players face off. The tiles are focusable now, which the first version deliberately was not: there was nothing to do then, so being in the tab order was six stops for nothing. |
 | 0e.9 | Signal as an unrolling papyrus map (§7). **The clipped panel (§8) is closed:** the stop name sat in a box reserving the font size, which is about two thirds of a line, so it was cut through its descenders the moment it appeared. It reserves a full line box now, and a test measures the painted rect against the render box so it cannot silently return. |
 | 0e.10 | Environmental depth throughout: parallax, stone, lighting, museum photography used with restraint (§9, §30) |
-| 0e.11 | Recruiter summary redesigned (§26); platform logos for links (§27) |
+| 0e.11 | **Closed.** The brief carried no work history at all, which is the one thing a recruiter opens a summary to find. It leads with experience now, most recent first, then shipped work as real links with their metrics, then education with the marks worth reading, then contact. It also repeated its own "Education" label once per entry, which read as a bug because it was one. Platform names were already real words rather than symbols (§27). |
 | 0e.12 | Academic content: robotics competition, the smart tank graduation project and its Excellent grade (§22). **Needs detail from the owner.** |
 | 0e.13 | Country flags including Russia via the Armenian project (§5). **Needs confirmation of how to represent it.** |
 | 0e.14 | MyNextStep to August 2025, and freelancing 2025 to now (§11). **Needs confirmation.** |
@@ -148,6 +148,22 @@ Still open, in his numbering:
 | 0e.18 | **Placeholder imagery throughout.** Real photography is wanted now, with uploads later. The upload half is milestone 7; the photography half is still open. |
 | 0e.20 | **R2 is rejected and the reason is recorded**, because it is the obvious choice and a future agent will otherwise reach for it: enabling it needs a payment card on the Cloudflare account even though the free tier bills nothing, and the owner asked for the path with least faff. KV instead, images only, video by URL. `15-ADMIN-AND-MEDIA.md` §2. |
 | 0e.19 | **The Cloudflare Worker needs no deploy.** Checked 2026-09-08: nothing under `worker/` has changed since version `929f5eaa`, `/v1/writing` returns 200 and `/v1/cover` relays a real Medium image at 200. Deploying from this session is impossible anyway without `CLOUDFLARE_API_TOKEN`, which is recorded here so the next agent does not retry it blind. |
+
+---
+
+## 0f. A gate that caught something
+
+**Coverage fell to 79.77% and CI refused the merge.** The owner waived testing
+for speed, and the waiver is legitimate, but the 80% gate is not something an
+agent may quietly lower to get past it.
+
+Tests were added rather than the bar moved: the climb's physics, which is the
+whole game and a pure function so it is cheap to test properly, plus paint
+smoke tests for the two new painters. Coverage is 86.06% and the physics is now
+genuinely covered, which it was not.
+
+Recorded because the next agent will meet the same tension. Skipping tests is
+allowed; lowering a standard to hide the consequence is not.
 
 ---
 
