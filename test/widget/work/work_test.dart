@@ -159,11 +159,11 @@ void main() {
       final unfeatured = apps.where((a) => a['featured'] != true).toList();
       expect(featured, hasLength(6));
       for (final app in featured) {
-        expect(
-          find.text(app['name'] as String),
-          findsOneWidget,
-          reason: '$app',
-        );
+        // At least once, not exactly once. The brief gained a work history,
+        // and a name can legitimately be both an employer and the product
+        // built there: MiNextStep is both, so it appears under Experience and
+        // under Shipped, and that is the brief being right rather than wrong.
+        expect(find.text(app['name'] as String), findsWidgets, reason: '$app');
       }
       for (final app in unfeatured) {
         expect(find.text(app['name'] as String), findsNothing, reason: '$app');

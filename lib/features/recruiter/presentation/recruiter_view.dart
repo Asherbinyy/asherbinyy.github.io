@@ -1,3 +1,9 @@
+import 'dart:async';
+
+import 'package:url_launcher/url_launcher.dart';
+import 'package:nocturne/content/models/career.dart';
+import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
+import 'package:nocturne/features/about/presentation/widgets/education_table.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,6 +61,17 @@ class RecruiterView extends ConsumerWidget {
       ContentReady(:final data) => data.entries,
       _ => const <EducationEntry>[],
     };
+    // The brief carried no work history at all, which is the one thing a
+    // recruiter opens a summary to find.
+    final roles = switch (ref.watch(careerProvider).valueOrNull) {
+      ContentReady(:final data) =>
+        data.roles
+            .where((role) => role.kind == StopKind.role)
+            .toList()
+            .reversed
+            .toList(),
+      _ => const <CareerRole>[],
+    };
 
     return Padding(
       padding: EdgeInsetsDirectional.only(
@@ -67,6 +84,7 @@ class RecruiterView extends ConsumerWidget {
         profile: profile,
         featured: featured,
         entries: entries,
+        roles: roles,
         locale: locale,
       ),
     );
@@ -78,12 +96,14 @@ class _Brief extends StatelessWidget {
     required this.profile,
     required this.featured,
     required this.entries,
+    required this.roles,
     required this.locale,
   });
 
   final Profile profile;
   final List<ShippedApp> featured;
   final List<EducationEntry> entries;
+  final List<CareerRole> roles;
   final AppLocale locale;
 
   @override
@@ -116,48 +136,243 @@ class _Brief extends StatelessWidget {
           ),
         ],
         SizedBox(height: tokens.space32),
-        if (featured.isNotEmpty)
+
+        // Most recent first. A recruiter reads a summary from the top and
+        // stops when they have decided, so the newest role has to be the one
+        // they meet.
+        if (roles.isNotEmpty)
           _Row(
-            label: l10n.recruiterShipped,
-            child: Wrap(
-              spacing: tokens.space16,
-              runSpacing: tokens.space8,
+            label: l10n.recruiterExperience,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                for (final app in featured) Text(app.name, style: type.body),
+                for (final role in roles)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: tokens.space12),
+                    child: _Role(role: role, locale: locale),
+                  ),
               ],
             ),
           ),
-        for (final entry in entries)
+
+        if (featured.isNotEmpty)
+          _Row(
+            label: l10n.recruiterShipped,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final app in featured)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: tokens.space8),
+                    child: _App(app: app, locale: locale),
+                  ),
+              ],
+            ),
+          ),
+
+        // One row for education, not one row per entry. It repeated its own
+        // label down the page, which read as a bug because it was one.
+        if (entries.isNotEmpty)
           _Row(
             label: l10n.recruiterEducation,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(entry.institution.resolve(locale), style: type.body),
-                Text(
-                  entry.award.resolve(locale),
-                  style: type.bodyS.copyWith(color: tokens.textSecondary),
-                ),
+                for (final entry in entries)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: tokens.space12),
+                    child: _Education(entry: entry, locale: locale),
+                  ),
               ],
             ),
           ),
+
         _Row(
           label: l10n.recruiterContact,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(profile.contact.email, style: type.telemetry),
-              for (final link in <Uri?>[
-                profile.contact.linkedin,
-                profile.contact.github,
-              ])
-                if (link != null) Text(link.host, style: type.telemetryS),
-            ],
-          ),
+          child: ContactLinks(contact: profile.contact),
         ),
       ],
+    );
+  }
+}
+
+/// One role: employer, what he did there, and when.
+class _Role extends StatelessWidget {
+  const _Role({required this.role, required this.locale});
+
+  final CareerRole role;
+  final AppLocale locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final type = context.type;
+    final title = role.title?.resolve(locale);
+    final summary = role.summary?.resolve(locale);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Flexible(
+              child: Text(
+                role.company ?? role.city,
+                style: type.body.copyWith(color: tokens.textPrimary),
+              ),
+            ),
+            SizedBox(width: tokens.space12),
+            Text(
+              '${role.start} to ${role.end ?? ''}'.trim(),
+              style: type.telemetryS.copyWith(color: tokens.textMuted),
+            ),
+          ],
+        ),
+        if (title != null)
+          Text(title, style: type.bodyS.copyWith(color: tokens.textSecondary)),
+        if (summary != null)
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: type.measureFor(type.bodyS)),
+            child: Text(
+              summary,
+              style: type.bodyS.copyWith(color: tokens.textSecondary),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// One shipped application, with its listing where there is one.
+///
+/// The names were plain text before, which made the strongest evidence on the
+/// site the one thing a reader could not click.
+class _App extends StatelessWidget {
+  const _App({required this.app, required this.locale});
+
+  final ShippedApp app;
+  final AppLocale locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final type = context.type;
+    final role = app.role?.resolve(locale);
+    final store = app.store.values.firstOrNull;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            if (store == null)
+              Text(app.name, style: type.body)
+            else
+              _Link(label: app.name, url: store),
+            if (app.metric case final metric?) ...[
+              SizedBox(width: tokens.space12),
+              Text(
+                metric,
+                style: type.telemetryS.copyWith(color: tokens.textMuted),
+              ),
+            ],
+          ],
+        ),
+        if (role != null)
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: type.measureFor(type.bodyS)),
+            child: Text(
+              role,
+              style: type.bodyS.copyWith(color: tokens.textSecondary),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// One qualification, with the marks that are worth reading.
+class _Education extends StatelessWidget {
+  const _Education({required this.entry, required this.locale});
+
+  final EducationEntry entry;
+  final AppLocale locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final type = context.type;
+    final status = entry.status?.resolve(locale);
+    // The same line the About page publishes, so the two cannot disagree.
+    final best =
+        entry.modules
+            .where((module) => module.mark >= EducationTable.publishableMark)
+            .toList()
+          ..sort((a, b) => b.mark.compareTo(a.mark));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(entry.award.resolve(locale), style: type.body),
+        Text(
+          '${entry.institution.resolve(locale)}   '
+          '${entry.start} to ${entry.end}',
+          style: type.telemetryS.copyWith(color: tokens.textMuted),
+        ),
+        if (status != null)
+          Text(status, style: type.bodyS.copyWith(color: tokens.beacon)),
+        if (best.isNotEmpty)
+          Text(
+            best
+                .take(3)
+                .map(
+                  (module) =>
+                      '${module.name.resolve(locale)} '
+                      '${module.mark.toStringAsFixed(0)}',
+                )
+                .join('   '),
+            style: type.telemetryS.copyWith(color: tokens.textSecondary),
+          ),
+      ],
+    );
+  }
+}
+
+/// A store listing, opened in a new tab.
+class _Link extends StatelessWidget {
+  const _Link({required this.label, required this.url});
+
+  final String label;
+  final Uri url;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Semantics(
+      link: true,
+      child: InkWell(
+        onTap: () =>
+            unawaited(launchUrl(url, mode: LaunchMode.externalApplication)),
+        hoverColor: Colors.transparent,
+        child: Text(
+          label,
+          style: context.type.body.copyWith(
+            color: tokens.beacon,
+            decoration: TextDecoration.underline,
+            decorationColor: tokens.beaconDim,
+          ),
+        ),
+      ),
     );
   }
 }

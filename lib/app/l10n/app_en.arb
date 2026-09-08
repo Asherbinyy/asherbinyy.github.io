@@ -245,6 +245,10 @@
   "@recruiterHeading": {
     "description": "Heading of the in-app recruiter view."
   },
+  "recruiterExperience": "Experience",
+  "@recruiterExperience": {
+    "description": "Brief: the work history row"
+  },
   "recruiterShipped": "Shipped",
   "@recruiterShipped": {
     "description": "Row label for shipped applications in the recruiter view."
