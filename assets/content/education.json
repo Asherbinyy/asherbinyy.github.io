@@ -102,7 +102,17 @@
         "ar": "بكالوريوس هندسة الاتصالات والإلكترونيات"
       },
       "start": "2015-09",
-      "end": "2020-08"
+      "end": "2020-08",
+      "highlights": [
+        {
+          "en": "Graduation project: a smart tank. Graded Excellent.",
+          "ar": "مشروع التخرّج: دبّابة ذكية. بتقدير ممتاز."
+        },
+        {
+          "en": "Third place in an inter-university robotics competition, in first year.",
+          "ar": "المركز الثالث في مسابقة روبوتات بين الجامعات، في السنة الأولى."
+        }
+      ]
     }
   ]
 }

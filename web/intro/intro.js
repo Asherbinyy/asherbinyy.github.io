@@ -246,63 +246,121 @@ export class Threshold {
   }
 
   #guards() {
-    // Two jackal-headed sentries, built from primitives and read as
-    // silhouettes. Detail here would be worse than none: a low-poly Anubis
-    // that almost works is uncanny, and one that is clearly a statue is not.
+    // Anubis, seated, as the funerary statues actually are: forelegs
+    // straight, hindquarters down, head up and forward, tail along the
+    // plinth. The first pass was a standing figure built from a cylinder and
+    // a box, and it read as a chess piece.
+    //
+    // Still stylised rather than detailed. A low-polygon Anubis that almost
+    // works is uncanny; one that is clearly a carved statue is not, and at
+    // this distance the silhouette is the whole read: long snout, tall ears,
+    // straight forelegs.
     const statue = new THREE.MeshStandardMaterial({
-      color: 0x222a38,
-      roughness: 1,
-      metalness: 0.04,
+      color: 0x2b3444,
+      roughness: 0.92,
+      metalness: 0.06,
+    });
+    const gilt = new THREE.MeshStandardMaterial({
+      color: PALETTE.gold,
+      emissive: PALETTE.gold,
+      emissiveIntensity: 0.12,
+      roughness: 0.4,
+      metalness: 0.6,
     });
     this.staves = [];
 
     for (const side of [-1, 1]) {
       const guard = new THREE.Group();
 
-      const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.7, 1.9), statue);
-      plinth.position.y = 0.35;
+      // Plinth, stepped.
+      const base = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.42, 1.9), statue);
+      base.position.y = 0.21;
+      guard.add(base);
+      const plinth = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.5, 1.65), statue);
+      plinth.position.y = 0.67;
       guard.add(plinth);
 
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.78, 3.1, 8), statue);
-      body.position.y = 2.25;
-      guard.add(body);
+      // Hindquarters: the mass a seated jackal sits back on.
+      const haunch = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.15, 1.3), statue);
+      haunch.position.set(-0.72, 1.5, 0);
+      guard.add(haunch);
 
-      const shoulders = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.42, 0.72), statue);
-      shoulders.position.y = 3.6;
-      guard.add(shoulders);
+      // The back, rising from haunch to shoulder.
+      const back = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.85, 1.05), statue);
+      back.position.set(0.02, 2.0, 0);
+      back.rotation.z = -0.32;
+      guard.add(back);
 
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.72, 0.62), statue);
-      head.position.set(0, 4.12, 0);
+      // Chest, upright and forward of the haunch.
+      const chest = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.65, 1.0), statue);
+      chest.position.set(0.62, 2.05, 0);
+      guard.add(chest);
+
+      // Forelegs: straight down to the plinth, which is the pose's signature.
+      for (const leg of [-1, 1]) {
+        const foreleg = new THREE.Mesh(
+          new THREE.BoxGeometry(0.26, 1.35, 0.26),
+          statue,
+        );
+        foreleg.position.set(0.86, 1.6, leg * 0.32);
+        guard.add(foreleg);
+        const paw = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.58), statue);
+        paw.position.set(0.92, 1.02, leg * 0.32);
+        guard.add(paw);
+      }
+
+      // Neck and head, carried high and forward.
+      const neck = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.8, 0.62), statue);
+      neck.position.set(0.66, 3.0, 0);
+      guard.add(neck);
+
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.62, 0.72), statue);
+      head.position.set(0.66, 3.55, 0);
       guard.add(head);
 
-      // The snout, which is the whole read: without it this is a person.
-      const snout = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.26, 0.62), statue);
-      snout.position.set(0, 4.0, 0.5);
+      // The snout. Long, level, and the single thing that makes this a jackal.
+      const snout = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.3, 0.34), statue);
+      snout.position.set(1.16, 3.44, 0);
       guard.add(snout);
 
+      // Ears: tall, upright, slightly splayed.
       for (const ear of [-1, 1]) {
-        const shape = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.66, 4), statue);
-        shape.position.set(ear * 0.19, 4.72, -0.04);
+        const shape = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.95, 0.34), statue);
+        shape.position.set(0.5, 4.2, ear * 0.24);
+        shape.rotation.z = 0.12;
+        shape.rotation.x = ear * 0.1;
         guard.add(shape);
       }
 
+      // The nemes headcloth flaring behind the ears, and a gilt collar. Two
+      // marks of rank, and the only gold on the figure.
+      const nemes = new THREE.Mesh(new THREE.BoxGeometry(0.36, 1.05, 1.15), statue);
+      nemes.position.set(0.3, 3.35, 0);
+      guard.add(nemes);
+      const collar = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.2, 1.06), gilt);
+      collar.position.set(0.62, 2.72, 0);
+      guard.add(collar);
+
+      // Tail along the plinth.
+      const tail = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.2, 0.22), statue);
+      tail.position.set(-1.25, 1.02, 0);
+      tail.rotation.z = 0.18;
+      guard.add(tail);
+
+      // The staff it holds upright, which is what strikes the ground.
       const staff = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.075, 0.075, 4.4, 6),
-        new THREE.MeshStandardMaterial({
-          color: PALETTE.gold,
-          emissive: PALETTE.gold,
-          emissiveIntensity: 0.1,
-          roughness: 0.45,
-          metalness: 0.5,
-        }),
+        new THREE.CylinderGeometry(0.08, 0.08, 4.6, 6),
+        gilt,
       );
-      staff.position.set(side * -0.95, 2.2, 0.42);
+      staff.position.set(1.12, 2.3, side * 0.62);
       guard.add(staff);
       this.staves.push(staff);
 
-      guard.position.set(side * 6.4, 0, 4.6);
-      guard.rotation.y = side * -0.1;
-      guard.scale.setScalar(0.82);
+      // Facing the doorway, so both sentries look at what the viewer is about
+      // to walk through.
+      guard.position.set(side * 4.9, 0, 4.2);
+      guard.rotation.y = side > 0 ? Math.PI : 0;
+      guard.scale.setScalar(0.95);
       this.rig.add(guard);
     }
   }

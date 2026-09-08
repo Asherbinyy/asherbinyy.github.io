@@ -32,12 +32,14 @@ void main() {
       // reserved for /cv and for structured metadata -- see Profile.shownName.
       expect(find.text('Sherbini'), findsOneWidget);
       expect(find.text('Ahmed Elsherbini'), findsNothing);
-      expect(
-        find.text(
-          'Mobile engineer. 25+ applications shipped across six countries.',
-        ),
-        findsOneWidget,
-      );
+      // Read from the content rather than pinned to a sentence: the line is
+      // the owner's own copy and he rewrites it, and a test that hard-codes it
+      // fails every time he does.
+      final positioning =
+          (bundledJson('assets/content/profile.json')['positioning']
+              as Map<String, dynamic>)['en'];
+      expect(positioning, isNotEmpty);
+      expect(find.text(positioning as String), findsOneWidget);
     });
 
     testWidgets('carries both calls to action', (tester) async {
@@ -105,21 +107,21 @@ void main() {
       expect(find.byType(StatPanel), findsNothing);
     });
 
-    testWidgets('renders the three panels the shipped profile declares', (
+    testWidgets('renders the panels the shipped profile declares', (
       tester,
     ) async {
-      // Every figure is traceable to a supplied document: 25+ applications
-      // and six countries from 00-PROJECT-BRIEF.md and the positioning line,
-      // and "4+ years commercial" from the owner's CV, which is what finally
-      // dated the spec's third panel.
+      // The hero used to lead with a scoreboard: 25+ shipped, six countries,
+      // 4+ years. The owner's objection was that it introduced him as a
+      // statistic, so the counts moved to where they are evidence rather than
+      // a greeting, and two panels remain. Both are traceable: five years is
+      // the span since October 2021, and the award is on his CV.
       await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
 
-      expect(find.byType(StatPanel), findsNWidgets(3));
-      expect(find.text('25+'), findsOneWidget);
-      expect(find.text('shipped'), findsOneWidget);
-      expect(find.text('6'), findsOneWidget);
-      expect(find.text('countries'), findsOneWidget);
-      expect(find.text('4+'), findsOneWidget);
+      expect(find.byType(StatPanel), findsNWidgets(2));
+      expect(find.text('5'), findsOneWidget);
+      expect(find.text('MSc'), findsOneWidget);
+      // The greeting must not be a count any more.
+      expect(find.text('25+'), findsNothing);
     });
 
     testWidgets('renders a panel for every stat the content declares', (

@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/rendering.dart';
 
 import 'package:nocturne/core/painting/glyph_paths.dart';
-import 'package:nocturne/features/ascent/domain/ascent_world.dart';
+import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
 
 /// Draws the shaft of the obelisk, and the climb up it.
 ///

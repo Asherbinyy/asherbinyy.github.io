@@ -17,6 +17,23 @@
       "featured": true
     },
     {
+      "id": "minextstep",
+      "name": "MiNextStep",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "store": {},
+      "role": {
+        "en": "Built the MVP: role-based access, curated feeds, mentorship programmes, chat and event management. Invitation-only onboarding and role-specific content lifted retention by 50 per cent.",
+        "ar": "بناء النسخة الأولى: صلاحيات حسب الدور، ومحتوى منسّق، وبرامج إرشاد، ومحادثات وإدارة فعاليات. رفع الدخول بالدعوة والمحتوى المخصّص الاحتفاظ بالمستخدمين 50 بالمئة."
+      },
+      "metric": "50% retention lift",
+      "domain": "Services",
+      "country": "CA",
+      "featured": true
+    },
+    {
       "id": "mokaf",
       "name": "Mokaf",
       "platforms": [
@@ -52,6 +69,25 @@
       "featured": true
     },
     {
+      "id": "guardy",
+      "name": "Guardy",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "store": {
+        "ios": "https://apps.apple.com/de/app/guardy/id6504706012"
+      },
+      "role": {
+        "en": "Showcase and shop features, cloud functions, structural and UI improvements, and bug fixes",
+        "ar": "إضافة واجهتَي العرض والمتجر، ودوالّ سحابية، وتحسينات بنيوية وواجهات، وإصلاح أخطاء"
+      },
+      "domain": "Safety",
+      "country": "DE",
+      "engagement": "freelance",
+      "featured": true
+    },
+    {
       "id": "enjoy",
       "name": "Enjoy",
       "platforms": [
@@ -80,25 +116,6 @@
       "featured": false
     },
     {
-      "id": "guardy",
-      "name": "Guardy",
-      "platforms": [
-        "ios",
-        "android"
-      ],
-      "store": {
-        "ios": "https://apps.apple.com/de/app/guardy/id6504706012"
-      },
-      "role": {
-        "en": "Showcase and shop features, cloud functions, structural and UI improvements, and bug fixes",
-        "ar": "إضافة واجهتَي العرض والمتجر، ودوالّ سحابية، وتحسينات بنيوية وواجهات، وإصلاح أخطاء"
-      },
-      "domain": "Safety",
-      "country": "DE",
-      "engagement": "freelance",
-      "featured": true
-    },
-    {
       "id": "tiara-beauty",
       "name": "Tiara Beauty",
       "platforms": [
@@ -108,7 +125,7 @@
         "ios": "https://apps.apple.com/us/app/tiara-beauty/id6502843404"
       },
       "domain": "Services",
-      "featured": true,
+      "featured": false,
       "role": {
         "en": "Freelance build with one other developer",
         "ar": "عمل حرّ بالتعاون مع مطوّر آخر"

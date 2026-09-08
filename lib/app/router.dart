@@ -15,7 +15,7 @@ import 'package:nocturne/core/widgets/placeholder_screen.dart';
 import 'package:nocturne/features/console/presentation/console_screen.dart';
 import 'package:nocturne/features/signal/presentation/signal_screen.dart';
 import 'package:nocturne/features/about/presentation/about_screen.dart';
-import 'package:nocturne/features/ascent/presentation/ascent_screen.dart';
+import 'package:nocturne/features/courtyard/presentation/courtyard_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/features/work/presentation/case_study_screen.dart';
 import 'package:nocturne/features/work/presentation/work_screen.dart';
@@ -107,7 +107,7 @@ abstract final class AppRouter {
     AppRoute.caseStudy => CaseStudyScreen(slug: slug ?? ''),
     AppRoute.writing => const WritingScreen(),
     AppRoute.about => const AboutScreen(),
-    AppRoute.ascent => const AscentScreen(),
+    AppRoute.courtyard => const CourtyardScreen(),
     AppRoute.console => const ConsoleScreen(),
     _ => PlaceholderScreen(route: route),
   };

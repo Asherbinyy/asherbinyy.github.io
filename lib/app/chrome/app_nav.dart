@@ -32,8 +32,8 @@ enum NavDestination {
   /// Background and contact.
   about(AppRoute.about),
 
-  /// The climb.
-  ascent(AppRoute.ascent);
+  /// The courtyard.
+  courtyard(AppRoute.courtyard);
 
   const NavDestination(this.route);
 
@@ -47,7 +47,7 @@ enum NavDestination {
     NavDestination.work => l10n.navWork,
     NavDestination.writing => l10n.navWriting,
     NavDestination.about => l10n.navAbout,
-    NavDestination.ascent => l10n.navAscent,
+    NavDestination.courtyard => l10n.navCourtyard,
   };
 }
 

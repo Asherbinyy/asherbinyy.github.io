@@ -68,10 +68,6 @@
   "@navWriting": {
     "description": "Header link to the writing feed."
   },
-  "navAscent": "Ascent",
-  "@navAscent": {
-    "description": "Navigation label for the climb"
-  },
   "navAbout": "About",
   "@navAbout": {
     "description": "Header link to the about page."
@@ -447,6 +443,26 @@
   "aboutEvidenceClose": "Close",
   "@aboutEvidenceClose": {
     "description": "About screen: closes the artefact view"
+  },
+  "navCourtyard": "Courtyard",
+  "@navCourtyard": {
+    "description": "Navigation label for the courtyard"
+  },
+  "courtyardHeading": "The Courtyard",
+  "@courtyardHeading": {
+    "description": "Courtyard heading"
+  },
+  "courtyardIntro": "Tomb walls gave as much space to the life someone lived as to the titles they held. This is that half: what I do when I am not shipping.",
+  "@courtyardIntro": {
+    "description": "Courtyard standfirst"
+  },
+  "courtyardGamePitch": "A climb up the inside of an obelisk. Every band you pass uncovers something real from this site, so it is the CV read the hard way.",
+  "@courtyardGamePitch": {
+    "description": "The line offering the climb before it is started"
+  },
+  "courtyardPlay": "Play",
+  "@courtyardPlay": {
+    "description": "Starts the climb"
   },
   "ascentHeading": "The Ascent",
   "@ascentHeading": {

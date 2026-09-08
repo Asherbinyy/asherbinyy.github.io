@@ -5,7 +5,6 @@ import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/features/about/presentation/widgets/education_table.dart';
-import 'package:nocturne/features/about/presentation/widgets/interests_grid.dart';
 import 'package:nocturne/features/about/presentation/widgets/portrait_frame.dart';
 
 import '../../support/chrome_harness.dart';
@@ -209,65 +208,6 @@ void main() {
       }
     });
 
-    testWidgets('lists every interest the content records', (tester) async {
-      await pumpStation(
-        tester,
-        breakpoint: ChromeBreakpoint.large,
-        initialRoute: AppRoute.about,
-      );
-
-      final interests =
-          (bundledJson('assets/content/interests.json')['interests']
-                  as List<dynamic>)
-              .cast<Map<String, dynamic>>();
-      expect(interests, isNotEmpty);
-
-      expect(find.byType(InterestsGrid), findsOneWidget);
-      for (final interest in interests) {
-        final label = (interest['label'] as Map<String, dynamic>)['en'];
-        expect(
-          find.descendant(
-            of: find.byType(InterestsGrid),
-            matching: find.text(label as String),
-          ),
-          findsOneWidget,
-          reason: '${interest['id']}',
-        );
-      }
-    });
-
-    testWidgets('shows the specifics without needing a hover', (tester) async {
-      await pumpStation(
-        tester,
-        breakpoint: ChromeBreakpoint.large,
-        initialRoute: AppRoute.about,
-      );
-
-      // A fact worth putting on the page is worth a touch user and a screen
-      // reader getting it. Hover adds emphasis here, never information -- so
-      // the note must be on screen with no pointer anywhere near the tile.
-      expect(find.text('Better Call Saul'), findsOneWidget);
-      expect(find.text('FIFA and Valorant'), findsOneWidget);
-    });
-
-    testWidgets('keeps the interests out of the tab order', (tester) async {
-      await pumpStation(
-        tester,
-        breakpoint: ChromeBreakpoint.large,
-        initialRoute: AppRoute.about,
-      );
-
-      // Nowhere for a tile to go, so it must not become six stops a keyboard
-      // user has to pass through on the way to the contact links.
-      expect(
-        find.descendant(
-          of: find.byType(InterestsGrid),
-          matching: find.byType(Focus),
-        ),
-        findsNothing,
-      );
-    });
-
     testWidgets('stacks the portrait above the text on a narrow viewport', (
       tester,
     ) async {
@@ -277,12 +217,13 @@ void main() {
         initialRoute: AppRoute.about,
       );
 
+      // Against the education table rather than the positioning line: the
+      // hero copy is the owner's own and he rewrites it, and a layout test
+      // should not fail because a sentence changed.
       final portrait = tester.getRect(find.byType(PortraitFrame));
-      final positioning = tester.getRect(
-        find.textContaining('Mobile engineer'),
-      );
+      final below = tester.getRect(find.byType(EducationTable));
 
-      expect(portrait.bottom, lessThanOrEqualTo(positioning.top));
+      expect(portrait.bottom, lessThanOrEqualTo(below.top));
     });
   });
 }

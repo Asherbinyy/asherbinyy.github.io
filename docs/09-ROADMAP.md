@@ -443,7 +443,7 @@ reduced motion, no layout shift.
 
 ### 5.9 `/cv` and `/brief` — **partly built**: both carry the ankh and the new palette; the layout is unchanged
 Restyled to match, still hand-written HTML, still JS-optional, still ATS-first.
-
+   
 ### 5.10 Verification
 Contrast across every new surface, full keyboard and screen-reader audit, frame
 profiles for wall, map, fields and cursor in a real browser — closing

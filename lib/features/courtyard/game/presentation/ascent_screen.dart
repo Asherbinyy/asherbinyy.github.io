@@ -18,8 +18,8 @@ import 'package:nocturne/core/painting/ascent_painter.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
-import 'package:nocturne/features/ascent/domain/ascent_facts.dart';
-import 'package:nocturne/features/ascent/domain/ascent_world.dart';
+import 'package:nocturne/features/courtyard/game/domain/ascent_facts.dart';
+import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
 
 /// `/ascent` — the climb up the obelisk.
 ///

@@ -9,7 +9,7 @@ import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/app_footer.dart';
 import 'package:nocturne/features/console/presentation/console_screen.dart';
 import 'package:nocturne/features/about/presentation/about_screen.dart';
-import 'package:nocturne/features/ascent/presentation/ascent_screen.dart';
+import 'package:nocturne/features/courtyard/presentation/courtyard_screen.dart';
 import 'package:nocturne/features/signal/presentation/signal_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/features/work/presentation/case_study_screen.dart';
@@ -32,7 +32,7 @@ void main() {
       AppRoute.caseStudy: CaseStudyScreen,
       AppRoute.writing: WritingScreen,
       AppRoute.about: AboutScreen,
-      AppRoute.ascent: AscentScreen,
+      AppRoute.courtyard: CourtyardScreen,
       AppRoute.console: ConsoleScreen,
       AppRoute.campaign: StationScreen,
     };
