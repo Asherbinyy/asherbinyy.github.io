@@ -136,13 +136,13 @@ Still open, in his numbering:
 | 0e.6 | Work page as an interactive exhibition, with a media pipeline he can fill later (his §13, §14, §17). **Partly superseded by milestone 7**, which owns the media half. |
 | 0e.7 | Writing as a scroll archive, pulling from Medium and his blog (§18) |
 | 0e.8 | About as a personal chamber; interests as interactions rather than words (§19, §20) |
-| 0e.9 | Signal as an unrolling papyrus map, and the clipped "choose stop" panel (§7, §8) |
+| 0e.9 | Signal as an unrolling papyrus map (§7). **The clipped panel (§8) is closed:** the stop name sat in a box reserving the font size, which is about two thirds of a line, so it was cut through its descenders the moment it appeared. It reserves a full line box now, and a test measures the painted rect against the render box so it cannot silently return. |
 | 0e.10 | Environmental depth throughout: parallax, stone, lighting, museum photography used with restraint (§9, §30) |
 | 0e.11 | Recruiter summary redesigned (§26); platform logos for links (§27) |
 | 0e.12 | Academic content: robotics competition, the smart tank graduation project and its Excellent grade (§22). **Needs detail from the owner.** |
 | 0e.13 | Country flags including Russia via the Armenian project (§5). **Needs confirmation of how to represent it.** |
 | 0e.14 | MyNextStep to August 2025, and freelancing 2025 to now (§11). **Needs confirmation.** |
-| 0e.15 | Remove the unexplained icon beside EN/AR (§25) |
+| ~~0e.15~~ | **Closed.** The icon was `⬡`, the Recruiter Mode toggle, and nothing about a hexagon says "collapse this site into a summary". It reads **Brief** now, which is what the mode is called everywhere else on the site. |
 | 0e.16 | Name audio player under the hero, awaiting his recording |
 | 0e.17 | **The climb's controls are rebuilt.** Keyboard: arrows or WASD to steer, space or W to leap, S to dive. Touch: a pad under the frame rather than dragging across the playfield, which put the hand over the shaft it was steering through and left nowhere for a second action. Leap and dive are new mechanics on top of the automatic bounce rather than instead of it, so the extra keys give a player something to do without turning a one-axis game into a two-axis one. **Still open:** density and pace, and how the shaft looks on a wide desktop. |
 | 0e.18 | **Placeholder imagery throughout.** Real photography is wanted now, with uploads later. The upload half is milestone 7; the photography half is still open. |

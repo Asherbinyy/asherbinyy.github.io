@@ -42,6 +42,15 @@ class ChronologyScrubber extends StatelessWidget {
   /// Called as the viewer drags, taps, or steps.
   final ValueChanged<int> onSelected;
 
+  /// The height one line of [style] actually occupies.
+  ///
+  /// `TextStyle.height` is a multiple of the font size, and is null when the
+  /// font's own metrics decide. The fallback is deliberately generous: a
+  /// reservation that is slightly too tall costs a few pixels of space, and
+  /// one that is too short costs the reader the bottom of the word.
+  static double _lineHeightOf(TextStyle style) =>
+      (style.fontSize ?? Tokens.bodySize) * (style.height ?? 1.5);
+
   @override
   Widget build(BuildContext context) {
     if (marks.isEmpty) return const SizedBox.shrink();
@@ -59,8 +68,14 @@ class ChronologyScrubber extends StatelessWidget {
       children: [
         // Reserved whether or not a stop is selected, so selecting one does
         // not push the map upward.
+        //
+        // The reservation is a full line box, not the font size. It was the
+        // font size, which is roughly two thirds of what a line actually
+        // occupies, so the selected stop's name was clipped through its
+        // descenders the moment it appeared. That is the clipped text the
+        // owner reported under "choose a stop".
         SizedBox(
-          height: context.type.body.fontSize,
+          height: _lineHeightOf(context.type.body),
           child: current >= 0 && current < places.length
               ? Text(
                   places[current],

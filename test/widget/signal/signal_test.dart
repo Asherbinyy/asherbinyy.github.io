@@ -204,6 +204,35 @@ void main() {
       );
     });
 
+    testWidgets('the selected stop name is not clipped', (tester) async {
+      await _pumpSignal(tester);
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+
+      await tester.tap(find.bySemanticsLabel(l10n.signalNextStop));
+      await pumpFrames(tester);
+
+      // The name sits in a reserved box so selecting a stop does not shove the
+      // map upward. That box reserved the font size, which is about two thirds
+      // of a line, so the name was cut through its descenders the moment it
+      // appeared -- the clipped text the owner reported.
+      final first = bundledStops().first;
+      final name = (first['company'] ?? first['city']) as String;
+      final label = find.descendant(
+        of: find.byType(ChronologyScrubber),
+        matching: find.text(name),
+      );
+      expect(label, findsOneWidget);
+
+      final painted = tester.getRect(label);
+      final box = tester.renderObject<RenderBox>(label);
+      expect(
+        painted.height,
+        greaterThanOrEqualTo(box.size.height),
+        reason: 'the stop name is being clipped by its reservation',
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('the step controls walk the journey in order', (tester) async {
       await _pumpSignal(tester);
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;

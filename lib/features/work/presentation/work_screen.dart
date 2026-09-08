@@ -74,9 +74,10 @@ class _Ledger extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // The count comes from the content. The screen spec's "of twenty-five"
-        // total appears only inside prose, so it is not stated here as data.
-        Text(l10n.workHeading(apps.length), style: context.type.displayM),
+        // A name rather than a count. It read "13 shipped applications",
+        // which is a statistic rather than a title, and the same statistic
+        // every other page was already carrying.
+        Text(l10n.workHeading, style: context.type.displayM),
         SizedBox(height: tokens.space8),
         Text(
           l10n.workSubheading,
