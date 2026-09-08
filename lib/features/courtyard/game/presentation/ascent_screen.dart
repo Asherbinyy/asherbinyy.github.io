@@ -9,9 +9,11 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/ascent_painter.dart';
+import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_audio.dart';
+import 'package:nocturne/features/courtyard/game/presentation/ascent_controls.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
 
 /// The climb, inside the courtyard.
@@ -41,6 +43,8 @@ class _AscentScreenState extends ConsumerState<AscentScreen>
   AscentWorld? _world;
   Duration _last = Duration.zero;
   double _steer = 0;
+  bool _leap = false;
+  bool _dive = false;
   int _bands = 0;
   int _best = 0;
 
@@ -78,7 +82,12 @@ class _AscentScreenState extends ConsumerState<AscentScreen>
     final step = dt.clamp(0.0, 1 / 30);
 
     final before = world;
-    final next = world.step(dt: step, steer: _steer);
+    final next = world.step(
+      dt: step,
+      steer: _steer,
+      isLeaping: _leap,
+      isDiving: _dive,
+    );
 
     // Sound is driven off what changed between two frames rather than from
     // inside the physics, which stays a pure function with no idea a speaker
@@ -124,34 +133,38 @@ class _AscentScreenState extends ConsumerState<AscentScreen>
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    // Arrows and WASD both, because a player reaches for whichever their
+    // hands already know. Space and up are the same key: leaping is the only
+    // thing "up" could mean in a climber.
     final left = {LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.keyA};
     final right = {LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.keyD};
+    final leap = {
+      LogicalKeyboardKey.arrowUp,
+      LogicalKeyboardKey.keyW,
+      LogicalKeyboardKey.space,
+    };
+    final dive = {LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.keyS};
 
-    if (event is KeyUpEvent) {
-      if (left.contains(event.logicalKey) || right.contains(event.logicalKey)) {
-        _steer = 0;
-        return KeyEventResult.handled;
-      }
-      return KeyEventResult.ignored;
-    }
-    if (left.contains(event.logicalKey)) {
-      _steer = -1;
+    final key = event.logicalKey;
+    final isDown = event is! KeyUpEvent;
+
+    if (left.contains(key)) {
+      _steer = isDown ? -1 : 0;
       return KeyEventResult.handled;
     }
-    if (right.contains(event.logicalKey)) {
-      _steer = 1;
+    if (right.contains(key)) {
+      _steer = isDown ? 1 : 0;
+      return KeyEventResult.handled;
+    }
+    if (leap.contains(key)) {
+      _leap = isDown;
+      return KeyEventResult.handled;
+    }
+    if (dive.contains(key)) {
+      _dive = isDown;
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
-  }
-
-  void _aimAt(double x, double width) {
-    final world = _world;
-    if (world == null || width <= 0) return;
-    final target = (x / width).clamp(0.0, 1.0);
-    _steer = (target - world.climberX).abs() < 0.02
-        ? 0
-        : (target > world.climberX ? 1 : -1);
   }
 
   @override
@@ -175,9 +188,23 @@ class _AscentScreenState extends ConsumerState<AscentScreen>
                 entrance: _entrance,
                 focus: _focus,
                 onKey: _onKey,
-                onAim: _aimAt,
-                onRelease: () => _steer = 0,
               ),
+              AscentControls(
+                onChanged: (input) {
+                  _steer = input.steer;
+                  _leap = input.leap;
+                  _dive = input.dive;
+                },
+              ),
+              if (context.platform.isPointer) ...[
+                SizedBox(height: tokens.space12),
+                Text(
+                  l10n.ascentKeys,
+                  style: context.type.telemetryS.copyWith(
+                    color: tokens.textMuted,
+                  ),
+                ),
+              ],
               SizedBox(height: tokens.space16),
               Wrap(
                 spacing: tokens.space16,
@@ -234,16 +261,12 @@ class _Shaft extends StatelessWidget {
     required this.entrance,
     required this.focus,
     required this.onKey,
-    required this.onAim,
-    required this.onRelease,
   });
 
   final AscentWorld? world;
   final Animation<double> entrance;
   final FocusNode focus;
   final KeyEventResult Function(FocusNode, KeyEvent) onKey;
-  final void Function(double, double) onAim;
-  final VoidCallback onRelease;
 
   @override
   Widget build(BuildContext context) {
@@ -260,42 +283,31 @@ class _Shaft extends StatelessWidget {
             onKeyEvent: onKey,
             child: Semantics(
               label: context.l10n.ascentCanvasLabel,
-              child: LayoutBuilder(
-                builder: (context, constraints) => GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTapDown: (details) =>
-                      onAim(details.localPosition.dx, constraints.maxWidth),
-                  onHorizontalDragUpdate: (details) =>
-                      onAim(details.localPosition.dx, constraints.maxWidth),
-                  onHorizontalDragEnd: (_) => onRelease(),
-                  onTapUp: (_) => onRelease(),
-                  child: live == null
-                      ? Center(
-                          child: Text(
-                            context.l10n.ascentReady,
-                            style: context.type.body.copyWith(
-                              color: tokens.textMuted,
-                            ),
-                          ),
-                        )
-                      : AnimatedBuilder(
-                          animation: entrance,
-                          builder: (context, _) => CustomPaint(
-                            painter: AscentPainter(
-                              world: live,
-                              entrance: entrance.value,
-                              stone: tokens.instrument,
-                              cracked: tokens.instrumentDim,
-                              gold: tokens.beacon,
-                              glow: tokens.beaconGlow,
-                              wall: tokens.hairline,
-                              strokeWidth: tokens.hairlineWidth,
-                              isReducedMotion: ReducedMotion.of(context),
-                            ),
-                          ),
+              child: live == null
+                  ? Center(
+                      child: Text(
+                        context.l10n.ascentReady,
+                        style: context.type.body.copyWith(
+                          color: tokens.textMuted,
                         ),
-                ),
-              ),
+                      ),
+                    )
+                  : AnimatedBuilder(
+                      animation: entrance,
+                      builder: (context, _) => CustomPaint(
+                        painter: AscentPainter(
+                          world: live,
+                          entrance: entrance.value,
+                          stone: tokens.instrument,
+                          cracked: tokens.instrumentDim,
+                          gold: tokens.beacon,
+                          glow: tokens.beaconGlow,
+                          wall: tokens.hairline,
+                          strokeWidth: tokens.hairlineWidth,
+                          isReducedMotion: ReducedMotion.of(context),
+                        ),
+                      ),
+                    ),
             ),
           ),
         ),

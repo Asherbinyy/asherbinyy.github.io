@@ -36,8 +36,8 @@ that can break while he is asleep and one that cannot.
 ```
 Browser ──▶ GitHub Pages (the site, unchanged)
    │
-   ├──▶ Cloudflare Worker  /v1/content   published overrides, JSON
-   │                       /v1/media/*   images and video
+   ├──▶ Cloudflare Worker  /v1/content   published overrides, JSON  (KV)
+   │                       /v1/media/*   images                      (KV)
    │
    └──▶ Cloudflare Worker  /admin        the panel, auth-gated
                            /v1/admin/*   write endpoints
@@ -46,8 +46,20 @@ Browser ──▶ GitHub Pages (the site, unchanged)
 **Why Cloudflare and not something else.** The Worker already exists, is already
 deployed, already has a KV namespace bound, and is already the origin the site
 talks to for the writing feed and article covers. Adding a second service would
-mean a second thing to keep alive for no gain. R2 gives object storage on the
-same free tier for the media.
+mean a second thing to keep alive for no gain.
+
+**Why KV and not R2.** R2 is the obvious choice for object storage and it is
+rejected on purpose: enabling it requires a payment card on the Cloudflare
+account even though the free tier bills nothing, and the owner asked for
+whichever path involves least faff. KV needs no card, is already bound, and
+holds values up to 25MiB, which is comfortably more than any screenshot.
+
+**Video is the exception.** A real video does not fit in KV and should not.
+Video is referenced by URL rather than uploaded: YouTube or Vimeo, embedded
+behind a click-to-load poster the way City Loom's prototype already is. That
+keeps the owner off a hosting bill and keeps a heavy asset off the first paint.
+If he later wants self-hosted video, that is the point at which R2 and its card
+become worth revisiting, and not before.
 
 **What the site does with it.** `ContentRepository` gains a remote source that
 is tried first and falls back to the bundle on any failure, any timeout, or any
@@ -75,9 +87,11 @@ A number typed into a panel at midnight is still a claim, so the editor carries
 a required source field on any figure, and the ledger test extends to remote
 content rather than only the bundle.
 
-**Auth is real.** A single owner, a long random token, and a rate limit. It is
-one person's portfolio, so a session cookie and a token in a KV namespace is
-proportionate. What is not proportionate is a public write endpoint.
+**Auth is real.** One owner, confirmed: a single long random token, a session
+cookie, and a rate limit. No accounts, no roles, no invitations, because there
+is exactly one person who will ever write here and building for more would be
+inventing a requirement. What is not proportionate in the other direction is a
+public write endpoint.
 
 **Media is validated at the edge.** Content type on an allowlist, hard size cap,
 dimensions read and rejected if absurd. An upload endpoint that accepts anything
@@ -94,9 +108,10 @@ visitor can see, and a malformed remote document is rejected by the same parser
 that guards the bundle.
 
 ### 7.2 Media storage
-R2 bucket, `/v1/media/*` read path, cache headers, and the allowlist and size
-cap above. **Done when:** an image dropped in appears on the site without a
-deploy, and a 40MB file, an SVG and an HTML file are all refused.
+A second KV namespace, `/v1/media/*` read path, long cache headers, and the
+allowlist and size cap above. Images only; video is a URL. **Done when:** an
+image dropped in appears on the site without a deploy, and an oversized file,
+an SVG and an HTML file are all refused.
 
 ### 7.3 Auth
 Token issue, verification, rate limit, and a way to revoke. **Done when:** an
@@ -106,10 +121,16 @@ be rotated without a code change.
 ### 7.4 The panel
 Served at `/admin` from the Worker. Plain HTML and a little JavaScript, not a
 framework: it is a form over a JSON document, it is used by one person, and it
-must not become a second frontend to maintain. Editing, reordering, media
-upload with a preview, and a diff against what is live before publishing.
-**Done when:** the owner can add a project with a screenshot, reorder the
-ledger, and publish, from a phone, without an agent.
+must not become a second frontend to maintain.
+
+**It edits everything** on the owner's instruction: projects, career, education,
+interests and profile. Career and education carry a warning in the editor, since
+those are the claims a recruiter cross-checks against a CV, and the provenance
+requirement in 7.5 applies to them most of all.
+
+Editing, reordering, image upload with a preview, and a diff against what is
+live before publishing. **Done when:** the owner can add a project with a
+screenshot, reorder the ledger, and publish, from a phone, without an agent.
 
 ### 7.5 Provenance in the editor
 Required source field on any numeric claim, and the ledger test extended to
@@ -119,19 +140,20 @@ remote content. **Done when:** a figure cannot be published without a source.
 
 ## 5. What this costs
 
-Free, on Cloudflare's free tier: Workers 100k requests a day, KV 100k reads a
-day, R2 10GB and no egress fee. The site is a personal portfolio and will not
-approach any of those.
+Free, on Cloudflare's free tier, with **no payment card anywhere**: Workers
+100k requests a day, KV 100k reads and 1k writes a day, 1GB of storage and
+25MiB per value. A portfolio edited a few times a month will not approach any
+of those.
 
 The real cost is that the site gains a moving part it did not have. That is why
 §3 exists, and why the fallback is the first task rather than the last.
 
 ---
 
-## 6. What the owner still has to decide
+## 6. Decided
 
-| # | Question |
-|---|---|
-| 6.1 | Cloudflare R2 needs a card on file to enable, even on the free tier. Is that acceptable, or should media go somewhere else? |
-| 6.2 | Should the panel be able to edit `career.json` and `education.json`, or only projects and media? Career claims are the ones a recruiter checks. |
-| 6.3 | Does anyone else ever need access, or is one owner token enough forever? |
+| # | Question | Answer, 2026-09-08 |
+|---|---|---|
+| 6.1 | R2 needs a card on file. Acceptable? | **No.** KV instead, images only. Video is a URL. |
+| 6.2 | Should the panel edit career and education too? | **Everything.** With a warning on the two a recruiter cross-checks. |
+| 6.3 | Does anyone else need access? | **No.** One owner, one token, forever. |

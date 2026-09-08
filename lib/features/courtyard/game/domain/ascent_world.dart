@@ -184,6 +184,15 @@ class AscentWorld {
   /// Upward speed given by a bounce, metres per second.
   static const double _bounce = 11;
 
+  /// How much taller a leap is than an ordinary bounce.
+  ///
+  /// Enough to clear a gap that an ordinary bounce cannot, and not enough to
+  /// skip a whole stretch of shaft, which would make the ledges decorative.
+  static const double _leapBoost = 1.42;
+
+  /// How much harder gravity pulls while diving.
+  static const double _diveGravity = 2.6;
+
   /// Gravity, metres per second squared.
   static const double _gravity = 22;
 
@@ -195,9 +204,21 @@ class AscentWorld {
 
   /// Advances the world by [dt] seconds.
   ///
-  /// [steer] is -1, 0 or 1. The whole game is this function; everything else
-  /// draws its result.
-  AscentWorld step({required double dt, required double steer}) {
+  /// [steer] is -1, 0 or 1. [isLeaping] asks for a stronger push off the next
+  /// ledge, and [isDiving] pulls the climber down harder. The whole game is
+  /// this function; everything else draws its result.
+  ///
+  /// The bounce is automatic, as it is in the game this is modelled on: the
+  /// climber never has to be told to jump, only where to go. Leap and dive are
+  /// on top of that rather than instead of it, so the two extra keys give a
+  /// player something to do without turning a one-axis game into a two-axis
+  /// one.
+  AscentWorld step({
+    required double dt,
+    required double steer,
+    bool isLeaping = false,
+    bool isDiving = false,
+  }) {
     if (isOver) return this;
 
     // Sideways first, wrapping at the walls: a shaft is round, and a climber
@@ -207,7 +228,10 @@ class AscentWorld {
     if (x < 0) x += 1;
     if (x > 1) x -= 1;
 
-    var speed = velocity - _gravity * dt;
+    // Diving is the only way down that a player controls, and it is what makes
+    // a missed ledge recoverable rather than a slow inevitability.
+    final gravity = isDiving ? _gravity * _diveGravity : _gravity;
+    var speed = velocity - gravity * dt;
     var y = climberY + speed * dt;
 
     final live = [for (final ledge in ledges) ledge.advance(dt)];
@@ -223,7 +247,7 @@ class AscentWorld {
         if (!crossed || !ledge.carries(x)) continue;
 
         y = ledge.y;
-        speed = _bounce;
+        speed = isLeaping ? _bounce * _leapBoost : _bounce;
         if (ledge.kind == LedgeKind.cracked) {
           live[i] = ledge.broken;
           broke = true;
