@@ -481,6 +481,26 @@
     "description": "Best altitude reached on this device",
     "placeholders": { "metres": { "type": "int" } }
   },
+  "ascentSteerLeft": "Steer left",
+  "@ascentSteerLeft": {
+    "description": "Touch control: steer left"
+  },
+  "ascentSteerRight": "Steer right",
+  "@ascentSteerRight": {
+    "description": "Touch control: steer right"
+  },
+  "ascentLeap": "Leap",
+  "@ascentLeap": {
+    "description": "Touch control: a stronger bounce"
+  },
+  "ascentDive": "Dive",
+  "@ascentDive": {
+    "description": "Touch control: fall faster"
+  },
+  "ascentKeys": "Arrows or WASD to steer. Space or W to leap, S to dive.",
+  "@ascentKeys": {
+    "description": "Keyboard controls, shown on a pointer browser"
+  },
   "ascentHeading": "The Ascent",
   "@ascentHeading": {
     "description": "The game route heading"

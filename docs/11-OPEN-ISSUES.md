@@ -144,8 +144,9 @@ Still open, in his numbering:
 | 0e.14 | MyNextStep to August 2025, and freelancing 2025 to now (§11). **Needs confirmation.** |
 | 0e.15 | Remove the unexplained icon beside EN/AR (§25) |
 | 0e.16 | Name audio player under the hero, awaiting his recording |
-| 0e.17 | **The climb does not feel like Ice Tower and is awkward on a desktop browser.** The owner's report. The mechanics are right; what is missing is density, pace and a control that suits a mouse. Not yet addressed. |
+| 0e.17 | **The climb's controls are rebuilt.** Keyboard: arrows or WASD to steer, space or W to leap, S to dive. Touch: a pad under the frame rather than dragging across the playfield, which put the hand over the shaft it was steering through and left nowhere for a second action. Leap and dive are new mechanics on top of the automatic bounce rather than instead of it, so the extra keys give a player something to do without turning a one-axis game into a two-axis one. **Still open:** density and pace, and how the shaft looks on a wide desktop. |
 | 0e.18 | **Placeholder imagery throughout.** Real photography is wanted now, with uploads later. The upload half is milestone 7; the photography half is still open. |
+| 0e.20 | **R2 is rejected and the reason is recorded**, because it is the obvious choice and a future agent will otherwise reach for it: enabling it needs a payment card on the Cloudflare account even though the free tier bills nothing, and the owner asked for the path with least faff. KV instead, images only, video by URL. `15-ADMIN-AND-MEDIA.md` §2. |
 | 0e.19 | **The Cloudflare Worker needs no deploy.** Checked 2026-09-08: nothing under `worker/` has changed since version `929f5eaa`, `/v1/writing` returns 200 and `/v1/cover` relays a real Medium image at 200. Deploying from this session is impossible anyway without `CLOUDFLARE_API_TOKEN`, which is recorded here so the next agent does not retry it blind. |
 
 ---
