@@ -20,7 +20,8 @@ import 'package:nocturne/core/platform/pointer_capabilities.dart';
 ///
 /// Kept in step with that file by a test rather than by memory: a tab that
 /// disagrees with the document it replaced reads as carelessness.
-const String shellTitle = 'Ahmed Elsherbini — Mobile Engineer, Manchester';
+const String shellTitle =
+    'Ahmed Elsherbini, Mobile Application Developer, Manchester';
 
 /// The app shell. Theme, language and Recruiter Mode are driven by controllers.
 class NocturneApp extends ConsumerStatefulWidget {

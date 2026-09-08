@@ -84,7 +84,7 @@ void main() {
     });
 
     test('has correct title', () {
-      expect(cvHtml, contains('<title>Ahmed Elsherbini — CV</title>'));
+      expect(cvHtml, contains('<title>Ahmed Elsherbini, CV</title>'));
     });
 
     test('has canonical URL', () {
@@ -249,7 +249,7 @@ void main() {
     });
 
     test('has correct title', () {
-      expect(briefHtml, contains('<title>Ahmed Elsherbini — Brief</title>'));
+      expect(briefHtml, contains('<title>Ahmed Elsherbini, Brief</title>'));
     });
 
     test('has only featured apps (6 maximum)', () {
