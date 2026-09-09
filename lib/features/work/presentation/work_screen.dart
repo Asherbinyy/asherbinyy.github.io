@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -84,19 +86,77 @@ class _Ledger extends StatelessWidget {
           style: context.type.bodyL.copyWith(color: tokens.textSecondary),
         ),
         SizedBox(height: tokens.space32),
-        Wrap(
-          spacing: tokens.space32,
-          runSpacing: tokens.space48,
-          children: [
-            for (final app in apps)
-              WorkCard(
-                app: app,
-                domainLabel: app.domain.label(l10n),
-                origin: AppOrigins.resolve(app: app, career: career),
-              ),
-          ],
-        ),
+        _Grid(apps: apps, career: career),
       ],
+    );
+  }
+}
+
+/// The ledger, in rows that share a height.
+///
+/// This was a `Wrap`, which aligns a run to its tallest item and leaves every
+/// shorter card sitting in a hole. The roles these cards carry run from 35 to
+/// 184 characters, so a row of three could differ by six lines and the store
+/// links -- the only thing on the card anyone clicks -- landed at a different
+/// height on every one.
+///
+/// Rows are built by hand rather than with a grid widget because the answer is
+/// not a fixed column count: the card has a declared width, so the number that
+/// fits is whatever the surface allows, and the last row is short rather than
+/// stretched.
+class _Grid extends StatelessWidget {
+  const _Grid({required this.apps, required this.career});
+
+  final List<ShippedApp> apps;
+  final Career career;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final l10n = context.l10n;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final spacing = tokens.space32;
+        final columns = math.max(
+          1,
+          ((constraints.maxWidth + spacing) / (WorkCard.width + spacing))
+              .floor(),
+        );
+
+        final rows = <List<ShippedApp>>[];
+        for (var start = 0; start < apps.length; start += columns) {
+          rows.add(apps.sublist(start, math.min(start + columns, apps.length)));
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (index, row) in rows.indexed) ...[
+              if (index > 0) SizedBox(height: tokens.space48),
+              // Every card in a row takes the tallest card's height, which is
+              // what lets each one settle its own links against the bottom.
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final (position, app) in row.indexed) ...[
+                      if (position > 0) SizedBox(width: spacing),
+                      WorkCard(
+                        app: app,
+                        domainLabel: app.domain.label(l10n),
+                        origin: AppOrigins.resolve(app: app, career: career),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }
