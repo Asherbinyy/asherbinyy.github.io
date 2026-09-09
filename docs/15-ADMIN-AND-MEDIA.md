@@ -101,11 +101,38 @@ is a free file host with the owner's name on it.
 
 ## 4. Tasks
 
-### 7.1 The content source
+### 7.1 The content source — **done**
 Remote read in `ContentRepository`, behind the existing `ContentResult`, with
 the bundle as fallback. **Done when:** killing the Worker changes nothing a
 visitor can see, and a malformed remote document is rejected by the same parser
 that guards the bundle.
+
+Shipped. `RemoteReader` is optional on the repository, every read is timed out
+at two seconds, and every failure -- a dead service, a slow one, a document
+that will not parse, one that parses to the wrong shape -- returns the shipped
+document. `remote_content_test.dart` walks each of those failures, and
+`bootstrap_test.dart` proves it against the real production wiring, where the
+test environment's refusal of outbound HTTP stands in for the Worker being
+down.
+
+A malformed override falls back to the **bundle**, not to `fallback.json`. The
+task said "rejected by the same parser", which it is, but degrading a bad
+override all the way to the minimum profile would make publishing a typo worse
+than never publishing at all.
+
+**One thing worth knowing before touching this.** `lib/content/providers.dart`
+is a generated library and `publishedContentProvider` is declared there as null,
+then overridden in `bootstrap.dart`. That is not indirection for its own sake:
+importing the HTTP-speaking reader into that library pulls `package:http` into
+the summary `riverpod_generator` writes, and the pinned analyser is older than
+the language version parts of that graph use. It crashes, and it crashes while
+reporting an unrelated file, which costs an hour to work out. The seam also
+happens to be the right shape, since it lets a test build a bundle-only
+repository by doing nothing.
+
+`relayEndpointProvider` moved from the writing feature to `lib/core/net/relay.dart`
+in the same change. The content layer needs it and cannot reach into a feature
+for it, and it was never a writing concern.
 
 ### 7.2 Media storage
 A second KV namespace, `/v1/media/*` read path, long cache headers, and the
