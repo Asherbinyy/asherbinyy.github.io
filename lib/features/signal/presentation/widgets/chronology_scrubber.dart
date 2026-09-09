@@ -89,6 +89,12 @@ class ChronologyScrubber extends StatelessWidget {
                 ),
         ),
         SizedBox(height: tokens.space8),
+        // The years used to live inside the rail, which made the rail taller
+        // than the line it draws, so the arrows -- centred against that box --
+        // sat below the line they belong to. The owner spotted it. The rail is
+        // the line and its stops now, and the years are a separate row inset
+        // by exactly one arrow's width on each side, so they still sit under
+        // their own stops.
         Row(
           children: [
             _Step(
@@ -116,6 +122,33 @@ class ChronologyScrubber extends StatelessWidget {
                   ? null
                   : () => onSelected(current < 0 ? 0 : current + 1),
             ),
+          ],
+        ),
+        SizedBox(height: tokens.space8),
+        Row(
+          children: [
+            SizedBox(width: context.platform.minimumTarget),
+            Expanded(
+              child: ExcludeSemantics(
+                child: Row(
+                  children: [
+                    for (var i = 0; i < marks.length; i++)
+                      Expanded(
+                        child: Text(
+                          marks[i],
+                          textAlign: TextAlign.center,
+                          style: context.type.telemetryS.copyWith(
+                            color: i == current
+                                ? tokens.beacon
+                                : tokens.textMuted,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(width: context.platform.minimumTarget),
           ],
         ),
       ],
@@ -229,65 +262,47 @@ class _Rail extends StatelessWidget {
           onTapDown: (details) => select(details.localPosition),
           onHorizontalDragUpdate: (details) => select(details.localPosition),
           child: SizedBox(
-            height: context.platform.minimumTarget + tokens.space24,
-            // The rail and years are the visible scale; the slider's own value
-            // announces the selection, so reading every year as part of its
-            // name would be noise.
+            // One arrow tall, so the rail and the controls either side of it
+            // are the same height and centre on the same line.
+            height: context.platform.minimumTarget,
+            // The rail is the visible scale; the slider's own value announces
+            // the selection, so reading every stop as part of its name would
+            // be noise.
             child: ExcludeSemantics(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // One rule across the whole control. Previously each
-                      // stop drew its own segment inside its own column, which
-                      // is why the line never read as a line.
-                      Padding(
-                        padding: EdgeInsetsDirectional.symmetric(
-                          horizontal: tokens.space16,
-                        ),
-                        child: SizedBox(
-                          // Width matters: a Stack gives its non-positioned
-                          // children loose constraints, so a SizedBox with
-                          // only a height wraps a ColoredBox that has no
-                          // intrinsic size and the rail renders zero pixels
-                          // wide. It did exactly that on the first pass, and
-                          // the golden showed the stops floating unconnected —
-                          // which is the defect this redesign existed to fix.
-                          width: double.infinity,
-                          height: tokens.hairlineWidth,
-                          child: ColoredBox(color: tokens.hairlineStrong),
-                        ),
+              child: Center(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // One rule across the whole control. Previously each
+                    // stop drew its own segment inside its own column, which
+                    // is why the line never read as a line.
+                    Padding(
+                      padding: EdgeInsetsDirectional.symmetric(
+                        horizontal: tokens.space16,
                       ),
-                      Row(
-                        children: [
-                          for (var i = 0; i < marks.length; i++)
-                            Expanded(
-                              child: _Stop(isSelected: i == selectedIndex),
-                            ),
-                        ],
+                      child: SizedBox(
+                        // Width matters: a Stack gives its non-positioned
+                        // children loose constraints, so a SizedBox with
+                        // only a height wraps a ColoredBox that has no
+                        // intrinsic size and the rail renders zero pixels
+                        // wide. It did exactly that on the first pass, and
+                        // the golden showed the stops floating unconnected —
+                        // which is the defect this redesign existed to fix.
+                        width: double.infinity,
+                        height: tokens.hairlineWidth,
+                        child: ColoredBox(color: tokens.hairlineStrong),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: tokens.space8),
-                  Row(
-                    children: [
-                      for (var i = 0; i < marks.length; i++)
-                        Expanded(
-                          child: Text(
-                            marks[i],
-                            textAlign: TextAlign.center,
-                            style: context.type.telemetryS.copyWith(
-                              color: i == selectedIndex
-                                  ? tokens.beacon
-                                  : tokens.textMuted,
-                            ),
+                    ),
+                    Row(
+                      children: [
+                        for (var i = 0; i < marks.length; i++)
+                          Expanded(
+                            child: _Stop(isSelected: i == selectedIndex),
                           ),
-                        ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
