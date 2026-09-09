@@ -1,17 +1,12 @@
-import 'dart:async';
-
 import 'package:material_ui/material_ui.dart';
-
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/app_origin.dart';
 import 'package:nocturne/content/models/apps.dart';
-import 'package:nocturne/core/platform/platform_scope.dart';
-import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/core/widgets/loading/station_card.dart';
+import 'package:nocturne/features/work/presentation/widgets/store_links.dart';
 
 /// One shipped application, as a visual card.
 ///
@@ -100,108 +95,8 @@ class WorkCard extends StatelessWidget {
           // one actionable row on the card is level across the whole grid.
           const Spacer(),
           SizedBox(height: tokens.space12),
-          _StoreLinks(app: app),
+          StoreLinks(app: app),
         ],
-      ),
-    );
-  }
-}
-
-/// The store destinations, or a plain line saying there are none.
-class _StoreLinks extends StatelessWidget {
-  const _StoreLinks({required this.app});
-
-  final ShippedApp app;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final l10n = context.l10n;
-
-    if (app.store.isEmpty) {
-      // An absence the reader has to interpret would be worse than a line
-      // saying so.
-      return Text(
-        l10n.workNoStoreLink,
-        style: context.type.telemetryS.copyWith(color: tokens.textMuted),
-      );
-    }
-
-    return Wrap(
-      spacing: tokens.space16,
-      runSpacing: tokens.space8,
-      children: [
-        for (final MapEntry(key: platform, value: url) in app.store.entries)
-          _StoreLink(
-            app: app,
-            url: url,
-            label: switch (platform) {
-              AppPlatform.ios => l10n.workAppStore,
-              AppPlatform.android => l10n.workGooglePlay,
-              AppPlatform.pub => l10n.workPubDev,
-            },
-          ),
-      ],
-    );
-  }
-}
-
-class _StoreLink extends StatefulWidget {
-  const _StoreLink({required this.app, required this.url, required this.label});
-
-  final ShippedApp app;
-  final Uri url;
-  final String label;
-
-  @override
-  State<_StoreLink> createState() => _StoreLinkState();
-}
-
-class _StoreLinkState extends State<_StoreLink> {
-  final WidgetStatesController _states = WidgetStatesController();
-
-  @override
-  void dispose() {
-    _states.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    return Semantics(
-      link: true,
-      label: context.l10n.workOpenStore(widget.app.name, widget.label),
-      child: ListenableBuilder(
-        listenable: _states,
-        builder: (context, _) => FocusRing(
-          isFocused: _states.value.contains(WidgetState.focused),
-          child: InkWell(
-            onTap: () => unawaited(
-              launchUrl(widget.url, mode: LaunchMode.externalApplication),
-            ),
-            statesController: _states,
-            borderRadius: BorderRadius.circular(tokens.controlRadius),
-            hoverColor: Colors.transparent,
-            mouseCursor: context.platform.isPointer
-                ? SystemMouseCursors.click
-                : MouseCursor.defer,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: context.platform.minimumTarget,
-              ),
-              child: Center(
-                widthFactor: 1,
-                child: ExcludeSemantics(
-                  child: Text(
-                    widget.label,
-                    style: context.type.bodyS.copyWith(color: tokens.beacon),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

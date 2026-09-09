@@ -13,6 +13,8 @@ import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/core/analytics/events.dart';
 import 'package:nocturne/core/analytics/interactions.dart';
+import 'package:nocturne/content/asset_content.dart';
+import 'package:nocturne/content/models/apps.dart';
 import 'package:nocturne/content/models/study.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
@@ -21,6 +23,7 @@ import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
 import 'package:nocturne/features/work/data/study_providers.dart';
+import 'package:nocturne/features/work/presentation/widgets/app_detail.dart';
 import 'package:nocturne/features/work/presentation/widgets/device_frame.dart';
 import 'package:nocturne/features/work/presentation/widgets/prototype_embed.dart';
 
@@ -59,8 +62,11 @@ class CaseStudyScreen extends ConsumerWidget {
           locale: ref.watch(localeControllerProvider),
         ),
         // A fallback result means the slug had no file and the repository
-        // resolved the shared fallback instead, which is not a study.
-        AsyncData() || AsyncError() => const _NotWritten(),
+        // resolved the shared fallback instead, which is not a study. That
+        // used to end the page. The site knows the name, role, metric, sector
+        // and store links for every application, so it shows those instead and
+        // only apologises when the slug matches nothing at all.
+        AsyncData() || AsyncError() => _WithoutStudy(slug: slug),
         _ => const _Loading(),
       },
     );
@@ -327,6 +333,25 @@ class _Section extends StatelessWidget {
 }
 
 /// Shown for a slug with no study file — which today is every slug.
+/// The application behind an unwritten slug, or an honest empty state.
+class _WithoutStudy extends ConsumerWidget {
+  const _WithoutStudy({required this.slug});
+
+  final String slug;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final apps = ref.watch<AsyncValue<ContentResult<Apps>>>(appsProvider);
+    final app = switch (apps) {
+      AsyncData(value: ContentReady(data: final Apps ready)) =>
+        ready.apps.where((app) => app.id == slug).firstOrNull,
+      _ => null,
+    };
+    if (app == null) return const _NotWritten();
+    return AppDetail(app: app, locale: ref.watch(localeControllerProvider));
+  }
+}
+
 class _NotWritten extends StatelessWidget {
   const _NotWritten();
 

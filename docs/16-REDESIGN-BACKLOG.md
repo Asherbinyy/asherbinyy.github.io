@@ -45,7 +45,7 @@ title** at all, which is why they looked empty. Fixed.
 | A7 | **Live preview** on the right, showing the part of the site the current edit changes. | 3 |
 | A8 | Themes beyond light and dark. Those two are fixed and cannot be removed; others can be added (Christmas, tech, Batman). Plus per-page background pattern control. | 4 |
 | A9 | Font choice per language or for both, default preserved. | 4 |
-| A10 | **Analytics home**: views by week, month and custom range; unique visitors; clicks by target; audience. Subscriber capture with optional name. A daily 12:00 digest by email with a link back. | 5 |
+| A10 | **Analytics home**: views by week, month and custom range; unique visitors; clicks by target; audience. | 5 |
 | A11 | Social links for the fun section, with an icon set matched by domain and a changeable default. | 2 |
 | A12 | Every admin page reflects the app changes below. | ongoing |
 | A13 | Drop the "Nocturne" name from the panel. | 1 |
@@ -137,7 +137,12 @@ objected to invented figures. "5+ years commercial experience" is checkable
 against the career file and should be computed from it rather than typed, so
 it cannot go stale.
 
-**Subscriber email is the one item with a real cost.** Everything else here is
-free. Sending mail needs a provider, and the free tiers all want a verified
-domain or cap hard. That decision is his and it is listed in A10 rather than
-assumed.
+**Subscribers are cancelled.** The bell, the mailing list and the daily digest
+were dropped by the owner on 2026-09-09, once it was clear sending mail is the
+only part of this that costs anything: every free tier wants a verified domain
+or caps hard. The analytics dashboard survives, because counting visits needs
+no mail at all.
+
+Worth knowing if it ever comes back: the Worker already has a noon digest that
+posts to `DIGEST_WEBHOOK_URL`. Pointing that at anything that forwards to email
+would give him the daily summary with no new dependency and no new cost.
