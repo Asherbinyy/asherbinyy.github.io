@@ -6,6 +6,7 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/map_painter.dart';
+import 'package:nocturne/core/painting/papyrus_painter.dart';
 import 'package:nocturne/core/painting/coastline_data.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
@@ -155,28 +156,50 @@ class _PropagationMapState extends State<PropagationMap>
                           );
                           if (index != null) widget.onSelected(index);
                         },
-                        child: RepaintBoundary(
-                          child: AnimatedBuilder(
-                            animation: Listenable.merge([_draw, _pulse]),
-                            builder: (context, _) => CustomPaint(
-                              size: size,
-                              painter: MapPainter(
-                                stations: widget.stations,
-                                selectedIndex: widget.selectedIndex,
-                                drawProgress: MotionCurves.emphasized.transform(
-                                  _draw.value,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // The sheet, in its own boundary so the weave and
+                            // the torn edge are rasterised once and are not
+                            // redrawn by the arc animation running over them.
+                            RepaintBoundary(
+                              child: CustomPaint(
+                                size: size,
+                                painter: PapyrusPainter(
+                                  sheet: tokens.surfaceRaised,
+                                  fibre: tokens.hairline,
+                                  edge: tokens.hairlineStrong,
+                                  hairlineWidth: tokens.hairlineWidth,
                                 ),
-                                pulse: _pulse.value,
-                                coastlines: widget.coastlines,
-                                landColour: tokens.hairlineStrong,
-                                graticuleColour: tokens.hairline,
-                                arcColour: tokens.instrumentDim,
-                                activeColour: tokens.beacon,
-                                nodeColour: tokens.instrumentDim,
-                                hairlineWidth: tokens.hairlineWidth,
                               ),
                             ),
-                          ),
+                            RepaintBoundary(
+                              child: AnimatedBuilder(
+                                animation: Listenable.merge([_draw, _pulse]),
+                                builder: (context, _) => CustomPaint(
+                                  size: size,
+                                  painter: MapPainter(
+                                    stations: widget.stations,
+                                    selectedIndex: widget.selectedIndex,
+                                    drawProgress: MotionCurves.emphasized
+                                        .transform(_draw.value),
+                                    pulse: _pulse.value,
+                                    coastlines: widget.coastlines,
+                                    // Ink on a sheet, so the coast and the
+                                    // graticule step up a rung: against the
+                                    // page they were legible, against a raised
+                                    // surface they were not.
+                                    landColour: tokens.instrument,
+                                    graticuleColour: tokens.hairlineStrong,
+                                    arcColour: tokens.instrumentMid,
+                                    activeColour: tokens.beacon,
+                                    nodeColour: tokens.instrumentMid,
+                                    hairlineWidth: tokens.hairlineWidth,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
