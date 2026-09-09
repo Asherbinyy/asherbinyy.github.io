@@ -31,12 +31,7 @@ void main() {
     var world = AscentWorld.seeded(best: 0, isPractice: false, seed: 1);
     var apex = world.climberY;
     for (var i = 0; i < 240; i++) {
-      world = world.step(
-        dt: 1 / 60,
-        steer: 0,
-        isLeaping: false,
-        isDiving: false,
-      );
+      world = world.step(dt: 1 / 60, steer: 0);
       if (world.climberY > apex) apex = world.climberY;
       if (world.isOver) break;
     }
@@ -45,7 +40,7 @@ void main() {
   });
 
   test('a whole climber fits between two ledges with room to spare', () {
-    final clearance = AscentWorld.ledgeGap - climberMetres;
+    const clearance = AscentWorld.ledgeGap - climberMetres;
     expect(
       clearance,
       greaterThan(climberMetres),
