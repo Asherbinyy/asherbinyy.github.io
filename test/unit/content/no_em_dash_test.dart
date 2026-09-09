@@ -40,17 +40,17 @@ void main() {
     final offenders = <String>[];
 
     for (final name in ['app_en.arb', 'app_ar.arb']) {
-      final file = File('lib/app/l10n/$name');
-      final strings =
-          jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+      final strings = jsonDecode(
+        File('lib/app/l10n/$name').readAsStringSync(),
+      ) as Map<String, dynamic>;
 
-      strings.forEach((key, value) {
+      for (final MapEntry(:key, :value) in strings.entries) {
         // Metadata blocks describe strings to translators and are never shown.
-        if (key.startsWith('@')) return;
+        if (key.startsWith('@')) continue;
         if (value is String && value.contains(emDash)) {
           offenders.add('$name  $key: $value');
         }
-      });
+      }
     }
 
     expect(offenders, isEmpty, reason: offenders.join('\n'));

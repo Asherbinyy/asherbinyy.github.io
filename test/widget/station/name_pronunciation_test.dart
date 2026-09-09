@@ -1,7 +1,4 @@
-import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
-
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/features/station/presentation/widgets/name_pronunciation.dart';
@@ -11,7 +8,7 @@ import '../../support/pump.dart';
 import '../../support/station_harness.dart';
 
 void main() {
-  testWidgets('the hero offers the name in the owner\'s own voice', (
+  testWidgets("the hero offers the name in the owner's own voice", (
     tester,
   ) async {
     await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
@@ -31,7 +28,7 @@ void main() {
     final node = tester.getSemantics(find.byType(NamePronunciation));
     expect(node.label, l10n.heroSayName);
     expect(
-      node.hasFlag(SemanticsFlag.isButton),
+      node.flagsCollection.isButton,
       isTrue,
       reason: 'it should announce as a button',
     );
