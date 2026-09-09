@@ -66,7 +66,7 @@ what it says never arises. See §2 for the set and §0 for how the rule failed.
 | 6 | **Obelisk** | A vertical monument, tapering, with a pyramidion cap | Scroll progress indicator; the tower in the game | Painter |
 | 7 | **Scarab** | Khepri rolls the sun from horizon to horizon — a thing in motion, becoming | The indeterminate loader, replacing the carrier sweep | Painter, one rotation per cycle |
 | 8 | **Seal impression** | A unique mark stamped for a unique thing | Procedural card art, replacing `station_card_painter.dart` | Painter, seeded per id |
-| 9 | **Papyrus sheet** | A drawn surface with fibre tooth and deckled edge | The map ground on `/signal` | Tiled texture + edge path |
+| 9 | **Papyrus sheet** | A drawn surface with fibre tooth and deckled edge | The map ground on `/signal` | `papyrus_painter.dart`, path + fibre |
 | 10 | **Register tick** | Small incised marks calibrating a band | Panel corners, scale marks, the chronology rail | Painter |
 | 11 | **Djed pillar** | Stability — a vertical stack of bars | Section dividers between major page blocks | Painter |
 | 12 | **Ma'at's feather** | Weighing, judgement, a measure against a standard | Education marks on `/about`; the game's score gate | Painter |
