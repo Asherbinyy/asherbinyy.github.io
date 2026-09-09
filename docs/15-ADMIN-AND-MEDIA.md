@@ -220,9 +220,55 @@ Editing, reordering, image upload with a preview, and a diff against what is
 live before publishing. **Done when:** the owner can add a project with a
 screenshot, reorder the ledger, and publish, from a phone, without an agent.
 
-### 7.5 Provenance in the editor
+**Shipped**, at `/admin`, as one HTML string in `worker/src/admin.js`.
+
+The editor is **shape-driven, not schema-driven**: it renders whatever the
+document contains. A schema here would be a second copy of the one in
+`content_parser.dart`, and the two would drift. Objects become labelled groups,
+arrays of entries become reorderable cards, arrays of short strings become
+inline rows, and an `{en, ar}` pair becomes one field labelled with its parent
+key rather than two fields labelled EN and AR.
+
+That last one is worth recording because the first version got it wrong and it
+was only visible by looking: every input on the profile form read EN, AR, EN,
+AR, with no way to tell the name from the positioning statement. The same pass
+found array indices being printed as gold section headings, and `platforms:
+["ios"]` rendering as a full card with reorder buttons around three characters.
+None of it would have shown up in a test that asserted the page contained the
+right strings.
+
+New entries are shaped from an existing one and emptied, so a new project has
+every field the parser expects rather than whichever ones got typed. The
+document being edited is reflected in the URL hash, so a reload on a phone
+comes back to the same tab.
+
+The page is served unauthenticated, deliberately: it is a form, and the form is
+useless without the token every endpoint behind it demands. Gating the HTML
+would mean inventing a session before there is anything to hold one for. Its CSP
+allows its own inline script and style, images from this Worker and the site,
+and connections to nothing else -- it handles a token that can rewrite the site,
+so where it may talk to is the header that matters most.
+
+### 7.5 Provenance in the editor — **partly done**
 Required source field on any numeric claim, and the ledger test extended to
 remote content. **Done when:** a figure cannot be published without a source.
+
+**The editor half is done.** Publishing diffs the draft against what the site
+is showing, and if any changed leaf is a number the panel names the figures,
+asks where the new one comes from, and refuses to publish without an answer.
+The answer goes to the Worker in a header and is stored beside the document as
+a change-log entry, readable at `GET /v1/admin/changes`.
+
+**Recorded beside the document, not inside it**, and that is the decision worth
+arguing with. A source belongs to the act of publishing rather than to the
+content the site renders: putting it in the JSON would mean adding a field the
+parser has to accept, the models have to carry and every consumer has to ignore.
+
+**What is not done: the ledger test does not cover remote content.** It reads
+the bundle, and it cannot read KV. Extending it properly needs a decision the
+owner has to make first -- whether `14-PROVENANCE.md` is regenerated from the
+change log, or whether published figures are expected to be folded back into
+the bundle at some point. Left open rather than guessed at.
 
 ---
 
