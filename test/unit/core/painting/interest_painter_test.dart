@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/painting/interest_painter.dart';
 
+import '../../../support/content_readers.dart';
+
 InterestPainter _painter(InterestScene scene, {double progress = 0.5}) =>
     InterestPainter(
       scene: scene,
@@ -48,13 +50,25 @@ void main() {
     expect(_operations(_painter(InterestScene.seal), plate), greaterThan(0));
   });
 
-  test('each known id maps to its own scene', () {
-    expect(InterestScene.of('gym'), InterestScene.gym);
-    expect(InterestScene.of('football'), InterestScene.football);
-    expect(InterestScene.of('padel'), InterestScene.padel);
-    expect(InterestScene.of('reading'), InterestScene.reading);
-    expect(InterestScene.of('television'), InterestScene.television);
-    expect(InterestScene.of('esports'), InterestScene.esports);
+  test('every interest in the content has a scene of its own', () {
+    // Read from the shipped content rather than listed here. This held the
+    // ids as literals, so renaming "esports" to "gaming" failed on the
+    // spelling instead of catching the thing worth catching: an interest the
+    // owner adds that quietly falls through to the generic seal.
+    final interests =
+        bundledJson('assets/content/interests.json')['interests'] as List;
+    final scenes = <InterestScene>{};
+
+    for (final interest in interests.cast<Map<String, dynamic>>()) {
+      final id = interest['id'] as String;
+      final scene = InterestScene.of(id);
+      expect(
+        scene,
+        isNot(InterestScene.seal),
+        reason: '$id has no scene and falls back to the generic mark',
+      );
+      expect(scenes.add(scene), isTrue, reason: '$id shares a scene');
+    }
   });
 
   test('an empty plate is survivable', () {

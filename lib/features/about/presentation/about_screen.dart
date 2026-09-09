@@ -154,8 +154,13 @@ class _Identity extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         // No instrument metaphor in prose about the person, per the spec.
+        //
+        // The biography where the owner has written one, and the strapline
+        // only as a fallback. This page printed `positioning` verbatim, so a
+        // visitor who clicked through to read about the person was handed the
+        // same sentence the home page opens with.
         Text(
-          profile.positioning.resolve(locale),
+          (profile.biography ?? profile.positioning).resolve(locale),
           style: type.bodyL.copyWith(color: tokens.textPrimary),
         ),
         if (status != null) ...[

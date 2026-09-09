@@ -69,5 +69,9 @@
     "RU",
     "CA",
     "GB"
-  ]
+  ],
+  "biography": {
+    "en": "Five years of shipping mobile apps for other people, and I still open a new project on a Sunday because I want to see whether the thing works. Lately that means AI automation: wiring tools together until a job that took an afternoon takes a minute. I read, I lift, I follow football far too closely, and I will lose an evening to a game with a good story in it.",
+    "ar": "خمس سنوات من إطلاق تطبيقات الهاتف لحساب الآخرين، وما زلت أفتح مشروعاً جديداً يوم الأحد لأرى إن كانت الفكرة تعمل. ومؤخراً صار ذلك يعني أتمتة بالذكاء الاصطناعي: ربط الأدوات ببعضها حتى يصير العمل الذي يأخذ بعد ظهيرة كاملة دقيقة واحدة. أقرأ، وأتمرّن، وأتابع كرة القدم أكثر مما ينبغي، وأضيّع أمسية كاملة على لعبة فيها حكاية جيدة."
+  }
 }

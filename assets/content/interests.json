@@ -2,29 +2,53 @@
   "interests": [
     {
       "id": "gym",
-      "label": { "en": "The gym", "ar": "النادي الرياضي" }
+      "label": {
+        "en": "The gym",
+        "ar": "النادي الرياضي"
+      }
     },
     {
       "id": "football",
-      "label": { "en": "Football", "ar": "كرة القدم" }
+      "label": {
+        "en": "Football",
+        "ar": "كرة القدم"
+      }
     },
     {
-      "id": "padel",
-      "label": { "en": "Padel", "ar": "البادل" }
+      "id": "gaming",
+      "label": {
+        "en": "Gaming",
+        "ar": "الألعاب"
+      },
+      "note": {
+        "en": "FIFA and Valorant",
+        "ar": "FIFA و Valorant"
+      }
     },
     {
       "id": "reading",
-      "label": { "en": "Reading", "ar": "القراءة" }
+      "label": {
+        "en": "Reading",
+        "ar": "القراءة"
+      }
     },
     {
       "id": "television",
-      "label": { "en": "Television", "ar": "المسلسلات" },
-      "note": { "en": "Better Call Saul", "ar": "Better Call Saul" }
+      "label": {
+        "en": "Television",
+        "ar": "المسلسلات"
+      },
+      "note": {
+        "en": "Better Call Saul",
+        "ar": "Better Call Saul"
+      }
     },
     {
-      "id": "esports",
-      "label": { "en": "E-sports", "ar": "الرياضات الإلكترونية" },
-      "note": { "en": "FIFA and Valorant", "ar": "FIFA و Valorant" }
+      "id": "padel",
+      "label": {
+        "en": "Padel",
+        "ar": "البادل"
+      }
     }
   ]
 }
