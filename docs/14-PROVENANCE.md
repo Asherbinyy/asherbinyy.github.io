@@ -221,6 +221,55 @@ the only third-party runtime code on the site.
 
 ---
 
+## 3e. Third-party assets
+
+| What | Source | Licence | Where |
+|---|---|---|---|
+| Large Sandstone Blocks (diffuse, normal, ARM) | Poly Haven, by Rob Tuytel | CC0 | `web/intro/textures/sand_*.jpg` |
+| Dense Sand (diffuse, normal) | Poly Haven | CC0 | `web/intro/textures/ground_*.jpg` |
+| *Statue of Ra-Horakhty*, photogrammetry scan | Wikimedia Commons, by OmarElAtabany | **CC BY-SA 4.0** | `web/intro/models/guardian.kmsh` |
+
+The textures were downloaded at 1K, resized to 512 and re-encoded at quality
+72, which is 356KB for the whole PBR set. Resolution is deliberately low: these are surfaces seen
+at distance in near-darkness, and the grain does the work rather than the
+detail.
+
+CC0 requires no attribution. They are recorded anyway, because this file's job
+is that nothing on the site is unaccounted for, and that applies to pixels as
+much as to claims.
+
+### The guardian statues
+
+The two figures flanking the gate are a real scan of a real statue. Until now
+they were nine boxes each, and read as nine boxes, which is what the owner
+said about them.
+
+This one asset is **not CC0 and not MIT**, and it is the only thing in the
+repository under a copyleft licence. CC BY-SA 4.0 requires three things, all of
+which are done:
+
+1. **Attribution.** Creator, title, source and licence, shown on screen in
+   `web/index.html` for as long as the statues are visible, and recorded in
+   `web/intro/models/LICENSE.md`.
+2. **Indicating changes.** The file ships decimated from 102,714 triangles to
+   21,712 and re-encoded; `web/intro/models/LICENSE.md` lists every change.
+3. **ShareAlike.** `guardian.kmsh` is itself CC BY-SA 4.0. The repository's MIT
+   licence does not extend to it, and `README.md` says so.
+
+The credit is deliberately outside the `aria-hidden` staging copy, so it is
+reachable by a screen reader rather than only visible.
+
+**What was tried first.** The Smithsonian publishes CC0 scans of Egyptian
+sculpture, which would have been the better licence. Both `3d.si.edu` and its
+API refuse automated requests, so nothing can be fetched from there without a
+person and a browser. Poly Haven has statuary but nothing Egyptian. Three D
+Scans has an ideal Hermanubis and states no licence anywhere on the site, which
+on this file's own standard makes it unusable however good the model is.
+Wikimedia Commons hosts museum photogrammetry with the licence stated in
+machine-readable metadata, which is why it won.
+
+---
+
 ## 4b. Store-link verification, 2026-09-07
 
 Every iOS link in `apps.json` was re-checked against the iTunes lookup API in
