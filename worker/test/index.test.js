@@ -1103,3 +1103,90 @@ test('media can be listed and removed', async () => {
   );
   assert.equal(gone.status, 404);
 });
+
+// --- the panel, milestone 7.4 and 7.5 --------------------------------------
+
+test('the panel is served at /admin', async () => {
+  const page = await handleRequest(
+    new Request('https://worker.example/admin'),
+    publishing(),
+  );
+  assert.equal(page.status, 200);
+  assert.match(page.headers.get('content-type'), /text\/html/);
+
+  const html = await page.text();
+  // The five documents the owner is allowed to edit, and the token gate.
+  for (const file of ['profile.json', 'career.json', 'education.json']) {
+    assert.ok(html.includes(file), file);
+  }
+  assert.ok(html.includes('Admin token'));
+});
+
+test('the panel is not indexable and cannot be framed', async () => {
+  const page = await handleRequest(
+    new Request('https://worker.example/admin'),
+    publishing(),
+  );
+  assert.match(page.headers.get('x-robots-tag'), /noindex/);
+  assert.match(page.headers.get('content-security-policy'), /frame-ancestors 'none'/);
+  // It handles a token that can rewrite the site, so where it may talk to is
+  // the header that matters most.
+  assert.match(
+    page.headers.get('content-security-policy'),
+    /connect-src 'self' https:\/\/asherbinyy\.github\.io/,
+  );
+});
+
+test('the panel warns about the documents a recruiter checks', async () => {
+  const html = await (
+    await handleRequest(new Request('https://worker.example/admin'), publishing())
+  ).text();
+  assert.match(html, /recruiter checks against your CV/);
+  assert.match(html, /publishing needs a source/);
+});
+
+test('a source given for a changed figure is recorded', async () => {
+  const env = publishing();
+  const published = await handleRequest(
+    new Request('https://worker.example/v1/admin/content/education.json', {
+      method: 'PUT',
+      headers: {
+        authorization: `Bearer ${adminToken}`,
+        'content-type': 'application/json',
+        'x-change-note': encodeURIComponent('Transcript, 2026-09-09'),
+      },
+      body: JSON.stringify({overallMark: 75}),
+    }),
+    env,
+  );
+  assert.equal(published.status, 200);
+
+  const changes = await handleRequest(adminRequest('/v1/admin/changes'), env);
+  const body = await changes.json();
+  assert.equal(body.changes.length, 1);
+  assert.equal(body.changes[0].file, 'education.json');
+  assert.equal(body.changes[0].note, 'Transcript, 2026-09-09');
+});
+
+test('publishing without a note records nothing', async () => {
+  // A source belongs to the act of publishing, not to the content, and an
+  // empty one must not be written as though it were an answer.
+  const env = publishing();
+  await handleRequest(
+    adminRequest('/v1/admin/content/apps.json', {
+      method: 'PUT',
+      body: JSON.stringify({apps: []}),
+    }),
+    env,
+  );
+  const changes = await handleRequest(adminRequest('/v1/admin/changes'), env);
+  assert.deepEqual(await changes.json(), {changes: []});
+});
+
+test('the change log needs the admin token', async () => {
+  const refused = await handleRequest(
+    adminRequest('/v1/admin/changes', {token: null}),
+    publishing(),
+  );
+  assert.equal(refused.status, 401);
+});

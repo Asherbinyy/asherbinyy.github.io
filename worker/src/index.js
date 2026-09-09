@@ -1,8 +1,11 @@
+import {adminPage} from './admin.js';
+
 const saltKey = 'system|salt';
 const counterPrefix = 'counter|';
 const totalPrefix = 'total|';
 const visitorPrefix = 'visitor|';
 const adminFailurePrefix = 'admin-failures|';
+const changeLogPrefix = 'change-log|';
 const digestPrefix = 'system|digest|';
 const saltLifetimeMs = 24 * 60 * 60 * 1000;
 const shortRetentionSeconds = 2 * 24 * 60 * 60;
@@ -61,6 +64,38 @@ export async function handleRequest(request, env, now = new Date()) {
   }
 
   const url = new URL(request.url);
+
+  // The panel itself. Unauthenticated on purpose: it is a form, and the form
+  // is useless without the token that every endpoint behind it demands. Gating
+  // the HTML would mean inventing a session before there is anything to hold
+  // one for.
+  if (url.pathname === '/admin' && request.method === 'GET') {
+    return new Response(adminPage(env.SITE_ORIGIN), {
+      status: 200,
+      headers: new Headers({
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        // Its own script and styles only, and it may reach this Worker and the
+        // site's asset bundle and nothing else. The panel handles a token that
+        // can rewrite the site, so it is the one page here that most needs to
+        // be unable to talk to anywhere unexpected.
+        'content-security-policy': [
+          "default-src 'none'",
+          "script-src 'unsafe-inline'",
+          "style-src 'unsafe-inline'",
+          `img-src 'self' data: ${env.SITE_ORIGIN}`,
+          `connect-src 'self' ${env.SITE_ORIGIN}`,
+          "form-action 'none'",
+          "base-uri 'none'",
+          "frame-ancestors 'none'",
+        ].join('; '),
+        'referrer-policy': 'no-referrer',
+        'x-content-type-options': 'nosniff',
+        'x-robots-tag': 'noindex, nofollow',
+      }),
+    });
+  }
+
   if (url.pathname === '/v1/beacon' && request.method === 'POST') {
     if (origin !== env.SITE_ORIGIN) {
       return response({error: 'Origin not allowed'}, 403, headers);
@@ -110,6 +145,9 @@ export async function handleRequest(request, env, now = new Date()) {
     if (url.pathname === '/v1/admin/content' && request.method === 'GET') {
       return listPublished(env, headers);
     }
+    if (url.pathname === '/v1/admin/changes' && request.method === 'GET') {
+      return listChanges(env, headers);
+    }
     if (url.pathname === '/v1/admin/media' && request.method === 'GET') {
       return listMedia(env, headers);
     }
@@ -122,7 +160,7 @@ export async function handleRequest(request, env, now = new Date()) {
     if (url.pathname.startsWith('/v1/admin/content/')) {
       const file = url.pathname.slice('/v1/admin/content/'.length);
       if (request.method === 'PUT') {
-        return publish(file, request, env, headers);
+        return publish(file, request, env, now, headers);
       }
       if (request.method === 'DELETE') {
         return withdraw(file, env, headers);
@@ -207,7 +245,20 @@ async function listPublished(env, headers) {
   );
 }
 
-async function publish(file, request, env, headers) {
+/// Every source the owner has given for a figure, newest first.
+async function listChanges(env, headers) {
+  const store = contentStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  const listing = await store.list({prefix: changeLogPrefix});
+  const entries = await Promise.all(
+    listing.keys.map((entry) => store.get(entry.name, 'json')),
+  );
+  return response({changes: entries.reverse()}, 200, headers);
+}
+
+async function publish(file, request, env, now, headers) {
   if (!publishableFiles.has(file)) {
     return response({error: 'Not a publishable document'}, 400, headers);
   }
@@ -242,6 +293,18 @@ async function publish(file, request, env, headers) {
   // Stored re-serialised rather than as received, so the bytes in KV are
   // exactly what was parsed and nothing rides along outside the JSON.
   await store.put(contentKey(file), JSON.stringify(document));
+
+  // §7.5: a figure is a claim and a claim needs a source. The panel asks for
+  // one whenever a number changed and sends it here, and it is recorded beside
+  // the document rather than inside it, because a source belongs to the act of
+  // publishing and not to the content the site renders.
+  const note = decodeURIComponent(request.headers.get('x-change-note') ?? '');
+  if (note) {
+    await store.put(
+      key(changeLogPrefix, [now.toISOString(), file]),
+      JSON.stringify({file, note, at: now.toISOString()}),
+    );
+  }
   return response({published: file}, 200, headers);
 }
 
