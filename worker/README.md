@@ -17,7 +17,25 @@ Before deployment:
    former receives CV-open and failed-salt-rotation alerts; the latter receives
    the noon Europe/London aggregate digest. No webhook is called when its
    secret is absent.
-5. Deploy with `npx wrangler deploy`. The Pages release build supplies the
+5. For the admin panel, create the content namespace and uncomment its binding
+   in `wrangler.toml`:
+
+   ```
+   npx wrangler kv namespace create CONTENT
+   npx wrangler secret put ADMIN_TOKEN   # 48+ random characters
+   ```
+
+   Both are optional. With neither set the Worker behaves exactly as it did
+   before: `/v1/content/*` returns 404 and the site reads its bundle, and the
+   write endpoints answer 401 or 503 rather than pretending to have stored
+   anything.
+
+   `ADMIN_TOKEN` is a different secret from `CONSOLE_TOKEN` and must stay that
+   way. The console token is handed to a dashboard that only reads counters;
+   the admin token can rewrite what the site says about the owner. Rotating
+   either is `wrangler secret put` again, with no code change.
+
+6. Deploy with `npx wrangler deploy`. The Pages release build supplies the
    checked production endpoint at
    `https://nocturne-analytics.asherbinyy.workers.dev/v1/beacon`; local builds
    omit it and therefore make no analytics requests.
