@@ -133,6 +133,31 @@
     /* The title leaves before the doors do, so the frame is clear for the
        camera move rather than competing with it. */
     .threshold--opening .threshold__frame { opacity: 0; transition-duration: 320ms; }
+    /*
+      The statue credit. Its own element rather than part of the frame,
+      because the frame is deliberately cleared when the doors open and the
+      credit is a licence condition, not staging: the guardians are a CC BY-SA
+      scan and attribution has to survive as long as they are on screen.
+    */
+    .threshold__credit {
+      position: absolute;
+      right: 16px;
+      bottom: 14px;
+      z-index: 1;
+      margin: 0;
+      max-width: 60vw;
+      text-align: right;
+      font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      line-height: 1.5;
+      letter-spacing: 0.04em;
+      color: rgba(237, 241, 248, 0.44);
+      opacity: 0;
+      transition: opacity 500ms ease 260ms;
+    }
+    .threshold__credit a { color: inherit; }
+    .threshold--ready .threshold__credit { opacity: 1; }
+    .threshold--gone .threshold__credit { opacity: 0; transition-delay: 0ms; }
     /* Someone who asked for less motion is shown nothing here at all; the
        script removes the overlay before a frame is drawn. */
     @media (prefers-reduced-motion: reduce) { .threshold { display: none; } }
@@ -149,11 +174,31 @@
     ordinary buttons, and the script removes it. Nothing here is required to
     reach the site.
   -->
-  <div id="threshold" class="threshold" role="presentation" aria-hidden="true">
-    <div class="threshold__frame">
+  <div id="threshold" class="threshold">
+    <!--
+      The staging copy is hidden from assistive technology: it is atmosphere
+      for a sequence that lasts seconds, and the site's real heading follows
+      immediately. The credit below it is not hidden, because attribution is a
+      licence condition rather than decoration.
+
+      This is why aria-hidden sits here and on the canvas rather than on the
+      overlay itself: an ancestor with aria-hidden would take the credit with
+      it, and aria-hidden cannot be undone further down the tree.
+    -->
+    <div class="threshold__frame" aria-hidden="true">
       <p class="threshold__eyebrow">Ahmed Elsherbini</p>
       <h1 class="threshold__title">The door is sealed.</h1>
     </div>
+    <!--
+      Required by the licence the guardians are scanned under, and kept in
+      markup rather than painted into the canvas so it is readable by anything
+      that reads the page, including a screen reader and a viewer whose WebGL
+      context never starts.
+    -->
+    <p class="threshold__credit">Guardians after <em>Statue of Ra-Horakhty</em>,
+      photogrammetry by OmarElAtabany, Wikimedia Commons,
+      <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="license noopener" target="_blank">CC BY-SA 4.0</a>.
+      Decimated for the web.</p>
   </div>
 
   <script src="flutter_bootstrap.js" async></script>

@@ -84,3 +84,5 @@ The specification lives in [`docs/`](docs/) and was written before the first lin
 ## Licence
 
 Source is MIT. Content, design and personal data are not — please don't ship this as your own portfolio.
+
+One asset is under a different licence and cannot be relicensed. `web/intro/models/guardian.kmsh`, the statue standing either side of the gate in the opening sequence, is adapted from *Statue of Ra-Horakhty* by [OmarElAtabany](https://commons.wikimedia.org/wiki/User:OmarElAtabany) on Wikimedia Commons, under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). ShareAlike means the adapted file carries the same terms; details and the full list of changes are in [`web/intro/models/LICENSE.md`](web/intro/models/LICENSE.md).

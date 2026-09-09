@@ -18,6 +18,7 @@
  * stranding a visitor in front of a broken scene.
  */
 import * as THREE from '../vendor/three.module.min.js';
+import { loadMesh } from './kmsh.js';
 
 const PALETTE = {
   night: 0x0b1018,
@@ -27,6 +28,17 @@ const PALETTE = {
   gold: 0xe3a93f,
   glow: 0xffd98a,
 };
+
+// The pedestal, in scene units, and the statue that stands on it. Named
+// because two different methods have to agree about where its top is.
+const BASE_HEIGHT = 0.42;
+const PLINTH_HEIGHT = 0.5;
+const PEDESTAL_TOP = BASE_HEIGHT + PLINTH_HEIGHT;
+const PEDESTAL_WIDTH = 2.1;
+// Tall enough to be a colossus rather than an ornament: with the pedestal
+// under it this stands above the doorway it flanks.
+const STATUE_HEIGHT = 4.3;
+const STAFF_HEIGHT = 4.6;
 
 /** Reads the run once, so a reload replays it but a route change does not. */
 const PLAYED_KEY = 'kemet.threshold.played';
@@ -78,6 +90,10 @@ export class Threshold {
     // Capped rather than matched: a 3x display would otherwise render nine
     // times the pixels for a scene that is mostly silhouette and dust.
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // The scene carries no information; the credit beside it does. Hiding the
+    // canvas specifically, rather than the overlay that contains both, is what
+    // lets a screen reader still reach the attribution.
+    this.renderer.domElement.setAttribute('aria-hidden', 'true');
     this.renderer.setSize(width, height);
     this.renderer.setClearColor(PALETTE.night, 1);
     this.host.appendChild(this.renderer.domElement);
@@ -155,6 +171,28 @@ export class Threshold {
       map: groundColour,
       normalMap: load('ground_nor.jpg', [26, 26]),
     };
+
+    // The statues take the sand grain, not the wall's stone. The wall texture
+    // is photographed sandstone *blocks*, and it has mortar courses running
+    // through it: correct on masonry, and on a figure carved from one piece it
+    // draws brick lines across the chest. The ground scan is bare grain with
+    // no structure in it, which is what weathered granite looks like close up.
+    //
+    // Cloned rather than reused because repeat lives on the texture, not on
+    // the material. The image is shared, so this costs a sampler, not a
+    // download.
+    this.statueMaps = {
+      map: this.#retile(groundColour, [3, 4]),
+      normalMap: this.#retile(this.groundMaps.normalMap, [3, 4]),
+    };
+  }
+
+  /** One texture at a different tiling, sharing the image it came from. */
+  #retile(texture, repeat) {
+    const copy = texture.clone();
+    copy.repeat.set(repeat[0], repeat[1]);
+    copy.needsUpdate = true;
+    return copy;
   }
 
   #lights() {
@@ -311,128 +349,173 @@ export class Threshold {
   }
 
   #guards() {
-    // Anubis, seated, as the funerary statues actually are: forelegs
-    // straight, hindquarters down, head up and forward, tail along the
-    // plinth. The first pass was a standing figure built from a cylinder and
-    // a box, and it read as a chess piece.
+    // Two colossi flanking the gate, which is how a pylon was actually
+    // fronted: standing figures at the door rather than ornament beside it.
     //
-    // Still stylised rather than detailed. A low-polygon Anubis that almost
-    // works is uncanny; one that is clearly a carved statue is not, and at
-    // this distance the silhouette is the whole read: long snout, tall ears,
-    // straight forelegs.
+    // Everything here except the statue itself is architecture, and boxes are
+    // the honest way to build architecture. The statue is not, and the first
+    // pass proved it: a seated Anubis assembled from nine boxes read as nine
+    // boxes at every distance, because that is what it was. Lighting cannot
+    // rescue geometry with no carving in it, and the owner said so.
+    //
+    // So the figure is a photogrammetry scan of a real statue, loaded from
+    // `models/guardian.kmsh`. It is Ra-Horakhty, the sun at the horizon, and
+    // that is a better fit than the Anubis it replaces: this sequence is a
+    // sealed door opening onto light.
     const statue = new THREE.MeshStandardMaterial({
-      // Carved from the same rock as the pylon, and tinted a shade cooler so
-      // the sentries read as separate objects standing in front of it rather
-      // than as part of the wall behind them.
+      // A cool albedo on a warm map, which together render as stone about half
+      // again brighter than the wall: two objects standing in front of it
+      // rather than a hole in it.
+      //
+      // The value is measured against the pylon rather than picked, and it
+      // took four passes to get there. Untextured, it rendered at twice the
+      // wall's brightness and read as plaster. Corrected to a blue-grey, it
+      // read as steel under a cool moon. Given the wall's own photograph, the
+      // same colour multiplied down darker than the wall and the figures
+      // vanished into it. Given the sand photograph instead, the warmth in the
+      // map compounded with the warmth in the colour and they came out bright
+      // tan. Hence a colour that looks wrong written down: it is the one that
+      // cancels the map rather than the one the stone should be.
+      color: 0xa7aebf,
+      roughness: 1,
+      metalness: 0,
+      ...this.statueMaps,
+      normalScale: new THREE.Vector2(0.55, 0.55),
+    });
+    // Held on the instance because the opening sequence brightens it, and it
+    // is shared by every part of both standards, so the strike is one
+    // assignment rather than one per piece.
+    this.gilt = new THREE.MeshStandardMaterial({
+      color: PALETTE.gold,
+      emissive: PALETTE.gold,
+      // Low at rest. The gold is the one saturated thing in a night scene, and
+      // at the first value it pulled the eye off the statues entirely; it has
+      // nine tenths of its range still to travel when the staves come down.
+      emissiveIntensity: 0.05,
+      roughness: 0.52,
+      metalness: 0.7,
+    });
+    const gilt = this.gilt;
+    const plinthStone = new THREE.MeshStandardMaterial({
       color: 0x8b98ae,
       roughness: 0.92,
       metalness: 0.06,
       ...this.stoneMaps,
       normalScale: new THREE.Vector2(0.7, 0.7),
     });
-    const gilt = new THREE.MeshStandardMaterial({
-      color: PALETTE.gold,
-      emissive: PALETTE.gold,
-      emissiveIntensity: 0.12,
-      roughness: 0.4,
-      metalness: 0.6,
-    });
     this.staves = [];
+    this.guards = [];
 
     for (const side of [-1, 1]) {
       const guard = new THREE.Group();
 
-      // Plinth, stepped.
-      const base = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.42, 1.9), statue);
-      base.position.y = 0.21;
+      // A stepped pedestal, roughly square: a standing figure does not need
+      // the long plinth a seated animal did.
+      const base = new THREE.Mesh(
+        new THREE.BoxGeometry(PEDESTAL_WIDTH, BASE_HEIGHT, PEDESTAL_WIDTH),
+        plinthStone,
+      );
+      base.position.y = BASE_HEIGHT / 2;
       guard.add(base);
-      const plinth = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.5, 1.65), statue);
-      plinth.position.y = 0.67;
+      const plinth = new THREE.Mesh(
+        new THREE.BoxGeometry(1.8, PLINTH_HEIGHT, 1.8),
+        plinthStone,
+      );
+      plinth.position.y = BASE_HEIGHT + PLINTH_HEIGHT / 2;
       guard.add(plinth);
 
-      // Hindquarters: the mass a seated jackal sits back on.
-      const haunch = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.15, 1.3), statue);
-      haunch.position.set(-0.72, 1.5, 0);
-      guard.add(haunch);
-
-      // The back, rising from haunch to shoulder.
-      const back = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.85, 1.05), statue);
-      back.position.set(0.02, 2.0, 0);
-      back.rotation.z = -0.32;
-      guard.add(back);
-
-      // Chest, upright and forward of the haunch.
-      const chest = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.65, 1.0), statue);
-      chest.position.set(0.62, 2.05, 0);
-      guard.add(chest);
-
-      // Forelegs: straight down to the plinth, which is the pose's signature.
-      for (const leg of [-1, 1]) {
-        const foreleg = new THREE.Mesh(
-          new THREE.BoxGeometry(0.26, 1.35, 0.26),
-          statue,
-        );
-        foreleg.position.set(0.86, 1.6, leg * 0.32);
-        guard.add(foreleg);
-        const paw = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.58), statue);
-        paw.position.set(0.92, 1.02, leg * 0.32);
-        guard.add(paw);
-      }
-
-      // Neck and head, carried high and forward.
-      const neck = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.8, 0.62), statue);
-      neck.position.set(0.66, 3.0, 0);
-      guard.add(neck);
-
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.62, 0.72), statue);
-      head.position.set(0.66, 3.55, 0);
-      guard.add(head);
-
-      // The snout. Long, level, and the single thing that makes this a jackal.
-      const snout = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.3, 0.34), statue);
-      snout.position.set(1.16, 3.44, 0);
-      guard.add(snout);
-
-      // Ears: tall, upright, slightly splayed.
-      for (const ear of [-1, 1]) {
-        const shape = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.95, 0.34), statue);
-        shape.position.set(0.5, 4.2, ear * 0.24);
-        shape.rotation.z = 0.12;
-        shape.rotation.x = ear * 0.1;
-        guard.add(shape);
-      }
-
-      // The nemes headcloth flaring behind the ears, and a gilt collar. Two
-      // marks of rank, and the only gold on the figure.
-      const nemes = new THREE.Mesh(new THREE.BoxGeometry(0.36, 1.05, 1.15), statue);
-      nemes.position.set(0.3, 3.35, 0);
-      guard.add(nemes);
-      const collar = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.2, 1.06), gilt);
-      collar.position.set(0.62, 2.72, 0);
-      guard.add(collar);
-
-      // Tail along the plinth.
-      const tail = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.2, 0.22), statue);
-      tail.position.set(-1.25, 1.02, 0);
-      tail.rotation.z = 0.18;
-      guard.add(tail);
-
-      // The staff it holds upright, which is what strikes the ground.
-      const staff = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.08, 0.08, 4.6, 6),
+      // The standard planted beside the pedestal, which is what strikes the
+      // ground and starts the sequence. Clear of the base rather than through
+      // it: at the first offset it stood inside the stone.
+      //
+      // A group rather than one cylinder. Six sides and a flat gold gave a
+      // bright yellow stick with no shading on it; a tapered ten-sided shaft
+      // with a collar and a finial reads as a carried object, which is what
+      // makes it belong to the figure behind it.
+      const staff = new THREE.Group();
+      const shaft = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.055, 0.085, STAFF_HEIGHT, 10),
         gilt,
       );
-      staff.position.set(1.12, 2.3, side * 0.62);
+      shaft.position.y = STAFF_HEIGHT / 2;
+      staff.add(shaft);
+      const finial = new THREE.Mesh(
+        new THREE.SphereGeometry(0.15, 12, 10),
+        gilt,
+      );
+      finial.position.y = STAFF_HEIGHT;
+      staff.add(finial);
+      const collar = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.11, 0.11, 0.1, 10),
+        gilt,
+      );
+      collar.position.y = STAFF_HEIGHT - 0.34;
+      staff.add(collar);
+
+      staff.position.set(PEDESTAL_WIDTH / 2 + 0.22, 0, 0);
       guard.add(staff);
       this.staves.push(staff);
 
       // Facing the doorway, so both sentries look at what the viewer is about
-      // to walk through.
+      // to walk through. The group's local +X is that direction, on both
+      // sides, which is also the direction the scan faces.
       guard.position.set(side * 4.9, 0, 4.2);
       guard.rotation.y = side > 0 ? Math.PI : 0;
       guard.scale.setScalar(0.95);
+      guard.userData.side = side;
       this.rig.add(guard);
+      this.guards.push(guard);
     }
+
+    this.#carve(statue);
+  }
+
+  /**
+   * Stands the scanned statue on both plinths, once it has arrived.
+   *
+   * Fire-and-forget, like the textures, and for the same reason: the scene has
+   * to paint on the first frame. The doors do not move for 1500ms, so a
+   * same-origin fetch of 190KB is in place long before anything happens.
+   *
+   * A failure leaves two lit pedestals with staves standing on them, which
+   * reads as a composition rather than as a fault. The boxes are deliberately
+   * not kept as a fallback: they were the thing being fixed, and showing them
+   * on a slow connection would say the fix had not landed.
+   */
+  #carve(material) {
+    loadMesh('intro/models/guardian.kmsh')
+      .then((geometry) => {
+        // The fetch can outlive the overlay if a visitor presses Escape.
+        if (this.disposed) {
+          geometry.dispose();
+          return;
+        }
+        const bounds = geometry.boundingBox;
+        // The mesh arrives centred on its own bounds and one unit tall, so it
+        // is placed in scene units without knowing anything about the scan.
+        const scale = STATUE_HEIGHT / (bounds.max.y - bounds.min.y);
+        for (const guard of this.guards) {
+          const figure = new THREE.Mesh(geometry, material);
+          figure.scale.setScalar(scale);
+          // Feet on the top of the pedestal. Derived from the pedestal rather
+          // than measured off a screenshot, so moving one moves the other and
+          // the statue cannot end up hovering a hand's width above its base.
+          figure.position.y = PEDESTAL_TOP - bounds.min.y * scale;
+          // Turned to face the viewer, not the door. Colossi at a pylon face
+          // outward, at whoever is walking up to it, and the first pass had
+          // both of them in profile showing a flank and a back pillar. The
+          // quarter turn back inward keeps them addressing the doorway as
+          // well, so they read as flanking it rather than ignoring it.
+          //
+          // The group already carries the mirror, so the sign follows it.
+          figure.rotation.y = guard.userData.side * (Math.PI / 2 - 0.25);
+          guard.add(figure);
+        }
+      })
+      .catch(() => {
+        // Recorded rather than surfaced. A missing statue is a poorer scene;
+        // a thrown error here would take the whole intro down for it.
+      });
   }
 
   #dust() {
@@ -538,8 +621,10 @@ export class Threshold {
     const strike = Math.min(1, since / 0.42);
     for (const staff of this.staves) {
       staff.rotation.z = (1 - ease(strike)) * 0.5;
-      staff.material.emissiveIntensity = 0.1 + ease(strike) * 0.9;
     }
+    // One material behind every part of both standards, so the gold takes
+    // light in a single assignment.
+    this.gilt.emissiveIntensity = 0.05 + ease(strike) * 0.95;
 
     // Beat two: the ground takes it. Shake decays fast; a long shake reads as
     // a bug rather than as an impact.
