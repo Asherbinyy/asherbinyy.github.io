@@ -7,10 +7,10 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/ascent_painter.dart';
-import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_audio.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
 import 'package:nocturne/features/courtyard/game/presentation/ascent_controls.dart';
+import 'package:nocturne/features/courtyard/game/presentation/game_control.dart';
 
 /// The climb, played full screen.
 ///
@@ -88,7 +88,11 @@ class _AscentStageState extends State<AscentStage>
     }
   }
 
+  /// Seconds since the ticker started, for the scene's own motion.
+  double _elapsed = 0;
+
   void _onTick(Duration elapsed) {
+    _elapsed = elapsed.inMicroseconds / 1000000;
     final world = _world;
     if (world == null) return;
     final dt = (elapsed - _last).inMicroseconds / 1000000;
@@ -212,6 +216,7 @@ class _AscentStageState extends State<AscentStage>
                       painter: AscentPainter(
                         world: world,
                         entrance: _entrance.value,
+                        time: _elapsed,
                         stone: tokens.instrument,
                         cracked: tokens.instrumentDim,
                         gold: tokens.beacon,
@@ -303,23 +308,14 @@ class _Hud extends StatelessWidget {
               ],
             ),
             const Spacer(),
-            _StageButton(
-              label: l10n.ascentAgain,
-              semanticLabel: l10n.ascentAgain,
-              onPressed: onRestart,
-            ),
+            GameControl(label: l10n.ascentAgain, onPressed: onRestart),
             SizedBox(width: tokens.space8),
-            _StageButton(
+            GameControl(
               label: isMuted ? l10n.ascentSoundOn : l10n.ascentSoundOff,
-              semanticLabel: isMuted ? l10n.ascentSoundOn : l10n.ascentSoundOff,
               onPressed: onMute,
             ),
             SizedBox(width: tokens.space8),
-            _StageButton(
-              label: l10n.ascentLeave,
-              semanticLabel: l10n.ascentLeave,
-              onPressed: onClose,
-            ),
+            GameControl(label: l10n.ascentLeave, onPressed: onClose),
           ],
         ),
       ),
@@ -374,9 +370,8 @@ class _Over extends StatelessWidget {
                   style: type.telemetryS.copyWith(color: tokens.textMuted),
                 ),
               SizedBox(height: tokens.space24),
-              _StageButton(
+              GameControl(
                 label: l10n.ascentAgain,
-                semanticLabel: l10n.ascentAgain,
                 isPrimary: true,
                 onPressed: onRestart,
               ),
@@ -392,78 +387,3 @@ class _Over extends StatelessWidget {
 ///
 /// The page's own buttons looked pasted on here, which is the owner's word for
 /// it: they are sized and weighted for reading, and this is a HUD.
-class _StageButton extends StatefulWidget {
-  const _StageButton({
-    required this.label,
-    required this.semanticLabel,
-    required this.onPressed,
-    this.isPrimary = false,
-  });
-
-  final String label;
-  final String semanticLabel;
-  final VoidCallback onPressed;
-  final bool isPrimary;
-
-  @override
-  State<_StageButton> createState() => _StageButtonState();
-}
-
-class _StageButtonState extends State<_StageButton> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final isLit = _isHovered || widget.isPrimary;
-
-    return Semantics(
-      button: true,
-      label: widget.semanticLabel,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        cursor: context.platform.isPointer
-            ? SystemMouseCursors.click
-            : MouseCursor.defer,
-        child: GestureDetector(
-          onTap: widget.onPressed,
-          behavior: HitTestBehavior.opaque,
-          child: ExcludeSemantics(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: context.platform.minimumTarget,
-              ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: isLit
-                      ? tokens.beacon.withValues(alpha: 0.16)
-                      : tokens.surface.withValues(alpha: 0.6),
-                  border: Border.all(
-                    color: isLit ? tokens.beacon : tokens.hairlineStrong,
-                    width: tokens.hairlineWidth,
-                  ),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: tokens.space16,
-                    vertical: tokens.space8,
-                  ),
-                  child: Center(
-                    widthFactor: 1,
-                    child: Text(
-                      widget.label,
-                      style: context.type.telemetry.copyWith(
-                        color: isLit ? tokens.beacon : tokens.instrument,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

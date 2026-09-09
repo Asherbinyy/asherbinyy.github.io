@@ -2,7 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
-import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/features/courtyard/game/presentation/game_control.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 
 /// What the player is currently asking for.
@@ -56,19 +56,19 @@ class _AscentControlsState extends State<AscentControls> {
         children: [
           Row(
             children: [
-              _Pad(
+              GameControl.key(
                 glyph: '‹',
-                label: l10n.ascentSteerLeft,
-                onChanged: (down) => setState(() {
+                semanticLabel: l10n.ascentSteerLeft,
+                onHeld: (down) => setState(() {
                   _left = down;
                   _publish();
                 }),
               ),
               SizedBox(width: tokens.space12),
-              _Pad(
+              GameControl.key(
                 glyph: '›',
-                label: l10n.ascentSteerRight,
-                onChanged: (down) => setState(() {
+                semanticLabel: l10n.ascentSteerRight,
+                onHeld: (down) => setState(() {
                   _right = down;
                   _publish();
                 }),
@@ -77,20 +77,20 @@ class _AscentControlsState extends State<AscentControls> {
           ),
           Row(
             children: [
-              _Pad(
+              GameControl.key(
                 glyph: '▼',
-                label: l10n.ascentDive,
-                onChanged: (down) => setState(() {
+                semanticLabel: l10n.ascentDive,
+                onHeld: (down) => setState(() {
                   _dive = down;
                   _publish();
                 }),
               ),
               SizedBox(width: tokens.space12),
-              _Pad(
+              GameControl.key(
                 glyph: '▲',
-                label: l10n.ascentLeap,
+                semanticLabel: l10n.ascentLeap,
                 isPrimary: true,
-                onChanged: (down) => setState(() {
+                onHeld: (down) => setState(() {
                   _leap = down;
                   _publish();
                 }),
@@ -105,74 +105,3 @@ class _AscentControlsState extends State<AscentControls> {
 
 /// One key on the pad. Reports press and release rather than taps, because
 /// steering is something you hold.
-class _Pad extends StatefulWidget {
-  const _Pad({
-    required this.glyph,
-    required this.label,
-    required this.onChanged,
-    this.isPrimary = false,
-  });
-
-  final String glyph;
-  final String label;
-  final ValueChanged<bool> onChanged;
-  final bool isPrimary;
-
-  @override
-  State<_Pad> createState() => _PadState();
-}
-
-class _PadState extends State<_Pad> {
-  bool _isDown = false;
-
-  void _set(bool down) {
-    if (_isDown == down) return;
-    setState(() => _isDown = down);
-    widget.onChanged(down);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final size = context.platform.minimumTarget * 1.35;
-
-    return Semantics(
-      button: true,
-      label: widget.label,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => _set(true),
-        onTapUp: (_) => _set(false),
-        onTapCancel: () => _set(false),
-        child: ExcludeSemantics(
-          child: SizedBox(
-            width: size,
-            height: size,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: _isDown
-                    ? tokens.beacon.withValues(alpha: 0.22)
-                    : tokens.surfaceRaised,
-                border: Border.all(
-                  color: _isDown ? tokens.beacon : tokens.hairlineStrong,
-                  width: tokens.hairlineWidth,
-                ),
-                borderRadius: BorderRadius.circular(tokens.controlRadius),
-              ),
-              child: Center(
-                child: Text(
-                  widget.glyph,
-                  style: context.type.heading.copyWith(
-                    color: _isDown || widget.isPrimary
-                        ? tokens.beacon
-                        : tokens.instrument,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

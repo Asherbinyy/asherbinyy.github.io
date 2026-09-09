@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
 
@@ -24,6 +25,7 @@ class AscentPainter extends CustomPainter {
     required this.pier,
     required this.strokeWidth,
     required this.isReducedMotion,
+    this.time = 0,
   });
 
   /// The world to draw.
@@ -63,8 +65,32 @@ class AscentPainter extends CustomPainter {
   /// Whether parallax and drift are suppressed.
   final bool isReducedMotion;
 
+  /// Seconds since the run began, for anything that moves on its own.
+  ///
+  /// The shaft had nothing living in it: the walls were a fixed grid and the
+  /// only motion on screen was the climber. Torchlight and dust are what make
+  /// it a place rather than a diagram, and both need a clock.
+  final double time;
+
   /// How much of the frame sits below the climber.
   static const double _climberHeight = 0.62;
+
+  /// How tall the climber is, in metres.
+  ///
+  /// Two fifths of the gap between ledges, which is the proportion that reads
+  /// as a creature climbing a tower rather than as a creature wedged in one.
+  static const double _climberMetres = 1.15;
+
+  /// Metres between torches down a pier.
+  static const double _torchGap = 7.5;
+
+  /// How many dust motes hang in the shaft.
+  static const int _moteCount = 46;
+
+  /// The climber's drawn height, in multiples of its own scale.
+  ///
+  /// Half a shell below the centre, then the sun's offset and radius above it.
+  static const double _climberSpans = 1.75 / 2 + 1.55 + 0.62;
 
   /// Metres of shaft visible at once.
   ///
@@ -133,11 +159,18 @@ class AscentPainter extends CustomPainter {
 
     _paintPiers(canvas, size, shaft, camera, metresToPixels, screenY);
     _paintShaftWall(canvas, shaft, camera, metresToPixels, screenY);
+    _paintTorches(canvas, size, shaft, camera, metresToPixels, screenY);
+    _paintDust(canvas, shaft, camera, metresToPixels);
 
-    // Register bands: the altitude at which a fact is uncovered. Drawn behind
-    // the ledges so a band never hides a foothold, and clipped to the shaft so
-    // they read as marks cut into its wall rather than as ruled rows across
-    // the whole screen.
+    // Depth marks cut into the shaft wall every 24 metres, so height is
+    // legible without reading the counter. They used to gate a fact about the
+    // owner's career; the owner's point was that this is the fun corner and a
+    // game does not need a reason to exist, so they are now just the marks a
+    // climber counts.
+    //
+    // Drawn behind the ledges so a mark never hides a foothold, and clipped to
+    // the shaft so they read as cut into its wall rather than as ruled rows
+    // across the screen.
     final bands = Paint()
       ..color = gold.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
@@ -160,7 +193,7 @@ class AscentPainter extends CustomPainter {
       _paintLedge(canvas, shaft, ledge, y);
     }
 
-    _paintClimber(canvas, shaft, screenY(world.climberY));
+    _paintClimber(canvas, shaft, screenY(world.climberY), metresToPixels);
 
     // The opening: light travels up the shaft as a run begins, so the game
     // arrives rather than appearing. Drawn last, over everything, and gone by
@@ -405,8 +438,155 @@ class AscentPainter extends CustomPainter {
   /// rendered at 43 pixels on a desktop with a sun the size of its own body
   /// balanced on top, which read as a balloon on a beetle. The sun now sits
   /// against the head, being pushed, which is the entire point of the figure.
-  void _paintClimber(Canvas canvas, Rect shaft, double y) {
-    final scale = math.max(strokeWidth * 3, shaft.width * 0.048);
+  /// Torches bracketed to the inner face of each pier.
+  ///
+  /// They are the only warm light in the scene and the only thing that moves
+  /// when the climber is still, which is what stops a paused game looking like
+  /// a screenshot. The flicker is two sine waves at unrelated speeds: cheaper
+  /// than noise, and irregular enough that the eye does not find the loop.
+  void _paintTorches(
+    Canvas canvas,
+    Size size,
+    Rect shaft,
+    double camera,
+    double metresToPixels,
+    double Function(double) screenY,
+  ) {
+    if (shaft.left <= 0) return;
+
+    final first = (camera / _torchGap).floor() * _torchGap;
+    for (
+      var metres = first;
+      metres < camera + _visibleMetres + _torchGap;
+      metres += _torchGap
+    ) {
+      if (metres <= 0) continue;
+      final y = screenY(metres);
+      final index = (metres / _torchGap).round();
+
+      // Staggered, so the two walls do not pulse in unison.
+      for (final (side, isLeft) in [(shaft.left, true), (shaft.right, false)]) {
+        final seed = index * 2 + (isLeft ? 0 : 1);
+        final flicker = isReducedMotion
+            ? 1.0
+            : 0.82 +
+                  0.12 * math.sin(time * 7.3 + seed * 2.1) +
+                  0.06 * math.sin(time * 17.9 + seed);
+        final reach = metresToPixels * 2.6 * flicker;
+        final inward = isLeft ? -1.0 : 1.0;
+        final root = Offset(side + inward * strokeWidth, y);
+
+        // The pool of light on the pier face, which is what actually lights
+        // the wall rather than the flame being a sticker on it.
+        canvas.drawCircle(
+          root,
+          reach,
+          Paint()
+            ..shader = ui.Gradient.radial(root, reach, [
+              glow.withValues(alpha: 0.20 * flicker),
+              glow.withValues(alpha: 0),
+            ]),
+        );
+
+        final bracket = metresToPixels * 0.34;
+        canvas.drawLine(
+          root,
+          root.translate(inward * bracket, -bracket * 0.35),
+          Paint()
+            ..color = gold.withValues(alpha: 0.75)
+            ..strokeWidth = strokeWidth * 1.6
+            ..strokeCap = StrokeCap.round,
+        );
+
+        final flame = root.translate(inward * bracket, -bracket * 0.5);
+        canvas
+          ..drawCircle(
+            flame,
+            bracket * 0.52 * flicker,
+            Paint()..color = glow.withValues(alpha: 0.85),
+          )
+          ..drawCircle(
+            flame,
+            bracket * 0.26 * flicker,
+            Paint()..color = Color.lerp(glow, stone, 0.5)!,
+          );
+      }
+    }
+  }
+
+  /// Dust hanging in the lit air of the shaft.
+  ///
+  /// Positions come from an index rather than a random source, so a mote does
+  /// not teleport between frames and the field is identical on every run. They
+  /// drift upward slowly, which reads as warm air rising off the torches.
+  void _paintDust(
+    Canvas canvas,
+    Rect shaft,
+    double camera,
+    double metresToPixels,
+  ) {
+    if (isReducedMotion) return;
+
+    final paint = Paint()..color = glow.withValues(alpha: 0.16);
+    const span = _visibleMetres * 1.4;
+    for (var i = 0; i < _moteCount; i++) {
+      // Hashed rather than stepped. The first pass used 0.618 and 0.382, which
+      // look independent and sum to one, so every mote sat on the same
+      // diagonal and the field showed a visible line through it. This is an
+      // integer hash: no relationship between the two axes, and still a pure
+      // function of the index, so a mote never teleports between frames.
+      final acrossSeed = _scatter(i * 2 + 1);
+      final alongSeed = _scatter(i * 2 + 2);
+      final rise = (alongSeed * span + time * (0.35 + acrossSeed * 0.5)) % span;
+      final metres = camera - span * 0.2 + rise;
+      final sway = math.sin(time * 0.7 + i) * 0.012;
+      final x =
+          shaft.left + (acrossSeed + sway).clamp(0.02, 0.98) * shaft.width;
+      final y = shaft.bottom - (metres - camera) * metresToPixels;
+      if (y < shaft.top || y > shaft.bottom) continue;
+      canvas.drawCircle(
+        Offset(x, y),
+        strokeWidth * (0.8 + acrossSeed * 0.9),
+        paint,
+      );
+    }
+  }
+
+  /// A stable pseudo-random fraction for [seed].
+  ///
+  /// Deterministic on purpose: the dust must be identical on every frame and
+  /// every run, so it cannot come from a `Random`, and it must not correlate
+  /// between axes, so it cannot come from multiplying the index by a constant.
+  static double _scatter(int seed) {
+    var hash = seed * 0x27d4eb2d;
+    hash = hash ^ (hash >> 15);
+    hash = (hash * 0x85ebca6b) & 0x7fffffff;
+    hash = hash ^ (hash >> 13);
+    return (hash & 0xffff) / 0x10000;
+  }
+
+  void _paintClimber(
+    Canvas canvas,
+    Rect shaft,
+    double y,
+    double metresToPixels,
+  ) {
+    // Sized in metres, like everything else in the world.
+    //
+    // It used to be a fraction of the shaft's width, which sounds reasonable
+    // and produced a climber 3.06 metres tall in a world where the ledges sit
+    // 2.6 metres apart and a bounce rises 2.75. It was taller than its own
+    // jump. That is the whole reason it read as enormous and the reason the
+    // bouncing looked frantic: the thing was filling the space it was trying
+    // to travel through.
+    //
+    // The drawing runs from half a shell below the centre to the top of the
+    // sun above it, so the scale that yields a given height is that height
+    // divided by the span those parts cover.
+    final scale = math.max(
+      strokeWidth * 2,
+      _climberMetres * metresToPixels / _climberSpans,
+    );
     final centre = Offset(shaft.left + world.climberX * shaft.width, y - scale);
     final rising = world.velocity > 0;
 
@@ -481,6 +661,7 @@ class AscentPainter extends CustomPainter {
   bool shouldRepaint(AscentPainter oldDelegate) =>
       !identical(oldDelegate.world, world) ||
       oldDelegate.entrance != entrance ||
+      oldDelegate.time != time ||
       oldDelegate.stone != stone ||
       oldDelegate.gold != gold ||
       oldDelegate.wall != wall ||
