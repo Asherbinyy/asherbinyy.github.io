@@ -22,17 +22,8 @@ enabled = false
 binding = "ANALYTICS"
 id = "f93e4a6cc18b499f89eb67b743b3e0db"
 
-# Content the owner publishes from the admin panel. Commented out because the
-# namespace has to be created first and its id pasted here:
-#
-#   npx wrangler kv namespace create CONTENT
-#
-# Until then the Worker deploys and runs exactly as before: `/v1/content/*`
-# returns 404, the site reads its bundle, and the admin write endpoints answer
-# 503 rather than pretending to have stored anything. Separate from ANALYTICS
-# on purpose -- every key in that namespace expires, and published content must
-# not.
-#
-# [[kv_namespaces]]
-# binding = "CONTENT"
-# id = "paste-the-id-from-the-command-above"
+# Content the owner publishes from the admin panel. Separate from ANALYTICS on
+# purpose: every key in that namespace expires, and published content must not.
+[[kv_namespaces]]
+binding = "CONTENT"
+id = "cd8e3febcf4c4ea5beacaeb65a514f5c"

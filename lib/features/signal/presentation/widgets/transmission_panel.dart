@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/content/period.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
@@ -67,7 +68,7 @@ class TransmissionPanel extends StatelessWidget {
             style: type.telemetryS.copyWith(color: tokens.instrumentMid),
           ),
           Text(
-            '${role.start} — ${role.end ?? ''}'.trim(),
+            formatPeriod(context.l10n, role.start, role.end),
             style: type.telemetryS.copyWith(color: tokens.textMuted),
           ),
           if (title != null) ...[

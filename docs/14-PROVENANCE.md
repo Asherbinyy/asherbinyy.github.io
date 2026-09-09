@@ -228,6 +228,7 @@ the only third-party runtime code on the site.
 | Large Sandstone Blocks (diffuse, normal, ARM) | Poly Haven, by Rob Tuytel | CC0 | `web/intro/textures/sand_*.jpg` |
 | Dense Sand (diffuse, normal) | Poly Haven | CC0 | `web/intro/textures/ground_*.jpg` |
 | *Statue of Ra-Horakhty*, photogrammetry scan | Wikimedia Commons, by OmarElAtabany | **CC BY-SA 4.0** | `web/intro/models/guardian.kmsh` |
+| Name pronunciation | The owner's own voice, recorded 2026-09-09 | Owner's | `assets/audio/name.m4a` |
 
 The textures were downloaded at 1K, resized to 512 and re-encoded at quality
 72, which is 356KB for the whole PBR set. Resolution is deliberately low: these are surfaces seen
@@ -237,6 +238,18 @@ detail.
 CC0 requires no attribution. They are recorded anyway, because this file's job
 is that nothing on the site is unaccounted for, and that applies to pixels as
 much as to claims.
+
+### The name recording
+
+`assets/audio/name.m4a` is the owner saying his own name, supplied through
+`supporting files/` and converted for the web. The original is 2.3 seconds of
+48kHz stereo AAC at 136kbps. Silence was trimmed from both ends, the level
+brought up from a mean of -33dB to -16dB, and the whole thing reduced to mono
+at 64kbps: 1.4 seconds and 12KB.
+
+The trim was measured rather than automatic. A silence gate at -45dB cut the
+leading consonant, because the start of the first word sits at -56dB, so the
+bounds were read off the envelope and set by hand with margin either side.
 
 ### The guardian statues
 

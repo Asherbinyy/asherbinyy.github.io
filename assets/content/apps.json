@@ -14,7 +14,8 @@
         "ar": "نقل تطبيق أندرويد قديم إلى Flutter"
       },
       "domain": "Travel",
-      "featured": true
+      "featured": true,
+      "country": "RU"
     },
     {
       "id": "minextstep",

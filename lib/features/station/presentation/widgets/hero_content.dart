@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/features/station/presentation/widgets/cv_button.dart';
+import 'package:nocturne/features/station/presentation/widgets/name_pronunciation.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
@@ -53,12 +54,26 @@ class HeroContent extends StatelessWidget {
           reveal: acquisitionReveal,
         ),
         SizedBox(height: tokens.space16),
-        // Short on purpose: a full-width rule reads as a divider, a 120px one
-        // reads as a mark.
-        SizedBox(
-          width: tokens.heroRuleWidth,
-          height: tokens.heroRuleHeight,
-          child: ColoredBox(color: tokens.beacon),
+        // Wrapped rather than a row: at 360px the mark and the control are
+        // 18px wider than the column, and a Row simply overflows. On a phone
+        // the control drops to its own line instead.
+        Wrap(
+          spacing: tokens.space16,
+          runSpacing: tokens.space8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            // Short on purpose: a full-width rule reads as a divider, a 120px
+            // one reads as a mark.
+            SizedBox(
+              width: tokens.heroRuleWidth,
+              height: tokens.heroRuleHeight,
+              child: ColoredBox(color: tokens.beacon),
+            ),
+            // Beside the mark rather than beside the name: the name is set in
+            // the largest type on the site and anything level with it competes
+            // with it.
+            const NamePronunciation(),
+          ],
         ),
         SizedBox(height: tokens.space24),
         ConstrainedBox(

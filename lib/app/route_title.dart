@@ -24,20 +24,20 @@ String routeTitle({
   required AppLocalizations l10n,
   required String name,
 }) => switch (route) {
-  AppRoute.station => '$name — ${l10n.tabRole}',
-  AppRoute.brief => '$name — ${l10n.navBrief}',
+  AppRoute.station => '$name ${l10n.titleSeparator} ${l10n.tabRole}',
+  AppRoute.brief => '$name ${l10n.titleSeparator} ${l10n.navBrief}',
   AppRoute.console => l10n.navConsole,
-  AppRoute.signal => '${l10n.navSignal} — $name',
-  AppRoute.work => '${l10n.navWork} — $name',
+  AppRoute.signal => '${l10n.navSignal} ${l10n.titleSeparator} $name',
+  AppRoute.work => '${l10n.navWork} ${l10n.titleSeparator} $name',
   // Case studies land in Milestone 2. Until a study supplies its own name, the
   // section name is the honest reading rather than an invented one.
-  AppRoute.caseStudy => '${l10n.navWork} — $name',
-  AppRoute.writing => '${l10n.navWriting} — $name',
-  AppRoute.about => '${l10n.navAbout} — $name',
+  AppRoute.caseStudy => '${l10n.navWork} ${l10n.titleSeparator} $name',
+  AppRoute.writing => '${l10n.navWriting} ${l10n.titleSeparator} $name',
+  AppRoute.about => '${l10n.navAbout} ${l10n.titleSeparator} $name',
   AppRoute.courtyard => '${l10n.navCourtyard}, $name',
-  AppRoute.cv => '$name — ${l10n.navCv}',
+  AppRoute.cv => '$name ${l10n.titleSeparator} ${l10n.navCv}',
   // A campaign link redirects to the station, so it carries its title.
-  AppRoute.campaign => '$name — ${l10n.tabRole}',
+  AppRoute.campaign => '$name ${l10n.titleSeparator} ${l10n.tabRole}',
 };
 
 /// Applies the route's title to the browser tab.
