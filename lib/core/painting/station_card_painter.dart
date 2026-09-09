@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/rendering.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
-import 'package:nocturne/core/painting/glyph_paths.dart';
+import 'package:nocturne/core/painting/ornament_paths.dart';
 import 'package:nocturne/core/painting/projection.dart';
 import 'package:nocturne/core/painting/station_seed.dart';
 
@@ -174,11 +174,10 @@ class StationCardPainter extends CustomPainter {
     final seed = StationSeed('seal.$seedId');
     final glyphBox = math.min(ring.width, ring.height) * _glyphShare;
     if (glyphBox <= 0) return;
-    final glyph =
-        EgyptianGlyph.values[seed.nextInt(EgyptianGlyph.values.length)];
+    final ornament = Ornament.values[seed.nextInt(Ornament.values.length)];
     final origin = ring.center.translate(-glyphBox / 2, -glyphBox / 2);
     final path = Path();
-    for (final stroke in GlyphPaths.strokes(glyph, glyphBox)) {
+    for (final stroke in OrnamentPaths.strokes(ornament, glyphBox)) {
       path.moveTo(origin.dx + stroke.first.x, origin.dy + stroke.first.y);
       for (final point in stroke.skip(1)) {
         path.lineTo(origin.dx + point.x, origin.dy + point.y);

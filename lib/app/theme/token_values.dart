@@ -404,9 +404,6 @@ extension ThemeTokenValues on ThemeTokens {
   /// Shared cursorTrailRadius token.
   double get cursorTrailRadius => Tokens.cursorTrailRadius;
 
-  /// Shared glyphFieldOpacity token.
-  double get glyphFieldOpacity => Tokens.glyphFieldOpacity;
-
-  /// Shared cartoucheHeroHeight token.
-  double get cartoucheHeroHeight => Tokens.cartoucheHeroHeight;
+  /// Shared ornamentFieldOpacity token.
+  double get ornamentFieldOpacity => Tokens.ornamentFieldOpacity;
 }

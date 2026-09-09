@@ -4,17 +4,17 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
-import 'package:nocturne/core/painting/glyph_field_painter.dart';
+import 'package:nocturne/core/painting/ornament_field_painter.dart';
 
-GlyphFieldPainter _painter({required String seed}) => GlyphFieldPainter(
+OrnamentFieldPainter _painter({required String seed}) => OrnamentFieldPainter(
   seed: seed,
   colour: nocturneTokens.instrumentDim,
-  opacity: Tokens.glyphFieldOpacity,
+  opacity: Tokens.ornamentFieldOpacity,
   hairlineWidth: Tokens.hairlineWidth,
 );
 
 void main() {
-  setUp(GlyphFieldPainter.clearCache);
+  setUp(OrnamentFieldPainter.clearCache);
 
   test('the tile is built once and reused across paints', () {
     final painter = _painter(seed: 'field.station');
@@ -30,7 +30,7 @@ void main() {
     // time is the performance risk 12-MOTIF-LIBRARY.md section 4 names as the
     // largest in the redesign, so the guarantee that matters is that repeated
     // paints add no cache entries.
-    expect(GlyphFieldPainter.cacheSize, 1);
+    expect(OrnamentFieldPainter.cacheSize, 1);
   });
 
   test('each route gets its own field', () {
@@ -39,7 +39,7 @@ void main() {
     _painter(seed: 'field.work')
         .paint(Canvas(ui.PictureRecorder()), const Size(400, 400));
 
-    expect(GlyphFieldPainter.cacheSize, 2);
+    expect(OrnamentFieldPainter.cacheSize, 2);
   });
 
   test('an identical field does not repaint', () {
@@ -61,6 +61,6 @@ void main() {
               .paint(Canvas(ui.PictureRecorder()), Size.zero),
       returnsNormally,
     );
-    expect(GlyphFieldPainter.cacheSize, 0);
+    expect(OrnamentFieldPainter.cacheSize, 0);
   });
 }

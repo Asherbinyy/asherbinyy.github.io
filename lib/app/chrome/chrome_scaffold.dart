@@ -9,7 +9,7 @@ import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/app_nav.dart';
 import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/features/recruiter/presentation/recruiter_view.dart';
-import 'package:nocturne/core/painting/glyph_field_painter.dart';
+import 'package:nocturne/core/painting/ornament_field_painter.dart';
 import 'package:nocturne/core/widgets/cursor_trail.dart';
 import 'package:nocturne/core/painting/grain_painter.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
@@ -379,10 +379,10 @@ class _Grained extends StatelessWidget {
         if (!isRecruiterMode)
           RepaintBoundary(
             child: CustomPaint(
-              painter: GlyphFieldPainter(
+              painter: OrnamentFieldPainter(
                 seed: 'field.${route.name}',
                 colour: tokens.instrumentDim,
-                opacity: tokens.glyphFieldOpacity,
+                opacity: tokens.ornamentFieldOpacity,
                 hairlineWidth: tokens.hairlineWidth,
               ),
             ),

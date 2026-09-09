@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/rendering.dart';
 
-import 'package:nocturne/core/painting/glyph_paths.dart';
+import 'package:nocturne/core/painting/ornament_paths.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
 
 /// Draws the shaft of the obelisk, and the climb up it.
@@ -162,11 +162,10 @@ class AscentPainter extends CustomPainter {
         courseMetres * metresToPixels / 3,
       );
       if (box <= 0) continue;
-      final glyph =
-          EgyptianGlyph.values[index.abs() % EgyptianGlyph.values.length];
+      final ornament = Ornament.values[index.abs() % Ornament.values.length];
       final path = Path();
       final origin = Offset(size.width * 0.08, y + box * 0.6);
-      for (final stroke in GlyphPaths.strokes(glyph, box)) {
+      for (final stroke in OrnamentPaths.strokes(ornament, box)) {
         path.moveTo(origin.dx + stroke.first.x, origin.dy + stroke.first.y);
         for (final point in stroke.skip(1)) {
           path.lineTo(origin.dx + point.x, origin.dy + point.y);

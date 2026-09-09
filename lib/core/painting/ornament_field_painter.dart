@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
-import 'package:nocturne/core/painting/glyph_paths.dart';
+import 'package:nocturne/core/painting/ornament_paths.dart';
 import 'package:nocturne/core/painting/station_seed.dart';
 
 /// A field of inscription behind a page.
@@ -17,17 +17,20 @@ import 'package:nocturne/core/painting/station_seed.dart';
 /// change it, and replayed across the surface. Replaying a picture is a
 /// display-list copy; rebuilding the paths is not.
 ///
-/// **The signs are laid on a grid, never in a line.** `12-MOTIF-LIBRARY.md` §0
-/// forbids generating glyph strings as texture, and that prohibition is about
-/// faking meaning: a horizontal run of signs reads as a sentence, and an
-/// arbitrary one would be nonsense presented as writing. A diaper of single
-/// signs at fixed spacing reads as ornament, which is what it is. Nothing here
-/// spells anything, and the one place this site does spell something is the
-/// cartouche.
-class GlyphFieldPainter extends CustomPainter {
+/// **Nothing in this field is writing.** It used to be: the tile picked at
+/// random from the Egyptian uniliteral signs, which are letters, and scattered
+/// them. The defence written here was that a grid reads as ornament where a
+/// line would read as a sentence, and that was wrong. Random letters are
+/// random letters at any spacing, and a reader who knows the signs sees
+/// nonsense laid out as decoration.
+///
+/// It draws [Ornament] now: kheker cresting, block borders, coils, rosettes
+/// and lotus buds, which are decoration in the record rather than language.
+/// Repeating them says nothing because there is nothing there to say.
+class OrnamentFieldPainter extends CustomPainter {
   /// [seed] varies the arrangement per route so navigation is legible at a
   /// glance; [colour] and [opacity] come from the palette.
-  GlyphFieldPainter({
+  OrnamentFieldPainter({
     required this.seed,
     required this.colour,
     required this.opacity,
@@ -91,14 +94,14 @@ class GlyphFieldPainter extends CustomPainter {
         // cell. The jitter is what stops a 2x2 tile reading as a chequerboard
         // once it repeats across a viewport; it is deterministic, so the field
         // is identical on every load.
-        final glyph =
-            EgyptianGlyph.values[random.nextInt(EgyptianGlyph.values.length)];
+        final ornament =
+            Ornament.values[random.nextInt(Ornament.values.length)];
         final originX =
             column * cell + (cell - glyphBox) / 2 + random.nextRange(-6, 6);
         final originY =
             row * cell + (cell - glyphBox) / 2 + random.nextRange(-6, 6);
 
-        for (final stroke in GlyphPaths.strokes(glyph, glyphBox)) {
+        for (final stroke in OrnamentPaths.strokes(ornament, glyphBox)) {
           path.moveTo(originX + stroke.first.x, originY + stroke.first.y);
           for (final point in stroke.skip(1)) {
             path.lineTo(originX + point.x, originY + point.y);
@@ -132,5 +135,6 @@ class GlyphFieldPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(GlyphFieldPainter oldDelegate) => oldDelegate._key != _key;
+  bool shouldRepaint(OrnamentFieldPainter oldDelegate) =>
+      oldDelegate._key != _key;
 }
