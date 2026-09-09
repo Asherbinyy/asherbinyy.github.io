@@ -221,6 +221,30 @@ the only third-party runtime code on the site.
 
 ---
 
+## 3e. Third-party assets
+
+| What | Source | Licence | Where |
+|---|---|---|---|
+| Large Sandstone Blocks (diffuse, normal, ARM) | Poly Haven, by Rob Tuytel | CC0 | `web/intro/textures/sand_*.jpg` |
+| Dense Sand (diffuse, normal) | Poly Haven | CC0 | `web/intro/textures/ground_*.jpg` |
+
+Downloaded at 1K, resized to 512 and re-encoded at quality 72, which is 356KB
+for the whole PBR set. Resolution is deliberately low: these are surfaces seen
+at distance in near-darkness, and the grain does the work rather than the
+detail.
+
+CC0 requires no attribution. They are recorded anyway, because this file's job
+is that nothing on the site is unaccounted for, and that applies to pixels as
+much as to claims.
+
+**What was tried and did not work.** The Smithsonian publishes CC0 3D scans of
+Egyptian sculpture, which would be the right way to get a real Anubis rather
+than one built from boxes. Both `3d.si.edu` and its API refuse automated
+requests, so the models cannot be fetched from here. Getting one needs a person
+with a browser.
+
+---
+
 ## 4b. Store-link verification, 2026-09-07
 
 Every iOS link in `apps.json` was re-checked against the iTunes lookup API in

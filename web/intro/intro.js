@@ -21,9 +21,9 @@ import * as THREE from '../vendor/three.module.min.js';
 
 const PALETTE = {
   night: 0x0b1018,
-  sand: 0x3d3524,
+  sand: 0x6d6144,
   sandLit: 0x8a7248,
-  stone: 0x333c4e,
+  stone: 0xa8b3c4,
   gold: 0xe3a93f,
   glow: 0xffd98a,
 };
@@ -83,7 +83,7 @@ export class Threshold {
     this.host.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(PALETTE.night, 0.018);
+    this.scene.fog = new THREE.FogExp2(PALETTE.night, 0.026);
 
     this.camera = new THREE.PerspectiveCamera(52, width / height, 0.1, 200);
     this.camera.position.set(0, 3.4, 16);
@@ -92,12 +92,69 @@ export class Threshold {
     this.rig = new THREE.Group();
     this.scene.add(this.rig);
 
+    this.#textures();
     this.#lights();
     this.#ground();
     this.#facade();
     this.#guards();
     this.#dust();
     this.#stars();
+  }
+
+  /**
+   * Real photographed stone and sand, instead of flat colour.
+   *
+   * The owner's repeated objection was that the scene read as cheap and flat,
+   * and the honest reason was that every surface was a single sRGB value with
+   * no grain, no normal detail and no variation in roughness. Lighting cannot
+   * rescue that: a flat albedo lit perfectly still looks like painted card.
+   *
+   * These are Poly Haven scans, CC0, at 512px and quality 72, which is 356KB
+   * for the whole set. Resolution is deliberately low: these are surfaces seen
+   * at distance in near-darkness, and the grain is doing the work rather than
+   * the detail.
+   *
+   * Loading is fire-and-forget. A texture that fails to arrive leaves the
+   * material at its base colour, which is exactly the scene as it was, so a
+   * blocked or slow request costs quality rather than the whole intro.
+   */
+  #textures() {
+    const loader = new THREE.TextureLoader();
+    const load = (file, repeat) => {
+      const texture = loader.load(`intro/textures/${file}`);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(repeat[0], repeat[1]);
+      texture.anisotropy = Math.min(
+        4,
+        this.renderer.capabilities.getMaxAnisotropy(),
+      );
+      return texture;
+    };
+
+    // Colour maps carry sRGB; normal and packed maps are raw data and must
+    // not be colour-managed, or the lighting goes subtly wrong everywhere.
+    const stoneColour = load('sand_diff.jpg', [3, 2]);
+    stoneColour.colorSpace = THREE.SRGBColorSpace;
+    const groundColour = load('ground_diff.jpg', [26, 26]);
+    groundColour.colorSpace = THREE.SRGBColorSpace;
+
+    this.stoneMaps = {
+      map: stoneColour,
+      normalMap: load('sand_nor_gl.jpg', [3, 2]),
+      // Poly Haven packs ambient occlusion, roughness and metalness into one
+      // texture's three channels, and Three reads roughness from the green
+      // one, so the packed map serves directly as the roughness map.
+      //
+      // The ambient-occlusion channel is deliberately unused: `aoMap` needs a
+      // second UV set that box and cylinder geometry does not carry, so wiring
+      // it would silently do nothing while looking like it worked.
+      roughnessMap: load('sand_arm.jpg', [3, 2]),
+    };
+    this.groundMaps = {
+      map: groundColour,
+      normalMap: load('ground_nor.jpg', [26, 26]),
+    };
   }
 
   #lights() {
@@ -146,6 +203,11 @@ export class Threshold {
         color: PALETTE.sand,
         roughness: 1,
         metalness: 0,
+        // Tinted rather than replaced: the scan is daylight sand and the
+        // scene is night, so the map supplies grain and the colour supplies
+        // the hour.
+        ...this.groundMaps,
+        normalScale: new THREE.Vector2(0.7, 0.7),
       }),
     );
     sand.rotation.x = -Math.PI / 2;
@@ -158,6 +220,8 @@ export class Threshold {
       color: PALETTE.stone,
       roughness: 0.95,
       metalness: 0.02,
+      ...this.stoneMaps,
+      normalScale: new THREE.Vector2(1.1, 1.1),
     });
 
     // Two battered towers with a gap between them, which is what a pylon is.
@@ -232,9 +296,10 @@ export class Threshold {
       const door = new THREE.Mesh(
         new THREE.BoxGeometry(gap / 2, 6.4, 0.4),
         new THREE.MeshStandardMaterial({
-          color: 0x232c3b,
+          color: 0x7f8ba0,
           roughness: 0.88,
           metalness: 0.06,
+          ...this.stoneMaps,
         }),
       );
       door.position.set(side * gap / 4, 3.2, -3.1);
@@ -256,9 +321,14 @@ export class Threshold {
     // this distance the silhouette is the whole read: long snout, tall ears,
     // straight forelegs.
     const statue = new THREE.MeshStandardMaterial({
-      color: 0x2b3444,
+      // Carved from the same rock as the pylon, and tinted a shade cooler so
+      // the sentries read as separate objects standing in front of it rather
+      // than as part of the wall behind them.
+      color: 0x8b98ae,
       roughness: 0.92,
       metalness: 0.06,
+      ...this.stoneMaps,
+      normalScale: new THREE.Vector2(0.7, 0.7),
     });
     const gilt = new THREE.MeshStandardMaterial({
       color: PALETTE.gold,
