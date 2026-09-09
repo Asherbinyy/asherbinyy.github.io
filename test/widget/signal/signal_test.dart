@@ -233,6 +233,42 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('a phone opens the stop as a sheet its content fits in', (
+      tester,
+    ) async {
+      await _pumpSignal(
+        tester,
+        breakpoint: ChromeBreakpoint.compact,
+        capabilities: touchBrowser,
+      );
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+
+      await tester.tap(find.bySemanticsLabel(l10n.signalNextStop));
+      await tester.pumpAndSettle();
+
+      // The screen had no touch coverage at all, which is why the owner found
+      // this and the suite did not. A bottom sheet is capped at half the
+      // screen by default and clips whatever does not fit, and a career
+      // summary on a 360px phone is reliably taller than that.
+      expect(find.byType(TransmissionPanel), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      final panel = tester.getRect(find.byType(TransmissionPanel));
+      final screen = tester.getRect(find.byType(ChromeScaffold));
+      expect(
+        panel.width,
+        lessThanOrEqualTo(screen.width + 1),
+        reason: 'the sheet must not be wider than the phone',
+      );
+      // Reachable rather than merely present: if it overflows the cap there
+      // has to be a scroller to get to the rest of it.
+      final scrollers = find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byType(Scrollable),
+      );
+      expect(scrollers, findsWidgets);
+    });
+
     testWidgets('the step controls walk the journey in order', (tester) async {
       await _pumpSignal(tester);
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;

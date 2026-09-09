@@ -1,9 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
+import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/painting/wall_painter.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
 import 'package:nocturne/features/trace/domain/trace_controller.dart';
@@ -79,11 +82,16 @@ void main() {
   ) async {
     await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
 
-    final frame = tester.getRect(find.byType(ChromeScaffold));
+    final scaffold = tester.getRect(find.byType(ChromeScaffold));
     final painted = tester.getRect(_tracePaint);
+    // Against the content frame, not the window. The frame is capped and
+    // centred on a wide monitor, and the wall lives inside it, so measuring
+    // the window would compare the wall to space it is deliberately not
+    // allowed to use.
+    final frame = math.min(scaffold.width, Tokens.contentMaxWidth);
 
     // The strip is a phone accommodation, not the design.
-    expect(painted.width, greaterThan(frame.width / 2));
+    expect(painted.width, greaterThan(frame / 2));
     expect(find.byType(TraceBurstLabel), findsWidgets);
   });
 

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -343,15 +345,48 @@ void main() {
   });
 
   group('composition', () {
-    testWidgets('the hero aligns to the rail, never centred', (tester) async {
+    testWidgets('the hero aligns to a frame that is centred on a wide screen', (
+      tester,
+    ) async {
       await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
 
       final rail = tester.getRect(find.byType(AppRail));
+      final scaffold = tester.getRect(find.byType(ChromeScaffold));
       final hero = tester.getRect(find.byType(HeroContent));
 
-      // "Everything left-aligned to the rail." Its leading edge is the rail's
-      // trailing edge plus the gutter, with nothing centred about it.
-      expect(hero.left, closeTo(rail.right + Tokens.largeGutter, 1));
+      // The design system said "everything left-aligned to the rail, nothing
+      // centred", and the owner overruled it: on a wide monitor that left the
+      // page pinned to one edge with a third of the screen empty beside it.
+      //
+      // Content is capped and centred now. The hero still aligns to the frame
+      // rather than being centred within it -- the copy is left-aligned, as it
+      // always was -- but the frame no longer starts at the rail.
+      final available = scaffold.width - rail.width;
+      final frame = math.min(available, Tokens.contentMaxWidth);
+      final expected =
+          rail.right + (available - frame) / 2 + Tokens.largeGutter;
+
+      expect(hero.left, closeTo(expected, 1));
+      expect(
+        hero.left,
+        greaterThan(rail.right),
+        reason: 'the frame never reaches under the rail',
+      );
+    });
+
+    testWidgets('the frame stops growing on a very wide monitor', (
+      tester,
+    ) async {
+      tester.view
+        ..devicePixelRatio = 1
+        ..physicalSize = const Size(2560, 1400);
+      addTearDown(tester.view.reset);
+
+      await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
+
+      // Uncapped, a 2560px window stretched the page until it had no shape.
+      final hero = tester.getRect(find.byType(HeroContent));
+      expect(hero.width, lessThanOrEqualTo(Tokens.contentMaxWidth));
     });
 
     testWidgets('the amber rule is short of the column, not a divider', (
