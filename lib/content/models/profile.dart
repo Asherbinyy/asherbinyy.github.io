@@ -36,6 +36,14 @@ class Profile with _$Profile {
     /// the weight.
     LocalizedText? greeting,
 
+    /// The longer answer, for the About page.
+    ///
+    /// About used to print `positioning`, the same sentence the home page
+    /// opens with, so a visitor who clicked through to read about the person
+    /// got the strapline again. This is the page where there is room to say
+    /// something a job title cannot.
+    LocalizedText? biography,
+
     /// Where the work has been, as ISO country codes.
     ///
     /// Rendered as flags beside a line of copy. Kept here rather than derived
