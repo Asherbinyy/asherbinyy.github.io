@@ -8,22 +8,34 @@ import 'package:nocturne/app/route_title.dart';
 
 const _name = 'Ahmed Elsherbini';
 
+/// The divider the titles actually use.
+///
+/// Read from the localisations rather than written out here. These assertions
+/// were pinned to a literal em dash, so they agreed with the code and with
+/// each other while both were wrong: the owner asked for em dashes to be gone
+/// from everything the site presents, and the tab titles were still full of
+/// them. A test that restates the value it is checking cannot notice that.
+final _divide = AppLocalizationsEn().titleSeparator;
+
 String _title(AppRoute route, [AppLocalizations? l10n]) =>
     routeTitle(route: route, l10n: l10n ?? AppLocalizationsEn(), name: _name);
 
 void main() {
   test('the two entry points lead with the name', () {
     // Section 12: name first only on the routes a stranger lands on.
-    expect(_title(AppRoute.station), 'Ahmed Elsherbini — Mobile Engineer');
-    expect(_title(AppRoute.brief), 'Ahmed Elsherbini — Brief');
+    expect(
+      _title(AppRoute.station),
+      'Ahmed Elsherbini $_divide Mobile Engineer',
+    );
+    expect(_title(AppRoute.brief), 'Ahmed Elsherbini $_divide Brief');
   });
 
   test('every other public route leads with its section', () {
     // So a stack of open tabs is scannable without hovering.
-    expect(_title(AppRoute.signal), 'Signal — Ahmed Elsherbini');
-    expect(_title(AppRoute.work), 'Work — Ahmed Elsherbini');
-    expect(_title(AppRoute.writing), 'Writing — Ahmed Elsherbini');
-    expect(_title(AppRoute.about), 'About — Ahmed Elsherbini');
+    expect(_title(AppRoute.signal), 'Signal $_divide Ahmed Elsherbini');
+    expect(_title(AppRoute.work), 'Work $_divide Ahmed Elsherbini');
+    expect(_title(AppRoute.writing), 'Writing $_divide Ahmed Elsherbini');
+    expect(_title(AppRoute.about), 'About $_divide Ahmed Elsherbini');
   });
 
   test('the console omits the name, not being a public surface', () {
@@ -51,5 +63,21 @@ void main() {
     // names, and a campaign link redirects to the station, so two pairs
     // legitimately collide.
     expect(titles.length, AppRoute.values.length - 2);
+  });
+
+  test('no title presents an em dash', () {
+    // A standing instruction from the owner, asserted rather than remembered.
+    for (final l10n in <AppLocalizations>[
+      AppLocalizationsEn(),
+      AppLocalizationsAr(),
+    ]) {
+      for (final route in AppRoute.values) {
+        expect(
+          _title(route, l10n),
+          isNot(contains('\u2014')),
+          reason: '${route.name} in ${l10n.localeName}',
+        );
+      }
+    }
   });
 }

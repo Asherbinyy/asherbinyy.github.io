@@ -263,5 +263,33 @@
   "consoleDormant": "التحليلات معطّلة، لذا لا يوجد ما يُعرض. أُبقيت لوحة التحكم استعدادًا لإعادة تفعيلها.",
   "@consoleDormant": {
     "description": "Console: shown when the build collects nothing"
+  },
+  "periodPresent": "حتى الآن",
+  "@periodPresent": {
+    "description": "Stands in for the end of a period that has not ended."
+  },
+  "periodRange": "{start} إلى {end}",
+  "@periodRange": {
+    "description": "A span of time. Joined with a word rather than a dash on the owner’s instruction.",
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "titleSeparator": "·",
+  "@titleSeparator": {
+    "description": "Divides the two halves of a browser tab title."
+  },
+  "heroSayName": "استمع إلى اسمي",
+  "@heroSayName": {
+    "description": "Button that plays the owner's own recording of his name."
+  },
+  "heroSayNamePlaying": "يُشغَّل",
+  "@heroSayNamePlaying": {
+    "description": "Announced while the name recording plays."
   }
 }

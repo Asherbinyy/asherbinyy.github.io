@@ -437,7 +437,11 @@
   "aboutEvidenceOpen": "Open: {caption}",
   "@aboutEvidenceOpen": {
     "description": "About screen: opens a coursework artefact",
-    "placeholders": { "caption": { "type": "String" } }
+    "placeholders": {
+      "caption": {
+        "type": "String"
+      }
+    }
   },
   "aboutEvidenceClose": "Close",
   "@aboutEvidenceClose": {
@@ -478,7 +482,11 @@
   "ascentBest": "best {metres} m",
   "@ascentBest": {
     "description": "Best altitude reached on this device",
-    "placeholders": { "metres": { "type": "int" } }
+    "placeholders": {
+      "metres": {
+        "type": "int"
+      }
+    }
   },
   "ascentSteerLeft": "Steer left",
   "@ascentSteerLeft": {
@@ -535,7 +543,11 @@
   "ascentAltitude": "{metres} m",
   "@ascentAltitude": {
     "description": "Altitude readout in metres",
-    "placeholders": { "metres": { "type": "int" } }
+    "placeholders": {
+      "metres": {
+        "type": "int"
+      }
+    }
   },
   "ascentUncovered": "What the climb uncovers",
   "@ascentUncovered": {
@@ -569,5 +581,33 @@
   "consoleDormant": "Analytics is switched off, so there is nothing to show. This console is kept for the day it is switched back on.",
   "@consoleDormant": {
     "description": "Console: shown when the build collects nothing"
+  },
+  "periodPresent": "Present",
+  "@periodPresent": {
+    "description": "Stands in for the end of a period that has not ended."
+  },
+  "periodRange": "{start} to {end}",
+  "@periodRange": {
+    "description": "A span of time. Joined with a word rather than a dash on the owner’s instruction.",
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "titleSeparator": "·",
+  "@titleSeparator": {
+    "description": "Divides the two halves of a browser tab title."
+  },
+  "heroSayName": "Hear my name",
+  "@heroSayName": {
+    "description": "Button that plays the owner's own recording of his name."
+  },
+  "heroSayNamePlaying": "Playing",
+  "@heroSayNamePlaying": {
+    "description": "Announced while the name recording plays."
   }
 }

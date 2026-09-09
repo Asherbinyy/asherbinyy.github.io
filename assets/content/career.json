@@ -15,6 +15,10 @@
       "title": {
         "en": "BEng Communications & Electronics Engineering",
         "ar": "بكالوريوس هندسة الاتصالات والإلكترونيات"
+      },
+      "summary": {
+        "en": "Third nationally in an inter-university robotics competition in 2015, building on Arduino Uno. That competition is where the programming started.",
+        "ar": "المركز الثالث على مستوى الجمهورية في مسابقة روبوتات بين الجامعات عام 2015، بالعمل على Arduino Uno. من تلك المسابقة بدأت البرمجة."
       }
     },
     {
@@ -114,8 +118,8 @@
         "ar": "مطوّر تطبيقات موبايل"
       },
       "summary": {
-        "en": "Rebuilt Tripster, a Russian travel marketplace, from a legacy Android app into Flutter, working with the client team in Russia. Performance up 20 per cent, and unit, integration and widget testing brought bug rates down 30 per cent.",
-        "ar": "أعاد بناء Tripster، وهو سوق سفر روسي، من تطبيق أندرويد قديم إلى Flutter، بالعمل مع فريق العميل في روسيا. تحسّن الأداء بنسبة 20 بالمئة، وخفّض الاختبار بأنواعه معدّل الأخطاء 30 بالمئة."
+        "en": "Rebuilt Tripster, a Russian travel marketplace, from a legacy Android app into Flutter, working with the client team in Russia. Performance up 20 per cent, and unit, integration and widget testing brought bug rates down 30 per cent. Also shipped several smaller products for the studio, among them a media downloader and a social app.",
+        "ar": "أعاد بناء Tripster، وهو سوق سفر روسي، من تطبيق أندرويد قديم إلى Flutter، بالعمل مع فريق العميل في روسيا. تحسّن الأداء بنسبة 20 بالمئة، وخفّض الاختبار بأنواعه معدّل الأخطاء 30 بالمئة. وأنجز كذلك عدة منتجات أصغر للاستوديو، منها تطبيق لتنزيل الوسائط وتطبيق اجتماعي."
       },
       "kind": "role",
       "appIds": [
@@ -142,6 +146,26 @@
         "ar": "طوّر Mokaf لمواقف السيارات الذكية بـ Flutter، بخرائط لحظية ومسح رمز QR وملاحة عبر خرائط جوجل، مع دمج TAP وApple Pay وSTC Pay. سُلّم النموذج الأولي في أقل من ثمانية أسابيع."
       },
       "kind": "role"
+    },
+    {
+      "id": "freelance",
+      "kind": "role",
+      "country": "GB",
+      "city": "Manchester",
+      "coords": [
+        53.4808,
+        -2.2426
+      ],
+      "start": "2025-08",
+      "company": "Freelance",
+      "title": {
+        "en": "Independent Mobile Developer",
+        "ar": "مطوّر تطبيقات موبايل مستقل"
+      },
+      "summary": {
+        "en": "Independent client work in Flutter, alongside the MSc.",
+        "ar": "عمل حرّ للعملاء باستخدام Flutter، بالتوازي مع الماجستير."
+      }
     },
     {
       "id": "university-of-salford",

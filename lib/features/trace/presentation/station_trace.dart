@@ -64,7 +64,7 @@ class StationTrace extends ConsumerWidget {
   static TraceLabel _labelFor(CareerRole role, AppLocale locale) {
     final company = role.company;
     final meta = StringBuffer(role.start)
-      ..write(' — ')
+      ..write(' to ')
       ..write(role.end ?? '')
       ..write(' · ')
       ..write(role.country);
