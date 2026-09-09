@@ -30,6 +30,15 @@ class MemoryKv {
     this.writes.push({name, value, options});
   }
 
+  async getWithMetadata(name, type) {
+    const entry = this.values.get(name);
+    if (entry === undefined) return {value: null, metadata: null};
+    return {
+      value: type === 'arrayBuffer' ? entry.value : entry.value,
+      metadata: entry.options.metadata ?? null,
+    };
+  }
+
   async delete(name) {
     this.values.delete(name);
   }
@@ -40,7 +49,10 @@ class MemoryKv {
       keys: [...this.values.keys()]
         .filter((name) => name.startsWith(prefix))
         .sort()
-        .map((name) => ({name})),
+        .map((name) => ({
+          name,
+          metadata: this.values.get(name).options.metadata,
+        })),
       list_complete: true,
     };
   }
@@ -858,4 +870,236 @@ test('with no content store bound the site simply reads its bundle', async () =>
     env,
   );
   assert.equal(written.status, 503);
+});
+
+// --- published media, milestone 7.2 ----------------------------------------
+
+/// The smallest byte sequence each decoder will read a size out of.
+///
+/// Built rather than fixtured: what is under test is the header parsing, and a
+/// hand-laid header states the offsets it depends on where a binary blob
+/// would hide them.
+function pngBytes(width, height) {
+  const bytes = new Uint8Array(32);
+  bytes.set([137, 80, 78, 71, 13, 10, 26, 10]);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(8, 13);
+  bytes.set([73, 72, 68, 82], 12); // "IHDR"
+  view.setUint32(16, width);
+  view.setUint32(20, height);
+  return bytes;
+}
+
+function jpegBytes(width, height) {
+  const bytes = new Uint8Array(20);
+  const view = new DataView(bytes.buffer);
+  bytes.set([0xff, 0xd8, 0xff, 0xc0]);
+  view.setUint16(4, 17); // segment length
+  bytes[6] = 8; // sample precision
+  view.setUint16(7, height);
+  view.setUint16(9, width);
+  return bytes;
+}
+
+function webpBytes(width, height) {
+  const bytes = new Uint8Array(40);
+  const encoder = new TextEncoder();
+  bytes.set(encoder.encode('RIFF'), 0);
+  bytes.set(encoder.encode('WEBP'), 8);
+  bytes.set(encoder.encode('VP8X'), 12);
+  const write24 = (at, value) => {
+    bytes[at] = value & 0xff;
+    bytes[at + 1] = (value >> 8) & 0xff;
+    bytes[at + 2] = (value >> 16) & 0xff;
+  };
+  write24(24, width - 1);
+  write24(27, height - 1);
+  return bytes;
+}
+
+function uploadRequest(body, {type = 'image/png', token = adminToken} = {}) {
+  return new Request('https://worker.example/v1/admin/media', {
+    method: 'POST',
+    headers: {authorization: `Bearer ${token}`, 'content-type': type},
+    body,
+  });
+}
+
+test('an uploaded image comes back at its own address', async () => {
+  const env = publishing();
+  const uploaded = await handleRequest(uploadRequest(pngBytes(320, 200)), env);
+  assert.equal(uploaded.status, 200);
+  const {id, url, width, height} = await uploaded.json();
+  assert.match(id, /^[0-9a-f]{32}$/);
+  assert.equal(url, `/v1/media/${id}`);
+  assert.equal(width, 320);
+  assert.equal(height, 200);
+
+  const read = await handleRequest(
+    new Request(`https://worker.example${url}`),
+    env,
+  );
+  assert.equal(read.status, 200);
+  assert.equal(read.headers.get('content-type'), 'image/png');
+});
+
+test('media is readable without an Origin header', async () => {
+  // Image elements send none. Gating these the way every other read is gated
+  // would 403 the only way they are ever actually fetched.
+  const env = publishing();
+  const uploaded = await handleRequest(uploadRequest(pngBytes(64, 64)), env);
+  const {url} = await uploaded.json();
+
+  const read = await handleRequest(
+    new Request(`https://worker.example${url}`),
+    env,
+  );
+  assert.equal(read.status, 200);
+});
+
+test('an image is cached for a year because its name is its hash', async () => {
+  const env = publishing();
+  const uploaded = await handleRequest(uploadRequest(pngBytes(64, 64)), env);
+  const {url} = await uploaded.json();
+  const read = await handleRequest(
+    new Request(`https://worker.example${url}`),
+    env,
+  );
+  assert.match(read.headers.get('cache-control'), /immutable/);
+});
+
+test('the same image twice is stored once', async () => {
+  const env = publishing();
+  const first = await handleRequest(uploadRequest(pngBytes(100, 100)), env);
+  const second = await handleRequest(uploadRequest(pngBytes(100, 100)), env);
+  assert.equal((await first.json()).id, (await second.json()).id);
+  assert.equal(env.CONTENT.values.size, 1);
+});
+
+test('jpeg and webp are read as well as png', async () => {
+  const env = publishing();
+  const jpeg = await handleRequest(
+    uploadRequest(jpegBytes(640, 480), {type: 'image/jpeg'}),
+    env,
+  );
+  assert.deepEqual(
+    {width: (await jpeg.clone().json()).width, height: (await jpeg.json()).height},
+    {width: 640, height: 480},
+  );
+
+  const webp = await handleRequest(
+    uploadRequest(webpBytes(800, 600), {type: 'image/webp'}),
+    env,
+  );
+  assert.deepEqual(
+    {width: (await webp.clone().json()).width, height: (await webp.json()).height},
+    {width: 800, height: 600},
+  );
+});
+
+test('an SVG is refused', async () => {
+  // Markup that can carry script. Accepting it would be stored XSS on the
+  // owner's own domain.
+  const env = publishing();
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg"><script/></svg>';
+  const refused = await handleRequest(
+    uploadRequest(svg, {type: 'image/svg+xml'}),
+    env,
+  );
+  assert.equal(refused.status, 415);
+  assert.deepEqual(env.CONTENT.writes, []);
+});
+
+test('HTML is refused even when it claims to be an image', async () => {
+  const env = publishing();
+  const refused = await handleRequest(
+    uploadRequest('<html><script>alert(1)</script></html>', {type: 'image/png'}),
+    env,
+  );
+  // Refused on what the bytes are, not on what the request says they are.
+  assert.equal(refused.status, 400);
+  assert.deepEqual(env.CONTENT.writes, []);
+});
+
+test('a png that is really a jpeg is refused', async () => {
+  const env = publishing();
+  const refused = await handleRequest(
+    uploadRequest(jpegBytes(64, 64), {type: 'image/png'}),
+    env,
+  );
+  assert.equal(refused.status, 400);
+});
+
+test('an oversized image is refused', async () => {
+  const env = publishing();
+  const big = pngBytes(64, 64);
+  const padded = new Uint8Array(5 * 1024 * 1024);
+  padded.set(big);
+  const refused = await handleRequest(uploadRequest(padded), env);
+  assert.equal(refused.status, 413);
+});
+
+test('absurd dimensions are refused', async () => {
+  const env = publishing();
+  for (const [width, height] of [[1, 1], [9000, 100], [100, 9000], [0, 0]]) {
+    const refused = await handleRequest(
+      uploadRequest(pngBytes(width, height)),
+      env,
+    );
+    assert.equal(refused.status, 400, `${width}x${height}`);
+  }
+  assert.deepEqual(env.CONTENT.writes, []);
+});
+
+test('an empty body is refused', async () => {
+  const env = publishing();
+  const refused = await handleRequest(uploadRequest(new Uint8Array(0)), env);
+  assert.equal(refused.status, 400);
+});
+
+test('uploading without a token is refused', async () => {
+  const env = publishing();
+  const refused = await handleRequest(
+    new Request('https://worker.example/v1/admin/media', {
+      method: 'POST',
+      headers: {'content-type': 'image/png'},
+      body: pngBytes(64, 64),
+    }),
+    env,
+  );
+  assert.equal(refused.status, 401);
+  assert.deepEqual(env.CONTENT.writes, []);
+});
+
+test('a media id that is not a hash is not found', async () => {
+  const env = publishing();
+  for (const id of ['../salt', 'nope', 'a'.repeat(31), 'A'.repeat(32)]) {
+    const read = await handleRequest(
+      new Request(`https://worker.example/v1/media/${id}`),
+      env,
+    );
+    assert.equal(read.status, 404, id);
+  }
+});
+
+test('media can be listed and removed', async () => {
+  const env = publishing();
+  const uploaded = await handleRequest(uploadRequest(pngBytes(200, 150)), env);
+  const {id} = await uploaded.json();
+
+  const listed = await handleRequest(adminRequest('/v1/admin/media'), env);
+  assert.deepEqual(await listed.json(), {
+    media: [{id, type: 'image/png', width: 200, height: 150, bytes: 32}],
+  });
+
+  const removed = await handleRequest(
+    adminRequest(`/v1/admin/media/${id}`, {method: 'DELETE'}),
+    env,
+  );
+  assert.equal(removed.status, 200);
+  const gone = await handleRequest(
+    new Request(`https://worker.example/v1/media/${id}`),
+    env,
+  );
+  assert.equal(gone.status, 404);
 });

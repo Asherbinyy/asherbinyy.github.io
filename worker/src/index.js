@@ -94,12 +94,30 @@ export async function handleRequest(request, env, now = new Date()) {
   // panel served by this Worker, not from the site, so an Origin check would
   // reject the only client that is supposed to reach it. The token is what
   // guards these, and it is checked before anything else is read.
+  // Published imagery. Deliberately **not** origin-gated, unlike every other
+  // read here: these are loaded by ordinary image elements, which send no
+  // Origin header, so gating them would 403 the only way they are ever
+  // fetched. There is nothing to protect either -- this is public artwork on a
+  // public site, and the id is a content hash rather than a guessable name.
+  if (url.pathname.startsWith('/v1/media/') && request.method === 'GET') {
+    return readMedia(url.pathname.slice('/v1/media/'.length), env, origin);
+  }
+
   if (url.pathname.startsWith('/v1/admin/')) {
     const refusal = await refuseUnauthorisedAdmin(request, env, now, headers);
     if (refusal) return refusal;
 
     if (url.pathname === '/v1/admin/content' && request.method === 'GET') {
       return listPublished(env, headers);
+    }
+    if (url.pathname === '/v1/admin/media' && request.method === 'GET') {
+      return listMedia(env, headers);
+    }
+    if (url.pathname === '/v1/admin/media' && request.method === 'POST') {
+      return uploadMedia(request, env, headers);
+    }
+    if (url.pathname.startsWith('/v1/admin/media/') && request.method === 'DELETE') {
+      return removeMedia(url.pathname.slice('/v1/admin/media/'.length), env, headers);
     }
     if (url.pathname.startsWith('/v1/admin/content/')) {
       const file = url.pathname.slice('/v1/admin/content/'.length);
@@ -262,6 +280,256 @@ async function refuseUnauthorisedAdmin(request, env, now, headers) {
     });
     return response({error: 'Unauthorised'}, 401, headers);
   }
+  return null;
+}
+
+/// Image types the upload endpoint will take.
+///
+/// A closed list, and the omissions are the point. SVG is markup and can carry
+/// script, so accepting it turns this into stored XSS on the owner's own
+/// domain. HTML and PDF are refused for the same reason. Everything here is a
+/// raster format a decoder cannot be talked into executing.
+const mediaTypes = new Map([
+  ['image/png', 'png'],
+  ['image/jpeg', 'jpg'],
+  ['image/webp', 'webp'],
+]);
+
+/// The largest image the endpoint will store, in bytes.
+///
+/// KV holds values up to 25MiB. This is far below that on purpose: a
+/// screenshot of an app is a few hundred kilobytes, and an endpoint that
+/// accepts 25MiB is a file host with the owner's name on it.
+const maximumMediaBytes = 4 * 1024 * 1024;
+
+/// Dimensions outside which an image is refused.
+///
+/// The floor rejects tracking pixels and decode failures that report 1x1; the
+/// ceiling rejects a decompression bomb before it is ever handed to a browser.
+const minimumMediaEdge = 16;
+const maximumMediaEdge = 8000;
+
+const mediaPrefix = 'media|';
+
+function mediaStore(env) {
+  return env.CONTENT ?? null;
+}
+
+async function readMedia(id, env, origin) {
+  if (!/^[0-9a-f]{32}$/.test(id)) {
+    return new Response('Not found', {status: 404});
+  }
+  const store = mediaStore(env);
+  if (!store) return new Response('Not found', {status: 404});
+
+  const stored = await store.getWithMetadata(mediaPrefix + id, 'arrayBuffer');
+  if (!stored || stored.value === null) {
+    return new Response('Not found', {status: 404});
+  }
+
+  const headers = new Headers({
+    'content-type': stored.metadata?.type ?? 'application/octet-stream',
+    // The id is a hash of the bytes, so this URL can never mean anything else
+    // and a year is safe. Replacing an image means a new id, which is also how
+    // the panel avoids ever serving a stale one.
+    'cache-control': 'public, max-age=31536000, immutable',
+    'content-security-policy': "default-src 'none'; sandbox",
+    'x-content-type-options': 'nosniff',
+  });
+  if (origin === env.SITE_ORIGIN) {
+    headers.set('access-control-allow-origin', origin);
+    headers.set('vary', 'Origin');
+  }
+  return new Response(stored.value, {status: 200, headers});
+}
+
+async function listMedia(env, headers) {
+  const store = mediaStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  const listing = await store.list({prefix: mediaPrefix});
+  return response(
+    {
+      media: listing.keys.map((entry) => ({
+        id: entry.name.slice(mediaPrefix.length),
+        ...(entry.metadata ?? {}),
+      })),
+    },
+    200,
+    headers,
+  );
+}
+
+async function uploadMedia(request, env, headers) {
+  const store = mediaStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+
+  const declaredType = (request.headers.get('content-type') ?? '')
+    .split(';')[0]
+    .trim()
+    .toLowerCase();
+  if (!mediaTypes.has(declaredType)) {
+    return response({error: 'Unsupported image type'}, 415, headers);
+  }
+
+  const declared = Number(request.headers.get('content-length') ?? 0);
+  if (declared > maximumMediaBytes) {
+    return response({error: 'Image too large'}, 413, headers);
+  }
+  const bytes = new Uint8Array(await request.arrayBuffer());
+  if (bytes.byteLength > maximumMediaBytes) {
+    return response({error: 'Image too large'}, 413, headers);
+  }
+  if (bytes.byteLength === 0) {
+    return response({error: 'Image is empty'}, 400, headers);
+  }
+
+  // The declared type is a claim by the client. This reads the actual bytes,
+  // so a script renamed to .png with an image content-type is refused on what
+  // it is rather than on what it says it is.
+  const measured = measureImage(bytes);
+  if (!measured) {
+    return response({error: 'Not a readable image'}, 400, headers);
+  }
+  if (measured.type !== declaredType) {
+    return response({error: 'Image does not match its type'}, 400, headers);
+  }
+  if (
+    measured.width < minimumMediaEdge ||
+    measured.height < minimumMediaEdge ||
+    measured.width > maximumMediaEdge ||
+    measured.height > maximumMediaEdge
+  ) {
+    return response({error: 'Image dimensions are out of range'}, 400, headers);
+  }
+
+  // Content-addressed: the same image uploaded twice is one key, and the URL
+  // cannot ever come to mean different bytes, which is what makes a one-year
+  // cache honest.
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  const id = bytesToHex(new Uint8Array(digest)).slice(0, 32);
+
+  await store.put(mediaPrefix + id, bytes, {
+    metadata: {
+      type: measured.type,
+      width: measured.width,
+      height: measured.height,
+      bytes: bytes.byteLength,
+    },
+  });
+  return response(
+    {
+      id,
+      url: `/v1/media/${id}`,
+      width: measured.width,
+      height: measured.height,
+    },
+    200,
+    headers,
+  );
+}
+
+async function removeMedia(id, env, headers) {
+  if (!/^[0-9a-f]{32}$/.test(id)) {
+    return response({error: 'Not found'}, 404, headers);
+  }
+  const store = mediaStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  await store.delete(mediaPrefix + id);
+  return response({removed: id}, 200, headers);
+}
+
+/// Reads an image's real format and dimensions from its own bytes.
+///
+/// Returns null for anything it cannot read, which is the answer for every
+/// format not on the allowlist as well as for a truncated or fabricated
+/// header. It parses only enough of each container to reach the size fields;
+/// nothing here decodes pixels.
+function measureImage(bytes) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+
+  // PNG: an 8-byte signature, then IHDR, whose first two fields are the size.
+  const pngSignature = [137, 80, 78, 71, 13, 10, 26, 10];
+  if (
+    bytes.byteLength > 24 &&
+    pngSignature.every((byte, index) => bytes[index] === byte)
+  ) {
+    return {
+      type: 'image/png',
+      width: view.getUint32(16),
+      height: view.getUint32(20),
+    };
+  }
+
+  // JPEG: a chain of segments; the size lives in whichever start-of-frame
+  // marker this file happens to use, so the chain has to be walked.
+  if (bytes.byteLength > 4 && bytes[0] === 0xff && bytes[1] === 0xd8) {
+    let at = 2;
+    while (at + 9 < bytes.byteLength) {
+      if (bytes[at] !== 0xff) {
+        at++;
+        continue;
+      }
+      const marker = bytes[at + 1];
+      // Start of frame, baseline through progressive, excluding the four
+      // markers in that range that are not frames.
+      const isFrame =
+        marker >= 0xc0 &&
+        marker <= 0xcf &&
+        marker !== 0xc4 &&
+        marker !== 0xc8 &&
+        marker !== 0xcc;
+      if (isFrame) {
+        return {
+          type: 'image/jpeg',
+          height: view.getUint16(at + 5),
+          width: view.getUint16(at + 7),
+        };
+      }
+      if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+        at += 2;
+        continue;
+      }
+      at += 2 + view.getUint16(at + 2);
+    }
+    return null;
+  }
+
+  // WebP: a RIFF container with three possible chunk layouts.
+  if (
+    bytes.byteLength > 30 &&
+    String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' &&
+    String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP'
+  ) {
+    const chunk = String.fromCharCode(...bytes.slice(12, 16));
+    if (chunk === 'VP8 ') {
+      return {
+        type: 'image/webp',
+        width: view.getUint16(26, true) & 0x3fff,
+        height: view.getUint16(28, true) & 0x3fff,
+      };
+    }
+    if (chunk === 'VP8L') {
+      const packed = view.getUint32(21, true);
+      return {
+        type: 'image/webp',
+        width: (packed & 0x3fff) + 1,
+        height: ((packed >> 14) & 0x3fff) + 1,
+      };
+    }
+    if (chunk === 'VP8X') {
+      const size = (start) =>
+        (bytes[start] | (bytes[start + 1] << 8) | (bytes[start + 2] << 16)) + 1;
+      return {type: 'image/webp', width: size(24), height: size(27)};
+    }
+    return null;
+  }
+
   return null;
 }
 
