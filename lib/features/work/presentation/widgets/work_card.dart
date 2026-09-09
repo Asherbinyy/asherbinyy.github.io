@@ -69,7 +69,9 @@ class WorkCard extends StatelessWidget {
       width: width,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+        // Fills the height its row was given, so the store links below can be
+        // pushed to a common baseline instead of floating wherever the role
+        // text happens to end.
         children: [
           StationCard(
             seedId: app.id,
@@ -94,6 +96,9 @@ class WorkCard extends StatelessWidget {
               style: type.telemetry.copyWith(color: tokens.instrument),
             ),
           ],
+          // Whatever height is left over goes here, above the links, so the
+          // one actionable row on the card is level across the whole grid.
+          const Spacer(),
           SizedBox(height: tokens.space12),
           _StoreLinks(app: app),
         ],
