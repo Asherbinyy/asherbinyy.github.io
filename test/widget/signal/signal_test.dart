@@ -348,10 +348,28 @@ void main() {
         await pumpFrames(tester);
       }
 
-      // CI Company is the one role with a company, a summary and a stack.
+      // CI Company is the one role with a company, a summary and applications.
       expect(find.text('CI Company'), findsWidgets);
       expect(find.text('Mansoura, EG'), findsWidgets);
-      expect(find.text('Flutter'), findsWidgets);
+
+      // The stack chips are gone on the owner's instruction: naming a
+      // framework said nothing his job title did not, and they were the
+      // loudest thing in the panel. Asserted so nobody restores them.
+      for (final technology in ['Flutter', 'Dart', 'Firebase', 'REST']) {
+        expect(find.text(technology), findsNothing, reason: technology);
+      }
+
+      // What replaced them: the applications by name, each one a link.
+      final apps = bundledJson('assets/content/apps.json')['apps'] as List;
+      final shipped =
+          bundledStops().firstWhere((s) => s['id'] == 'ci-company')['appIds']
+              as List;
+      for (final id in shipped) {
+        final name = apps.cast<Map<String, dynamic>>().firstWhere(
+          (app) => app['id'] == id,
+        )['name'];
+        expect(find.text(name as String), findsWidgets, reason: id as String);
+      }
     });
 
     testWidgets('a role with no company falls back to its city', (

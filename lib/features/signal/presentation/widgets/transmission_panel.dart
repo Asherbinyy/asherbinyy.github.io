@@ -1,5 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nocturne/app/app_route.dart';
+import 'package:nocturne/content/asset_content.dart';
+import 'package:nocturne/content/content_result.dart';
+import 'package:nocturne/content/models/apps.dart';
+import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
@@ -85,23 +92,20 @@ class TransmissionPanel extends StatelessWidget {
               child: Text(summary.resolve(locale), style: type.body),
             ),
           ],
-          if (role.stack.isNotEmpty) ...[
-            SizedBox(height: tokens.space16),
-            Wrap(
-              spacing: tokens.space8,
-              runSpacing: tokens.space8,
-              children: [
-                for (final technology in role.stack)
-                  _StackChip(label: technology),
-              ],
-            ),
-          ],
+          // The stack chips are gone on the owner's instruction. Four words
+          // naming a framework said nothing a recruiter could not guess from
+          // the job title, and they were the loudest thing in the panel.
           if (role.appIds.isNotEmpty) ...[
             SizedBox(height: tokens.space16),
             Text(
               l10n.signalAppsShipped(role.appIds.length),
-              style: type.telemetry,
+              style: type.telemetryS.copyWith(color: tokens.textMuted),
             ),
+            SizedBox(height: tokens.space8),
+            // The applications by name, each one a way into its own page.
+            // This was a count -- "4 applications" -- which named nothing and
+            // led nowhere.
+            _AppLinks(appIds: role.appIds),
           ],
         ],
       ),
@@ -109,28 +113,85 @@ class TransmissionPanel extends StatelessWidget {
   }
 }
 
-/// One technology from the role's stack, as a hairline chip.
-class _StackChip extends StatelessWidget {
-  const _StackChip({required this.label});
+/// The applications a role shipped, by name, each opening its own page.
+class _AppLinks extends ConsumerWidget {
+  const _AppLinks({required this.appIds});
 
-  final String label;
+  final List<String> appIds;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = context.tokens;
+    final apps = ref.watch<AsyncValue<ContentResult<Apps>>>(appsProvider);
+    final known = switch (apps) {
+      AsyncData(value: ContentReady(data: final Apps ready)) => {
+        for (final app in ready.apps) app.id: app.name,
+      },
+      _ => const <String, String>{},
+    };
+
+    return Wrap(
+      spacing: tokens.space8,
+      runSpacing: tokens.space8,
+      children: [
+        for (final id in appIds)
+          // Only applications the content actually knows about. A role listing
+          // an id that no longer exists would otherwise render a link to a
+          // page that cannot be built.
+          if (known[id] case final String name) _AppLink(id: id, name: name),
+      ],
+    );
+  }
+}
+
+class _AppLink extends StatelessWidget {
+  const _AppLink({required this.id, required this.name});
+
+  final String id;
+  final String name;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(tokens.tagRadius),
-        border: Border.all(color: tokens.hairline, width: tokens.hairlineWidth),
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: tokens.space8,
-          vertical: tokens.space4,
+    return Semantics(
+      link: true,
+      label: name,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: () => context.goNamed(
+          AppRoute.caseStudy.name,
+          pathParameters: {'slug': id},
         ),
-        child: Text(
-          label,
-          style: context.type.meta.copyWith(color: tokens.instrumentMid),
+        borderRadius: BorderRadius.circular(tokens.controlRadius),
+        mouseCursor: context.platform.isPointer
+            ? SystemMouseCursors.click
+            : MouseCursor.defer,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: context.platform.minimumTarget,
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(tokens.controlRadius),
+              border: Border.all(
+                color: tokens.hairlineStrong,
+                width: tokens.hairlineWidth,
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: tokens.space12,
+                vertical: tokens.space8,
+              ),
+              child: Center(
+                widthFactor: 1,
+                child: Text(
+                  name,
+                  style: context.type.bodyS.copyWith(color: tokens.beacon),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

@@ -42,22 +42,20 @@ void main() {
       expect(find.text('15,000+ downloads'), findsOneWidget);
     });
 
-    testWidgets('says plainly when an application has no public listing', (
+    testWidgets('an application with no listing says nothing at all', (
       tester,
     ) async {
+      // It used to print "No public store listing", which is honest and was
+      // shown on eight of fourteen cards, so the loudest repeated phrase on
+      // the page was an absence. The owner asked for it gone.
       await pumpStation(
         tester,
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.work,
       );
-      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
-      // Mokaf has no supplied listing; Snunu's listing is dead; AZ Exams has
-      // no independently verified URL. The ledger says so instead of linking
-      // to a dead or ambiguous destination.
-      final unlisted = bundledApps().where((a) => storeOf(a).isEmpty).length;
-      expect(unlisted, greaterThan(0));
-      expect(find.text(l10n.workNoStoreLink), findsNWidgets(unlisted));
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+      expect(find.text(l10n.workNoStoreLink), findsNothing);
     });
 
     testWidgets('offers a store link for every listing the content has', (
