@@ -217,6 +217,8 @@ class _AscentStageState extends State<AscentStage>
                         gold: tokens.beacon,
                         glow: tokens.beaconGlow,
                         wall: tokens.hairline,
+                        chamber: tokens.surfaceRaised,
+                        pier: tokens.void_,
                         strokeWidth: tokens.hairlineWidth,
                         isReducedMotion: ReducedMotion.of(context),
                       ),

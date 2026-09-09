@@ -39,6 +39,14 @@ on a keyboard, a touch screen and a mouse, which no other arcade form does, and
 it needs no tutorial.
 
 **Setting.** The interior shaft of an obelisk, climbing toward the pyramidion.
+
+**The shaft is a column, not the frame.** `AscentPainter.shaftOf` centres a
+playable column and draws the rock either side of it as masonry. This is the
+one structural thing the game gets from Ice Tower and it was missing: with the
+whole surface playable, a wide monitor gave the climber a field to wander
+across and no sense of being inside anything. The piers grow from zero as the
+frame widens, starting above the largest phone, so a phone plays full width and
+a desktop plays a column with scenery. Nothing in the piers is collidable.
 The walls carry the glyph field from `12-MOTIF-LIBRARY.md` §4, parallaxed.
 
 ### Elements

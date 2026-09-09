@@ -27,6 +27,8 @@ AscentPainter _painter({
   gold: nocturneTokens.beacon,
   glow: nocturneTokens.beaconGlow,
   wall: nocturneTokens.hairline,
+  chamber: nocturneTokens.surfaceRaised,
+  pier: nocturneTokens.void_,
   strokeWidth: Tokens.hairlineWidth,
   isReducedMotion: isReducedMotion,
 );
@@ -96,5 +98,43 @@ void main() {
       _painter(world: a).shouldRepaint(_painter(world: a, entrance: 0.3)),
       isTrue,
     );
+  });
+
+  group('the shaft is a column, not the whole frame', () {
+    // 0e.17: on a wide monitor the playfield was the entire surface, so the
+    // climber had 1440 pixels of empty to drift through and the game looked
+    // nothing like the one it is modelled on. Ice Tower is a narrow tower.
+    test('a desktop frame gets piers either side', () {
+      const size = Size(1440, 860);
+      final shaft = AscentPainter.shaftOf(size);
+
+      expect(shaft.width, lessThan(size.width * 0.5));
+      expect(shaft.height, size.height);
+      // Centred, so the two piers are equal and the column sits under the eye.
+      expect(shaft.left, closeTo(size.width - shaft.right, 0.01));
+      expect(shaft.left, greaterThan(0));
+    });
+
+    test('a phone gets the whole width', () {
+      // Narrower than the frame would be a box inside a box, which is the
+      // thing the owner objected to in the first place.
+      for (final width in [320.0, 390.0, 430.0]) {
+        final shaft = AscentPainter.shaftOf(Size(width, 720));
+        expect(shaft.left, 0, reason: '$width');
+        expect(shaft.width, width, reason: '$width');
+      }
+    });
+
+    test('the column widens with the frame but never faster than it', () {
+      // A shaft that grew at the frame's rate would put the walls back where
+      // they were; one that never grew would look like a slot on a monitor.
+      var previous = 0.0;
+      for (final width in [600.0, 900.0, 1280.0, 1920.0, 2560.0]) {
+        final shaft = AscentPainter.shaftOf(Size(width, 900));
+        expect(shaft.width, greaterThan(previous), reason: '$width');
+        expect(shaft.width / width, lessThan(0.85), reason: '$width');
+        previous = shaft.width;
+      }
+    });
   });
 }
