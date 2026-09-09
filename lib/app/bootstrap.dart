@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nocturne/app/theme/theme_controller.dart';
 import 'package:nocturne/content/asset_content.dart';
+import 'package:nocturne/content/providers.dart';
+import 'package:nocturne/content/published_content.dart';
 import 'package:nocturne/core/platform/preference_store.dart';
 
 /// The provider overrides the real application runs with.
@@ -22,4 +24,11 @@ List<Override> productionOverrides({required PreferenceStore preferences}) => [
   preferenceStoreProvider.overrideWithValue(preferences),
   // The one line whose absence emptied every page on the site.
   assetReaderProvider.overrideWithValue(rootBundle.loadString),
+  // Content the owner published from the panel, preferred over the bundle and
+  // falling back to it on any failure. The content layer declares this hole
+  // and cannot fill it itself: the reader speaks HTTP and that library is
+  // generated. `15-ADMIN-AND-MEDIA.md` §7.1.
+  publishedContentProvider.overrideWith(
+    (ref) => ref.watch(publishedContentReaderProvider),
+  ),
 ];

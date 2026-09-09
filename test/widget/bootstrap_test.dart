@@ -8,6 +8,7 @@ import 'package:nocturne/content/models/apps.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/content/models/education.dart';
 import 'package:nocturne/content/models/profile.dart';
+import 'package:nocturne/content/providers.dart';
 import 'package:nocturne/core/platform/preference_store.dart';
 
 /// The gap every other test had, and the reason the live site was empty.
@@ -68,6 +69,40 @@ void main() {
       expect(
         await container.read(educationProvider.future),
         isA<ContentReady<Education>>(),
+      );
+    });
+
+    test('installs a reader for content published from the panel', () {
+      // The same gap this file exists for, one milestone later: the content
+      // layer declares `publishedContentProvider` and defaults it to null, so
+      // forgetting the override here would silently ship a site that ignores
+      // everything the owner publishes, with every test still green.
+      expect(
+        production().read(publishedContentProvider),
+        isNotNull,
+        reason: 'bootstrap did not install the published-content reader',
+      );
+    });
+
+    test('every page still resolves with the relay unreachable', () async {
+      // This is the milestone's first non-negotiable, exercised against the
+      // real bootstrap rather than a hand-built repository. The test
+      // environment refuses outbound HTTP, so the remote read fails exactly as
+      // it would with the Worker down, and every document must still come back
+      // ready from the bundle.
+      final container = production();
+
+      expect(
+        await container.read(profileProvider.future),
+        isA<ContentReady<Profile>>(),
+      );
+      expect(
+        await container.read(careerProvider.future),
+        isA<ContentReady<Career>>(),
+      );
+      expect(
+        await container.read(appsProvider.future),
+        isA<ContentReady<Apps>>(),
       );
     });
   });
