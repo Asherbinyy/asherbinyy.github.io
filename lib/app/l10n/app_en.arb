@@ -459,7 +459,7 @@
   "@courtyardIntro": {
     "description": "Courtyard standfirst"
   },
-  "courtyardGamePitch": "A climb up the inside of an obelisk. Every band you pass uncovers something real from this site, so it is the CV read the hard way.",
+  "courtyardGamePitch": "A climb up the inside of an obelisk. Get as high as you can before you miss a ledge.",
   "@courtyardGamePitch": {
     "description": "The line offering the climb before it is started"
   },
@@ -520,7 +520,7 @@
   "@ascentHeading": {
     "description": "The game route heading"
   },
-  "ascentIntro": "A climb up the inside of an obelisk. Every band you pass uncovers something real from this site. Steer with the arrow keys, a drag, or the pointer.",
+  "ascentIntro": "A climb up the inside of an obelisk. Ledges crumble, some of them drift, and the only way is up.",
   "@ascentIntro": {
     "description": "The game route standfirst"
   },
@@ -549,11 +549,7 @@
       }
     }
   },
-  "ascentUncovered": "What the climb uncovers",
-  "@ascentUncovered": {
-    "description": "Heading over the list of facts the climb reveals"
-  },
-  "ascentCanvasLabel": "The climb, drawn on a canvas. Everything it uncovers is listed in text below, and every entry links to where it lives on the site.",
+  "ascentCanvasLabel": "The climb, drawn on a canvas. Your height and your best are announced above it.",
   "@ascentCanvasLabel": {
     "description": "Accessible name for the game canvas"
   },
