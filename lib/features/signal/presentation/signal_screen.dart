@@ -51,7 +51,7 @@ class _SignalScreenState extends ConsumerState<SignalScreen> {
     _selected.value = index;
     ref.recordInteraction(
       AnalyticsEvent.mapNodeOpened,
-      route: AppRoute.signal.path,
+      route: AppRoute.journey.path,
       inputMode: context.platform.inputMode,
     );
     // Section 7 decides the surface once: a side panel on pointer, a bottom

@@ -23,19 +23,24 @@ String _title(AppRoute route, [AppLocalizations? l10n]) =>
 void main() {
   test('the two entry points lead with the name', () {
     // Section 12: name first only on the routes a stranger lands on.
-    expect(
-      _title(AppRoute.station),
-      'Ahmed Elsherbini $_divide Mobile Engineer',
-    );
+    expect(_title(AppRoute.home), 'Ahmed Elsherbini $_divide Mobile Engineer');
     expect(_title(AppRoute.brief), 'Ahmed Elsherbini $_divide Brief');
   });
 
   test('every other public route leads with its section', () {
     // So a stack of open tabs is scannable without hovering.
-    expect(_title(AppRoute.signal), 'Signal $_divide Ahmed Elsherbini');
-    expect(_title(AppRoute.work), 'Work $_divide Ahmed Elsherbini');
-    expect(_title(AppRoute.writing), 'Writing $_divide Ahmed Elsherbini');
-    expect(_title(AppRoute.about), 'About $_divide Ahmed Elsherbini');
+    // Read from the localisations, like the divider. These held the section
+    // names as literals, so renaming Signal to Journey failed here on the
+    // spelling rather than on the rule the test is actually about.
+    final l10n = AppLocalizationsEn();
+    for (final (route, section) in <(AppRoute, String)>[
+      (AppRoute.journey, l10n.navJourney),
+      (AppRoute.work, l10n.navWork),
+      (AppRoute.writing, l10n.navWriting),
+      (AppRoute.about, l10n.navAbout),
+    ]) {
+      expect(_title(route), '$section $_divide $_name', reason: route.name);
+    }
   });
 
   test('the console omits the name, not being a public surface', () {

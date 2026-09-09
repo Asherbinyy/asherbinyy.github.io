@@ -44,7 +44,7 @@ class _AppMarkState extends State<AppMark> {
         builder: (context, _) => FocusRing(
           isFocused: _states.value.contains(WidgetState.focused),
           child: InkWell(
-            onTap: () => context.goNamed(AppRoute.station.name),
+            onTap: () => context.goNamed(AppRoute.home.name),
             statesController: _states,
             borderRadius: BorderRadius.circular(tokens.controlRadius),
             child: Padding(

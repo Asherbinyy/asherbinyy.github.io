@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/features/station/presentation/widgets/cv_button.dart';
 import 'package:nocturne/features/station/presentation/widgets/name_pronunciation.dart';
+import 'package:nocturne/features/station/presentation/widgets/reach_row.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/content/models/localized_text.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/features/station/presentation/widgets/stat_panel.dart';
@@ -48,33 +50,35 @@ class HeroContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _AcquiredName(
-          name: profile.shownName.resolve(locale),
-          style: type.displayXl,
-          reveal: acquisitionReveal,
+        // The greeting first. The page used to open on the name set in the
+        // largest type on the site, which the owner said read as a wall
+        // rather than a welcome. The name still follows, and still carries
+        // the weight; it just is not the first thing said.
+        if (profile.greeting case final LocalizedText greeting) ...[
+          Text(
+            greeting.resolve(locale),
+            style: type.heading.copyWith(color: tokens.beacon),
+          ),
+          SizedBox(height: tokens.space8),
+        ],
+        // A step down from the largest size on the site, and capped to the
+        // measure. The full name is longer than the short one it replaced, so
+        // at displayXl it wrapped to two lines and ran the whole width, which
+        // is the wall the greeting was added to avoid.
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
+          child: _AcquiredName(
+            name: profile.shownName.resolve(locale),
+            style: type.displayL,
+            reveal: acquisitionReveal,
+          ),
         ),
-        SizedBox(height: tokens.space16),
-        // Wrapped rather than a row: at 360px the mark and the control are
-        // 18px wider than the column, and a Row simply overflows. On a phone
-        // the control drops to its own line instead.
-        Wrap(
-          spacing: tokens.space16,
-          runSpacing: tokens.space8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            // Short on purpose: a full-width rule reads as a divider, a 120px
-            // one reads as a mark.
-            SizedBox(
-              width: tokens.heroRuleWidth,
-              height: tokens.heroRuleHeight,
-              child: ColoredBox(color: tokens.beacon),
-            ),
-            // Beside the mark rather than beside the name: the name is set in
-            // the largest type on the site and anything level with it competes
-            // with it.
-            const NamePronunciation(),
-          ],
-        ),
+        SizedBox(height: tokens.space12),
+        // The rule under the name is gone on the owner's instruction. The
+        // pronunciation control sits directly under the name now, which is
+        // also where it belongs: it is about the name, and the rule was
+        // separating it from the thing it refers to.
+        const NamePronunciation(),
         SizedBox(height: tokens.space24),
         ConstrainedBox(
           // Section 3 caps the measure and says to enforce it with a
@@ -85,6 +89,10 @@ class HeroContent extends StatelessWidget {
             style: type.displayM.copyWith(color: tokens.textSecondary),
           ),
         ),
+        if (profile.reach.isNotEmpty) ...[
+          SizedBox(height: tokens.space24),
+          ReachRow(countries: profile.reach),
+        ],
         if (profile.stats.isNotEmpty) ...[
           SizedBox(height: tokens.space32),
           Wrap(
@@ -106,7 +114,7 @@ class HeroContent extends StatelessWidget {
               emphasis: ButtonEmphasis.primary,
               onPressed: () => context.goNamed(AppRoute.work.name),
             ),
-            const CvButton(route: AppRoute.station),
+            const CvButton(route: AppRoute.home),
           ],
         ),
       ],

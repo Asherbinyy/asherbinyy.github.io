@@ -101,6 +101,16 @@ abstract final class Tokens {
   /// Design-system value for modalRadius.
   static const double modalRadius = 10;
 
+  /// Corner radius for a card carrying an image.
+  ///
+  /// The design language is square: panels have no radius, because an
+  /// instrument panel does not. A photograph is not an instrument, and a cover
+  /// with square corners reads as a screenshot dropped on the page rather than
+  /// as a card, which is what the owner objected to. This is the one place
+  /// roundness is allowed, and it is deliberately larger than a control's so
+  /// that it reads as intentional rather than as a control that grew.
+  static const double cardRadius = 12;
+
   /// Design-system value for hairlineWidth.
   static const double hairlineWidth = 1;
 

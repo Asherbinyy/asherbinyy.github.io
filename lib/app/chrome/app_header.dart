@@ -88,7 +88,7 @@ class AppHeader extends ConsumerWidget {
                   ref.read(localeControllerProvider.notifier).toggle();
                   ref.recordInteraction(
                     AnalyticsEvent.languageChanged,
-                    route: current?.path ?? AppRoute.station.path,
+                    route: current?.path ?? AppRoute.home.path,
                     inputMode: context.platform.inputMode,
                   );
                 },
@@ -103,7 +103,7 @@ class AppHeader extends ConsumerWidget {
                   ref.read(themeControllerProvider.notifier).toggle();
                   ref.recordInteraction(
                     AnalyticsEvent.themeChanged,
-                    route: current?.path ?? AppRoute.station.path,
+                    route: current?.path ?? AppRoute.home.path,
                     inputMode: context.platform.inputMode,
                   );
                 },

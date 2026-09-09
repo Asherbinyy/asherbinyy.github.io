@@ -26,7 +26,7 @@ void main() {
           breakpoint: ChromeBreakpoint.expanded,
           themeMode: mode,
           locale: Locale(language),
-          initialRoute: AppRoute.signal,
+          initialRoute: AppRoute.journey,
           reducedMotion: true,
         );
 
@@ -44,7 +44,7 @@ void main() {
       breakpoint: ChromeBreakpoint.expanded,
       themeMode: ThemeMode.dark,
       locale: const Locale('en'),
-      initialRoute: AppRoute.signal,
+      initialRoute: AppRoute.journey,
       reducedMotion: true,
     );
 

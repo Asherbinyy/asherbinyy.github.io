@@ -30,10 +30,12 @@ void main() {
     ) async {
       await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
 
-      // Every in-app surface shows `profile.displayName`. The legal name is
-      // reserved for /cv and for structured metadata -- see Profile.shownName.
-      expect(find.text('Sherbini'), findsOneWidget);
-      expect(find.text('Ahmed Elsherbini'), findsNothing);
+      // Every in-app surface shows `profile.displayName`, whatever the owner
+      // has set it to. It used to be "Sherbini", and this asserted the full
+      // name was absent to prove the short one was being used. He has since
+      // set the display name to the full name for consistency, so that second
+      // assertion now contradicts the content it is meant to be reading.
+      expect(find.text(_shownName()), findsOneWidget);
       // Read from the content rather than pinned to a sentence: the line is
       // the owner's own copy and he rewrites it, and a test that hard-codes it
       // fails every time he does.
@@ -119,9 +121,20 @@ void main() {
       // the span since October 2021, and the award is on his CV.
       await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
 
-      expect(find.byType(StatPanel), findsNWidgets(2));
-      expect(find.text('5'), findsOneWidget);
-      expect(find.text('MSc'), findsOneWidget);
+      // Read from the shipped profile rather than written out. These were
+      // literals, so correcting "5 years building" to "5+ years commercial
+      // experience" failed the test on the spelling of a value it was not
+      // about.
+      final stats =
+          bundledJson('assets/content/profile.json')['stats'] as List<dynamic>;
+      expect(find.byType(StatPanel), findsNWidgets(stats.length));
+      for (final stat in stats.cast<Map<String, dynamic>>()) {
+        expect(
+          find.text(stat['value'] as String),
+          findsOneWidget,
+          reason: stat['value'] as String,
+        );
+      }
       // The greeting must not be a count any more.
       expect(find.text('25+'), findsNothing);
     });
@@ -253,7 +266,7 @@ void main() {
       await pumpFrames(tester);
 
       expect(container.read(acquisitionPlayedProvider), isTrue);
-      expect(find.text('Sherbini'), findsOneWidget);
+      expect(find.text(_shownName()), findsOneWidget);
     });
 
     testWidgets('a pointer press skips it too', (tester) async {
@@ -326,7 +339,7 @@ void main() {
       await tester.pump(Tokens.instant);
 
       expect(container.read(acquisitionPlayedProvider), isTrue);
-      expect(find.text('Sherbini'), findsOneWidget);
+      expect(find.text(_shownName()), findsOneWidget);
     });
 
     testWidgets('no other route carries the sequence', (tester) async {
@@ -389,20 +402,33 @@ void main() {
       expect(hero.width, lessThanOrEqualTo(Tokens.contentMaxWidth));
     });
 
-    testWidgets('the amber rule is short of the column, not a divider', (
-      tester,
-    ) async {
+    testWidgets('there is no rule under the name any more', (tester) async {
+      // Removed on the owner's instruction. Asserted rather than deleted,
+      // because the rule was a deliberate mark for several milestones and a
+      // future reader would otherwise reasonably put it back.
       await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
 
-      final rule = find.descendant(
-        of: find.byType(HeroContent),
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is SizedBox && widget.width == Tokens.heroRuleWidth,
+      expect(
+        find.descendant(
+          of: find.byType(HeroContent),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is SizedBox && widget.width == Tokens.heroRuleWidth,
+          ),
         ),
+        findsNothing,
       );
-      expect(tester.getSize(rule.first).width, Tokens.heroRuleWidth);
-      expect(tester.getSize(rule.first).height, Tokens.heroRuleHeight);
     });
   });
+}
+
+/// The name the hero is expected to draw, from the content it draws it from.
+///
+/// The owner changed the shown name from "Sherbini" to his full name for
+/// consistency across the site. Asserting the literal made that a test failure
+/// rather than a content edit.
+String _shownName() {
+  final profile = bundledJson('assets/content/profile.json');
+  final display = profile['displayName'] ?? profile['name'];
+  return (display as Map<String, dynamic>)['en'] as String;
 }

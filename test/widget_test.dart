@@ -26,8 +26,8 @@ void main() {
   testWidgets('every route resolves to its own screen', (tester) async {
     // Routes that have a real screen; the rest are still reserved placeholders.
     final built = <AppRoute, Type>{
-      AppRoute.station: StationScreen,
-      AppRoute.signal: SignalScreen,
+      AppRoute.home: StationScreen,
+      AppRoute.journey: SignalScreen,
       AppRoute.work: WorkScreen,
       AppRoute.caseStudy: CaseStudyScreen,
       AppRoute.writing: WritingScreen,
