@@ -32,7 +32,7 @@ Future<void> _pumpSignal(
     capabilities: capabilities,
     reader: reader,
     reducedMotion: reducedMotion,
-    initialRoute: AppRoute.signal,
+    initialRoute: AppRoute.journey,
   );
 }
 

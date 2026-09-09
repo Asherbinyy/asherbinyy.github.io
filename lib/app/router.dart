@@ -46,7 +46,7 @@ abstract final class AppRouter {
                   ).read(analyticsIsCollectingProvider)) {
                     captureCampaign(state.pathParameters['campaign']);
                   }
-                  return AppRoute.station.path;
+                  return AppRoute.home.path;
                 }
               : null,
           pageBuilder: (context, state) => NoTransitionPage<void>(
@@ -70,8 +70,8 @@ abstract final class AppRouter {
         ),
     ],
     errorBuilder: (context, state) => RouteTitle(
-      route: AppRoute.station,
-      child: AppMessengerHost(child: _sequenced(AppRoute.station)),
+      route: AppRoute.home,
+      child: AppMessengerHost(child: _sequenced(AppRoute.home)),
     ),
   );
 
@@ -81,7 +81,7 @@ abstract final class AppRouter {
   /// it has to sit above the chrome rather than inside the routed content.
   /// Every other route resolves straight to its settled state.
   static Widget _sequenced(AppRoute route, {String? slug}) {
-    return route == AppRoute.station
+    return route == AppRoute.home
         ? AcquisitionSequence(
             builder: (context, contentReveal, chromeReveal) => _framed(
               route,
@@ -99,8 +99,8 @@ abstract final class AppRouter {
     Animation<double>? acquisitionReveal,
     String? slug,
   }) => switch (route) {
-    AppRoute.station => StationScreen(acquisitionReveal: acquisitionReveal),
-    AppRoute.signal => const SignalScreen(),
+    AppRoute.home => StationScreen(acquisitionReveal: acquisitionReveal),
+    AppRoute.journey => const SignalScreen(),
     AppRoute.work => const WorkScreen(),
     // A missing slug cannot happen for a matched `/work/:slug`, but the
     // screen's own "not written yet" state is the honest fallback anyway.
@@ -129,7 +129,7 @@ abstract final class AppRouter {
           chromeReveal: chromeReveal,
           // Section 6 runs the trace from the hero to the end of the career
           // sequence, both of which live on the station.
-          backgroundBuilder: route == AppRoute.station
+          backgroundBuilder: route == AppRoute.home
               ? (controller) => StationTrace(controller: controller)
               : null,
           child: child,

@@ -17,11 +17,11 @@ import 'package:nocturne/core/widgets/focus_ring.dart';
 /// A subset of [AppRoute] rather than all of it: the case study, campaign,
 /// console and static routes are reachable but not navigation destinations.
 enum NavDestination {
-  /// Ground station.
-  station(AppRoute.station),
+  /// The front door.
+  home(AppRoute.home),
 
-  /// Propagation map.
-  signal(AppRoute.signal),
+  /// The career map.
+  journey(AppRoute.journey),
 
   /// Shipped applications.
   work(AppRoute.work),
@@ -42,8 +42,8 @@ enum NavDestination {
 
   /// The viewer-facing name in the active locale.
   String label(AppLocalizations l10n) => switch (this) {
-    NavDestination.station => l10n.navStation,
-    NavDestination.signal => l10n.navSignal,
+    NavDestination.home => l10n.navHome,
+    NavDestination.journey => l10n.navJourney,
     NavDestination.work => l10n.navWork,
     NavDestination.writing => l10n.navWriting,
     NavDestination.about => l10n.navAbout,

@@ -27,6 +27,22 @@ class Profile with _$Profile {
     required LocalizedText positioning,
     required Contact contact,
     LocalizedText? displayName,
+
+    /// What the page opens with, before the name.
+    ///
+    /// The hero used to lead on the name set in the largest type on the site,
+    /// which the owner said read as a wall rather than a welcome. A greeting
+    /// gives the page a voice; the name still follows it, and still carries
+    /// the weight.
+    LocalizedText? greeting,
+
+    /// Where the work has been, as ISO country codes.
+    ///
+    /// Rendered as flags beside a line of copy. Kept here rather than derived
+    /// from the career file because it includes places a client was rather
+    /// than places a desk was: the Tripster team was in Russia while the
+    /// employer was in Armenia, and both are true.
+    @Default(<String>[]) List<String> reach,
     LocalizedText? location,
     LocalizedText? status,
     Venture? venture,

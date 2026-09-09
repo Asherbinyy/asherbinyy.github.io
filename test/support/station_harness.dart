@@ -71,7 +71,7 @@ Future<ProviderContainer> pumpStation(
     await container.read(appsProvider.future);
     await container.read(educationProvider.future);
     await container.read(interestsProvider.future);
-    if (initialRoute == AppRoute.signal) {
+    if (initialRoute == AppRoute.journey) {
       await container.read(coastlineRingsProvider.future);
     }
     if (initialRoute == AppRoute.caseStudy) {
@@ -99,7 +99,7 @@ Future<ProviderContainer> pumpStation(
     await tester.pump();
   }
 
-  if (initialRoute != null && initialRoute != AppRoute.station) {
+  if (initialRoute != null && initialRoute != AppRoute.home) {
     GoRouter.of(tester.element(find.byType(ChromeScaffold)))
         .goNamed(initialRoute.name, pathParameters: pathParameters);
     await pumpFrames(tester);

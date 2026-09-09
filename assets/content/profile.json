@@ -4,12 +4,12 @@
     "ar": "أحمد الشربيني"
   },
   "displayName": {
-    "en": "Sherbini",
-    "ar": "الشربيني"
+    "en": "Ahmed Elsherbini",
+    "ar": "أحمد الشربيني"
   },
   "positioning": {
-    "en": "I build mobile products end to end, from the first idea to the release notes.",
-    "ar": "أبني منتجات الهاتف من أولها إلى آخرها، من الفكرة الأولى حتى ملاحظات الإصدار."
+    "en": "Egyptian, in Manchester, happiest when something that did not exist on Monday is on a phone by Friday.",
+    "ar": "مصري في مانشستر، وأسعد ما أكون حين يصبح شيء لم يكن موجوداً يوم الاثنين على هاتف يوم الجمعة."
   },
   "location": {
     "en": "Manchester, United Kingdom",
@@ -43,18 +43,31 @@
   },
   "stats": [
     {
-      "value": "5",
+      "value": "5+",
       "label": {
-        "en": "years building",
-        "ar": "سنوات في البناء"
+        "en": "years commercial experience",
+        "ar": "سنوات خبرة تجارية"
       }
     },
     {
       "value": "MSc",
       "label": {
-        "en": "Distinction, Salford",
-        "ar": "بامتياز، سالفورد"
+        "en": "in IT, with Distinction",
+        "ar": "في تقنية المعلومات، بامتياز"
       }
     }
+  ],
+  "greeting": {
+    "en": "Hiya, I am Ahmed.",
+    "ar": "أهلاً، أنا أحمد."
+  },
+  "reach": [
+    "EG",
+    "SA",
+    "QA",
+    "AM",
+    "RU",
+    "CA",
+    "GB"
   ]
 }

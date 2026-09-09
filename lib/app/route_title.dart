@@ -24,10 +24,10 @@ String routeTitle({
   required AppLocalizations l10n,
   required String name,
 }) => switch (route) {
-  AppRoute.station => '$name ${l10n.titleSeparator} ${l10n.tabRole}',
+  AppRoute.home => '$name ${l10n.titleSeparator} ${l10n.tabRole}',
   AppRoute.brief => '$name ${l10n.titleSeparator} ${l10n.navBrief}',
   AppRoute.console => l10n.navConsole,
-  AppRoute.signal => '${l10n.navSignal} ${l10n.titleSeparator} $name',
+  AppRoute.journey => '${l10n.navJourney} ${l10n.titleSeparator} $name',
   AppRoute.work => '${l10n.navWork} ${l10n.titleSeparator} $name',
   // Case studies land in Milestone 2. Until a study supplies its own name, the
   // section name is the honest reading rather than an invented one.

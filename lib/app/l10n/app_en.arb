@@ -52,12 +52,12 @@
   "@workDomainConsumer": {
     "description": "Application category label for the Consumer domain."
   },
-  "navStation": "Station",
-  "@navStation": {
+  "navHome": "Home",
+  "@navHome": {
     "description": "Header link to the home route."
   },
-  "navSignal": "Signal",
-  "@navSignal": {
+  "navJourney": "Journey",
+  "@navJourney": {
     "description": "Header link to the propagation map."
   },
   "navWork": "Work",
@@ -598,12 +598,20 @@
   "@titleSeparator": {
     "description": "Divides the two halves of a browser tab title."
   },
-  "heroSayName": "Hear my name",
+  "heroSayName": "Hear how it is said",
   "@heroSayName": {
     "description": "Button that plays the owner's own recording of his name."
   },
   "heroSayNamePlaying": "Playing",
   "@heroSayNamePlaying": {
     "description": "Announced while the name recording plays."
+  },
+  "writingReadOn": "Read on Medium",
+  "@writingReadOn": {
+    "description": "Affordance on an article card saying where it opens."
+  },
+  "heroReach": "Built for teams in",
+  "@heroReach": {
+    "description": "Introduces the row of country flags in the hero."
   }
 }

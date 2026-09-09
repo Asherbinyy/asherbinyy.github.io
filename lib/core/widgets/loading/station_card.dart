@@ -107,9 +107,13 @@ class StationCard extends StatelessWidget {
               ),
             ),
             // A thumbnail is too small for display-m to be legible, let alone
-            // to fit. Below that the constellation stands alone — the name is
-            // already beside it wherever a card this size is used.
-            if (height >= _minimumLabelledHeight(type))
+            // to fit. Below that the constellation stands alone, and the name
+            // is already beside it wherever a card this size is used.
+            //
+            // An empty name is also a caller saying it prints the name itself,
+            // which the article card does: drawing it here as well put the
+            // headline on the card twice.
+            if (name.isNotEmpty && height >= _minimumLabelledHeight(type))
               Padding(
                 padding: EdgeInsets.all(tokens.space16),
                 child: Column(

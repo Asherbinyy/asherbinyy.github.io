@@ -94,11 +94,49 @@ class _ArticleCardState extends ConsumerState<ArticleCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _Art(article: widget.article, seed: _seed),
+                    // Rounded and clipped. A cover photograph with square
+                    // corners reads as a screenshot dropped on the page; the
+                    // radius is what makes it a card.
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(Tokens.cardRadius),
+                      child: _Art(article: widget.article, seed: _seed),
+                    ),
+                    SizedBox(height: tokens.space12),
+                    // The title. It was never drawn: the card showed a cover,
+                    // a date and two tags, and the headline existed only in
+                    // the screen-reader label. This class's own comment says
+                    // it is taller than a work card because "a title is longer
+                    // than an application name", so the space was reserved for
+                    // a thing that was never put in it.
+                    Text(
+                      widget.article.title,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: type.heading.copyWith(color: tokens.textPrimary),
+                    ),
                     SizedBox(height: tokens.space8),
                     Text(
                       _meta(),
                       style: type.telemetryS.copyWith(color: tokens.textMuted),
+                    ),
+                    SizedBox(height: tokens.space8),
+                    // Says where it goes. A card that is entirely a link
+                    // should admit it, and the arrow is the only part that
+                    // moves on hover.
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          context.l10n.writingReadOn,
+                          style: type.telemetryS.copyWith(color: tokens.beacon),
+                        ),
+                        SizedBox(width: tokens.space4),
+                        Icon(
+                          Icons.arrow_outward,
+                          size: type.telemetryS.fontSize,
+                          color: tokens.beacon,
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -145,7 +183,10 @@ class _Art extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mark = StationCard(
       seedId: seed,
-      name: article.title,
+      // Deliberately unlabelled. The card prints the title below the artwork
+      // now, and the mark drawing it too was how the headline came to appear
+      // twice on any article whose cover did not resolve.
+      name: '',
       width: ArticleCard.width,
       height: ArticleCard.artHeight,
     );

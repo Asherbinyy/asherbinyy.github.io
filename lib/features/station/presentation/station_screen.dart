@@ -170,7 +170,7 @@ class _Unavailable extends StatelessWidget {
     children: [
       CarrierEmptyState(direction: context.l10n.heroContentUnavailable),
       SizedBox(height: context.tokens.space24),
-      const CvButton(route: AppRoute.station),
+      const CvButton(route: AppRoute.home),
     ],
   );
 }

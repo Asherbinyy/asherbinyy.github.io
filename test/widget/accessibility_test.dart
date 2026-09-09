@@ -20,8 +20,8 @@ import '../support/station_harness.dart';
 void main() {
   /// Routes a viewer can reach without a token or a typed path.
   const publicRoutes = [
-    AppRoute.station,
-    AppRoute.signal,
+    AppRoute.home,
+    AppRoute.journey,
     AppRoute.work,
     AppRoute.writing,
     AppRoute.about,
@@ -64,7 +64,7 @@ void main() {
 
   group('keyboard traversal', () {
     // 05-TESTING.md names these three routes specifically.
-    for (final route in [AppRoute.station, AppRoute.work]) {
+    for (final route in [AppRoute.home, AppRoute.work]) {
       testWidgets('${route.path} can be reached and left with Tab alone', (
         tester,
       ) async {

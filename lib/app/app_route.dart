@@ -1,10 +1,16 @@
 /// Paths transcribed from the project brief, section 4.
 enum AppRoute {
-  /// Ground station.
-  station('/'),
+  /// The front door.
+  ///
+  /// Named for what a visitor calls it. It was `station`, from the radio
+  /// metaphor the site used to run on, and no one arriving here would have
+  /// guessed that meant "home".
+  home('/'),
 
-  /// Propagation map.
-  signal('/signal'),
+  /// Where the work happened, and when.
+  ///
+  /// Was `signal`, at `/signal`, which said nothing about a career map.
+  journey('/journey'),
 
   /// Shipped applications.
   work('/work'),
@@ -30,7 +36,7 @@ enum AppRoute {
   /// Reserved for the static HTML recruiter view in task 1.4.
   brief('/brief'),
 
-  /// Session-scoped campaign entry; redirects to the station.
+  /// Session-scoped campaign entry; redirects to the front door.
   campaign('/r/:campaign');
 
   const AppRoute(this.path);

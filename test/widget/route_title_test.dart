@@ -36,7 +36,7 @@ void main() {
         initialRoute: AppRoute.writing,
       );
 
-      expect(effectiveTitle(tester), contains('Sherbini'));
+      expect(effectiveTitle(tester), contains(_shownName()));
     });
 
     testWidgets('never blanks the shell title while content is unavailable', (
@@ -76,7 +76,14 @@ void main() {
       await pumpFrames(tester);
 
       expect(effectiveTitle(tester), isNot(onStation));
-      expect(effectiveTitle(tester), contains('Sherbini'));
+      expect(effectiveTitle(tester), contains(_shownName()));
     });
   });
+}
+
+/// The name a title is expected to carry, read from the content.
+String _shownName() {
+  final profile = bundledJson('assets/content/profile.json');
+  final display = profile['displayName'] ?? profile['name'];
+  return (display as Map<String, dynamic>)['en'] as String;
 }
