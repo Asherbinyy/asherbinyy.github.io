@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
-import 'package:nocturne/core/painting/glyph_paths.dart';
+import 'package:nocturne/core/painting/ornament_paths.dart';
 import 'package:nocturne/core/painting/station_seed.dart';
 import 'package:nocturne/features/trace/domain/trace_geometry.dart';
 
@@ -243,9 +243,8 @@ class WallPainter extends CustomPainter {
     for (var i = 0; i < count; i++) {
       final x = left + i * Tokens.wallSignPitch;
       if (x + box > left + width) break;
-      final glyph =
-          EgyptianGlyph.values[seed.nextInt(EgyptianGlyph.values.length)];
-      for (final stroke in GlyphPaths.strokes(glyph, box)) {
+      final ornament = Ornament.values[seed.nextInt(Ornament.values.length)];
+      for (final stroke in OrnamentPaths.strokes(ornament, box)) {
         path.moveTo(x + stroke.first.x, top + stroke.first.y);
         for (final point in stroke.skip(1)) {
           path.lineTo(x + point.x, top + point.y);

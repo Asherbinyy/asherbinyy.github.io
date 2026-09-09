@@ -30,19 +30,27 @@ is wrong.
 **3. Never fake meaning.** Do not invent hieroglyphs, and do not spell English
 words in glyph-shaped ornaments.
 
-The precise rule, because two surfaces now draw runs of signs and the earlier
-wording would have banned the concept outright: **signs may be arranged
-decoratively, and nothing may present them as readable.** The site never offers
-a translation, never captions a run as saying something, and never places one
-where a reader would take it for the page's actual text. The wall's registers
-are inscription the way a carved wall is inscription; the career they stand
-beside is rendered as real text a few pixels away. The one place anything is
-spelled is the cartouche in §2, and that spells a name a scribe would have
-spelled the same way.
-Every glyph that appears on the site is a real sign from Gardiner's list, used
-either as documented ornament or in the one place the site spells something —
-the cartouche in §2. Fabricated writing on a site whose whole argument is
-"nothing here is made up" would be a self-inflicted wound.
+This rule was broken for most of the project's life, in a way worth recording
+because it did not look like breaking it. Nobody invented a sign and nobody
+spelled an English word. Four painters picked at random from the uniliteral
+signs — the phonetic alphabet — and scattered the result, and the defence
+written into the code was that a grid reads as ornament where a line would read
+as a sentence. That is wrong. Random letters are random letters at any spacing,
+and a reader who knows the signs sees nonsense laid out as decoration, which is
+faking meaning by another route. Presenting letters that say nothing is the
+same failure as presenting letters that say the wrong thing.
+
+The site now scatters **ornament**, not letters. See §2.
+
+The precise rule, which used to be a licence and is now a prohibition: **no
+phonetic sign is drawn anywhere on this site.** The earlier wording here said
+signs could be arranged decoratively so long as nothing presented them as
+readable, and that permission is withdrawn. It was doing the opposite of its
+job — it let four painters scatter letters at random and pointed at its own
+carefully worded caveat as the reason that was fine.
+
+The site draws ornament instead, which has no sound value, so the question of
+what it says never arises. See §2 for the set and §0 for how the rule failed.
 
 ---
 
@@ -50,9 +58,9 @@ the cartouche in §2. Fabricated writing on a site whose whole argument is
 
 | # | Motif | Structural job | Where | How drawn |
 |---|---|---|---|---|
-| 1 | **Cartouche** | Encloses a name — the oval and bar that marked a royal name | Header name treatment, `/about` identity block, app card frames | `CustomPainter`, path |
+| 1 | **Cartouche ring** | An enclosure — the oval and bar that marked a name. Empty here, enclosing a place rather than a word | Map stops on `/signal` | `map_painter.dart`, path |
 | 2 | **Register** | A horizontal band separating eras — the native form of a timeline | The wall (`/`), career chronology, `/work` grouping | Layout + hairline painter |
-| 3 | **Glyph column** | A vertical inscription line — the native form of a rail | Navigation rail ≥1024px | Painter + glyph paths |
+| 3 | **Ornament column** | A vertical decorated band — the native form of a rail | Navigation rail ≥1024px | Painter + ornament paths |
 | 4 | **Ankh** | Life. The site's mark, replacing the carrier wave | Favicon, header mark, loading resolve, `/` hero | `mark_painter.dart`, path |
 | 5 | **Torchlight** | A moving pool of light revealing an inscription | The wall's scroll reveal — the signature interaction | Radial gradient mask over the wall painter |
 | 6 | **Obelisk** | A vertical monument, tapering, with a pyramidion cap | Scroll progress indicator; the tower in the game | Painter |
@@ -65,7 +73,7 @@ the cartouche in §2. Fabricated writing on a site whose whole argument is
 | 13 | **Stepped mastaba** | A rising stack — the honest ancestor of the pyramid | Stat panels, the game's platforms | Layout + painter |
 | 14 | **Wedjat (Eye of Horus)** | Watching, protection | `/console` only — the one page that observes | Painter |
 | 15 | **Sarcophagus / wrapped form** | A thing at rest, not yet opened | Empty and dormant states, the click-to-load poster | Painter |
-| 16 | **Glyph field** | A wall of inscription at low contrast — texture with real provenance | Page backgrounds, one field per route | Pre-rendered tile, see §4 |
+| 16 | **Ornament field** | A low-contrast decorated ground — texture with real provenance and no phonetic content | Page backgrounds, one field per route | Pre-rendered tile, see §4 |
 
 ### Explicitly excluded
 
@@ -79,35 +87,54 @@ These are the obvious choices and they are excluded on purpose.
 
 ---
 
-## 2. The cartouche, and the one place the site spells something
+## 2. Ornament, and why the site spells nothing at all
 
-The header renders **Sherbini** in a cartouche.
+**The site draws no writing.** Not in the background, not on the cards, not on
+the wall, not in the game. There is no cartouche and no glyph anywhere in the
+interface.
 
-The glyphs inside it are the Egyptian uniliteral signs — the phonetic alphabet
-Egyptian scribes themselves used to write foreign names. Ptolemaic cartouches
-spell *Ptolemy* and *Cleopatra* phonetically with exactly these signs, so
-transliterating a modern name this way is the historically correct practice
-rather than a pastiche of one.
+This is a reversal, and both halves of it were the owner's call. He asked for
+the cartouche to be removed because its spelling could not be verified by
+anyone he could point at. That left the five uniliteral signs it had been built
+from with no legitimate use — and four painters still drawing them at random as
+texture, which is what §0 rule 3 forbids. Removing the one honest use of the
+alphabet while leaving the dishonest one standing was not a defensible place to
+stop.
 
-| Sound | Gardiner | Sign |
+So the alphabet is gone from the codebase entirely. `glyph_paths.dart` and
+`cartouche_painter.dart` are deleted rather than left unreferenced, because
+dead code that draws letters is an invitation to draw letters again.
+
+### What replaced it
+
+`ornament_paths.dart`, a closed set of five motifs, all of them decoration in
+the archaeological record rather than language:
+
+| Motif | What it is | Where it comes from |
 |---|---|---|
-| š (sh) | N37 | pool |
-| r | D21 | mouth |
-| b | D58 | foot |
-| i | M17 | reed |
-| n | N35 | water |
-| i | M17 | reed |
+| Kheker | A bound bundle of reeds, splayed at the top | Wall cresting, the standard frieze along the top of a tomb or temple wall |
+| Block border | A banded chequer, two courses deep | The border run under a cornice |
+| Coil | A running spiral | Painted ceiling patterns |
+| Rosette | A ring of petals around an open centre | Ceilings and broad collars |
+| Lotus | A bud on its stem, with two sepals | The common frieze filler |
 
-**š – r – b – i – n – i.**
+None of these carries a sound value. A random arrangement of them says nothing
+because there is nothing there to say, which is the whole point: the site can
+now repeat, scatter and tile them freely without any claim being made.
 
-Rules for this, and they are tight:
+Rules, and they are tighter than the ones they replace:
 
-- The glyphs are drawn as **vector paths in the repository**, not set in a font. No font on the bundle budget covers the Egyptian Hieroglyphs block, and pulling one would cost more than the seven paths it replaces.
-- The cartouche spells this name and nothing else. It is not a generator. No other string is ever rendered in glyphs.
-- The Latin word **Sherbini** is always present beside or beneath the cartouche at every breakpoint. The glyphs are an ornament with provenance, never the only way to read the name.
-- The accessible name of the element is the Latin name. Screen readers get `Sherbini`, never a glyph description.
-- **The sign choices are verified.** N37 = š, D21 = r, D58 = b, M17 = i, N35 = n are the standard uniliteral values in Gardiner's list, and the drawings follow them. The spelling — single reed for the final vowels rather than the double reed — is settled on the owner's instruction of 2026-09-07 and is not an open question.
-- **A codepoint column was removed from this table.** It listed Unicode values for the six signs, two of which were wrong and four of which were never checked — in the file whose entire job is to stop unverified things reaching the site. The glyphs are drawn as vector paths in `glyph_paths.dart` and no code ever needed the codepoints, so the column was decoration pretending to be data.
+- The motifs are **vector paths in the repository**, not a font. Unchanged from before, and for the same reason: no font on the bundle budget covers this material.
+- **No phonetic sign is ever drawn.** Not one, not in a cartouche, not as a mark, not at 4% opacity in a background. If the owner ever wants his name in glyphs again, that is a deliberate decision with an epigrapher's sign-off attached to it, not a thing this file quietly permits.
+- The set is **closed at five**, and `ornament_paths_test.dart` asserts the count, so adding a sixth is a deliberate act with a test to update.
+- A motif is **decoration and is described as decoration**. Nothing in the interface, in a tooltip or in an accessible name presents it as writing.
+
+### The one cartouche shape that remains
+
+`/signal` draws its map stops as cartouche **rings**, and that is deliberate and
+allowed. A cartouche is an enclosure, and an empty one enclosing a place on a
+map is a shape doing structural work under §0 rule 1. It encloses nothing and
+spells nothing. `Tokens.stationCartoucheRatio` sets how wide it sits.
 
 ---
 
@@ -127,9 +154,9 @@ golden test whose geometry depends on the current metrics.
 
 ---
 
-## 4. The glyph field — how backgrounds are drawn
+## 4. The ornament field — how backgrounds are drawn
 
-Every route carries a background field of low-contrast inscription. This is the
+Every route carries a background field of low-contrast ornament. This is the
 "patterns in the background" requirement, and it is the single largest
 performance risk in the redesign.
 
@@ -137,19 +164,19 @@ performance risk in the redesign.
 
 The rule is inherited from `grain_painter.dart`, which already solves this
 problem for the film grain: render to an offscreen image once, cache it, and
-blit the tile. A field of glyph paths repainted every frame across a full
+blit the tile. A field of motif paths repainted every frame across a full
 viewport would cost more than the frame budget for the wall and the map
 combined.
 
 Specification:
 
-- One tile per route, recorded once to a `ui.Picture` and replayed across the surface. **No build-time generator and no image assets**, which is a change from the original plan here: recording a picture at runtime gives the same display-list replay that a cached bitmap would, costs no bytes in the bundle, and needs no second definition of the glyphs to fall out of step with the first.
-- Composed from the documented sign set only, at fixed rotations of 0°, laid on the register grid. No random rotation, no scatter — Egyptian inscription is columnar and aligned, and aligned tiles also seam cleanly.
+- One tile per route, recorded once to a `ui.Picture` and replayed across the surface. **No build-time generator and no image assets**, which is a change from the original plan here: recording a picture at runtime gives the same display-list replay that a cached bitmap would, costs no bytes in the bundle, and needs no second definition of the motifs to fall out of step with the first.
+- Composed from the documented motif set only, at fixed rotations of 0°, laid on the register grid. No random rotation, no scatter — Egyptian decoration is aligned to its register, and aligned tiles also seam cleanly.
 - Drawn at `--limestone-dim` over the ground at **4% opacity**, one step above the 3% texture so the two read as separate layers rather than mud.
 - The field is **behind** the texture layer, not above it.
 - Under `prefers-reduced-motion` the field is unchanged: it does not move, so there is nothing to reduce. It is disabled entirely in Recruiter Mode, which is a quiet document.
-- Each route gets a distinct field so navigation is legible at a glance. **They differ by arrangement, not by sign.** This file originally said each field would be drawn from its route's own subject — craft signs for the work grid, water and land signs for `/signal` — and that is not what shipped: the inventory in §2 is five signs, chosen because they spell the owner's name, and drawing a dozen more means verifying a dozen more. Each route seeds its own layout instead, which distinguishes the pages without adding an unverified sign to the site. Widening the inventory is a decision worth making deliberately, not a gap to be filled quietly.
-- **Signs are laid on a grid, never in a line.** §0 forbids generating glyph strings as texture, and that prohibition is about faking meaning: a horizontal run reads as a sentence, and an arbitrary one is nonsense presented as writing. A diaper of single signs at fixed spacing reads as ornament, which is what it is. Nothing in a field spells anything.
+- Each route gets a distinct field so navigation is legible at a glance. **They differ by arrangement, not by motif.** This file originally said each field would be drawn from its route's own subject — craft signs for the work grid, water and land signs for `/signal`. That was written when the inventory was an alphabet, and it is exactly the idea that produced the problem in §0: a field "about" a page's subject is a field making a claim. Each route seeds its own layout instead.
+- **Nothing in a field spells anything, in any arrangement.** The previous rule here permitted a grid of phonetic signs on the argument that a grid does not read as a sentence. That argument was wrong and it is withdrawn. The field draws ornament, which has no sound value, so the question of what it spells does not arise — on a grid, in a line, or anywhere else.
 
 **Budget: the field costs 0ms per frame after first paint.** If a profile shows
 otherwise, it is being repainted and that is a bug.

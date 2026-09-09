@@ -412,10 +412,10 @@ abstract final class Tokens {
 
   /// How much wider than tall a station's cartouche sits on the atlas.
   ///
-  /// Far shorter than the name cartouche in the header, which encloses six
-  /// signs. This encloses nothing — it is the shape read at a glance, and past
-  /// about this ratio it stops reading as an enclosure and starts reading as a
-  /// dash on a coastline.
+  /// The shape only, and it encloses nothing: a cartouche ring is what an
+  /// Egyptian map-maker would have drawn around a place, and it is read here
+  /// at a glance rather than read as writing. Past about this ratio it stops
+  /// reading as an enclosure and starts reading as a dash on a coastline.
   static const double stationCartoucheRatio = 1.7;
 
   /// The torch's reach over the wall, as a fraction of the visible frame's
@@ -454,19 +454,11 @@ abstract final class Tokens {
   /// A mote's radius at birth.
   static const double cursorTrailRadius = 3;
 
-  /// Opacity of the inscription field behind every page.
+  /// Opacity of the ornament field behind every page.
   ///
   /// One step above the 3% texture beneath it, so the two read as separate
   /// layers rather than as one muddy surface. `12-MOTIF-LIBRARY.md` §4.
-  static const double glyphFieldOpacity = 0.04;
-
-  /// The cartouche's height where it introduces the name in the hero.
-  ///
-  /// Its width follows from `CartouchePainter.aspectRatio`, so this is the
-  /// only dimension anyone sets. Sized to sit clearly under the display-xl
-  /// name without competing with it: the sign is the ornament, the name is
-  /// the information.
-  static const double cartoucheHeroHeight = 40;
+  static const double ornamentFieldOpacity = 0.04;
 }
 
 /// Kemet palette from design-system section 2 — the Black Land.

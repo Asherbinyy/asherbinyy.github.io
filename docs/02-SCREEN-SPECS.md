@@ -34,7 +34,7 @@
 > Added in milestone 5 so far:
 >
 > - **The ankh** as the mark, replacing the waveform frame this file specifies.
-> - **The cartouche** above the hero name, spelling *Sherbini* in uniliteral signs.
+> - ~~**The cartouche** above the hero name, spelling *Sherbini* in uniliteral signs.~~ **Cut.** The owner asked for it removed because the spelling could not be verified by anyone he could point at, and with it went every phonetic sign on the site. `12-MOTIF-LIBRARY.md` §2.
 > - **Inscription fields** behind every route, one arrangement each.
 >
 > Specified but not built: the wall (5.3), the atlas (5.4), seal cards (5.6),
