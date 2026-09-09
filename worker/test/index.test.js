@@ -30,6 +30,10 @@ class MemoryKv {
     this.writes.push({name, value, options});
   }
 
+  async delete(name) {
+    this.values.delete(name);
+  }
+
   async list({prefix = '', cursor} = {}) {
     assert.equal(cursor, undefined);
     return {
@@ -590,4 +594,268 @@ test('a cover request from another origin is refused', async () => {
     new Date(),
   );
   assert.equal(response.status, 403);
+});
+
+// --- published content, milestone 7 ----------------------------------------
+
+const adminToken = 'b'.repeat(48);
+
+/// An environment with the content store bound and an admin token set.
+function publishing(overrides = {}) {
+  return environment({
+    CONTENT: new MemoryKv(),
+    ADMIN_TOKEN: adminToken,
+    ...overrides,
+  });
+}
+
+function adminRequest(path, {method = 'GET', body, token = adminToken} = {}) {
+  return new Request(`https://worker.example${path}`, {
+    method,
+    headers: token
+      ? {authorization: `Bearer ${token}`, 'content-type': 'application/json'}
+      : {'content-type': 'application/json'},
+    body,
+  });
+}
+
+function siteRequest(path) {
+  return new Request(`https://worker.example${path}`, {
+    headers: {origin: siteOrigin},
+  });
+}
+
+test('a document with nothing published is not found', async () => {
+  const response = await handleRequest(
+    siteRequest('/v1/content/profile.json'),
+    publishing(),
+  );
+  // The site treats this as "use the bundle", so it is the ordinary answer
+  // rather than an error anyone has to handle.
+  assert.equal(response.status, 404);
+});
+
+test('a published document comes back to the site', async () => {
+  const env = publishing();
+  const put = await handleRequest(
+    adminRequest('/v1/admin/content/profile.json', {
+      method: 'PUT',
+      body: JSON.stringify({name: 'Ahmed'}),
+    }),
+    env,
+  );
+  assert.equal(put.status, 200);
+
+  const read = await handleRequest(siteRequest('/v1/content/profile.json'), env);
+  assert.equal(read.status, 200);
+  assert.deepEqual(await read.json(), {name: 'Ahmed'});
+});
+
+test('withdrawing a document returns the site to its bundle', async () => {
+  const env = publishing();
+  await handleRequest(
+    adminRequest('/v1/admin/content/career.json', {
+      method: 'PUT',
+      body: JSON.stringify({stops: []}),
+    }),
+    env,
+  );
+  const removed = await handleRequest(
+    adminRequest('/v1/admin/content/career.json', {method: 'DELETE'}),
+    env,
+  );
+  assert.equal(removed.status, 200);
+
+  const read = await handleRequest(siteRequest('/v1/content/career.json'), env);
+  assert.equal(read.status, 404);
+});
+
+test('only the documents on the list can be published', async () => {
+  // The path segment reaches KV. Without the allowlist an admin request could
+  // write any key in the namespace, including the analytics counters.
+  const env = publishing();
+  for (const file of ['salt', 'anything.json', 'fallback.json', 'profile']) {
+    const written = await handleRequest(
+      adminRequest(`/v1/admin/content/${file}`, {
+        method: 'PUT',
+        body: JSON.stringify({}),
+      }),
+      env,
+    );
+    assert.equal(written.status, 400, file);
+  }
+  assert.deepEqual(env.CONTENT.writes, []);
+});
+
+test('a path that climbs out of the content prefix is refused', async () => {
+  // `URL` normalises `..` away before the handler sees it, so this lands on a
+  // path that matches no route rather than on the allowlist. Asserted anyway,
+  // and asserted on the write rather than the status: the guarantee that
+  // matters is that nothing reached the store, and it must hold whichever of
+  // the two refusals happens to catch it.
+  const env = publishing();
+  for (const path of [
+    '/v1/admin/content/../salt',
+    '/v1/admin/content/..%2Fsalt',
+    '/v1/admin/content/nested/profile.json',
+  ]) {
+    const written = await handleRequest(
+      adminRequest(path, {method: 'PUT', body: JSON.stringify({})}),
+      env,
+    );
+    assert.ok(written.status >= 400, path);
+  }
+  assert.deepEqual(env.CONTENT.writes, []);
+});
+
+test('a document that is not JSON is refused at the door', async () => {
+  const env = publishing();
+  const written = await handleRequest(
+    adminRequest('/v1/admin/content/profile.json', {
+      method: 'PUT',
+      body: '{ not json',
+    }),
+    env,
+  );
+  // The site would survive this -- it falls back -- but the owner would not
+  // know he had published something broken.
+  assert.equal(written.status, 400);
+  assert.deepEqual(env.CONTENT.writes, []);
+});
+
+test('a document that is not an object is refused', async () => {
+  const env = publishing();
+  const written = await handleRequest(
+    adminRequest('/v1/admin/content/profile.json', {
+      method: 'PUT',
+      body: JSON.stringify([1, 2, 3]),
+    }),
+    env,
+  );
+  assert.equal(written.status, 400);
+});
+
+test('an oversized document is refused', async () => {
+  const env = publishing();
+  const written = await handleRequest(
+    adminRequest('/v1/admin/content/profile.json', {
+      method: 'PUT',
+      body: JSON.stringify({padding: 'x'.repeat(300 * 1024)}),
+    }),
+    env,
+  );
+  assert.equal(written.status, 413);
+});
+
+test('writing without a token is refused', async () => {
+  const env = publishing();
+  const written = await handleRequest(
+    adminRequest('/v1/admin/content/profile.json', {
+      method: 'PUT',
+      body: JSON.stringify({}),
+      token: null,
+    }),
+    env,
+  );
+  assert.equal(written.status, 401);
+  assert.deepEqual(env.CONTENT.writes, []);
+});
+
+test('writing with the wrong token is refused', async () => {
+  const env = publishing();
+  const written = await handleRequest(
+    adminRequest('/v1/admin/content/profile.json', {
+      method: 'PUT',
+      body: JSON.stringify({}),
+      token: 'c'.repeat(48),
+    }),
+    env,
+  );
+  assert.equal(written.status, 401);
+});
+
+test('the console token does not open the admin endpoints', async () => {
+  // Two different jobs and two different secrets. The console token is handed
+  // to a dashboard that only reads counters; it must not also be able to
+  // rewrite what the site says about the owner.
+  const env = publishing();
+  const written = await handleRequest(
+    adminRequest('/v1/admin/content/profile.json', {
+      method: 'PUT',
+      body: JSON.stringify({}),
+      token: consoleToken,
+    }),
+    env,
+  );
+  assert.equal(written.status, 401);
+});
+
+test('repeated wrong tokens stop being answered', async () => {
+  const env = publishing();
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const refused = await handleRequest(
+      adminRequest('/v1/admin/content', {token: 'c'.repeat(48)}),
+      env,
+    );
+    assert.equal(refused.status, 401, `attempt ${attempt}`);
+  }
+  const limited = await handleRequest(
+    adminRequest('/v1/admin/content', {token: 'c'.repeat(48)}),
+    env,
+  );
+  assert.equal(limited.status, 429);
+
+  // And the right token is refused too while the limit holds: the point is
+  // that the endpoint stops answering, not that it keeps a door open.
+  const correct = await handleRequest(adminRequest('/v1/admin/content'), env);
+  assert.equal(correct.status, 429);
+});
+
+test('a correct token does not count against the limit', async () => {
+  const env = publishing();
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const listed = await handleRequest(adminRequest('/v1/admin/content'), env);
+    assert.equal(listed.status, 200);
+  }
+});
+
+test('the listing says what is currently published', async () => {
+  const env = publishing();
+  await handleRequest(
+    adminRequest('/v1/admin/content/apps.json', {
+      method: 'PUT',
+      body: JSON.stringify({apps: []}),
+    }),
+    env,
+  );
+  const listed = await handleRequest(adminRequest('/v1/admin/content'), env);
+  assert.deepEqual(await listed.json(), {published: ['apps.json']});
+});
+
+test('a site read from another origin is refused', async () => {
+  const env = publishing();
+  const read = await handleRequest(
+    new Request('https://worker.example/v1/content/profile.json', {
+      headers: {origin: 'https://example.com'},
+    }),
+    env,
+  );
+  assert.equal(read.status, 403);
+});
+
+test('with no content store bound the site simply reads its bundle', async () => {
+  // The namespace has to be created by hand. Until it is, this Worker deploys
+  // and behaves exactly as it did before.
+  const env = environment({ADMIN_TOKEN: adminToken});
+  const read = await handleRequest(siteRequest('/v1/content/profile.json'), env);
+  assert.equal(read.status, 404);
+
+  const written = await handleRequest(
+    adminRequest('/v1/admin/content/profile.json', {
+      method: 'PUT',
+      body: JSON.stringify({}),
+    }),
+    env,
+  );
+  assert.equal(written.status, 503);
 });

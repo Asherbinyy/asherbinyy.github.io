@@ -101,7 +101,7 @@ is a free file host with the owner's name on it.
 
 ## 4. Tasks
 
-### 7.1 The content source — **done**
+### 7.1 The content source — **done**, both halves
 Remote read in `ContentRepository`, behind the existing `ContentResult`, with
 the bundle as fallback. **Done when:** killing the Worker changes nothing a
 visitor can see, and a malformed remote document is rejected by the same parser
@@ -134,16 +134,48 @@ repository by doing nothing.
 in the same change. The content layer needs it and cannot reach into a feature
 for it, and it was never a writing concern.
 
+**The server half.** `GET /v1/content/<file>` reads a published document from
+KV, `PUT` and `DELETE` under `/v1/admin/content/` write and withdraw it, and
+`GET /v1/admin/content` lists what is live. Only the five documents on an
+allowlist can be addressed: the path segment reaches KV, so without it an admin
+request could read or write any key in the namespace, including the analytics
+counters that share it. A document is parsed before it is stored, so publishing
+something broken is refused at the door rather than served to the site and
+silently rejected there.
+
+The `CONTENT` namespace is optional and commented out in `wrangler.toml` until
+the owner creates it. Until then the Worker deploys and behaves exactly as it
+did: reads 404, writes answer 503, and the site uses its bundle.
+
 ### 7.2 Media storage
 A second KV namespace, `/v1/media/*` read path, long cache headers, and the
 allowlist and size cap above. Images only; video is a URL. **Done when:** an
 image dropped in appears on the site without a deploy, and an oversized file,
 an SVG and an HTML file are all refused.
 
-### 7.3 Auth
+### 7.3 Auth — **done**
 Token issue, verification, rate limit, and a way to revoke. **Done when:** an
 unauthenticated write returns 401, a wrong token returns 401, and the token can
 be rotated without a code change.
+
+Shipped with the write endpoints. `ADMIN_TOKEN` is a separate secret from
+`CONSOLE_TOKEN` and a test asserts the console token does **not** open the admin
+endpoints: one is handed to a dashboard that reads counters, the other can
+rewrite what the site says about the owner. Rotation is `wrangler secret put`
+again, with no code change, which is also how revocation works.
+
+Ten failed attempts in an hour and the endpoint stops answering, including to
+the correct token, because the guarantee is that it stops rather than that it
+keeps a door open. A correct token never counts against the limit.
+
+The write endpoints are deliberately **not** origin-gated. The panel is served
+by the Worker, not by the site, so an Origin check would reject the only client
+meant to reach them. The token is the guard and it is checked before any body
+is read.
+
+**The read path is origin-gated and the write path is not, which is the right
+way round.** A read is the site asking for its own content back; a write is the
+owner, from somewhere else entirely.
 
 ### 7.4 The panel
 Served at `/admin` from the Worker. Plain HTML and a little JavaScript, not a

@@ -2,6 +2,7 @@ const saltKey = 'system|salt';
 const counterPrefix = 'counter|';
 const totalPrefix = 'total|';
 const visitorPrefix = 'visitor|';
+const adminFailurePrefix = 'admin-failures|';
 const digestPrefix = 'system|digest|';
 const saltLifetimeMs = 24 * 60 * 60 * 1000;
 const shortRetentionSeconds = 2 * 24 * 60 * 60;
@@ -78,6 +79,40 @@ export async function handleRequest(request, env, now = new Date()) {
     }
     return relayCover(url.searchParams.get('src'), headers);
   }
+  // Content the owner has published, read by the site in place of its bundle.
+  // Origin-gated like every other read: this is the site's own content coming
+  // back to it, not a public API.
+  if (url.pathname.startsWith('/v1/content/') && request.method === 'GET') {
+    if (origin !== env.SITE_ORIGIN) {
+      return response({error: 'Origin not allowed'}, 403, headers);
+    }
+    const file = url.pathname.slice('/v1/content/'.length);
+    return readPublished(file, env, headers);
+  }
+
+  // The write half. Deliberately not origin-gated: the owner publishes from a
+  // panel served by this Worker, not from the site, so an Origin check would
+  // reject the only client that is supposed to reach it. The token is what
+  // guards these, and it is checked before anything else is read.
+  if (url.pathname.startsWith('/v1/admin/')) {
+    const refusal = await refuseUnauthorisedAdmin(request, env, now, headers);
+    if (refusal) return refusal;
+
+    if (url.pathname === '/v1/admin/content' && request.method === 'GET') {
+      return listPublished(env, headers);
+    }
+    if (url.pathname.startsWith('/v1/admin/content/')) {
+      const file = url.pathname.slice('/v1/admin/content/'.length);
+      if (request.method === 'PUT') {
+        return publish(file, request, env, headers);
+      }
+      if (request.method === 'DELETE') {
+        return withdraw(file, env, headers);
+      }
+    }
+    return response({error: 'Not found'}, 404, headers);
+  }
+
   if (url.pathname === '/v1/aggregates' && request.method === 'GET') {
     if (!authorised(request, env.CONSOLE_TOKEN)) {
       return response({error: 'Unauthorised'}, 401, headers);
@@ -85,6 +120,149 @@ export async function handleRequest(request, env, now = new Date()) {
     return response(await aggregateSnapshot(env), 200, headers);
   }
   return response({error: 'Not found'}, 404, headers);
+}
+
+/// Content documents the owner is allowed to override.
+///
+/// A closed list, checked before the key is built. The path segment reaches
+/// KV, so without this an admin request could read or write any key in the
+/// namespace, including the analytics counters sharing it.
+const publishableFiles = new Set([
+  'profile.json',
+  'career.json',
+  'apps.json',
+  'education.json',
+  'interests.json',
+]);
+
+/// How long a published document may be, in bytes.
+///
+/// The largest bundled document is a few kilobytes. This is generous enough
+/// that the owner will never meet it and small enough that the endpoint is not
+/// a file host.
+const maximumDocumentBytes = 256 * 1024;
+
+/// Failed admin attempts allowed per hour before the endpoint stops answering.
+const maximumFailedAttempts = 10;
+
+function contentKey(file) {
+  return `content:${file}`;
+}
+
+/// Whether the store that holds published content is configured at all.
+///
+/// It is optional on purpose. The namespace has to be created by hand, and
+/// until it is, this Worker deploys and runs exactly as before: reads 404 and
+/// the site uses its bundle, which is the behaviour it already handles.
+function contentStore(env) {
+  return env.CONTENT ?? null;
+}
+
+async function readPublished(file, env, headers) {
+  if (!publishableFiles.has(file)) {
+    return response({error: 'Not found'}, 404, headers);
+  }
+  const store = contentStore(env);
+  if (!store) return response({error: 'Not found'}, 404, headers);
+
+  const document = await store.get(contentKey(file));
+  if (document === null) return response({error: 'Not found'}, 404, headers);
+
+  const published = new Headers(headers);
+  published.set('content-type', 'application/json; charset=utf-8');
+  // Short, because the point of publishing is that a correction is live
+  // quickly, and the site falls back to its bundle if this is slow anyway.
+  published.set('cache-control', 'public, max-age=60');
+  return new Response(document, {status: 200, headers: published});
+}
+
+async function listPublished(env, headers) {
+  const store = contentStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  const listing = await store.list({prefix: 'content:'});
+  return response(
+    {published: listing.keys.map((entry) => entry.name.slice('content:'.length))},
+    200,
+    headers,
+  );
+}
+
+async function publish(file, request, env, headers) {
+  if (!publishableFiles.has(file)) {
+    return response({error: 'Not a publishable document'}, 400, headers);
+  }
+  const store = contentStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+
+  const declared = Number(request.headers.get('content-length') ?? 0);
+  if (declared > maximumDocumentBytes) {
+    return response({error: 'Payload too large'}, 413, headers);
+  }
+  const source = await request.text();
+  if (new TextEncoder().encode(source).byteLength > maximumDocumentBytes) {
+    return response({error: 'Payload too large'}, 413, headers);
+  }
+
+  // Parsed here so a document that cannot be read is refused at the door
+  // rather than served to the site and rejected there. The site would survive
+  // it -- it falls back to the bundle -- but the owner would have no idea he
+  // had published something broken.
+  let document;
+  try {
+    document = JSON.parse(source);
+  } catch {
+    return response({error: 'Document is not valid JSON'}, 400, headers);
+  }
+  if (!plainObject(document)) {
+    return response({error: 'Document must be an object'}, 400, headers);
+  }
+
+  // Stored re-serialised rather than as received, so the bytes in KV are
+  // exactly what was parsed and nothing rides along outside the JSON.
+  await store.put(contentKey(file), JSON.stringify(document));
+  return response({published: file}, 200, headers);
+}
+
+async function withdraw(file, env, headers) {
+  if (!publishableFiles.has(file)) {
+    return response({error: 'Not a publishable document'}, 400, headers);
+  }
+  const store = contentStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  await store.delete(contentKey(file));
+  // Withdrawing is not deleting content: the bundled document is still there
+  // and the site goes back to it.
+  return response({withdrawn: file}, 200, headers);
+}
+
+/// Refuses an admin request, or returns null to let it through.
+///
+/// Counts failures and stops answering after too many in an hour. The token is
+/// long and random so guessing it is not a realistic attack, but an endpoint
+/// that will answer an unlimited number of guesses is a different claim from
+/// one that will not, and the second is cheap.
+async function refuseUnauthorisedAdmin(request, env, now, headers) {
+  const attemptKey = key(adminFailurePrefix, [
+    isoDate(now),
+    String(now.getUTCHours()),
+  ]);
+  const failures = Number((await env.ANALYTICS.get(attemptKey)) ?? 0);
+  if (failures >= maximumFailedAttempts) {
+    return response({error: 'Too many attempts'}, 429, headers);
+  }
+  if (!authorised(request, env.ADMIN_TOKEN)) {
+    await env.ANALYTICS.put(attemptKey, String(failures + 1), {
+      expirationTtl: 3600,
+    });
+    return response({error: 'Unauthorised'}, 401, headers);
+  }
+  return null;
 }
 
 async function receiveBeacon(request, env, now, headers) {
