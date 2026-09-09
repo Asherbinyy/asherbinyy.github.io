@@ -147,11 +147,40 @@ The `CONTENT` namespace is optional and commented out in `wrangler.toml` until
 the owner creates it. Until then the Worker deploys and behaves exactly as it
 did: reads 404, writes answer 503, and the site uses its bundle.
 
-### 7.2 Media storage
+### 7.2 Media storage — **done**
 A second KV namespace, `/v1/media/*` read path, long cache headers, and the
 allowlist and size cap above. Images only; video is a URL. **Done when:** an
 image dropped in appears on the site without a deploy, and an oversized file,
 an SVG and an HTML file are all refused.
+
+Shipped. `POST /v1/admin/media` takes PNG, JPEG or WebP up to 4MiB;
+`GET /v1/media/<id>` serves it; `DELETE` removes it and `GET /v1/admin/media`
+lists what is stored with its dimensions.
+
+**Validation is on the bytes, not on the claim.** `measureImage` reads the real
+container header and returns the format and dimensions, so a script renamed to
+`.png` and posted as `image/png` is refused on what it is. An SVG is refused
+outright at the type allowlist, because it is markup that can carry script and
+accepting it would be stored XSS on the owner's own domain. Dimensions are
+bounded at both ends: the floor rejects tracking pixels and decode failures
+that report 1x1, the ceiling rejects a decompression bomb before a browser ever
+sees it.
+
+**Ids are content hashes.** The same image uploaded twice is one key, and a
+`/v1/media/<id>` URL can never come to mean different bytes, which is what
+makes the one-year immutable cache honest rather than a bet. Replacing an image
+produces a new id, so nothing stale is ever served.
+
+**Media reads are the one thing here that is not origin-gated**, and that is
+deliberate: images are fetched by ordinary image elements, which send no Origin
+header, so gating them would refuse the only way they are ever loaded. There is
+nothing to protect — this is public artwork on a public site behind an
+unguessable name.
+
+The media lives in the same `CONTENT` namespace under its own key prefix. The
+task said a second namespace; one namespace with two prefixes has the same
+isolation from the expiring analytics keys, and it is one thing for the owner to
+create rather than two.
 
 ### 7.3 Auth — **done**
 Token issue, verification, rate limit, and a way to revoke. **Done when:** an
