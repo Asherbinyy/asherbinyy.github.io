@@ -8,8 +8,8 @@
     "ar": "أحمد الشربيني"
   },
   "positioning": {
-    "en": "Egyptian, in Manchester, happiest when something that did not exist on Monday is on a phone by Friday.",
-    "ar": "مصري في مانشستر، وأسعد ما أكون حين يصبح شيء لم يكن موجوداً يوم الاثنين على هاتف يوم الجمعة."
+    "en": "Senior mobile developer. Five years building apps people use every day.",
+    "ar": "مطوّر تطبيقات موبايل أول. خمس سنوات في بناء تطبيقات يستخدمها الناس كل يوم."
   },
   "location": {
     "en": "Manchester, United Kingdom",
@@ -58,8 +58,8 @@
     }
   ],
   "greeting": {
-    "en": "Hiya, I am Ahmed.",
-    "ar": "أهلاً، أنا أحمد."
+    "en": "Hi, I'm Ahmed Elsherbini.",
+    "ar": "أهلاً، أنا أحمد الشربيني."
   },
   "reach": [
     "EG",
@@ -71,7 +71,7 @@
     "GB"
   ],
   "biography": {
-    "en": "Five years of shipping mobile apps for other people, and I still open a new project on a Sunday because I want to see whether the thing works. Lately that means AI automation: wiring tools together until a job that took an afternoon takes a minute. I read, I lift, I follow football far too closely, and I will lose an evening to a game with a good story in it.",
-    "ar": "خمس سنوات من إطلاق تطبيقات الهاتف لحساب الآخرين، وما زلت أفتح مشروعاً جديداً يوم الأحد لأرى إن كانت الفكرة تعمل. ومؤخراً صار ذلك يعني أتمتة بالذكاء الاصطناعي: ربط الأدوات ببعضها حتى يصير العمل الذي يأخذ بعد ظهيرة كاملة دقيقة واحدة. أقرأ، وأتمرّن، وأتابع كرة القدم أكثر مما ينبغي، وأضيّع أمسية كاملة على لعبة فيها حكاية جيدة."
+    "en": "I build mobile apps, mostly in Flutter, and I have been doing it for five years across seven countries. Outside work I am usually at the gym, watching football, reading, or playing something. Lately I spend a lot of my free time on AI automation.",
+    "ar": "أبني تطبيقات موبايل، غالباً بـ Flutter، منذ خمس سنوات وفي سبع دول. خارج العمل أكون في النادي، أو أتابع كرة القدم، أو أقرأ، أو ألعب. ومؤخراً أقضي وقت فراغي في أتمتة بالذكاء الاصطناعي."
   }
 }

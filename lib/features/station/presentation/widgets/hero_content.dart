@@ -10,7 +10,6 @@ import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
-import 'package:nocturne/content/models/localized_text.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/features/station/presentation/widgets/stat_panel.dart';
@@ -50,25 +49,14 @@ class HeroContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // The greeting first. The page used to open on the name set in the
-        // largest type on the site, which the owner said read as a wall
-        // rather than a welcome. The name still follows, and still carries
-        // the weight; it just is not the first thing said.
-        if (profile.greeting case final LocalizedText greeting) ...[
-          Text(
-            greeting.resolve(locale),
-            style: type.heading.copyWith(color: tokens.beacon),
-          ),
-          SizedBox(height: tokens.space8),
-        ],
-        // A step down from the largest size on the site, and capped to the
-        // measure. The full name is longer than the short one it replaced, so
-        // at displayXl it wrapped to two lines and ran the whole width, which
-        // is the wall the greeting was added to avoid.
+        // One line, and it contains the name. The first pass put a greeting
+        // above the name and printed both, so the page said "Ahmed" twice
+        // before it said anything else. The greeting is the heading now, and
+        // the separate name line is gone.
         ConstrainedBox(
           constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
           child: _AcquiredName(
-            name: profile.shownName.resolve(locale),
+            name: (profile.greeting ?? profile.shownName).resolve(locale),
             style: type.displayL,
             reveal: acquisitionReveal,
           ),
