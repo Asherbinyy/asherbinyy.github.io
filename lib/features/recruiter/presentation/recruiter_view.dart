@@ -12,6 +12,7 @@ import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/locale_controller.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/content/period.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
@@ -147,11 +148,27 @@ class _Brief extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (final role in roles)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: tokens.space12),
-                    child: _Role(role: role, locale: locale),
-                  ),
+                // Two columns where the surface allows it. This was one
+                // narrow column capped to the reading measure, so on a laptop
+                // the right half of the page was empty and the owner had to
+                // scroll a summary that would have fitted on one screen.
+                _Columns(
+                  children: [
+                    for (final role in roles)
+                      _Role(
+                        role: role,
+                        locale: locale,
+                        // The title is repeated verbatim on most roles, so it
+                        // is printed only where it changes.
+                        showTitle:
+                            role == roles.first ||
+                            role.title?.resolve(locale) !=
+                                roles[roles.indexOf(role) - 1].title?.resolve(
+                                  locale,
+                                ),
+                      ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -201,10 +218,21 @@ class _Brief extends StatelessWidget {
 
 /// One role: employer, what he did there, and when.
 class _Role extends StatelessWidget {
-  const _Role({required this.role, required this.locale});
+  const _Role({
+    required this.role,
+    required this.locale,
+    this.showTitle = true,
+  });
 
   final CareerRole role;
   final AppLocale locale;
+
+  /// Whether to print the job title.
+  ///
+  /// Five of the seven roles carry the identical title, so printing it under
+  /// every employer made "Mobile Application Developer" the most repeated
+  /// phrase on a page whose job is to be read in a minute.
+  final bool showTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -229,20 +257,17 @@ class _Role extends StatelessWidget {
             ),
             SizedBox(width: tokens.space12),
             Text(
-              '${role.start} to ${role.end ?? ''}'.trim(),
+              formatPeriod(context.l10n, role.start, role.end),
               style: type.telemetryS.copyWith(color: tokens.textMuted),
             ),
           ],
         ),
-        if (title != null)
+        if (title != null && showTitle)
           Text(title, style: type.bodyS.copyWith(color: tokens.textSecondary)),
         if (summary != null)
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: type.measureFor(type.bodyS)),
-            child: Text(
-              summary,
-              style: type.bodyS.copyWith(color: tokens.textSecondary),
-            ),
+          Text(
+            summary,
+            style: type.bodyS.copyWith(color: tokens.textSecondary),
           ),
       ],
     );
@@ -400,6 +425,70 @@ class _Row extends StatelessWidget {
           Expanded(child: child),
         ],
       ),
+    );
+  }
+}
+
+/// Lays children out in two columns where the surface is wide enough.
+///
+/// The recruiter view was a single column capped to the reading measure, which
+/// is right for prose and wrong for a summary meant to be scanned in under a
+/// minute: on a laptop the right half of the page was empty and the reader had
+/// to scroll past content that would have fitted on one screen.
+class _Columns extends StatelessWidget {
+  const _Columns({required this.children});
+
+  final List<Widget> children;
+
+  /// Below this the second column would be narrower than a readable measure.
+  static const double _twoColumnWidth = 720;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < _twoColumnWidth) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final child in children)
+                Padding(
+                  padding: EdgeInsets.only(bottom: tokens.space16),
+                  child: child,
+                ),
+            ],
+          );
+        }
+
+        // Split down the middle, in order, so the sequence still reads down
+        // the left column and then down the right rather than zig-zagging.
+        final half = (children.length / 2).ceil();
+        Widget column(Iterable<Widget> items) => Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final child in items)
+                Padding(
+                  padding: EdgeInsets.only(bottom: tokens.space16),
+                  child: child,
+                ),
+            ],
+          ),
+        );
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            column(children.take(half)),
+            SizedBox(width: tokens.space32),
+            column(children.skip(half)),
+          ],
+        );
+      },
     );
   }
 }

@@ -30,12 +30,13 @@ void main() {
     ) async {
       await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
 
-      // Every in-app surface shows `profile.displayName`, whatever the owner
-      // has set it to. It used to be "Sherbini", and this asserted the full
-      // name was absent to prove the short one was being used. He has since
-      // set the display name to the full name for consistency, so that second
-      // assertion now contradicts the content it is meant to be reading.
-      expect(find.text(_shownName()), findsOneWidget);
+      // The headline is the greeting, which carries the name inside it. The
+      // first pass printed a greeting *and* the name, so the page said
+      // "Ahmed" twice before it said anything else; the owner objected and
+      // the separate name line went. This asserts both halves of that: the
+      // name is present, and it is present exactly once.
+      expect(find.text(_headline()), findsOneWidget);
+      expect(find.textContaining(_shownName()), findsOneWidget);
       // Read from the content rather than pinned to a sentence: the line is
       // the owner's own copy and he rewrites it, and a test that hard-codes it
       // fails every time he does.
@@ -266,7 +267,7 @@ void main() {
       await pumpFrames(tester);
 
       expect(container.read(acquisitionPlayedProvider), isTrue);
-      expect(find.text(_shownName()), findsOneWidget);
+      expect(find.text(_headline()), findsOneWidget);
     });
 
     testWidgets('a pointer press skips it too', (tester) async {
@@ -339,7 +340,7 @@ void main() {
       await tester.pump(Tokens.instant);
 
       expect(container.read(acquisitionPlayedProvider), isTrue);
-      expect(find.text(_shownName()), findsOneWidget);
+      expect(find.text(_headline()), findsOneWidget);
     });
 
     testWidgets('no other route carries the sequence', (tester) async {
@@ -420,6 +421,16 @@ void main() {
       );
     });
   });
+}
+
+/// The hero's headline: the greeting where there is one, else the name.
+///
+/// Mirrors `HeroContent`, which prints one line rather than two.
+String _headline() {
+  final profile = bundledJson('assets/content/profile.json');
+  final greeting =
+      profile['greeting'] ?? profile['displayName'] ?? profile['name'];
+  return (greeting as Map<String, dynamic>)['en'] as String;
 }
 
 /// The name the hero is expected to draw, from the content it draws it from.

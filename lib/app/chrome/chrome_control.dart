@@ -25,6 +25,7 @@ class ChromeControl extends StatefulWidget {
     required this.semanticLabel,
     required this.isActive,
     required this.onPressed,
+    this.face,
     super.key,
   });
 
@@ -39,6 +40,12 @@ class ChromeControl extends StatefulWidget {
 
   /// Invoked on tap, click, or Enter and Space when focused.
   final VoidCallback onPressed;
+
+  /// Drawn in place of [label], for a control that is a picture.
+  ///
+  /// [label] is still required and still the fallback, so a control that
+  /// supplies a face has a word behind it rather than nothing.
+  final Widget Function(BuildContext context, Color colour)? face;
 
   @override
   State<ChromeControl> createState() => _ChromeControlState();
@@ -91,10 +98,19 @@ class _ChromeControlState extends State<ChromeControl> {
                   minHeight: target,
                 ),
                 child: Center(
-                  child: AnimatedDefaultTextStyle(
-                    duration: ReducedMotion.duration(context, Motion.quick),
-                    style: context.type.telemetry.copyWith(color: colour),
-                    child: ExcludeSemantics(child: Text(widget.label)),
+                  child: ExcludeSemantics(
+                    child: widget.face != null
+                        ? widget.face!(context, colour)
+                        : AnimatedDefaultTextStyle(
+                            duration: ReducedMotion.duration(
+                              context,
+                              Motion.quick,
+                            ),
+                            style: context.type.telemetry.copyWith(
+                              color: colour,
+                            ),
+                            child: Text(widget.label),
+                          ),
                   ),
                 ),
               ),

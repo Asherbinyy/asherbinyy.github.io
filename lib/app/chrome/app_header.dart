@@ -6,6 +6,7 @@ import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/app_mark.dart';
 import 'package:nocturne/app/chrome/app_nav.dart';
 import 'package:nocturne/app/chrome/chrome_control.dart';
+import 'package:nocturne/app/chrome/theme_brazier.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/locale_controller.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
@@ -99,6 +100,13 @@ class AppHeader extends ConsumerWidget {
                     ? l10n.themeSwitchToDaybreak
                     : l10n.themeSwitchToNocturne,
                 isActive: theme == AppTheme.daybreak,
+                // A brazier rather than the half-filled circle every site
+                // uses: a temple is lit by fire, so day and night here is a
+                // bowl of it catching or being put out.
+                face: (context, colour) => ThemeBrazier(
+                  isLit: theme == AppTheme.daybreak,
+                  colour: colour,
+                ),
                 onPressed: () {
                   ref.read(themeControllerProvider.notifier).toggle();
                   ref.recordInteraction(
