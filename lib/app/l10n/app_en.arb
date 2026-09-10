@@ -213,7 +213,7 @@
   "@workHeading": {
     "description": "Heading on the work page. A name, not a count: it read \"13 shipped applications\", which is a statistic rather than a title and one every other page already carries."
   },
-  "workSubheading": "Products taken from a first conversation to a release, and kept running afterwards. Some built alone, most with a team, all of them shipped.",
+  "workSubheading": "Fourteen apps, shipped and running.",
   "@workSubheading": {
     "description": "Standfirst under the work ledger heading."
   },

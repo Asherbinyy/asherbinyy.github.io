@@ -50,7 +50,7 @@
   "signalAppsShipped": "{count, plural, =1{تطبيق واحد} other{{count} تطبيقات}}",
   "signalClose": "إغلاق",
   "workHeading": "الخزانة",
-  "workSubheading": "منتجات أُخذت من أول حديث حتى الإصدار، ثم بقيت تعمل بعده. بعضها بُني منفرداً، وأغلبها مع فريق، وكلها أُطلقت.",
+  "workSubheading": "أربعة عشر تطبيقاً، أُطلقت وما زالت تعمل.",
   "workOpenStore": "افتح {name} على {store}",
   "workAppStore": "آب ستور",
   "workGooglePlay": "جوجل بلاي",

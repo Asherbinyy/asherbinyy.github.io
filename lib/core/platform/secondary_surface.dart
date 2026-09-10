@@ -20,10 +20,20 @@ extension SecondarySurfaceContext on BuildContext {
         // and this is why: the content was never allowed to be tall, and was
         // never allowed to scroll either.
         isScrollControlled: true,
-        backgroundColor: tokens.surfaceRaised,
+        // `surfaceRaised` is near-white on papyrus, which is why the owner
+        // read these as plain white cards with no edge of their own.
+        // `surface` sits a step down from the page in the dark theme and a
+        // step up in the light one, so the sheet reads as a sheet in both.
+        backgroundColor: tokens.surface,
         elevation: Tokens.zero,
+        // Top corners only, and rounded further than a modal. A sheet has come
+        // up from the bottom edge of the screen, so rounding its bottom
+        // corners against that edge is what made it read as a box dropped on
+        // the page rather than as a sheet.
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Tokens.modalRadius),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(Tokens.sheetRadius),
+          ),
           side: BorderSide(color: tokens.hairlineStrong),
         ),
         sheetAnimationStyle: AnimationStyle(

@@ -9,6 +9,7 @@ import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/locale_controller.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
@@ -169,17 +170,15 @@ class _Map extends StatelessWidget {
             Text(l10n.signalHeading, style: context.type.displayM),
             SizedBox(height: tokens.space32),
             if (isWide)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 2, child: map),
-                  SizedBox(width: tokens.space32),
-                  Expanded(
-                    child: index < 0
-                        ? const SizedBox.shrink()
-                        : TransmissionPanel(role: roles[index], locale: locale),
-                  ),
-                ],
+              // The map holds the whole width until a stop is chosen, then
+              // gives a third of it back. It used to reserve that third from
+              // the first frame and fill it with nothing, so the page opened
+              // with an empty column beside a squeezed map.
+              _MapAndPanel(
+                map: map,
+                panel: index < 0
+                    ? null
+                    : TransmissionPanel(role: roles[index], locale: locale),
               )
             else
               map,
@@ -212,4 +211,64 @@ class _Unavailable extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       CarrierEmptyState(direction: context.l10n.heroContentUnavailable);
+}
+
+/// The map, and the panel that takes room from it once a stop is chosen.
+///
+/// Widths rather than flex factors, because flex is an integer and this has to
+/// move: the panel opens from nothing to a third of the row, and the map gives
+/// up exactly that much. Under reduced motion the change is instant.
+class _MapAndPanel extends StatelessWidget {
+  const _MapAndPanel({required this.map, required this.panel});
+
+  final Widget map;
+  final Widget? panel;
+
+  /// How much of the row the panel takes when it is open.
+  static const double _panelFraction = 0.34;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final gap = tokens.space32;
+
+    return LayoutBuilder(
+      builder: (context, constraints) => TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: panel == null ? 0 : 1),
+        duration: ReducedMotion.duration(context, Tokens.standard),
+        curve: Tokens.emphasized,
+        builder: (context, open, _) {
+          final panelWidth = constraints.maxWidth * _panelFraction * open;
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: constraints.maxWidth - panelWidth - gap * open,
+                child: map,
+              ),
+              SizedBox(width: gap * open),
+              // Clipped while it opens, so the panel slides out from behind
+              // the map's edge rather than reflowing its own text on every
+              // frame of the animation.
+              //
+              // `Align`'s width factor rather than an `OverflowBox`: the page
+              // is inside a scroll view, so an overflow box has no bounded
+              // height to work with and asserts. A width factor scales the
+              // slot to a fraction of the child and leaves height alone.
+              ClipRect(
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  widthFactor: open,
+                  child: SizedBox(
+                    width: constraints.maxWidth * _panelFraction,
+                    child: panel ?? const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
 }
