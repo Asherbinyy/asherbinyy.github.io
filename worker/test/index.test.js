@@ -649,10 +649,15 @@ test('a document with nothing published is not found', async () => {
 
 test('a published document comes back to the site', async () => {
   const env = publishing();
+  const document = {
+    name: {en: 'Ahmed'},
+    positioning: {en: 'Mobile developer'},
+    contact: {email: 'someone@example.com'},
+  };
   const put = await handleRequest(
     adminRequest('/v1/admin/content/profile.json', {
       method: 'PUT',
-      body: JSON.stringify({name: 'Ahmed'}),
+      body: JSON.stringify(document),
     }),
     env,
   );
@@ -660,7 +665,9 @@ test('a published document comes back to the site', async () => {
 
   const read = await handleRequest(siteRequest('/v1/content/profile.json'), env);
   assert.equal(read.status, 200);
-  assert.deepEqual(await read.json(), {name: 'Ahmed'});
+  // The document itself, not an envelope: the site parses this straight into
+  // its content models.
+  assert.deepEqual(await read.json(), document);
 });
 
 test('withdrawing a document returns the site to its bundle', async () => {
@@ -668,7 +675,7 @@ test('withdrawing a document returns the site to its bundle', async () => {
   await handleRequest(
     adminRequest('/v1/admin/content/career.json', {
       method: 'PUT',
-      body: JSON.stringify({stops: []}),
+      body: JSON.stringify({roles: []}),
     }),
     env,
   );
@@ -1155,7 +1162,17 @@ test('a source given for a changed figure is recorded', async () => {
         'content-type': 'application/json',
         'x-change-note': encodeURIComponent('Transcript, 2026-09-09'),
       },
-      body: JSON.stringify({overallMark: 75}),
+      body: JSON.stringify({
+        entries: [
+          {
+            institution: {en: 'A university'},
+            award: {en: 'MSc'},
+            start: '2025-09',
+            end: '2026-09',
+            overallMark: 75,
+          },
+        ],
+      }),
     }),
     env,
   );

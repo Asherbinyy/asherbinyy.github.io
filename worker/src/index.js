@@ -1,3 +1,9 @@
+import {editableFiles} from '../contracts/content-schema.js';
+import {
+  changedClaims,
+  differences,
+  validateDocument,
+} from '../contracts/validate.js';
 import {adminPage} from './admin.js';
 
 const saltKey = 'system|salt';
@@ -70,7 +76,7 @@ export async function handleRequest(request, env, now = new Date()) {
   // the HTML would mean inventing a session before there is anything to hold
   // one for.
   if (url.pathname === '/admin' && request.method === 'GET') {
-    return new Response(adminPage(env.SITE_ORIGIN), {
+    return new Response(adminPage(env), {
       status: 200,
       headers: new Headers({
         'content-type': 'text/html; charset=utf-8',
@@ -148,6 +154,12 @@ export async function handleRequest(request, env, now = new Date()) {
     if (url.pathname === '/v1/admin/changes' && request.method === 'GET') {
       return listChanges(env, headers);
     }
+    if (url.pathname === '/v1/admin/validate' && request.method === 'POST') {
+      return checkDraft(request, env, headers, false);
+    }
+    if (url.pathname === '/v1/admin/review' && request.method === 'POST') {
+      return checkDraft(request, env, headers, true);
+    }
     if (url.pathname === '/v1/admin/media' && request.method === 'GET') {
       return listMedia(env, headers);
     }
@@ -183,13 +195,7 @@ export async function handleRequest(request, env, now = new Date()) {
 /// A closed list, checked before the key is built. The path segment reaches
 /// KV, so without this an admin request could read or write any key in the
 /// namespace, including the analytics counters sharing it.
-const publishableFiles = new Set([
-  'profile.json',
-  'career.json',
-  'apps.json',
-  'education.json',
-  'interests.json',
-]);
+const publishableFiles = new Set(editableFiles);
 
 /// How long a published document may be, in bytes.
 ///
@@ -290,6 +296,21 @@ async function publish(file, request, env, now, headers) {
     return response({error: 'Document must be an object'}, 400, headers);
   }
 
+  // The real schema, not just "it is an object" (A-F6). Before this, a
+  // document the app could not parse was accepted here, reported to the owner
+  // as published, and then silently discarded by the site in favour of its
+  // bundle -- so the panel said the change was live and the change was not.
+  const verdict = validateDocument(file, document, {
+    references: await referenceSets(file, env),
+  });
+  if (verdict.errors.length > 0) {
+    return response(
+      {error: 'The document does not match the schema', errors: verdict.errors},
+      422,
+      headers,
+    );
+  }
+
   // Stored re-serialised rather than as received, so the bytes in KV are
   // exactly what was parsed and nothing rides along outside the JSON.
   await store.put(contentKey(file), JSON.stringify(document));
@@ -306,6 +327,106 @@ async function publish(file, request, env, now, headers) {
     );
   }
   return response({published: file}, 200, headers);
+}
+
+/// Checks a draft, and for a review also says what would change.
+///
+/// The panel has no validator of its own. It asks this, so there is exactly
+/// one answer to "would this be accepted" and the panel cannot disagree with
+/// the endpoint that decides.
+async function checkDraft(request, env, headers, full) {
+  const declared = Number(request.headers.get('content-length') ?? 0);
+  if (declared > maximumDocumentBytes) {
+    return response({error: 'Payload too large'}, 413, headers);
+  }
+  let body;
+  try {
+    body = JSON.parse(await request.text());
+  } catch {
+    return response({error: 'Request is not valid JSON'}, 400, headers);
+  }
+  if (!plainObject(body) || !publishableFiles.has(body.file)) {
+    return response({error: 'Not a document this panel edits'}, 400, headers);
+  }
+
+  const verdict = validateDocument(body.file, body.document, {
+    references: await referenceSets(body.file, env, body.references),
+  });
+  if (!full) return response(verdict, 200, headers);
+
+  // What the site is showing right now, which is not always something this
+  // Worker can read. Where nothing has been published the site falls back to
+  // the copy in its own bundle, and only the panel has that -- so it may say
+  // what it is comparing against, and the answer says which it was.
+  //
+  // Advisory, and only for what the owner is shown. When the provenance rule
+  // is enforced here in A3 it has to compare against the published copy or
+  // against nothing, never against a baseline the caller supplied.
+  const published = await liveDocument(body.file, env);
+  const offered = plainObject(body.baseline) ? body.baseline : null;
+  const live = published ?? offered;
+  return response(
+    {
+      ...verdict,
+      changes: live === null ? [] : differences(live, body.document),
+      claims: live === null ? [] : changedClaims(body.file, live, body.document),
+      comparedWith:
+        published !== null ? 'published' : offered !== null ? 'shipped' : 'nothing',
+    },
+    200,
+    headers,
+  );
+}
+
+/// The published document, or null when the site is using its own bundle.
+async function liveDocument(file, env) {
+  const store = contentStore(env);
+  if (!store) return null;
+  return store.get(contentKey(file), 'json');
+}
+
+/// The identifiers another document offers, so a reference can be checked.
+///
+/// Published content is the authority: it is what the site is actually
+/// serving. Where nothing is published the site falls back to the copy in its
+/// own bundle, which this Worker cannot read -- so the panel, which has both,
+/// may declare what it loaded. That declaration is advisory and only ever
+/// used to answer the panel's own question; a publish is checked against KV
+/// alone. The worst a wrong declaration can do is quiet a warning about the
+/// owner's own content, in a panel only he can open.
+async function referenceSets(file, env, declared = null) {
+  const wanted = referencedBy[file];
+  if (!wanted) return null;
+  const sets = {};
+  for (const name of wanted) {
+    const published = await liveDocument(name, env);
+    if (published !== null) {
+      sets[name] = collectIdentifiers(published) ?? [];
+      continue;
+    }
+    const offered = declared?.[name];
+    if (Array.isArray(offered) && offered.every((id) => typeof id === 'string')) {
+      sets[name] = offered;
+    }
+  }
+  return sets;
+}
+
+/// Which documents each document points at. The schema's `references` fields
+/// are the authority for a field; this says where to go looking.
+const referencedBy = {'career.json': ['apps.json']};
+
+/// Every `id` in the first list of objects a document holds.
+function collectIdentifiers(document) {
+  if (!plainObject(document)) return null;
+  for (const value of Object.values(document)) {
+    if (!Array.isArray(value)) continue;
+    const ids = value
+      .filter((entry) => plainObject(entry) && typeof entry.id === 'string')
+      .map((entry) => entry.id);
+    if (ids.length > 0) return ids;
+  }
+  return [];
 }
 
 async function withdraw(file, env, headers) {
