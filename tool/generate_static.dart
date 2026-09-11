@@ -14,6 +14,8 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:nocturne/app/app_route.dart';
+
 /// Base URL for the published site. Single constant to update when a custom
 /// domain is configured.
 const String baseUrl = 'https://asherbinyy.github.io';
@@ -43,7 +45,7 @@ void main() {
     _generateBrief(profile, apps, education),
   );
   _writeFile(File('${webDir.path}/robots.txt'), _generateRobots());
-  _writeFile(File('${webDir.path}/sitemap.xml'), _generateSitemap());
+  _writeFile(File('${webDir.path}/sitemap.xml'), _generateSitemap(apps));
 
   print('Static routes generated successfully.');
 }
@@ -809,22 +811,32 @@ String _generateRobots() =>
 // sitemap.xml
 // ---------------------------------------------------------------------------
 
-String _generateSitemap() {
-  final now = DateTime.now().toUtc().toIso8601String().split('T').first;
+String _generateSitemap(Map<String, dynamic> apps) {
   // The application routes carry no trailing slash — AppRoute declares them
   // as '/work', not '/work/' — and go_router resolves the slashed forms to its
   // error route. Only the two static directories keep theirs, because Pages
   // serves them as directories.
-  final routes = <String>[
-    '/',
-    '/cv/',
-    '/brief/',
-    '/signal',
-    '/work',
-    '/about',
-    '/writing',
-    '/privacy',
-  ];
+  final routes = <String>{
+    for (final route in AppRoute.values)
+      ...switch (route) {
+        AppRoute.console ||
+        AppRoute.campaign ||
+        AppRoute.caseStudy => <String>[],
+        AppRoute.cv || AppRoute.brief => ['${route.path}/'],
+        AppRoute.home ||
+        AppRoute.journey ||
+        AppRoute.work ||
+        AppRoute.writing ||
+        AppRoute.about ||
+        AppRoute.courtyard => [route.path],
+      },
+    for (final app
+        in (apps['apps'] as List<dynamic>).cast<Map<String, dynamic>>())
+      AppRoute.caseStudy.path.replaceFirst(
+        ':slug',
+        Uri.encodeComponent(app['id'] as String),
+      ),
+  };
 
   final buf = StringBuffer()
     ..writeln('<?xml version="1.0" encoding="UTF-8"?>')
@@ -833,8 +845,11 @@ String _generateSitemap() {
   for (final route in routes) {
     buf
       ..writeln('  <url>')
-      ..writeln('    <loc>$baseUrl$route</loc>')
-      ..writeln('    <lastmod>$now</lastmod>');
+      ..writeln('    <loc>${_esc('$baseUrl$route')}</loc>');
+
+    // There is no trusted content-modification timestamp in the current
+    // schema. Omit this optional field rather than date every page today on
+    // every build. R1's shared publication revision will supply real dates.
 
     // Static routes get higher priority — they are the indexable surface.
     if (route == '/cv/' || route == '/brief/') {

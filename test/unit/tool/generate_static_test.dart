@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/app/app_route.dart';
 
 /// A token as the six-digit uppercase hex the generator writes.
 ///
@@ -342,35 +343,40 @@ void main() {
       );
     });
 
-    test('includes all public routes', () {
-      expect(sitemapXml, contains('https://asherbinyy.github.io/'));
-      expect(sitemapXml, contains('https://asherbinyy.github.io/cv/'));
-      expect(sitemapXml, contains('https://asherbinyy.github.io/brief/'));
-      // No trailing slash on application routes: AppRoute declares '/work',
-      // and go_router resolves '/work/' to its error route, so advertising the
-      // slashed form would point search engines at the error page.
-      expect(sitemapXml, contains('<loc>https://asherbinyy.github.io/signal<'));
-      expect(sitemapXml, contains('<loc>https://asherbinyy.github.io/work<'));
-      expect(sitemapXml, isNot(contains('/work/</loc>')));
-      // The two static pages are directories that Pages serves as such.
-      expect(sitemapXml, contains('<loc>https://asherbinyy.github.io/cv/<'));
-      expect(sitemapXml, contains('<loc>https://asherbinyy.github.io/about<'));
-      expect(
-        sitemapXml,
-        contains('<loc>https://asherbinyy.github.io/writing<'),
-      );
-      expect(
-        sitemapXml,
-        contains('<loc>https://asherbinyy.github.io/privacy<'),
-      );
+    test('includes exactly the public routes and actual project IDs', () {
+      final locations = RegExp('<loc>([^<]+)</loc>')
+          .allMatches(sitemapXml)
+          .map((match) => Uri.parse(match.group(1)!).path)
+          .toList();
+      final apps = jsonDecode(
+        File('${_projectRoot()}/assets/content/apps.json').readAsStringSync(),
+      ) as Map<String, dynamic>;
+      final expected = [
+        for (final route in [
+          AppRoute.home,
+          AppRoute.journey,
+          AppRoute.work,
+          AppRoute.about,
+          AppRoute.writing,
+          AppRoute.courtyard,
+        ])
+          route.path,
+        '${AppRoute.cv.path}/',
+        '${AppRoute.brief.path}/',
+        for (final app
+            in (apps['apps'] as List<dynamic>).cast<Map<String, dynamic>>())
+          '${AppRoute.work.path}/${app['id']}',
+      ];
+      expect(locations, unorderedEquals(expected));
+      expect(locations.toSet().length, locations.length);
     });
 
     test('does not include non-public routes', () {
       expect(sitemapXml, isNot(contains('/console')));
     });
 
-    test('has lastmod dates', () {
-      expect(sitemapXml, contains('<lastmod>'));
+    test('does not invent modification dates from the build clock', () {
+      expect(sitemapXml, isNot(contains('<lastmod>')));
     });
 
     test('has priority values', () {
