@@ -49,6 +49,40 @@ from rotating the same salt concurrently. Counter keys expire after 24 calendar
 months; daily visitor hashes expire after two days; digest idempotency keys
 expire after two days.
 
+## Running the admin panel locally
+
+Neither of these reaches Cloudflare, and neither needs a production credential.
+
+```bash
+node worker/dev/serve.js 8788
+npm exec --yes --package=node@22 -- node worker/dev/verify-a1.js
+```
+
+`serve.js` runs `handleRequest` behind a plain Node server with an in-memory
+key/value store, the sanitized fixtures in `worker/contracts/fixtures/` standing
+in for both the published content and the site's own bundle, and a throwaway
+admin token printed at startup. `verify-a1.js` drives that panel in headless
+Chrome over the DevTools protocol — no automation package is installed — and
+writes screenshots to `docs/audits/`. It needs Node 22 for the global
+`WebSocket`, which is why it runs through `npm exec`.
+
+Use the harness for anything that involves typing into the panel. Editing the
+owner's live content with his real token to find out whether a button works is
+not a test.
+
+## Content validation
+
+`worker/contracts/content-schema.js` describes the five editable documents and
+`worker/contracts/validate.js` checks a document against it. Both run inside the
+Worker: `PUT /v1/admin/content/<file>` refuses a document that does not match
+with **422** and the failing paths, and `POST /v1/admin/validate` answers the
+same question without writing anything. `POST /v1/admin/review` adds what would
+change and which claims moved.
+
+The schema is derived from `lib/content/models/*.dart`. When those change, the
+schema has to follow: `worker/test/content-schema.test.js` validates every
+document in `assets/content/` and fails when the two disagree.
+
 ## Runtime and release verification
 
 Wrangler 4.129.0 requires Node 22 or later. The machine's default Node 20 can
