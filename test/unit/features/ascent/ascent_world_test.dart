@@ -14,17 +14,11 @@ AscentWorld _run(
   required int frames,
   double steer = 0,
   bool leap = false,
-  bool dive = false,
   double dt = 1 / 60,
 }) {
   var current = world;
   for (var i = 0; i < frames; i++) {
-    current = current.step(
-      dt: dt,
-      steer: steer,
-      isLeaping: leap,
-      isDiving: dive,
-    );
+    current = current.step(dt: dt, steer: steer, isLeaping: leap);
   }
   return current;
 }
@@ -55,35 +49,83 @@ void main() {
     expect(leapt.altitude, greaterThan(plain.altitude));
   });
 
-  test('a dive falls faster than gravity alone', () {
-    final start = fresh();
-    final drifting = _run(start, frames: 12);
-    final diving = _run(start, frames: 12, dive: true);
-    expect(diving.climberY, lessThan(drifting.climberY));
+  test('a wall kick is taller than a standing jump', () {
+    // The one move in the game that pays more than it costs, and the reason
+    // to steer wide rather than straight up.
+    final grounded = _run(fresh(), frames: 120);
+    expect(grounded.isGrounded, isTrue);
+
+    final jumped = grounded.step(dt: 1 / 60, steer: 0, isLeaping: true);
+    var kicked = grounded.step(dt: 1 / 60, steer: 0, isLeaping: true);
+    for (var i = 0; i < 60 && !kicked.kickedWall; i++) {
+      kicked = kicked.step(dt: 1 / 60, steer: -1);
+    }
+
+    expect(kicked.kickedWall, isTrue);
+    expect(kicked.velocity, greaterThan(jumped.velocity));
   });
 
-  test('steering wraps at the walls rather than pinning', () {
-    // A shaft is round. Pinning against an edge with no ledge in reach is a
-    // dead end the player cannot steer out of.
+  test('steering stops at the walls rather than wrapping', () {
+    // It used to wrap, on the reasoning that a shaft is round. A wall is worth
+    // something now, so leaving one side and arriving at the other would hand
+    // out the kick for free.
     final world = _run(fresh(), frames: 400, steer: -1);
     expect(world.climberX, inInclusiveRange(0, 1));
+    expect(world.climberX, 0);
   });
 
   test('practice mode never ends', () {
     // Falling is survivable, so the whole shaft stays reachable at the
     // player's own pace. This is the accessibility floor, not a difficulty
     // setting.
-    final world = _run(fresh(isPractice: true), frames: 3000, dive: true);
+    final world = _run(fresh(isPractice: true), frames: 3000);
     expect(world.isOver, isFalse);
   });
 
-  test('a standard run ends on a long enough fall', () {
-    final world = _run(fresh(), frames: 3000, dive: true, steer: 1);
-    expect(world.isOver, isTrue);
+  test('the opening stretch does not chase the player', () {
+    // The floor is still on the first level on purpose: that is where the
+    // controls are learned, and a floor rising under someone who has not
+    // worked out the jump yet is a short run rather than a hard one.
+    final world = _run(fresh(), frames: 3000);
+    expect(world.level, 0);
+    expect(world.isOver, isFalse);
+  });
+
+  test('the floor rises once the pace starts, and not before', () {
+    // Built at altitude rather than climbed to: a standard run ends on a
+    // fourteen-metre fall, so a climber cannot reach the second level and
+    // then stand still long enough to be caught by anything else.
+    AscentWorld at(double altitude) => AscentWorld(
+      ledges: const [
+        Ledge(id: 0, kind: LedgeKind.stone, x: 0.5, y: 0, width: 0.9),
+      ],
+      climberX: 0.5,
+      climberY: altitude,
+      velocity: 0,
+      altitude: altitude,
+      best: 0,
+      isPractice: true,
+      isOver: false,
+      nextLedgeId: 1,
+      registersPassed: 0,
+      floorY: altitude - 10,
+    );
+
+    final opening = at(10);
+    expect(opening.level, 0);
+    expect(
+      opening.step(dt: 1, steer: 0).floorY,
+      opening.floorY,
+      reason: 'the first level is where the controls are learned',
+    );
+
+    final paced = at(AscentWorld.levelHeight * 2);
+    expect(paced.level, 2);
+    expect(paced.step(dt: 1, steer: 0).floorY, greaterThan(paced.floorY));
   });
 
   test('an ended run ignores every further step', () {
-    final over = _run(fresh(), frames: 3000, dive: true, steer: 1);
+    final over = _run(fresh(), frames: 3000, steer: 1);
     expect(over.isOver, isTrue);
     final after = over.step(dt: 1 / 60, steer: 1);
     expect(after.climberY, over.climberY);
@@ -117,21 +159,36 @@ void main() {
   test('a cracked ledge is reported the frame it gives way', () {
     // Presentation plays a sound off this, so the world has to say it rather
     // than the screen having to guess.
-    // Practice mode, because cracked ledges only appear above forty metres:
-    // the first stretch is dressed stone so the controls are learned before
-    // the hazards, and a run that falls short never meets one.
-    var world = fresh(isPractice: true);
-    var reported = false;
-    for (var i = 0; i < 6000; i++) {
-      world = world.step(
-        dt: 1 / 60,
-        steer: i % 120 < 60 ? 0.8 : -0.8,
-        isLeaping: true,
-      );
-      if (world.brokeLedge) reported = true;
+    //
+    // Built rather than climbed to. This used to steer a random shaft for a
+    // hundred seconds and hope it met a cracked ledge above forty metres,
+    // which made it a test of the seed: retuning the jump changed how high
+    // that climb got and the test failed at 33 metres without anything being
+    // wrong with the thing it names.
+    const world = AscentWorld(
+      ledges: [Ledge(id: 0, kind: LedgeKind.cracked, x: 0.5, y: 0, width: 0.9)],
+      climberX: 0.5,
+      climberY: 0.4,
+      velocity: -1,
+      altitude: 0.4,
+      best: 0,
+      isPractice: true,
+      isOver: false,
+      nextLedgeId: 1,
+      registersPassed: 0,
+    );
+
+    // Stepped until it lands rather than once: falling the last 40cm takes
+    // several frames, and the report is about the frame it touches down.
+    var current = world;
+    var reports = 0;
+    for (var i = 0; i < 60; i++) {
+      current = current.step(dt: 1 / 60, steer: 0);
+      if (current.brokeLedge) reports++;
     }
-    expect(world.altitude, greaterThan(40));
-    expect(reported, isTrue);
+
+    expect(reports, 1, reason: 'reported once, on the frame it gave way');
+    expect(current.ledges.single.isBroken, isTrue);
   });
 
   test('a seed reproduces a shaft exactly', () {

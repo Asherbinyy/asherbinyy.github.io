@@ -213,7 +213,7 @@
   "@workHeading": {
     "description": "Heading on the work page. A name, not a count: it read \"13 shipped applications\", which is a statistic rather than a title and one every other page already carries."
   },
-  "workSubheading": "Products taken from a first conversation to a release, and kept running afterwards. Some built alone, most with a team, all of them shipped.",
+  "workSubheading": "Fourteen apps, shipped and running.",
   "@workSubheading": {
     "description": "Standfirst under the work ledger heading."
   },
@@ -504,7 +504,7 @@
   "@ascentDive": {
     "description": "Touch control: fall faster"
   },
-  "ascentKeys": "Arrows or WASD to steer. Space or W to leap, S to dive.",
+  "ascentKeys": "Arrows or A and D to steer. Space to jump. Kick off a wall for height.",
   "@ascentKeys": {
     "description": "Keyboard controls, shown on a pointer browser"
   },
@@ -613,5 +613,18 @@
   "heroReach": "Built for teams in",
   "@heroReach": {
     "description": "Introduces the row of country flags in the hero."
+  },
+  "ascentJump": "Jump",
+  "@ascentJump": {
+    "description": "The jump control on a touch device."
+  },
+  "ascentLevel": "Level {level}",
+  "@ascentLevel": {
+    "description": "How far into the climb the pace has stepped up.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
   }
 }

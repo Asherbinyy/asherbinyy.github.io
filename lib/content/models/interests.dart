@@ -37,6 +37,16 @@ class Interest with _$Interest {
     required String id,
     required LocalizedText label,
     LocalizedText? note,
+
+    /// A bundled image standing for the specific named in [note].
+    ///
+    /// A club crest is a registered trademark. Drawing an approximation would
+    /// be worse than using the real one, and shipping the real one is the
+    /// owner's call to make about his own site, so the field takes a path and
+    /// the repository ships none: see `assets/media/interests/README.md`. A
+    /// path that resolves to nothing falls back to the drawn scene, so this is
+    /// safe to declare before the file exists.
+    String? logo,
   }) = _Interest;
 
   /// Decodes the documented JSON shape.

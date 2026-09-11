@@ -44,6 +44,7 @@ flutter:
     - assets/brand/
     - assets/maps/
     - assets/media/
+    - assets/media/interests/
     - assets/docs/
     - assets/audio/
   fonts:

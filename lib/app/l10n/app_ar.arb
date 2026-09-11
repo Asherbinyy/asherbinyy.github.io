@@ -50,7 +50,7 @@
   "signalAppsShipped": "{count, plural, =1{تطبيق واحد} other{{count} تطبيقات}}",
   "signalClose": "إغلاق",
   "workHeading": "الخزانة",
-  "workSubheading": "منتجات أُخذت من أول حديث حتى الإصدار، ثم بقيت تعمل بعده. بعضها بُني منفرداً، وأغلبها مع فريق، وكلها أُطلقت.",
+  "workSubheading": "أربعة عشر تطبيقاً، أُطلقت وما زالت تعمل.",
   "workOpenStore": "افتح {name} على {store}",
   "workAppStore": "آب ستور",
   "workGooglePlay": "جوجل بلاي",
@@ -230,7 +230,7 @@
   "ascentSteerRight": "توجّه يميناً",
   "ascentLeap": "قفزة",
   "ascentDive": "انقضاض",
-  "ascentKeys": "الأسهم أو WASD للتوجيه. المسافة أو W للقفز، S للانقضاض.",
+  "ascentKeys": "الأسهم أو A و D للتوجيه. المسافة للقفز. ارتد عن الجدار لمزيد من الارتفاع.",
   "ascentLeave": "خروج",
   "ascentRecord": "أفضل نتيجة جديدة",
   "ascentHeading": "الصعود",
@@ -298,5 +298,18 @@
   "heroReach": "عملت مع فرق في",
   "@heroReach": {
     "description": "Introduces the row of country flags in the hero."
+  },
+  "ascentJump": "قفز",
+  "@ascentJump": {
+    "description": "The jump control on a touch device."
+  },
+  "ascentLevel": "المستوى {level}",
+  "@ascentLevel": {
+    "description": "How far into the climb the pace has stepped up.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
   }
 }

@@ -83,7 +83,9 @@ class StationCard extends StatelessWidget {
     // Locals so the null checks promote; the standards ban the bang operator.
     final domain = domainLabel;
     final origin = country;
-    final telemetry = [if (domain != null) domain, if (origin != null) origin];
+    // The sector moved to a badge over the artwork, so it is no longer
+    // repeated in the line underneath.
+    final telemetry = [if (origin != null) origin];
 
     return SizedBox(
       width: width,
@@ -106,6 +108,41 @@ class StationCard extends StatelessWidget {
                 ),
               ),
             ),
+            // The sector, as a badge in the corner of the artwork.
+            //
+            // It used to be small text on the same line as the country at the
+            // bottom of the card, where it read as metadata about the picture
+            // rather than as a label on the thing. A recruiter scanning a grid
+            // of fourteen wants to know what each one *is* before anything
+            // else, so it sits on the image.
+            if (domain != null && height >= _minimumLabelledHeight(type))
+              PositionedDirectional(
+                top: tokens.space12,
+                start: tokens.space12,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    // Over the page colour rather than the artwork's, so the
+                    // badge stays legible wherever the constellation happens
+                    // to fall behind it.
+                    color: tokens.surface.withValues(alpha: 0.86),
+                    borderRadius: BorderRadius.circular(tokens.tagRadius),
+                    border: Border.all(
+                      color: tokens.hairlineStrong,
+                      width: tokens.hairlineWidth,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: tokens.space8,
+                      vertical: tokens.space4,
+                    ),
+                    child: Text(
+                      domain,
+                      style: type.meta.copyWith(color: tokens.beacon),
+                    ),
+                  ),
+                ),
+              ),
             // A thumbnail is too small for display-m to be legible, let alone
             // to fit. Below that the constellation stands alone, and the name
             // is already beside it wherever a card this size is used.

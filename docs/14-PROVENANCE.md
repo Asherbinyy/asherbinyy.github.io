@@ -239,6 +239,23 @@ CC0 requires no attribution. They are recorded anyway, because this file's job
 is that nothing on the site is unaccounted for, and that applies to pixels as
 much as to claims.
 
+### The Manchester United crest
+
+`assets/media/interests/` ships empty and `interests.json` points into it. The
+owner asked for the real club crest rather than a drawn approximation, and he
+is right that an approximation would be worse: a wrong crest says less than no
+crest.
+
+No version of it exists that this repository can carry. It is non-free on
+Wikipedia and absent from Wikimedia Commons, so there is nothing to fetch under
+a licence. Using a crest to say which club you support is ordinary nominative
+use and that is his call about his own site, so the slot is built and the file
+is his to drop in. Until he does, the card draws its scene as normal: a
+declared logo that resolves to nothing falls back rather than leaving a gap.
+
+`assets/media/interests/README.md` says the same thing where someone adding the
+file will actually be standing.
+
 ### The name recording
 
 `assets/audio/name.m4a` is the owner saying his own name, supplied through

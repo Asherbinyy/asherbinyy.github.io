@@ -101,6 +101,14 @@ abstract final class Tokens {
   /// Design-system value for modalRadius.
   static const double modalRadius = 10;
 
+  /// Corner radius on the top edge of a bottom sheet.
+  ///
+  /// Larger than a modal's, and applied to the top corners only. The sheet
+  /// used one radius on all four, so the bottom corners were rounded against
+  /// the bottom of the screen and the whole thing read as a floating box
+  /// rather than as something that had come up from the edge.
+  static const double sheetRadius = 20;
+
   /// Corner radius for a card carrying an image.
   ///
   /// The design language is square: panels have no radius, because an

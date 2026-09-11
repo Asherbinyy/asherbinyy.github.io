@@ -108,9 +108,9 @@ title** at all, which is why they looked empty. Fixed.
 | # | Item | Ship |
 |---|---|---|
 | B30 | Replace the tomb-walls line. | 1 |
-| B31 | The game still is not good enough. | 3 |
+| B31 | **Reworked.** Landing settles and space jumps, on both keyboard and a wide touch bar; up, down and dive are gone. A wall kick is worth a third more height than a standing jump and leaves a mark. The floor rises, faster every sixty metres, and standing still past the opening level ends the run. The chrome is three glyphs instead of three labelled buttons across the playfield. **Still open:** the shaft's own look at higher levels. |
 | B32 | Consider merging the game and Off duty into About. | 4 |
-| B33 | Reading does not look like a book. Swap padel and e-sports. E-sports becomes Gaming with a moving joystick and favourite games. Television is still wrong. | 2 |
+| ~~B33~~ | **Done.** Reading is a book, Gaming is a controller with a d-pad, four face buttons and two thumbsticks, Television is a screen. Football is a boot into a net that shakes, with the shout. Padel is two players and a serve. Favourites are in the content: FIFA and Valorant, Better Call Saul, The Alchemist and Animal Farm, Manchester United. |
 | B34 | Off duty cards clickable, but only where they have content, with a hint when they do. | 3 |
 | B35 | The theme toggle and the Brief control should be a moment, not a switch. A goblet lighting and being put out. | 2 |
 | B36 | Brief: plain, repetitive headings, wrong name, empty right side. | 1 |
