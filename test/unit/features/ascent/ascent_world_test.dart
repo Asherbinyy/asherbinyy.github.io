@@ -52,7 +52,7 @@ void main() {
   test('a wall kick is taller than a standing jump', () {
     // The one move in the game that pays more than it costs, and the reason
     // to steer wide rather than straight up.
-    var grounded = _run(fresh(), frames: 120);
+    final grounded = _run(fresh(), frames: 120);
     expect(grounded.isGrounded, isTrue);
 
     final jumped = grounded.step(dt: 1 / 60, steer: 0, isLeaping: true);
@@ -165,10 +165,8 @@ void main() {
     // which made it a test of the seed: retuning the jump changed how high
     // that climb got and the test failed at 33 metres without anything being
     // wrong with the thing it names.
-    final world = AscentWorld(
-      ledges: const [
-        Ledge(id: 0, kind: LedgeKind.cracked, x: 0.5, y: 0, width: 0.9),
-      ],
+    const world = AscentWorld(
+      ledges: [Ledge(id: 0, kind: LedgeKind.cracked, x: 0.5, y: 0, width: 0.9)],
       climberX: 0.5,
       climberY: 0.4,
       velocity: -1,
