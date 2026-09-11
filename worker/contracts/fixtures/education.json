@@ -1,0 +1,26 @@
+{
+  "entries": [
+    {
+      "institution": {"en": "Test University", "ar": "جامعة الاختبار"},
+      "award": {"en": "MSc Fixture Design", "ar": "ماجستير تصميم الاختبارات"},
+      "start": "2024-09",
+      "end": "2025-09",
+      "status": {"en": "Pass", "ar": "ناجح"},
+      "overallMark": 70,
+      "modules": [
+        {
+          "name": {"en": "Data Fixtures", "ar": "بيانات الاختبار"},
+          "mark": 74,
+          "evidence": {
+            "src": "assets/media/bdia-dashboard.jpg",
+            "caption": {"en": "A dashboard that does not exist", "ar": "لوحة غير موجودة"}
+          }
+        },
+        {"name": {"en": "Sample Systems", "ar": "أنظمة العينات"}, "mark": 66}
+      ],
+      "highlights": [
+        {"en": "Wrote the fixture that this sentence lives in.", "ar": "كتب الاختبار الذي تعيش فيه هذه الجملة."}
+      ]
+    }
+  ]
+}

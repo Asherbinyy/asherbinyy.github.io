@@ -1,0 +1,38 @@
+{
+  "apps": [
+    {
+      "id": "example-one",
+      "name": "Example One",
+      "platforms": ["ios", "android"],
+      "store": {
+        "ios": "https://apps.apple.com/gb/app/id0000000000",
+        "android": "https://play.google.com/store/apps/details?id=com.example.one"
+      },
+      "domain": "Travel",
+      "role": {
+        "en": "Rebuilt the booking flow.",
+        "ar": "إعادة بناء مسار الحجز."
+      },
+      "metric": "30% faster checkout",
+      "country": "GB",
+      "featured": true
+    },
+    {
+      "id": "example-two",
+      "name": "Example Two",
+      "platforms": ["android"],
+      "store": {},
+      "domain": "Education",
+      "role": {"en": "Offline lesson downloads. No public listing."},
+      "country": "EG",
+      "engagement": "freelance"
+    },
+    {
+      "id": "example-tools",
+      "name": "example_tools",
+      "platforms": ["pub"],
+      "store": {"pub": "https://pub.dev/packages/example_tools"},
+      "domain": "Open source"
+    }
+  ]
+}

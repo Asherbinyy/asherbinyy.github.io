@@ -1,0 +1,34 @@
+{
+  "roles": [
+    {
+      "id": "test-university",
+      "kind": "study",
+      "country": "EG",
+      "city": "Testville",
+      "coords": [31.0409, 31.3785],
+      "start": "2015-09",
+      "end": "2019-08",
+      "company": "Test University",
+      "title": {"en": "BEng Fixtures", "ar": "بكالوريوس الاختبارات"}
+    },
+    {
+      "id": "example-works",
+      "kind": "role",
+      "country": "GB",
+      "city": "Testchester",
+      "coords": [53.4808, -2.2426],
+      "start": "2021-01",
+      "end": "2023-06",
+      "company": "Example Works",
+      "title": {"en": "Mobile Developer", "ar": "مطوّر تطبيقات"},
+      "summary": {
+        "en": "Built two applications and looked after a third.",
+        "ar": "بنى تطبيقين واعتنى بثالث."
+      },
+      "employment": "full-time",
+      "traceWeight": 0.8,
+      "stack": ["Flutter", "Dart"],
+      "appIds": ["example-one", "example-two"]
+    }
+  ]
+}
