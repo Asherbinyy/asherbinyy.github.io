@@ -81,6 +81,38 @@ web/          hand-authored shell and static routes
 
 The specification lives in [`docs/`](docs/) and was written before the first line of code. [`AGENTS.md`](AGENTS.md) defines the operating rules, and [`docs/worklog/`](docs/worklog/) records every build session — what changed, what was decided and why, what was tested, what was left open.
 
+## Editing the site without a deploy
+
+Content lives in `assets/content/*.json` and ships with the app, but the site
+also asks a Cloudflare Worker whether anything has been published since. If it
+has, the published version wins; if the Worker is unreachable, the bundled copy
+renders and nothing breaks. That fallback is the design, not a safety net.
+
+**The panel is at `https://nocturne-analytics.asherbinyy.workers.dev/admin`.**
+Sign in with `ADMIN_TOKEN`.
+
+**It costs nothing.** Cloudflare's free plan allows 100,000 Worker requests a
+day, and KV allows 100,000 reads, 1,000 writes and 1GB of storage. A portfolio
+publishes a handful of times a week. No card is required, which is also why R2
+was rejected for images in `docs/15-ADMIN-AND-MEDIA.md` §2.
+
+**Changing the password** takes one command and no deploy:
+
+```
+npx wrangler secret put ADMIN_TOKEN
+```
+
+It takes effect on the next request, and rotating it revokes the old one,
+because there is only ever one.
+
+**Images** are uploaded through the panel, validated on their actual bytes
+rather than on what the upload claims, and addressed by a hash of their
+contents so a URL can never come to mean different bytes. Video is referenced
+by URL rather than hosted.
+
+Articles are **not** edited here. The Worker relays the owner's Medium feed, so
+they appear on their own.
+
 ## Licence
 
 Source is MIT. Content, design and personal data are not — please don't ship this as your own portfolio.
