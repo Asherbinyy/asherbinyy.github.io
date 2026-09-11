@@ -56,8 +56,13 @@ class _AscentStageState extends State<AscentStage>
   Duration _last = Duration.zero;
   double _steer = 0;
   bool _leap = false;
-  bool _dive = false;
   int _bands = 0;
+
+  /// When the last wall kick happened, in seconds since the ticker started.
+  ///
+  /// Negative infinity rather than zero: zero is a real moment on the clock,
+  /// and a run would open with the flourish already playing.
+  double _kickedAt = double.negativeInfinity;
   int _best = 0;
 
   @override
@@ -100,17 +105,16 @@ class _AscentStageState extends State<AscentStage>
     final step = dt.clamp(0.0, 1 / 30);
 
     final before = world;
-    final next = world.step(
-      dt: step,
-      steer: _steer,
-      isLeaping: _leap,
-      isDiving: _dive,
-    );
+    final next = world.step(dt: step, steer: _steer, isLeaping: _leap);
 
     if (next.velocity > 0 && before.velocity <= 0) {
       _audio.play(AscentSound.bounce);
     }
     if (next.brokeLedge) _audio.play(AscentSound.breaking);
+    if (next.kickedWall) {
+      _kickedAt = _elapsed;
+      _audio.play(AscentSound.collect);
+    }
     if (next.registersPassed > _bands) _audio.play(AscentSound.collect);
     _bands = next.registersPassed;
     if (next.isOver && !before.isOver) {
@@ -128,9 +132,9 @@ class _AscentStageState extends State<AscentStage>
 
     _last = Duration.zero;
     _bands = 0;
+    _kickedAt = double.negativeInfinity;
     _steer = 0;
     _leap = false;
-    _dive = false;
     if (!mounted) return;
     setState(() {
       _world = AscentWorld.seeded(
@@ -168,14 +172,13 @@ class _AscentStageState extends State<AscentStage>
       _leap = isDown;
       return KeyEventResult.handled;
     }
-    if (_diveKeys.contains(key)) {
-      _dive = isDown;
-      return KeyEventResult.handled;
-    }
     // Everything else is swallowed too. Nothing on this route wants a key,
     // and letting one through is how space reached the document before.
     return KeyEventResult.handled;
   }
+
+  /// How long the wall-kick flourish lasts, in seconds.
+  static const double _kickFlourish = 0.5;
 
   static final _left = {LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.keyA};
   static final _right = {
@@ -186,10 +189,6 @@ class _AscentStageState extends State<AscentStage>
     LogicalKeyboardKey.arrowUp,
     LogicalKeyboardKey.keyW,
     LogicalKeyboardKey.space,
-  };
-  static final _diveKeys = {
-    LogicalKeyboardKey.arrowDown,
-    LogicalKeyboardKey.keyS,
   };
 
   @override
@@ -217,6 +216,12 @@ class _AscentStageState extends State<AscentStage>
                         world: world,
                         entrance: _entrance.value,
                         time: _elapsed,
+                        // Normalised over the flourish's own lifetime, so the
+                        // painter never has to know what a second is.
+                        kickAge: ((_elapsed - _kickedAt) / _kickFlourish).clamp(
+                          0.0,
+                          1.0,
+                        ),
                         stone: tokens.instrument,
                         cracked: tokens.instrumentDim,
                         gold: tokens.beacon,
@@ -250,7 +255,6 @@ class _AscentStageState extends State<AscentStage>
                   onChanged: (input) {
                     _steer = input.steer;
                     _leap = input.leap;
-                    _dive = input.dive;
                   },
                 ),
               ),
@@ -300,22 +304,49 @@ class _Hud extends StatelessWidget {
                   l10n.ascentAltitude(world?.metres ?? 0),
                   style: type.displayM.copyWith(color: tokens.beacon),
                 ),
-                if (best > 0)
-                  Text(
-                    l10n.ascentBest(best),
-                    style: type.telemetryS.copyWith(color: tokens.textMuted),
-                  ),
+                Row(
+                  children: [
+                    // The level, because the floor rising underneath is the
+                    // one thing a player needs warning about.
+                    Text(
+                      l10n.ascentLevel((world?.level ?? 0) + 1),
+                      style: type.telemetryS.copyWith(
+                        color: tokens.instrumentMid,
+                      ),
+                    ),
+                    if (best > 0) ...[
+                      SizedBox(width: tokens.space12),
+                      Text(
+                        l10n.ascentBest(best),
+                        style: type.telemetryS.copyWith(
+                          color: tokens.textMuted,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
             const Spacer(),
-            GameControl(label: l10n.ascentAgain, onPressed: onRestart),
-            SizedBox(width: tokens.space8),
-            GameControl(
-              label: isMuted ? l10n.ascentSoundOn : l10n.ascentSoundOff,
+            // Glyphs rather than words. Three labelled buttons ran across the
+            // top of the playfield, which is where the climber is heading.
+            GameControl.icon(
+              glyph: '↻',
+              semanticLabel: l10n.ascentAgain,
+              onPressed: onRestart,
+            ),
+            SizedBox(width: tokens.space4),
+            GameControl.icon(
+              glyph: isMuted ? '🔇' : '🔊',
+              semanticLabel: isMuted ? l10n.ascentSoundOn : l10n.ascentSoundOff,
               onPressed: onMute,
             ),
-            SizedBox(width: tokens.space8),
-            GameControl(label: l10n.ascentLeave, onPressed: onClose),
+            SizedBox(width: tokens.space4),
+            GameControl.icon(
+              glyph: '✕',
+              semanticLabel: l10n.ascentLeave,
+              onPressed: onClose,
+            ),
           ],
         ),
       ),

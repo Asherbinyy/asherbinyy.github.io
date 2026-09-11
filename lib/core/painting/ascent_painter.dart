@@ -26,6 +26,7 @@ class AscentPainter extends CustomPainter {
     required this.strokeWidth,
     required this.isReducedMotion,
     this.time = 0,
+    this.kickAge = 1,
   });
 
   /// The world to draw.
@@ -71,6 +72,12 @@ class AscentPainter extends CustomPainter {
   /// only motion on screen was the climber. Torchlight and dust are what make
   /// it a place rather than a diagram, and both need a clock.
   final double time;
+
+  /// How long since the last wall kick, 0 to 1, where 1 is long ago.
+  ///
+  /// Drives the flourish that marks a kick as worth doing. A kick is the one
+  /// move in the game that pays more than it costs, and it was invisible.
+  final double kickAge;
 
   /// How much of the frame sits below the climber.
   static const double _climberHeight = 0.62;
@@ -193,7 +200,9 @@ class AscentPainter extends CustomPainter {
       _paintLedge(canvas, shaft, ledge, y);
     }
 
+    _paintFloor(canvas, shaft, screenY(world.floorY), metresToPixels);
     _paintClimber(canvas, shaft, screenY(world.climberY), metresToPixels);
+    _paintKick(canvas, shaft, screenY(world.climberY));
 
     // The opening: light travels up the shaft as a run begins, so the game
     // arrives rather than appearing. Drawn last, over everything, and gone by
@@ -565,6 +574,64 @@ class AscentPainter extends CustomPainter {
     return (hash & 0xffff) / 0x10000;
   }
 
+  /// The rising floor, and the dark below it.
+  ///
+  /// A number saying the level would not have helped: what a player needs is
+  /// to see the thing coming. It is drawn as a lit edge with the shaft going
+  /// out beneath it, so the danger reads as the absence of floor rather than
+  /// as a line with a rule attached.
+  void _paintFloor(Canvas canvas, Rect shaft, double y, double metresToPixels) {
+    if (y > shaft.bottom + metresToPixels) return;
+
+    final top = math.max(y, shaft.top);
+    canvas
+      ..save()
+      ..clipRect(shaft)
+      ..drawRect(
+        Rect.fromLTRB(shaft.left, top, shaft.right, shaft.bottom),
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(shaft.left, top),
+            Offset(
+              shaft.left,
+              math.min(shaft.bottom, top + metresToPixels * 6),
+            ),
+            [wall.withValues(alpha: 0), wall.withValues(alpha: 0.92)],
+          ),
+      )
+      ..drawLine(
+        Offset(shaft.left, top),
+        Offset(shaft.right, top),
+        Paint()
+          ..color = cracked
+          ..strokeWidth = strokeWidth * 2,
+      )
+      ..restore();
+  }
+
+  /// The mark a wall kick leaves.
+  ///
+  /// Rings going out from the point of contact, fading. Short: it has to read
+  /// at the moment it happens and be gone before the next one.
+  void _paintKick(Canvas canvas, Rect shaft, double y) {
+    if (kickAge >= 1 || isReducedMotion) return;
+
+    final atLeft = world.climberX < 0.5;
+    final origin = Offset(atLeft ? shaft.left : shaft.right, y);
+    for (var ring = 0; ring < 3; ring++) {
+      final phase = (kickAge - ring * 0.16).clamp(0.0, 1.0);
+      if (phase <= 0 || phase >= 1) continue;
+      canvas.drawCircle(
+        origin,
+        shaft.width * 0.06 + shaft.width * 0.14 * phase,
+        Paint()
+          ..color = glow.withValues(alpha: (1 - phase) * 0.5)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth * 1.6,
+      );
+    }
+  }
+
   void _paintClimber(
     Canvas canvas,
     Rect shaft,
@@ -662,6 +729,7 @@ class AscentPainter extends CustomPainter {
       !identical(oldDelegate.world, world) ||
       oldDelegate.entrance != entrance ||
       oldDelegate.time != time ||
+      oldDelegate.kickAge != kickAge ||
       oldDelegate.stone != stone ||
       oldDelegate.gold != gold ||
       oldDelegate.wall != wall ||

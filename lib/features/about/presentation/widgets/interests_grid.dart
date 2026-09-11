@@ -210,17 +210,41 @@ class _Plate extends StatelessWidget {
         width: _Tile.width,
         height: _Tile.artHeight,
         child: RepaintBoundary(
-          child: AnimatedBuilder(
-            animation: play,
-            builder: (context, _) => CustomPaint(
-              painter: InterestPainter(
-                scene: InterestScene.of(interest.id),
-                progress: MotionCurves.emphasized.transform(play.value),
-                ink: tokens.instrumentMid,
-                gold: tokens.beacon,
-                strokeWidth: tokens.hairlineWidth * 1.6,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              AnimatedBuilder(
+                animation: play,
+                builder: (context, _) => CustomPaint(
+                  painter: InterestPainter(
+                    scene: InterestScene.of(interest.id),
+                    progress: MotionCurves.emphasized.transform(play.value),
+                    ink: tokens.instrumentMid,
+                    gold: tokens.beacon,
+                    strokeWidth: tokens.hairlineWidth * 1.6,
+                  ),
+                ),
               ),
-            ),
+              // The real mark for a named specific, where the owner has
+              // supplied one. A crest is a trademark and drawing an
+              // approximation of it would be worse than not having it, so the
+              // file is his to add and the drawing carries on underneath
+              // until he does: `errorBuilder` turns a missing asset into the
+              // scene rather than into a broken-image box.
+              if (interest.logo case final String path)
+                Align(
+                  alignment: AlignmentDirectional.bottomEnd,
+                  child: Padding(
+                    padding: EdgeInsets.all(tokens.space8),
+                    child: Image.asset(
+                      path,
+                      height: tokens.space32,
+                      errorBuilder: (context, error, stack) =>
+                          const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),

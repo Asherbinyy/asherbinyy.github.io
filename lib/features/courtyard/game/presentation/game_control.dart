@@ -23,7 +23,42 @@ class GameControl extends StatefulWidget {
     super.key,
   }) : glyph = null,
        onHeld = null,
-       semanticLabel = null;
+       semanticLabel = null,
+       _isBar = false,
+       _isIcon = false;
+
+  /// A compact glyph button for the chrome around the game.
+  ///
+  /// The restart, mute and leave controls were full labelled buttons sitting
+  /// across the top of the playfield, which is exactly where the climber is
+  /// heading. A glyph at one target square says the same thing and leaves the
+  /// shaft to be looked at.
+  const GameControl.icon({
+    required String this.glyph,
+    required String this.semanticLabel,
+    required VoidCallback this.onPressed,
+    super.key,
+  }) : label = null,
+       onHeld = null,
+       isPrimary = false,
+       _isBar = false,
+       _isIcon = true;
+
+  /// The wide jump bar: the touch stand-in for the space bar.
+  ///
+  /// Deliberately much wider than a steering key. It is the only action in the
+  /// game and the one a thumb has to find without looking, so it gets the
+  /// width the keyboard gives the space bar for the same reason.
+  const GameControl.jump({
+    required String this.label,
+    required ValueChanged<bool> this.onHeld,
+    super.key,
+  }) : glyph = null,
+       semanticLabel = null,
+       onPressed = null,
+       isPrimary = true,
+       _isBar = true,
+       _isIcon = false;
 
   /// A square key that reports press and release, for steering.
   const GameControl.key({
@@ -33,7 +68,9 @@ class GameControl extends StatefulWidget {
     this.isPrimary = false,
     super.key,
   }) : label = null,
-       onPressed = null;
+       onPressed = null,
+       _isBar = false,
+       _isIcon = false;
 
   /// Text on a labelled button.
   final String? label;
@@ -53,6 +90,12 @@ class GameControl extends StatefulWidget {
   /// Whether this reads as lit when idle.
   final bool isPrimary;
 
+  /// Whether this is the wide jump bar rather than a key or a labelled button.
+  final bool _isBar;
+
+  /// Whether this is a compact glyph button in the chrome.
+  final bool _isIcon;
+
   @override
   State<GameControl> createState() => _GameControlState();
 }
@@ -70,6 +113,8 @@ class _GameControlState extends State<GameControl> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final isKey = widget.glyph != null;
+    final isBar = widget._isBar;
+    final isIcon = widget._isIcon;
     final isLit = _isActive || widget.isPrimary;
     final target = context.platform.minimumTarget;
 
@@ -85,11 +130,12 @@ class _GameControlState extends State<GameControl> {
         borderRadius: BorderRadius.circular(tokens.controlRadius),
       ),
       child: Center(
-        widthFactor: isKey ? null : 1,
+        widthFactor: isKey || isBar || isIcon ? null : 1,
         child: Text(
           widget.glyph ?? widget.label!,
-          style: (isKey ? context.type.heading : context.type.telemetry)
-              .copyWith(color: isLit ? tokens.beacon : tokens.instrument),
+          style:
+              (isKey || isIcon ? context.type.heading : context.type.telemetry)
+                  .copyWith(color: isLit ? tokens.beacon : tokens.instrument),
         ),
       ),
     );
@@ -108,10 +154,18 @@ class _GameControlState extends State<GameControl> {
           behavior: HitTestBehavior.opaque,
           onTap: widget.onPressed,
           // A key reports both edges, because steering has to stop.
-          onTapDown: isKey ? (_) => _setActive(true) : null,
-          onTapUp: isKey ? (_) => _setActive(false) : null,
-          onTapCancel: isKey ? () => _setActive(false) : null,
-          child: isKey
+          onTapDown: widget.onHeld != null ? (_) => _setActive(true) : null,
+          onTapUp: widget.onHeld != null ? (_) => _setActive(false) : null,
+          onTapCancel: widget.onHeld != null ? () => _setActive(false) : null,
+          child: isBar
+              ? SizedBox(
+                  width: target * 4,
+                  height: target * 1.35,
+                  child: surface,
+                )
+              : isIcon
+              ? SizedBox(width: target, height: target, child: surface)
+              : isKey
               ? SizedBox(
                   width: target * 1.35,
                   height: target * 1.35,

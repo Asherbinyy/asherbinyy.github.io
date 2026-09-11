@@ -28,10 +28,13 @@ void main() {
   test('the climber is shorter than the height of its own bounce', () {
     // Derived from the physics rather than restated, so tuning the bounce
     // cannot silently make the climber too big again.
+    // Space is held, because a jump is a press now rather than something the
+    // world does on its own. Without it the climber settles and the apex is
+    // wherever it started.
     var world = AscentWorld.seeded(best: 0, isPractice: false, seed: 1);
     var apex = world.climberY;
     for (var i = 0; i < 240; i++) {
-      world = world.step(dt: 1 / 60, steer: 0);
+      world = world.step(dt: 1 / 60, steer: 0, isLeaping: true);
       if (world.climberY > apex) apex = world.climberY;
       if (world.isOver) break;
     }

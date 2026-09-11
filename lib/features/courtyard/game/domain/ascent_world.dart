@@ -106,6 +106,10 @@ class AscentWorld {
     required this.nextLedgeId,
     required this.registersPassed,
     this.brokeLedge = false,
+    this.isGrounded = false,
+    this.wasWalled = false,
+    this.floorY = -_fallMargin,
+    this.kickedWall = false,
   });
 
   /// A fresh run.
@@ -172,8 +176,42 @@ class AscentWorld {
   /// speaker exists, and presentation decides what a broken ledge sounds like.
   final bool brokeLedge;
 
+  /// Whether the climber is standing on something.
+  ///
+  /// Landing settles rather than bouncing, so this is what space acts on.
+  final bool isGrounded;
+
+  /// Whether the climber was already touching a wall on the previous step.
+  ///
+  /// A kick is worth height, so it has to cost contact: without this a player
+  /// could hold one direction and ride an edge to the top.
+  final bool wasWalled;
+
+  /// The height below which a run ends, in metres.
+  ///
+  /// It rises on its own, faster at every level, which is what turns a climb
+  /// anyone could take slowly into one with a pace.
+  final double floorY;
+
+  /// Whether this step kicked off a wall, for the sound and the flourish.
+  final bool kickedWall;
+
   /// Metres between ledges.
   static const double ledgeGap = 2.6;
+
+  /// How much taller a wall kick is than a standing jump.
+  static const double _wallBoost = 1.34;
+
+  /// Metres climbed before the pace steps up.
+  static const double levelHeight = 60;
+
+  /// How fast the floor rises at [level], in metres per second.
+  ///
+  /// Zero on the first level: the opening stretch is where the controls are
+  /// learned, and a floor chasing a player who has not worked out the jump yet
+  /// is just a short run. After that it climbs, and the steps are linear
+  /// rather than exponential so the last level is hard rather than impossible.
+  static double _floorSpeed(int level) => level == 0 ? 0 : 0.5 + level * 0.55;
 
   /// Metres between register bands, each of which unlocks one fact.
   static const double registerGap = 24;
@@ -181,17 +219,14 @@ class AscentWorld {
   /// How many ledges are kept in play at once.
   static const int _ledgeCount = 40;
 
-  /// Upward speed given by a bounce, metres per second.
-  static const double _bounce = 11;
-
-  /// How much taller a leap is than an ordinary bounce.
+  /// Upward speed given by a jump, metres per second.
   ///
-  /// Enough to clear a gap that an ordinary bounce cannot, and not enough to
-  /// skip a whole stretch of shaft, which would make the ledges decorative.
-  static const double _leapBoost = 1.42;
-
-  /// How much harder gravity pulls while diving.
-  static const double _diveGravity = 2.6;
+  /// Set against the ledge spacing rather than picked: at 13 the apex is
+  /// 3.84m, which is 1.48 gaps, so one press clears the next ledge with room
+  /// to steer under it. It was 11, whose apex of 2.75m against a 2.6m gap left
+  /// 15cm of margin, and a climb that needs a pixel-perfect landing every time
+  /// is not a climb.
+  static const double _bounce = 13;
 
   /// Gravity, metres per second squared.
   static const double _gravity = 22;
@@ -204,38 +239,63 @@ class AscentWorld {
 
   /// Advances the world by [dt] seconds.
   ///
-  /// [steer] is -1, 0 or 1. [isLeaping] asks for a stronger push off the next
-  /// ledge, and [isDiving] pulls the climber down harder. The whole game is
+  /// [steer] is -1, 0 or 1. [isLeaping] is the space bar. The whole game is
   /// this function; everything else draws its result.
   ///
-  /// The bounce is automatic, as it is in the game this is modelled on: the
-  /// climber never has to be told to jump, only where to go. Leap and dive are
-  /// on top of that rather than instead of it, so the two extra keys give a
-  /// player something to do without turning a one-axis game into a two-axis
-  /// one.
+  /// The bounce used to be automatic, as it is in the game this was modelled
+  /// on: the climber was never told to jump, only where to go. The owner's
+  /// objection was that the character was therefore jumping the entire time
+  /// with nothing asked of the player, so landing settles now and space is
+  /// what leaves the ground. Dive went with it: it existed because the only
+  /// way to come down deliberately was to force it, and not jumping is now how
+  /// you stay put.
   AscentWorld step({
     required double dt,
     required double steer,
     bool isLeaping = false,
-    bool isDiving = false,
   }) {
     if (isOver) return this;
 
-    // Sideways first, wrapping at the walls: a shaft is round, and a climber
-    // who leaves one side arrives at the other. It also removes the dead end
-    // of being pinned against an edge with no ledge in reach.
-    var x = climberX + steer * _steerRate * dt;
-    if (x < 0) x += 1;
-    if (x > 1) x -= 1;
+    // The rising floor. Every level it climbs faster, and falling below it
+    // ends the run, so the climb stops being something a patient player can
+    // take at their own pace forever.
+    final rise = _floorSpeed(level) * dt;
 
-    // Diving is the only way down that a player controls, and it is what makes
-    // a missed ledge recoverable rather than a slow inevitability.
-    final gravity = isDiving ? _gravity * _diveGravity : _gravity;
-    var speed = velocity - gravity * dt;
+    // Sideways first. Reaching a wall is worth something now: it kicks the
+    // climber back with more height than a standing jump, which is the trick
+    // the tower games are built on and the reason to steer wide rather than
+    // straight up.
+    var x = climberX + steer * _steerRate * dt;
+    var walled = false;
+    if (x <= 0) {
+      x = 0;
+      walled = true;
+    }
+    if (x >= 1) {
+      x = 1;
+      walled = true;
+    }
+
+    var speed = velocity - _gravity * dt;
     var y = climberY + speed * dt;
+    var grounded = false;
+    var kicked = false;
+
+    // A wall kick only counts on the way up, and only once per contact: a
+    // climber grinding along an edge would otherwise ride it to the top.
+    if (walled && speed > 0 && !wasWalled) {
+      speed = _bounce * _wallBoost;
+      kicked = true;
+    }
 
     final live = [for (final ledge in ledges) ledge.advance(dt)];
     var broke = false;
+
+    // Space, from a standing start or in the air on the first press.
+    // Space, from a standing start only. A kick has already set its own,
+    // taller speed, and letting the jump overwrite it meant holding space
+    // through a kick threw the bonus away.
+    if (isLeaping && isGrounded) speed = _bounce;
 
     // Only ever falling, and only from above: a climber rising through a ledge
     // passes it, which is what makes the ascent readable rather than a trap.
@@ -247,7 +307,13 @@ class AscentWorld {
         if (!crossed || !ledge.carries(x)) continue;
 
         y = ledge.y;
-        speed = isLeaping ? _bounce * _leapBoost : _bounce;
+        // Landing no longer throws the climber back up on its own. It used to
+        // bounce automatically, which is Ice Tower's rule and, as the owner
+        // put it, meant the character was jumping the whole time with nothing
+        // asked of the player. A landing settles; space is what leaves the
+        // ground.
+        speed = 0;
+        grounded = true;
         if (ledge.kind == LedgeKind.cracked) {
           live[i] = ledge.broken;
           broke = true;
@@ -258,10 +324,11 @@ class AscentWorld {
 
     final reached = math.max(altitude, y);
     final registers = (reached / registerGap).floor();
+    final risenFloor = math.max(floorY + rise, reached - _fallMargin);
 
     // Recycle ledges that have dropped well below, so the list stays a fixed
     // size however far the climb goes.
-    final floor = reached - _fallMargin * 2;
+    final floor = risenFloor - _fallMargin * 2;
     final random = math.Random(nextLedgeId);
     final kept = <Ledge>[];
     var nextId = nextLedgeId;
@@ -280,7 +347,7 @@ class AscentWorld {
     }
     kept.sort((a, b) => a.y.compareTo(b.y));
 
-    final fallen = y < reached - _fallMargin;
+    final fallen = y < risenFloor;
     if (fallen && isPractice) {
       // Practice mode never ends. The climber is set back down on the highest
       // ledge below, so the whole shaft stays reachable at the player's pace.
@@ -290,10 +357,13 @@ class AscentWorld {
         ledges: kept,
         climberX: landing.x,
         climberY: landing.y,
-        velocity: _bounce,
+        velocity: 0,
         altitude: reached,
         nextLedgeId: nextId,
         registersPassed: registers,
+        isGrounded: true,
+        wasWalled: false,
+        floorY: risenFloor,
         brokeLedge: broke,
       );
     }
@@ -308,11 +378,18 @@ class AscentWorld {
       nextLedgeId: nextId,
       registersPassed: registers,
       brokeLedge: broke,
+      isGrounded: grounded,
+      wasWalled: walled,
+      floorY: risenFloor,
+      kickedWall: kicked,
     );
   }
 
   /// The run's score, in whole metres.
   int get metres => altitude.floor();
+
+  /// How far into the climb the pace has stepped up.
+  int get level => (altitude / levelHeight).floor();
 
   /// Whether this run beat the stored best.
   bool get isRecord => metres > best;
@@ -347,6 +424,10 @@ class AscentWorld {
     int? nextLedgeId,
     int? registersPassed,
     bool brokeLedge = false,
+    bool? isGrounded,
+    bool? wasWalled,
+    double? floorY,
+    bool kickedWall = false,
   }) => AscentWorld(
     ledges: ledges ?? this.ledges,
     climberX: climberX ?? this.climberX,
@@ -358,6 +439,10 @@ class AscentWorld {
     isOver: isOver ?? this.isOver,
     nextLedgeId: nextLedgeId ?? this.nextLedgeId,
     registersPassed: registersPassed ?? this.registersPassed,
+    isGrounded: isGrounded ?? this.isGrounded,
+    wasWalled: wasWalled ?? this.wasWalled,
+    floorY: floorY ?? this.floorY,
+    kickedWall: kickedWall,
     brokeLedge: brokeLedge,
   );
 }
