@@ -1,5 +1,7 @@
 # Analytics and Privacy — NOCTURNE
 
+> Status clarification, 2026-09-11: the release still disables visitor analytics. The sentence below saying nothing is written to a visitor's device is too broad: display preferences and intro session state exist. No new collection or storage behavior is authorized by the audit. The proposed admin analytics home must show disabled/no-data states honestly; any collection change requires the explicit design and consent checks in [R8](19-REINNOVATION-ROADMAP.md#r8--customization-and-analytics). Historical legal conclusions below have not been revalidated by this audit.
+
 > **Status as shipped: this site collects nothing, and has no privacy page.**
 >
 > The release build supplies no analytics endpoint, so there is no sender, no

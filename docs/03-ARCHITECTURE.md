@@ -1,5 +1,7 @@
 # Architecture — NOCTURNE
 
+> Architecture audit, 2026-09-11: Flutter remains pinned and unchanged. The content source now includes Worker overrides and an admin; the app is not local-JSON-only. A 404 app shell does not make a valid indexable public route, and runtime admin updates can drift from generated HTML. [R1](19-REINNOVATION-ROADMAP.md#r1--search-visibility-and-publishing-foundation) proposes semantic HTML public pages and a consistent publication revision; the frontend decision is pending. The old assertions that no other 3D embedding/renderer approach is possible, and blanket asset/engine exclusions, are not grounds to reject a reviewed solution. Package versions must be verified when selected.
+
 **Flutter 3.47.2 / Dart 3.13.2** (August 2026 stable), pinned with **FVM**. **Web target only.** Feature-first clean architecture.
 
 ## Platform scope

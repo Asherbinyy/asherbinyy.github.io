@@ -1,5 +1,7 @@
 # Content Schema — KEMET
 
+> Schema status, 2026-09-11: this document predates several current fields. The models/parser and bundled JSON establish the current shape; do not use old examples as replacement content. `greeting`, `biography`, `reach`, interest logos and published overrides exist. The closing claim that static pages can never drift is false with runtime overrides. The ban on mentioning AI automation also predates the owner's explicit request to mention it as an interest. [R1/R3](19-REINNOVATION-ROADMAP.md) will establish the shared schema, revision/provenance contract and flexible authoring. No new personal claim is inferred here.
+
 > **Milestone 4 changed this schema substantially.** Every field added there is
 > documented below and marked *(4)*. The largest change is that several fields
 > that were plain strings became `LocalizedText`: app roles, institutions,

@@ -1,5 +1,7 @@
 # Motif Library — KEMET
 
+> Direction update, 2026-09-11: the owner now explicitly requests more realistic reliefs, figures, materials and Egyptian environments. The five-polylines limit, flat-only treatment and exclusions of requested environmental elements below describe the old implementation, not a veto on that request. Expand the sourced asset/motif inventory as part of the concrete [R2 visual proof](19-REINNOVATION-ROADMAP.md#r2--visual-system-home-and-entrance). Do not invent phonetic strings or an Egyptian spelling of the owner's name. Existing code and token values remain unchanged until that proof is reviewed.
+
 **This file is a closed inventory, not a source of inspiration.** If a motif is
 not listed here, it does not go on the site. Adding one means adding a row to
 this file first, with its structural job filled in, and getting that approved —

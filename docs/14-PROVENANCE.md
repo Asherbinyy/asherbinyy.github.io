@@ -1,5 +1,7 @@
 # Provenance — KEMET
 
+> Ledger status, 2026-09-11: preserve the sources below, but the “currently on the site” inventory is a milestone 4 snapshot. [The audit](18-REINNOVATION-AUDIT.md#content) identifies later content/source reconciliation work. The old third-party crest refusal is superseded by the owner's explicit real-logo request; no asset is supplied or relicensed by this notice. New/changed claims still need actual provenance, including admin-authored string metrics. Do not use a stale row or a passing existence test as proof of source accuracy.
+
 Every claim this site makes about the owner, and where it came from.
 
 **A number without a row here does not ship.** `AGENTS.md` §3 already forbade

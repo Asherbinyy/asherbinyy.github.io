@@ -1,5 +1,7 @@
 # 17. Handover
 
+> Historical handover from Claude. The independent [audit](18-REINNOVATION-AUDIT.md) has now inspected code, source conversations, the four owner-annotated screenshots and live browser views. Use [Re-innovation milestones](19-REINNOVATION-ROADMAP.md) for next work. Do not repeat the logo permission question: the original owner request is explicit. Manual jump, navigation arrangement and HTML rendering were asked in the audit and remain pending unless a later owner answer is recorded.
+
 **For the agent picking this up. Read this before touching anything.**
 
 ## The owner is not satisfied with the work so far

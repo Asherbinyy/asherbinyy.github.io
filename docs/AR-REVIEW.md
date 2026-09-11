@@ -1,5 +1,7 @@
 # Arabic content — for review
 
+> Review snapshot notice, 2026-09-11: the tables below are historical and do not cover all current copy. Rebuild the review surface from the current EN/AR content during R6/R9; do not overwrite newer translations with these examples. See [the content audit](18-REINNOVATION-AUDIT.md#content).
+
 Every Arabic string on the site, beside its English, so a correction is a
 glance down a column rather than a hunt through five JSON files.
 

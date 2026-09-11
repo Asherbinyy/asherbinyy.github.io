@@ -5,6 +5,13 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### Documentation
+
+- Audited the original requests, repository and deployed browser views; saved 11 visual baseline captures.
+- Added Re-innovation milestones R0–R9 with request-by-request coverage and acceptance criteria.
+- Replaced stale current-state issues, brief, game and admin specifications; marked historical design/screen/schema instructions that conflict with later requests.
+- Shortened the README and documented the current SEO/publication gap. No application redesign, content edit or deployment is included in this audit.
+
 ### Fixed
 
 - Deployed the Milestone 4 Worker from the repository root. The `/v1/cover`

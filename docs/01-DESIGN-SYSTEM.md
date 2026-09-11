@@ -1,5 +1,7 @@
 # Design System — NOCTURNE
 
+> Current direction, 2026-09-11: use [the brief](00-PROJECT-BRIEF.md) and [Re-innovation R2](19-REINNOVATION-ROADMAP.md#r2--visual-system-home-and-entrance). The values below document the existing Flutter implementation. The old instrumentation, flat-only material rules, ban on environmental depth and single-animation limit are superseded as creative direction by the owner's later requests. New token values/type choices require the concrete R2 review; none are changed by this audit. Provenance, legibility, focus, reduced motion and shared tokens remain requirements.
+
 Authoritative. Any value not listed here is a bug. No raw hex, no magic numbers, no ad-hoc durations anywhere in feature code.
 
 ---

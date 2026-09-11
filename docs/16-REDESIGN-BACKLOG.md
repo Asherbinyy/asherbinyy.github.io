@@ -1,5 +1,7 @@
 # 16. Redesign backlog
 
+> Re-innovation update, 2026-09-11: all A/B/C request IDs are mapped individually in [the new roadmap](19-REINNOVATION-ROADMAP.md#original-request-coverage). “Shipped” below does not mean the owner accepted the quality; real store marks remain open and B18 has a new requirement to keep the timeline visible. Subscriber cancellation is confirmed; the separate daily digest is ambiguous in the original conversation and stays dormant. Provider costs and old implementation claims should be checked against the current audit, not assumed from this historical table.
+
 > **This file was written as a plan and went stale while work shipped.** It has
 > been reconciled once, on 2026-09-11. If you are picking this up, read
 > `17-HANDOVER.md` first: it states what is actually true and what the owner

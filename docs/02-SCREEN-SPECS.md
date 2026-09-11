@@ -1,5 +1,7 @@
 # Screen Specifications — KEMET
 
+> Historical screen specification. The September 7 status block and diagrams below are not a current inventory. The wall, map treatment, intro, game and admin now have implementations, but are not visually accepted. Current observations: [audit](18-REINNOVATION-AUDIT.md). Current screen behaviors and acceptance: [R2–R7](19-REINNOVATION-ROADMAP.md). Do not treat the existing code as automatically correct where the owner has rejected it.
+
 > ## Status, 2026-09-07 — read this first
 >
 > **This document is behind the code.** It was written for the ground-station

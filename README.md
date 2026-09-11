@@ -1,120 +1,51 @@
-# Nocturne
+# Ahmed Elsherbini — Portfolio
 
-Personal portfolio for Ahmed Elsherbini. Flutter 3.47, web target, built for phone and desktop browsers alike.
+Egyptian-inspired portfolio for phone and desktop browsers. The current frontend uses Flutter 3.47.2 / Dart 3.13.2, pinned with FVM. Cloudflare Workers serves content, media and the admin panel.
 
-**Live:** [asherbinyy.github.io](https://asherbinyy.github.io) · **Recruiter view:** [/brief](https://asherbinyy.github.io/brief)
+[Website](https://asherbinyy.github.io/) · [CV](https://asherbinyy.github.io/cv/) · [Quick résumé](https://asherbinyy.github.io/brief/) · [Admin](https://nocturne-analytics.asherbinyy.workers.dev/admin)
 
-<!-- badges: CI, coverage, Flutter version -->
-
-![Screenshot](docs/assets/screenshot.webp)
-
----
-
-## What this is
-
-A portfolio built as an instrument panel. The visual language is signal telemetry — the design comes from a first degree in Communications and Electronics, and the structure follows a career that moved across Egypt, Saudi Arabia, Armenia, Qatar, Canada and the UK.
-
-The central interaction is a telemetry trace that runs the length of the page and responds to scroll velocity: scroll fast and the waveform degrades into noise, slow down and it resolves and locks, revealing the role beneath it. It rewards attention rather than demanding it.
-
-> **This is what is live today, and it is being replaced.** From 2026-09-07 the
-> concept changes: the identity becomes Egyptian, drawn from where the owner is
-> from rather than from what he studied, and the site grows a person around the
-> résumé. The engineering below survives it almost entirely — the change is
-> skin, not structure. See [`docs/00-PROJECT-BRIEF.md`](docs/00-PROJECT-BRIEF.md)
-> §3 for the concept, [`docs/09-ROADMAP.md`](docs/09-ROADMAP.md) for milestones
-> 4–6, and [`docs/12-MOTIF-LIBRARY.md`](docs/12-MOTIF-LIBRARY.md) before any
-> visual work.
-
-## Notable decisions
-
-**Standalone design package.** Built against `material_ui` rather than the in-framework Material library, which was frozen in Flutter 3.44 and deprecates in November 2026. No `cupertino_ui` — the target is browsers, where there are no iOS system widgets to match.
-
-**Flutter Web is not indexable, so `/cv` and `/brief` are not Flutter.** CanvasKit and WASM both render to canvas, meaning search engines and ATS parsers see an empty document. Those two routes are hand-written static HTML generated from the same JSON content, so they can never drift from the app. The rest of the site is free to be as ambitious as it likes.
-
-**Cookieless analytics, built rather than installed.** No third-party tracking script — no Google Analytics, no tag manager, nothing in the network tab that isn't first-party. Unique visitors are counted with a rotating-salt hash computed server-side — the salt regenerates every 24 hours and the old one is destroyed, so identifiers are mathematically unlinkable across days. IP addresses are resolved to a coarse country and discarded in the same function invocation; they are never written or logged. The aggregate tier writes nothing to the visitor's device, so PECR consent is not engaged by it. The site does store three things locally — the theme, the language and Recruiter Mode — because the visitor chose them; those are user-requested preferences, which PECR exempts, and they never leave the browser. Session-level analytics are strictly opt-in.
-
-The `/privacy` page shows a live table of every field the site can collect, its status, and the visitor's own current values — including the rows marked *never collected*.
-
-**A custom map instead of an SDK.** The propagation map is an equirectangular projection drawn with a `CustomPainter`. Roughly 30KB against ~900KB for a mapping SDK, no API key, no third-party data flow, and fully themeable.
-
-**Recruiter Mode.** A single control collapses the whole experience into a quiet, fast, scannable page. Knowing when not to be flashy is part of the work.
-
-**Static hosting, deliberately.** The site is a static bundle on GitHub Pages, with a single Cloudflare Worker for the analytics endpoint. `404.html` mirrors the app shell so client-side routes resolve on direct hits, and `.nojekyll` keeps Pages from stripping Flutter's underscore-prefixed output.
-
-## Stack
-
-Flutter 3.47.2 (pinned with FVM) · Dart 3.13.2 · Riverpod 2 · go_router · freezed · GitHub Pages · Cloudflare Workers
-
-## Running
-
-The Flutter SDK is pinned with [FVM](https://fvm.app) via `.fvmrc`.
+## Development
 
 ```bash
-fvm install          # installs the pinned SDK (3.47.2)
+fvm install
 fvm flutter pub get
+fvm flutter gen-l10n
 fvm dart run build_runner build --delete-conflicting-outputs
+fvm dart run tool/generate_mark.dart
+fvm dart run tool/generate_static.dart
 fvm flutter run -d chrome --wasm
 ```
 
-Generated files (`*.g.dart`, `*.freezed.dart`) are not committed, so `build_runner` must run before the first build.
+## Verification
 
 ```bash
-fvm flutter test                    # unit, widget, golden
-fvm flutter test --coverage
-fvm dart run tool/generate_static.dart   # regenerate /cv and /brief
-fvm flutter build web --wasm --release
+fvm dart format --set-exit-if-changed .
+fvm flutter analyze
+fvm flutter test
+fvm flutter build web --wasm
+node --test worker/test/*.test.js
 ```
 
-## Structure
+## Content and admin
 
-```
-lib/
-  app/        bootstrap, router, theme, l10n
-  core/       tokens, platform, motion, painting, analytics, shared widgets
-  content/    models and repository — content is local JSON, no CMS
-  features/   station, trace, signal, work, writing, about, privacy, console
-docs/         specification, provenance ledger, and build worklog
-web/          hand-authored shell and static routes
+Sign in to the admin with `ADMIN_TOKEN`. It edits profile, projects, journey, education and interests. Published content overrides bundled JSON; failed remote reads fall back to the bundle. Images use the Worker media service; direct video upload is not supported. Medium articles update through the RSS relay.
+
+Rotate the admin password from the repository root using the documented isolated CLI runtime:
+
+```bash
+npm exec --yes --package=node@22 --package=wrangler@4.129.0 -- wrangler secret put ADMIN_TOKEN
 ```
 
-## Documentation
+In-panel password changes, live preview and flexible content components are still planned. Admin edits currently do **not** update static CV/Brief HTML or shell metadata automatically.
 
-The specification lives in [`docs/`](docs/) and was written before the first line of code. [`AGENTS.md`](AGENTS.md) defines the operating rules, and [`docs/worklog/`](docs/worklog/) records every build session — what changed, what was decided and why, what was tested, what was left open.
+Hosting uses GitHub Pages and Cloudflare free tiers, subject to their limits: [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/) and [KV pricing](https://developers.cloudflare.com/kv/platform/pricing/). The public release currently disables visitor analytics. Saved display preferences are separate from analytics.
 
-## Editing the site without a deploy
+## Project status
 
-Content lives in `assets/content/*.json` and ships with the app, but the site
-also asks a Cloudflare Worker whether anything has been published since. If it
-has, the published version wins; if the Worker is unreachable, the bundled copy
-renders and nothing breaks. That fallback is the design, not a safety net.
+The redesign is not finished. Start with the [audit](docs/18-REINNOVATION-AUDIT.md), [Re-innovation milestones](docs/19-REINNOVATION-ROADMAP.md) and [open issues](docs/11-OPEN-ISSUES.md). Read [AGENTS.md](AGENTS.md) before contributing. Session records are in [the worklog](docs/worklog/).
 
-**The panel is at `https://nocturne-analytics.asherbinyy.workers.dev/admin`.**
-Sign in with `ADMIN_TOKEN`.
+Public pages currently run in Flutter; `/cv/` and `/brief/` are generated HTML. The audit recommends HTML-based public pages for SEO; migration is not yet approved or implemented. Pages and the Worker deploy separately. [Worker operations](worker/README.md).
 
-**It costs nothing.** Cloudflare's free plan allows 100,000 Worker requests a
-day, and KV allows 100,000 reads, 1,000 writes and 1GB of storage. A portfolio
-publishes a handful of times a week. No card is required, which is also why R2
-was rejected for images in `docs/15-ADMIN-AND-MEDIA.md` §2.
+## Assets
 
-**Changing the password** takes one command and no deploy:
-
-```
-npx wrangler secret put ADMIN_TOKEN
-```
-
-It takes effect on the next request, and rotating it revokes the old one,
-because there is only ever one.
-
-**Images** are uploaded through the panel, validated on their actual bytes
-rather than on what the upload claims, and addressed by a hash of their
-contents so a URL can never come to mean different bytes. Video is referenced
-by URL rather than hosted.
-
-Articles are **not** edited here. The Worker relays the owner's Medium feed, so
-they appear on their own.
-
-## Licence
-
-Source is MIT. Content, design and personal data are not — please don't ship this as your own portfolio.
-
-One asset is under a different licence and cannot be relicensed. `web/intro/models/guardian.kmsh`, the statue standing either side of the gate in the opening sequence, is adapted from *Statue of Ra-Horakhty* by [OmarElAtabany](https://commons.wikimedia.org/wiki/User:OmarElAtabany) on Wikimedia Commons, under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). ShareAlike means the adapted file carries the same terms; details and the full list of changes are in [`web/intro/models/LICENSE.md`](web/intro/models/LICENSE.md).
+Personal content and photographs are not reusable portfolio templates. Third-party asset sources are recorded in [the provenance ledger](docs/14-PROVENANCE.md). The current guardian mesh is CC BY-SA 4.0; see [its license and modifications](web/intro/models/LICENSE.md).

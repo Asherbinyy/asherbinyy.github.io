@@ -1,5 +1,7 @@
 # Testing — NOCTURNE
 
+> Current verification, 2026-09-11: `/how-it-was-built` and the public consent/privacy UI were removed; don't recreate them to satisfy historical examples below. Keep tests of actual behavior and privacy boundaries. Visual acceptance also requires real-browser captures and interaction checks with real fonts. Phone viewport emulation is not physical-device testing. The full release matrix is [R9](19-REINNOVATION-ROADMAP.md#r9--release-evidence).
+
 The site's credibility partly rests on being well-built. `/how-it-was-built` will show coverage and CI status publicly, so the tests need to be real.
 
 ---

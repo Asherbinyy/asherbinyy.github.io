@@ -1,293 +1,57 @@
-# Admin and Media — Milestone 7
+# Admin and media
 
-The owner needs to add and remove content, and upload images and video, without
-an agent and without editing JSON by hand.
+Current-state audit: 2026-09-11. Implementation baseline: `1cfd039`.
+Target workflow and acceptance: [R3](19-REINNOVATION-ROADMAP.md#r3--admin-as-an-editing-workspace). Customization and analytics: [R8](19-REINNOVATION-ROADMAP.md#r8--customization-and-analytics).
 
-Nothing here is built yet. This file is the specification.
+## What exists
 
----
+The Worker serves `/admin` from `worker/src/admin.js`. The HTML is public and marked noindex; write endpoints require a separate `ADMIN_TOKEN`. The panel edits profile, apps, career, education and interests as forms generated from existing JSON shapes.
 
-## 1. The problem, stated honestly
+Public content reads use `/v1/content/<file>`. Authenticated content writes/withdrawals use `/v1/admin/content/<file>`. The site tries the published document, with a timeout and bundled fallback. Image upload/list/remove endpoints and `/v1/media/<hash>` use the content KV binding.
 
-Content lives in `assets/content/*.json` and is **compiled into the bundle**.
-That was the right call and `00-PROJECT-BRIEF.md` §7 still holds: content
-changes a handful of times a year, and a CMS would have cost a large share of
-the build to solve a problem that editing a file already solved.
+The admin HTML is deployed according to the prior handover. This audit rendered a local fixture of the panel, not a production authenticated editing session. Public content reads during browser captures returned 404 for the requested overrides, so those views used bundled content. That does not by itself prove whether the content binding is configured.
 
-It stopped being true for two reasons.
+## Current limitations
 
-**Media.** Screenshots, project videos and photographs cannot go in a JSON file,
-and committing them means a rebuild and a deploy for every image.
+- No preview of the actual website. Image thumbnails are not the requested live preview.
+- Objects expose existing keys; lists clone an existing item. There is no generic supported-field/component system and no flexible contact-link model.
+- English and Arabic appear as separate inputs rather than the requested language tabs.
+- Switching documents replaces the single draft without a dirty-state guard.
+- Publish already sends only the selected document. The toolbar looks global; a page-specific confirmation/review flow is still missing.
+- Image inputs are detected by matching their final field name. That misses `src` fields and cannot add screenshot fields absent from a document.
+- Video is not uploaded. Name recording also has no upload endpoint.
+- The server checks valid JSON and a top-level object, not full content-schema validity. The client may reject an accepted publish and silently fall back.
+- The browser asks for sources on changed numeric values, but misses numeric claims embedded in strings. The server accepts publishes without a provenance note.
+- No revision-conflict detection or coordinated static HTML publication.
+- The panel stores its bearer token in tab `sessionStorage`, not a session cookie. In-panel password change and logout are absent. Failed attempts share an hourly counter and can lock out the correct token.
+- No theme/font/pattern management or analytics homepage. The UI still says Nocturne.
 
-**The owner is not the only editor any more.** He wants to add a project at
-11pm from a phone without opening an editor, and that is a reasonable thing to
-want from his own site.
+## Media behavior
 
-So the site needs a second content source that is read at runtime, without
-giving up the first. **Bundled content stays the fallback.** If the admin
-service is down, misconfigured or deleted, the site renders exactly what it
-renders today. That is not a nicety: it is the difference between a portfolio
-that can break while he is asleep and one that cannot.
+The existing endpoint accepts PNG, JPEG and WebP with size/type/dimension checks and rejects SVG. Media IDs are hashes of their contents. Current upload limit and dimensions are defined in `worker/src/index.js`; R3 must preserve validation while adding explicit media controls.
 
----
+Video currently uses external URLs and deliberate click-to-load playback. R3 must expose that honestly. Direct video storage is a separate hosting decision if needed, not something already supported by image KV storage.
 
-## 2. Shape
+Real app screenshots are absent from the bundled app entries. `assets/media/apps/` contains guidance only and is not currently declared as a Flutter asset directory. Adding a file there alone does not finish the gallery or publishing pipeline.
 
-```
-Browser ──▶ GitHub Pages (the site, unchanged)
-   │
-   ├──▶ Cloudflare Worker  /v1/content   published overrides, JSON  (KV)
-   │                       /v1/media/*   images                      (KV)
-   │
-   └──▶ Cloudflare Worker  /admin        the panel, auth-gated
-                           /v1/admin/*   write endpoints
-```
+## Publishing contract to establish
 
-**Why Cloudflare and not something else.** The Worker already exists, is already
-deployed, already has a KV namespace bound, and is already the origin the site
-talks to for the writing feed and article covers. Adding a second service would
-mean a second thing to keep alive for no gain.
+R1 must choose the public HTML and content-revision strategy before R3 promises a live publish. At present the app reads Worker overrides while CV/Brief are generated from local files and the main shell metadata is written separately.
 
-**Why KV and not R2.** R2 is the obvious choice for object storage and it is
-rejected on purpose: enabling it requires a payment card on the Cloudflare
-account even though the free tier bills nothing, and the owner asked for
-whichever path involves least faff. KV needs no card, is already bound, and
-holds values up to 25MiB, which is comfortably more than any screenshot.
+A draft preview must not publish. A publication must validate schema, references and claim provenance, protect against stale edits, and expose failure. The public document, metadata and interactive view must all refer to the same published revision, with the last successful revision available on failure.
 
-**Video is the exception.** A real video does not fit in KV and should not.
-Video is referenced by URL rather than uploaded: YouTube or Vimeo, embedded
-behind a click-to-load poster the way City Loom's prototype already is. That
-keeps the owner off a hosting bill and keeps a heavy asset off the first paint.
-If he later wants self-hosted video, that is the point at which R2 and its card
-become worth revisiting, and not before.
+A typed component contract should drive the editor and consumers. Arbitrary fields that are silently ignored on the website do not meet the owner's requirement.
 
-**What the site does with it.** `ContentRepository` gains a remote source that
-is tried first and falls back to the bundle on any failure, any timeout, or any
-document that does not parse. The parser is unchanged and still validates
-everything, so a malformed remote document is rejected exactly as a malformed
-bundled one is.
+## Security and privacy
 
----
+Keep credentials separate from public previews and out of source/logs. Password management must not expose a Cloudflare account token to the browser. Test unauthorized writes, session behavior, rotation and lockout in isolated data.
 
-## 3. Non-negotiables
+The public build has analytics disabled. Rebuilding the admin does not authorize silently enabling collection. The requested analytics home must show available/disabled/empty states accurately; a graph must never imply invented visitors. Existing consent requirements remain binding.
 
-These are the rules that stop an admin panel becoming the weakest part of a
-site whose whole argument is care.
+Subscriptions were cancelled. The separate daily digest remains dormant because the original cancellation and handover differ in scope.
 
-**The site must render with the service dead.** Every remote read is wrapped,
-timed out at two seconds, and falls back. A visitor must never see a spinner
-that resolves to nothing, and never a blank page.
+## Operations and costs
 
-**Nothing about a visitor is collected.** The admin path must not become the
-back door through which this site starts logging people. `06-ANALYTICS-AND-PRIVACY.md`
-outranks this whole milestone.
+See [Worker operations](../worker/README.md) for existing commands. The site and Worker deploy separately. Use the existing content binding; do not recreate a production namespace from an old setup checklist.
 
-**Provenance survives.** `14-PROVENANCE.md` requires a source for every claim.
-A number typed into a panel at midnight is still a claim, so the editor carries
-a required source field on any figure, and the ledger test extends to remote
-content rather than only the bundle.
-
-**Auth is real.** One owner, confirmed: a single long random token, a session
-cookie, and a rate limit. No accounts, no roles, no invitations, because there
-is exactly one person who will ever write here and building for more would be
-inventing a requirement. What is not proportionate in the other direction is a
-public write endpoint.
-
-**Media is validated at the edge.** Content type on an allowlist, hard size cap,
-dimensions read and rejected if absurd. An upload endpoint that accepts anything
-is a free file host with the owner's name on it.
-
----
-
-## 4. Tasks
-
-### 7.1 The content source — **done**, both halves
-Remote read in `ContentRepository`, behind the existing `ContentResult`, with
-the bundle as fallback. **Done when:** killing the Worker changes nothing a
-visitor can see, and a malformed remote document is rejected by the same parser
-that guards the bundle.
-
-Shipped. `RemoteReader` is optional on the repository, every read is timed out
-at two seconds, and every failure -- a dead service, a slow one, a document
-that will not parse, one that parses to the wrong shape -- returns the shipped
-document. `remote_content_test.dart` walks each of those failures, and
-`bootstrap_test.dart` proves it against the real production wiring, where the
-test environment's refusal of outbound HTTP stands in for the Worker being
-down.
-
-A malformed override falls back to the **bundle**, not to `fallback.json`. The
-task said "rejected by the same parser", which it is, but degrading a bad
-override all the way to the minimum profile would make publishing a typo worse
-than never publishing at all.
-
-**One thing worth knowing before touching this.** `lib/content/providers.dart`
-is a generated library and `publishedContentProvider` is declared there as null,
-then overridden in `bootstrap.dart`. That is not indirection for its own sake:
-importing the HTTP-speaking reader into that library pulls `package:http` into
-the summary `riverpod_generator` writes, and the pinned analyser is older than
-the language version parts of that graph use. It crashes, and it crashes while
-reporting an unrelated file, which costs an hour to work out. The seam also
-happens to be the right shape, since it lets a test build a bundle-only
-repository by doing nothing.
-
-`relayEndpointProvider` moved from the writing feature to `lib/core/net/relay.dart`
-in the same change. The content layer needs it and cannot reach into a feature
-for it, and it was never a writing concern.
-
-**The server half.** `GET /v1/content/<file>` reads a published document from
-KV, `PUT` and `DELETE` under `/v1/admin/content/` write and withdraw it, and
-`GET /v1/admin/content` lists what is live. Only the five documents on an
-allowlist can be addressed: the path segment reaches KV, so without it an admin
-request could read or write any key in the namespace, including the analytics
-counters that share it. A document is parsed before it is stored, so publishing
-something broken is refused at the door rather than served to the site and
-silently rejected there.
-
-The `CONTENT` namespace is optional and commented out in `wrangler.toml` until
-the owner creates it. Until then the Worker deploys and behaves exactly as it
-did: reads 404, writes answer 503, and the site uses its bundle.
-
-### 7.2 Media storage — **done**
-A second KV namespace, `/v1/media/*` read path, long cache headers, and the
-allowlist and size cap above. Images only; video is a URL. **Done when:** an
-image dropped in appears on the site without a deploy, and an oversized file,
-an SVG and an HTML file are all refused.
-
-Shipped. `POST /v1/admin/media` takes PNG, JPEG or WebP up to 4MiB;
-`GET /v1/media/<id>` serves it; `DELETE` removes it and `GET /v1/admin/media`
-lists what is stored with its dimensions.
-
-**Validation is on the bytes, not on the claim.** `measureImage` reads the real
-container header and returns the format and dimensions, so a script renamed to
-`.png` and posted as `image/png` is refused on what it is. An SVG is refused
-outright at the type allowlist, because it is markup that can carry script and
-accepting it would be stored XSS on the owner's own domain. Dimensions are
-bounded at both ends: the floor rejects tracking pixels and decode failures
-that report 1x1, the ceiling rejects a decompression bomb before a browser ever
-sees it.
-
-**Ids are content hashes.** The same image uploaded twice is one key, and a
-`/v1/media/<id>` URL can never come to mean different bytes, which is what
-makes the one-year immutable cache honest rather than a bet. Replacing an image
-produces a new id, so nothing stale is ever served.
-
-**Media reads are the one thing here that is not origin-gated**, and that is
-deliberate: images are fetched by ordinary image elements, which send no Origin
-header, so gating them would refuse the only way they are ever loaded. There is
-nothing to protect — this is public artwork on a public site behind an
-unguessable name.
-
-The media lives in the same `CONTENT` namespace under its own key prefix. The
-task said a second namespace; one namespace with two prefixes has the same
-isolation from the expiring analytics keys, and it is one thing for the owner to
-create rather than two.
-
-### 7.3 Auth — **done**
-Token issue, verification, rate limit, and a way to revoke. **Done when:** an
-unauthenticated write returns 401, a wrong token returns 401, and the token can
-be rotated without a code change.
-
-Shipped with the write endpoints. `ADMIN_TOKEN` is a separate secret from
-`CONSOLE_TOKEN` and a test asserts the console token does **not** open the admin
-endpoints: one is handed to a dashboard that reads counters, the other can
-rewrite what the site says about the owner. Rotation is `wrangler secret put`
-again, with no code change, which is also how revocation works.
-
-Ten failed attempts in an hour and the endpoint stops answering, including to
-the correct token, because the guarantee is that it stops rather than that it
-keeps a door open. A correct token never counts against the limit.
-
-The write endpoints are deliberately **not** origin-gated. The panel is served
-by the Worker, not by the site, so an Origin check would reject the only client
-meant to reach them. The token is the guard and it is checked before any body
-is read.
-
-**The read path is origin-gated and the write path is not, which is the right
-way round.** A read is the site asking for its own content back; a write is the
-owner, from somewhere else entirely.
-
-### 7.4 The panel
-Served at `/admin` from the Worker. Plain HTML and a little JavaScript, not a
-framework: it is a form over a JSON document, it is used by one person, and it
-must not become a second frontend to maintain.
-
-**It edits everything** on the owner's instruction: projects, career, education,
-interests and profile. Career and education carry a warning in the editor, since
-those are the claims a recruiter cross-checks against a CV, and the provenance
-requirement in 7.5 applies to them most of all.
-
-Editing, reordering, image upload with a preview, and a diff against what is
-live before publishing. **Done when:** the owner can add a project with a
-screenshot, reorder the ledger, and publish, from a phone, without an agent.
-
-**Shipped**, at `/admin`, as one HTML string in `worker/src/admin.js`.
-
-The editor is **shape-driven, not schema-driven**: it renders whatever the
-document contains. A schema here would be a second copy of the one in
-`content_parser.dart`, and the two would drift. Objects become labelled groups,
-arrays of entries become reorderable cards, arrays of short strings become
-inline rows, and an `{en, ar}` pair becomes one field labelled with its parent
-key rather than two fields labelled EN and AR.
-
-That last one is worth recording because the first version got it wrong and it
-was only visible by looking: every input on the profile form read EN, AR, EN,
-AR, with no way to tell the name from the positioning statement. The same pass
-found array indices being printed as gold section headings, and `platforms:
-["ios"]` rendering as a full card with reorder buttons around three characters.
-None of it would have shown up in a test that asserted the page contained the
-right strings.
-
-New entries are shaped from an existing one and emptied, so a new project has
-every field the parser expects rather than whichever ones got typed. The
-document being edited is reflected in the URL hash, so a reload on a phone
-comes back to the same tab.
-
-The page is served unauthenticated, deliberately: it is a form, and the form is
-useless without the token every endpoint behind it demands. Gating the HTML
-would mean inventing a session before there is anything to hold one for. Its CSP
-allows its own inline script and style, images from this Worker and the site,
-and connections to nothing else -- it handles a token that can rewrite the site,
-so where it may talk to is the header that matters most.
-
-### 7.5 Provenance in the editor — **partly done**
-Required source field on any numeric claim, and the ledger test extended to
-remote content. **Done when:** a figure cannot be published without a source.
-
-**The editor half is done.** Publishing diffs the draft against what the site
-is showing, and if any changed leaf is a number the panel names the figures,
-asks where the new one comes from, and refuses to publish without an answer.
-The answer goes to the Worker in a header and is stored beside the document as
-a change-log entry, readable at `GET /v1/admin/changes`.
-
-**Recorded beside the document, not inside it**, and that is the decision worth
-arguing with. A source belongs to the act of publishing rather than to the
-content the site renders: putting it in the JSON would mean adding a field the
-parser has to accept, the models have to carry and every consumer has to ignore.
-
-**What is not done: the ledger test does not cover remote content.** It reads
-the bundle, and it cannot read KV. Extending it properly needs a decision the
-owner has to make first -- whether `14-PROVENANCE.md` is regenerated from the
-change log, or whether published figures are expected to be folded back into
-the bundle at some point. Left open rather than guessed at.
-
----
-
-## 5. What this costs
-
-Free, on Cloudflare's free tier, with **no payment card anywhere**: Workers
-100k requests a day, KV 100k reads and 1k writes a day, 1GB of storage and
-25MiB per value. A portfolio edited a few times a month will not approach any
-of those.
-
-The real cost is that the site gains a moving part it did not have. That is why
-§3 exists, and why the fallback is the first task rather than the last.
-
----
-
-## 6. Decided
-
-| # | Question | Answer, 2026-09-08 |
-|---|---|---|
-| 6.1 | R2 needs a card on file. Acceptable? | **No.** KV instead, images only. Video is a URL. |
-| 6.2 | Should the panel edit career and education too? | **Everything.** With a warning on the two a recruiter cross-checks. |
-| 6.3 | Does anyone else need access? | **No.** One owner, one token, forever. |
+GitHub Pages and Cloudflare free tiers are the current hosting approach. Quotas are limits, not a permanent no-cost guarantee: [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/) and [KV pricing](https://developers.cloudflare.com/kv/platform/pricing/). No new paid storage, service or package is selected by this document.

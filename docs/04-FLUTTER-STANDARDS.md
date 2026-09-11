@@ -1,5 +1,7 @@
 # Flutter and Dart Standards — NOCTURNE
 
+> Scope note, 2026-09-11: these standards apply to retained Flutter code; a possible HTML frontend is still only a proposal in [R1](19-REINNOVATION-ROADMAP.md). The “second chroma” ban at the end is obsolete; existing palette roles are in `01-DESIGN-SYSTEM.md`. Current user requirements and approved milestone decisions take precedence over old creative constraints. The audit makes no SDK, package or token change.
+
 Target: **Flutter 3.47.2 / Dart 3.13.2.**
 
 These are enforceable rules, not preferences. Code that breaks them does not get merged, regardless of whether it runs.

@@ -1,5 +1,7 @@
 # AI Workflow — NOCTURNE
 
+> Workflow update, 2026-09-11: take current work from [Re-innovation milestones](19-REINNOVATION-ROADMAP.md), not the historical milestone queue. Use the original-request mapping, render and inspect the affected section, and distinguish implementation from visual acceptance. Keep the session worklog current; do not backfill invented history.
+
 How to run this project with coding agents. Written for someone who has not set up an agent workflow before.
 
 ---
