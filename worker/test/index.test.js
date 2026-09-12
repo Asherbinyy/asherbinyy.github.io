@@ -1095,9 +1095,17 @@ test('media can be listed and removed', async () => {
   const {id} = await uploaded.json();
 
   const listed = await handleRequest(adminRequest('/v1/admin/media'), env);
-  assert.deepEqual(await listed.json(), {
-    media: [{id, type: 'image/png', width: 200, height: 150, bytes: 32}],
-  });
+  const {media} = await listed.json();
+  assert.equal(media.length, 1);
+  // The fields the library draws a row from. Asserted by name rather than as
+  // a whole-shape snapshot, so adding one to the listing is not a test change.
+  assert.equal(media[0].id, id);
+  assert.equal(media[0].kind, 'image');
+  assert.equal(media[0].type, 'image/png');
+  assert.equal(media[0].width, 200);
+  assert.equal(media[0].height, 150);
+  assert.equal(media[0].bytes, 32);
+  assert.equal(media[0].url, `/v1/media/${id}`);
 
   const removed = await handleRequest(
     adminRequest(`/v1/admin/media/${id}`, {method: 'DELETE'}),

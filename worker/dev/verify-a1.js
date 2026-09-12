@@ -10,51 +10,18 @@
  *   npm exec --yes --package=node@22 -- node worker/dev/verify-a1.js
  */
 
-import {mkdir} from 'node:fs/promises';
-import {fileURLToPath} from 'node:url';
 
+import {captures, helpers, noise, quiet, reporter} from './harness.js';
 import {launch} from './browser.js';
 
 const base = process.env.ADMIN_BASE ?? 'http://localhost:8788';
 const token = process.env.ADMIN_TOKEN ??
   'local-development-token-' + 'x'.repeat(24);
-const shots = new URL('../../docs/audits/2026-09-11-admin-a1/', import.meta.url);
+const {check, finish} = reporter();
 
-/// `pathname` percent-encodes the space in the checkout's directory name.
-const shot = (name) => fileURLToPath(new URL(name, shots));
-
-const results = [];
-function record(name, passed, detail = '') {
-  results.push({name, passed, detail});
-  process.stdout.write(
-    (passed ? '  ok   ' : '  FAIL ') + name + (detail ? '  -- ' + detail : '') + '\n',
-  );
-}
-
-function check(name, condition, detail = '') {
-  record(name, Boolean(condition), detail);
-}
-
-const helpers = `
-  window.$ = (id) => document.getElementById(id);
-  window.setValue = (id, text) => {
-    const node = document.getElementById(id);
-    node.focus();
-    node.value = text;
-    node.dispatchEvent(new Event('input', {bubbles: true}));
-    return true;
-  };
-  window.clickText = (selector, text) => {
-    const node = [...document.querySelectorAll(selector)]
-      .find((entry) => entry.textContent.trim().startsWith(text));
-    if (!node) return false;
-    node.click();
-    return true;
-  };
-`;
 
 async function main() {
-  await mkdir(shots, {recursive: true});
+  const shot = await captures('2026-09-11-admin-a1');
   const page = await launch({width: 1440, height: 900});
 
   try {
@@ -91,7 +58,8 @@ async function main() {
     );
     check(
       'all five documents are listed as sections',
-      layout.sections.length === 5,
+      ['Profile', 'Work', 'Journey', 'Education', 'Off duty'].every((name) =>
+        layout.sections.includes(name)),
       layout.sections.join(', '),
     );
     check(
@@ -124,7 +92,7 @@ async function main() {
     );
     await page.settle(200);
     await page.type('Good evening');
-    await page.settle(900);
+    await quiet(page);
     const typing = await page.eval(`({
       value: $('f-greeting-en').value,
       focused: document.activeElement.id,
@@ -196,7 +164,7 @@ async function main() {
 
     // --- adding, reordering, removing -------------------------------------
     await page.eval("clickText('#editor .listFoot button', 'Add an application')");
-    await page.settle(400);
+    await quiet(page);
     const added = await page.eval(`({
       heading: document.querySelector('#editor h2').textContent,
       problems: $('problemCount').textContent,
@@ -278,7 +246,7 @@ async function main() {
 
     // --- validation --------------------------------------------------------
     await page.eval("setValue('f-positioning-en', '')");
-    await page.settle(1000);
+    await quiet(page);
     const invalid = await page.eval(`({
       issue: (document.querySelector('#editor .issue') || {}).textContent || '',
       publish: $('publish').disabled,
@@ -291,7 +259,7 @@ async function main() {
     );
     await page.screenshot(shot('05-validation-desktop.png'));
     await page.eval("setValue('f-positioning-en', 'Fixture engineer.')");
-    await page.settle(900);
+    await quiet(page);
     check(
       'fixing it re-enables publishing',
       (await page.eval("$('publish').disabled")) === false,
@@ -353,6 +321,7 @@ async function main() {
       const rail = $('rail').getBoundingClientRect();
       const editor = $('editorPane').getBoundingClientRect();
       const small = [...document.querySelectorAll('#editor button, #rail button')]
+        .filter((n) => n.getBoundingClientRect().height > 0)
         .filter((n) => n.getBoundingClientRect().height < 44)
         .map((n) => n.textContent.trim() || n.getAttribute('aria-label'));
       return {
@@ -378,9 +347,7 @@ async function main() {
     await page.screenshot(shot('08-phone-journey.png'));
 
     // --- nothing broke quietly ---------------------------------------------
-    const noisy = page.logs.filter(
-      (entry) => entry.level === 'error' || entry.level === 'exception',
-    );
+    const noisy = noise(page);
     check(
       'the browser reported no errors while all of that happened',
       noisy.length === 0,
@@ -390,11 +357,7 @@ async function main() {
     await page.close();
   }
 
-  const failed = results.filter((entry) => !entry.passed);
-  process.stdout.write(
-    '\n' + (results.length - failed.length) + '/' + results.length + ' checks passed\n',
-  );
-  process.exit(failed.length === 0 ? 0 : 1);
+  process.exit(finish() ? 0 : 1);
 }
 
 main().catch((error) => {

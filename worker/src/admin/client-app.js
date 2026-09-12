@@ -14,6 +14,9 @@ export const clientApp = `
 // --- navigation ------------------------------------------------------------
 
 function go(file, path) {
+  // Whatever the last thing to happen was, it was about the page being left.
+  say('');
+  state.view = 'document';
   state.file = file;
   state.path = path || [];
   const hash = '#' + file + (state.path.length ? '/' + state.path.join('/') : '');
@@ -23,14 +26,26 @@ function go(file, path) {
   check();
 }
 
+/// The sections that are not one of the owner's documents.
+function goTo(view) {
+  say('');
+  state.view = view;
+  if (location.hash !== '#' + view) history.replaceState(null, '', '#' + view);
+  render();
+  el('editorPane').scrollTop = 0;
+}
+
+const otherViews = [{id: 'media', label: 'Media'}];
+
 function readHash() {
   const raw = decodeURIComponent(location.hash.slice(1));
   if (!raw) return null;
+  if (otherViews.some((view) => view.id === raw)) return {view: raw};
   const parts = raw.split('/');
   const file = parts[0];
   if (!schemaFor(file)) return null;
   const path = parts.slice(1).map((step) => (/^\\d+$/.test(step) ? Number(step) : step));
-  return {file: file, path: path};
+  return {view: 'document', file: file, path: path};
 }
 
 // --- rendering -------------------------------------------------------------
@@ -54,7 +69,8 @@ function render() {
   }
 
   renderRail();
-  renderEditor();
+  if (state.view === 'media') renderLibrary();
+  else renderEditor();
   renderOutline();
   renderBar();
 
@@ -81,7 +97,8 @@ function renderRail() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'section';
-    button.setAttribute('aria-current', state.file === document_.file ? 'page' : 'false');
+    const open = state.view === 'document' && state.file === document_.file;
+    button.setAttribute('aria-current', open ? 'page' : 'false');
     button.append(node('span', 'name', document_.section));
     const pip = node('span', 'pip');
     pip.hidden = !dirty(document_.file);
@@ -89,6 +106,16 @@ function renderRail() {
     if (!pip.hidden) button.setAttribute('aria-describedby', 'unsavedHint');
     button.append(pip);
     button.onclick = () => go(document_.file, []);
+    rail.append(button);
+  }
+  rail.append(node('div', 'railHead', 'Library'));
+  for (const view of otherViews) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'section';
+    button.setAttribute('aria-current', state.view === view.id ? 'page' : 'false');
+    button.append(node('span', 'name', view.label));
+    button.onclick = () => goTo(view.id);
     rail.append(button);
   }
   const hint = node('span', null, 'has unsaved changes');
@@ -211,6 +238,14 @@ function languageTabs() {
 function renderOutline() {
   const pane = el('outline');
   pane.replaceChildren();
+  if (state.view !== 'document') {
+    pane.append(node(
+      'p',
+      'note',
+      'The outline follows whichever page you are editing.',
+    ));
+    return;
+  }
   const entry = current();
   if (!entry) return;
   const document_ = schemaFor(state.file);
@@ -259,6 +294,18 @@ function outlineLines(field, value) {
 }
 
 function renderBar() {
+  // Publishing is per page, so on a section that is not a page there is
+  // nothing here to press. Shown disabled rather than hidden, so the bar does
+  // not move about as the owner walks around the panel.
+  if (state.view !== 'document') {
+    el('changeCount').textContent = 'Media is stored as soon as it is uploaded';
+    el('problemCount').hidden = true;
+    el('publish').disabled = true;
+    el('review').disabled = true;
+    el('withdraw').disabled = true;
+    el('source').textContent = '';
+    return;
+  }
   const entry = current();
   const issues = state.issues.get(state.file);
   const changes = entry ? countChanges(entry) : 0;
@@ -460,9 +507,11 @@ async function unlock() {
     // at an application cannot be checked against a document nobody loaded.
     await Promise.all(SCHEMA.documents.map((entry) => ensure(entry.file)));
     const wanted = readHash();
-    if (wanted) {
+    if (wanted && wanted.view === 'document') {
       state.file = wanted.file;
       state.path = wanted.path;
+    } else if (wanted) {
+      state.view = wanted.view;
     }
     render();
     say('');

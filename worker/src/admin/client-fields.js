@@ -339,10 +339,12 @@ function referencableEntries(file) {
   return [];
 }
 
-/// An image, either uploaded here or shipped in the app's bundle.
+/// A picture or a recording, either uploaded here or shipped in the bundle.
 ///
-/// The uploader is attached because the schema says this field holds an
-/// image, not because the key happened to be spelled "cover".
+/// The uploader is attached because the schema says this field holds a file,
+/// not because the key happened to be spelled "cover". The field can also take
+/// something already in the library, which is what makes one picture usable in
+/// two places without uploading it twice.
 function assetControl(field, value, path) {
   const wrap = node('div', 'field');
   const id = idFor(path);
@@ -354,47 +356,106 @@ function assetControl(field, value, path) {
   input.oninput = () => write(path, input.value);
   wrap.append(labelFor(field, id), markInvalid(input, path));
 
-  if (field.media === 'image' && field.uploadable !== false) {
-    const picker = document.createElement('input');
-    picker.type = 'file';
-    picker.accept = 'image/png,image/jpeg,image/webp';
-    picker.id = id + '-file';
-    picker.style.marginTop = '8px';
-    const pickerLabel = node('label', null, 'Upload a replacement');
-    pickerLabel.htmlFor = picker.id;
-    pickerLabel.style.marginTop = '10px';
-    picker.onchange = async () => {
-      const chosen = picker.files && picker.files[0];
-      if (!chosen) return;
-      say('Uploading ' + chosen.name + '...');
-      try {
-        const response = await api('/v1/admin/media', {
-          method: 'POST',
-          headers: {'content-type': chosen.type},
-          body: chosen,
-        });
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error || 'The upload was refused');
-        write(path, body.url, true);
-        say('Uploaded, ' + body.width + ' by ' + body.height, 'good');
-        render();
-      } catch (error) {
-        say(error.message, 'bad');
-      }
-    };
-    wrap.append(pickerLabel, picker);
-    const shown = shownSource(input.value);
-    if (shown) {
+  const uploadable = field.uploadable !== false &&
+    (field.media === 'image' || field.media === 'audio');
+  if (!uploadable) return decorate(wrap, field, path);
+
+  const progress = node('div', 'progress');
+  progress.hidden = true;
+  const bar = node('div', 'bar');
+  progress.append(bar);
+  const line = node('p', 'help');
+  line.hidden = true;
+
+  const tools = node('div', 'listFoot');
+  const pickerId = id + '-file';
+  const picker = document.createElement('input');
+  picker.type = 'file';
+  picker.id = pickerId;
+  picker.className = 'filePicker';
+  picker.accept = field.media === 'audio'
+    ? 'audio/mpeg,audio/mp4,audio/wav,audio/ogg'
+    : 'image/png,image/jpeg,image/webp';
+
+  const pickLabel = node('label', 'buttonish', 'Upload');
+  pickLabel.htmlFor = pickerId;
+
+  const fromLibrary = document.createElement('button');
+  fromLibrary.type = 'button';
+  fromLibrary.className = 'small';
+  fromLibrary.textContent = 'Choose from library';
+  fromLibrary.onclick = () => openMediaPicker(field.media, (url) => {
+    write(path, url, true);
+    render();
+  });
+
+  const clear = document.createElement('button');
+  clear.type = 'button';
+  clear.className = 'small danger';
+  clear.textContent = 'Clear';
+  clear.disabled = input.value === '';
+  clear.onclick = () => {
+    write(path, undefined);
+    render();
+  };
+
+  let lastFile = null;
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.className = 'small';
+  retry.textContent = 'Try again';
+  retry.hidden = true;
+
+  const run = async (file) => {
+    lastFile = file;
+    retry.hidden = true;
+    progress.hidden = false;
+    line.hidden = false;
+    bar.style.width = '0%';
+    line.textContent = 'Sending ' + file.name + '...';
+    try {
+      const body = await sendFile(file, field.media, (fraction) => {
+        bar.style.width = Math.round(fraction * 100) + '%';
+      });
+      write(path, body.url, true);
+      say('Uploaded ' + file.name, 'good');
+      render();
+    } catch (error) {
+      progress.hidden = true;
+      line.textContent = error.message;
+      retry.hidden = false;
+      say(error.message, 'bad');
+    }
+  };
+  picker.onchange = () => {
+    const chosen = picker.files && picker.files[0];
+    if (chosen) run(chosen);
+  };
+  retry.onclick = () => {
+    if (lastFile) run(lastFile);
+  };
+
+  tools.append(pickLabel, picker, fromLibrary, clear, retry);
+  wrap.append(tools, progress, line);
+
+  const shown = shownSource(input.value);
+  if (shown) {
+    const preview = node('div', 'assetPreview');
+    if (field.media === 'audio') {
+      const player = document.createElement('audio');
+      player.controls = true;
+      player.preload = 'none';
+      player.src = shown;
+      player.setAttribute('aria-label', field.label);
+      preview.append(player);
+    } else {
       const thumb = document.createElement('img');
-      thumb.className = 'thumb';
+      thumb.className = 'mediaThumb';
       thumb.src = shown;
       thumb.alt = 'Current ' + field.label;
-      thumb.style.maxHeight = '160px';
-      thumb.style.marginTop = '10px';
-      thumb.style.borderRadius = '8px';
-      thumb.style.border = '1px solid var(--line)';
-      wrap.append(thumb);
+      preview.append(thumb);
     }
+    wrap.append(preview);
   }
   return decorate(wrap, field, path);
 }

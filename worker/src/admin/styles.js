@@ -173,6 +173,42 @@ select { appearance: none; padding-right: 34px;
 .inlineItem > .body { padding: 4px 14px 14px; border-top: 1px solid var(--line-soft); }
 .inlineItem > .body[hidden] { display: none; }
 
+/* --- media -------------------------------------------------------------- */
+
+.mediaThumb { display: block; max-width: 100%; max-height: 180px;
+  border-radius: 8px; border: 1px solid var(--line); background: var(--void); }
+.mediaThumb.small { max-height: 96px; }
+.assetPreview { margin-top: 10px; }
+.assetPreview audio { width: 100%; max-width: 320px; }
+.mediaCard { display: flex; gap: 14px; align-items: flex-start; }
+.mediaFigure { flex: none; width: 168px; }
+.mediaFigure audio { width: 100%; }
+.mediaBody { flex: 1; min-width: 0; }
+.mediaBody h3 { margin: 0 0 4px; font-size: 13px; font-weight: 600;
+  color: var(--gold); text-transform: uppercase; letter-spacing: .08em; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  word-break: break-all; }
+.mediaGrid { display: grid; gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+.mediaChoice { display: flex; flex-direction: column; gap: 6px; align-items: stretch;
+  text-align: start; padding: 8px; height: auto; }
+.progress { height: 6px; border-radius: 3px; background: var(--raised);
+  overflow: hidden; margin-top: 10px; }
+.progress .bar { height: 100%; width: 0; background: var(--gold);
+  transition: width .12s linear; }
+/* A file input styled as a button, because a browser will not let the real
+   control be styled and the owner should not be able to tell. */
+.filePicker { position: absolute; width: 1px; height: 1px; opacity: 0;
+  overflow: hidden; clip: rect(0 0 0 0); }
+label.buttonish { display: inline-flex; align-items: center; margin: 0;
+  min-height: 36px; padding: 6px 10px; font-size: 13px; letter-spacing: 0;
+  text-transform: none; color: var(--text); background: var(--raised);
+  border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+label.buttonish:hover { border-color: var(--gold); }
+.filePicker:focus-visible + * , input.filePicker:focus-visible ~ label.buttonish {
+  outline: 2px solid var(--gold); outline-offset: 2px; }
+.listFoot { flex-wrap: wrap; }
+
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { display: flex; align-items: center; gap: 4px; border: 1px solid var(--line);
   border-radius: 999px; padding: 3px 4px 3px 12px; background: var(--surface); }
@@ -262,6 +298,9 @@ body.locked { overflow: auto; }
   #bar button { flex: 1; min-width: 0; padding-inline: 8px; }
   .rowTools button, .chip button { min-height: 44px; min-width: 44px; }
   .listFoot button, button.small, .section, .langTabs button { min-height: 44px; }
+  label.buttonish { min-height: 44px; }
+  .mediaCard { flex-direction: column; }
+  .mediaFigure { width: 100%; }
   .chip { padding-inline-start: 14px; }
   .chip input { min-height: 40px; }
 }

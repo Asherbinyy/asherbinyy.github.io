@@ -166,6 +166,12 @@ export async function handleRequest(request, env, now = new Date()) {
     if (url.pathname === '/v1/admin/media' && request.method === 'POST') {
       return uploadMedia(request, env, headers);
     }
+    // Its own path, not a flag on the image endpoint. The image endpoint's
+    // whole argument is that it decodes enough of each container to know it is
+    // a raster image; widening it to "or some audio" would throw that away.
+    if (url.pathname === '/v1/admin/media/audio' && request.method === 'POST') {
+      return uploadAudio(request, env, headers);
+    }
     if (url.pathname.startsWith('/v1/admin/media/') && request.method === 'DELETE') {
       return removeMedia(url.pathname.slice('/v1/admin/media/'.length), env, headers);
     }
@@ -537,7 +543,11 @@ async function listMedia(env, headers) {
     {
       media: listing.keys.map((entry) => ({
         id: entry.name.slice(mediaPrefix.length),
+        // Inferred for anything stored before the library existed, rather
+        // than left undefined for the panel to guess at.
+        kind: (entry.metadata?.type ?? '').startsWith('audio/') ? 'audio' : 'image',
         ...(entry.metadata ?? {}),
+        url: `/v1/media/${entry.name.slice(mediaPrefix.length)}`,
       })),
     },
     200,
@@ -598,6 +608,7 @@ async function uploadMedia(request, env, headers) {
 
   await store.put(mediaPrefix + id, bytes, {
     metadata: {
+      kind: 'image',
       type: measured.type,
       width: measured.width,
       height: measured.height,
@@ -614,6 +625,165 @@ async function uploadMedia(request, env, headers) {
     200,
     headers,
   );
+}
+
+/// Sound formats the recording endpoint will take.
+///
+/// Closed, like the image list, and for the same reason: each of these has a
+/// header this Worker can read well enough to say what the bytes actually are.
+/// A container that can carry a video track or a script is not on it.
+const audioTypes = new Map([
+  ['audio/mpeg', 'mp3'],
+  ['audio/mp4', 'm4a'],
+  ['audio/wav', 'wav'],
+  ['audio/ogg', 'ogg'],
+]);
+
+/// The largest recording the endpoint will store.
+///
+/// The owner's name is 1.4 seconds and 12KB. This is three orders of magnitude
+/// above that, and still small enough that the endpoint is not somewhere to
+/// keep a podcast.
+const maximumAudioBytes = 2 * 1024 * 1024;
+
+async function uploadAudio(request, env, headers) {
+  const store = mediaStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+
+  const declaredType = (request.headers.get('content-type') ?? '')
+    .split(';')[0]
+    .trim()
+    .toLowerCase();
+  if (!audioTypes.has(declaredType)) {
+    return response({error: 'Unsupported sound format'}, 415, headers);
+  }
+
+  const declared = Number(request.headers.get('content-length') ?? 0);
+  if (declared > maximumAudioBytes) {
+    return response({error: 'Recording too large'}, 413, headers);
+  }
+  const bytes = new Uint8Array(await request.arrayBuffer());
+  if (bytes.byteLength > maximumAudioBytes) {
+    return response({error: 'Recording too large'}, 413, headers);
+  }
+  if (bytes.byteLength === 0) {
+    return response({error: 'Recording is empty'}, 400, headers);
+  }
+
+  const measured = measureAudio(bytes);
+  if (!measured) {
+    return response({error: 'Not a readable recording'}, 400, headers);
+  }
+  // The same rule the image endpoint applies: the header says what this is,
+  // not the caller. An .m4a renamed to .wav is refused on its bytes.
+  if (measured.type !== declaredType) {
+    return response({error: 'Recording does not match its type'}, 400, headers);
+  }
+
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  const id = bytesToHex(new Uint8Array(digest)).slice(0, 32);
+  await store.put(mediaPrefix + id, bytes, {
+    metadata: {
+      kind: 'audio',
+      type: measured.type,
+      bytes: bytes.byteLength,
+      // Absent where the container does not state it plainly. A length this
+      // Worker cannot read is reported as unknown rather than estimated.
+      ...(measured.seconds === null ? {} : {seconds: measured.seconds}),
+    },
+  });
+  return response(
+    {id, url: `/v1/media/${id}`, seconds: measured.seconds},
+    200,
+    headers,
+  );
+}
+
+/// Reads a recording's real format, and its length where the header says so.
+///
+/// Parses only as far as the fields it needs. Nothing here decodes sound.
+function measureAudio(bytes) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const ascii = (at, length) =>
+    String.fromCharCode(...bytes.slice(at, at + length));
+
+  // WAV: a RIFF container. The length is the data chunk over the byte rate,
+  // both of which are stated in the header.
+  if (bytes.byteLength > 44 && ascii(0, 4) === 'RIFF' && ascii(8, 4) === 'WAVE') {
+    let at = 12;
+    let byteRate = 0;
+    while (at + 8 <= bytes.byteLength) {
+      const chunk = ascii(at, 4);
+      const size = view.getUint32(at + 4, true);
+      // Inside the fmt chunk's own data, which starts eight bytes in: format,
+      // channels, sample rate, then the byte rate at offset eight.
+      if (chunk === 'fmt ' && at + 20 <= bytes.byteLength) {
+        byteRate = view.getUint32(at + 16, true);
+      }
+      if (chunk === 'data') {
+        return {
+          type: 'audio/wav',
+          seconds: byteRate > 0 ? Math.round((size / byteRate) * 100) / 100 : null,
+        };
+      }
+      at += 8 + size + (size % 2);
+    }
+    return {type: 'audio/wav', seconds: null};
+  }
+
+  // OggS: the length lives in the last page's granule position, which means
+  // reading the end of the file. Not worth it for a name recording.
+  if (bytes.byteLength > 4 && ascii(0, 4) === 'OggS') {
+    return {type: 'audio/ogg', seconds: null};
+  }
+
+  // MPEG-4: atoms, with the length in mvhd inside moov.
+  if (bytes.byteLength > 12 && ascii(4, 4) === 'ftyp') {
+    const brand = ascii(8, 4);
+    if (!['M4A ', 'mp42', 'isom', 'M4B ', 'mp41'].includes(brand)) return null;
+    return {type: 'audio/mp4', seconds: mpeg4Seconds(view, bytes, ascii)};
+  }
+
+  // MP3: either an ID3 tag or a bare frame sync. Its length needs every frame
+  // header counted, so it is reported as unknown.
+  if (bytes.byteLength > 4) {
+    const tagged = ascii(0, 3) === 'ID3';
+    const synced = bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0;
+    if (tagged || synced) return {type: 'audio/mpeg', seconds: null};
+  }
+
+  return null;
+}
+
+/// Walks MPEG-4 atoms to the movie header and reads its duration.
+function mpeg4Seconds(view, bytes, ascii) {
+  const findAtom = (name, from, until) => {
+    let at = from;
+    while (at + 8 <= until) {
+      const size = view.getUint32(at);
+      if (size < 8) return null;
+      if (ascii(at + 4, 4) === name) return {at: at + 8, end: at + size};
+      at += size;
+    }
+    return null;
+  };
+  const moov = findAtom('moov', 0, bytes.byteLength);
+  if (!moov) return null;
+  const mvhd = findAtom('mvhd', moov.at, Math.min(moov.end, bytes.byteLength));
+  if (!mvhd || mvhd.at + 20 > bytes.byteLength) return null;
+
+  const version = bytes[mvhd.at];
+  // Version 1 widened the timestamps to 64 bits, which moves both fields.
+  const timescale = version === 1
+    ? view.getUint32(mvhd.at + 20)
+    : view.getUint32(mvhd.at + 12);
+  const duration = version === 1
+    ? Number(view.getBigUint64(mvhd.at + 24))
+    : view.getUint32(mvhd.at + 16);
+  if (!timescale) return null;
+  return Math.round((duration / timescale) * 100) / 100;
 }
 
 async function removeMedia(id, env, headers) {

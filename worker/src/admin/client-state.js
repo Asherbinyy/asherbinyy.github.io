@@ -24,12 +24,15 @@
 export const clientState = `
 const state = {
   token: '',
+  view: 'document',
   file: SCHEMA.documents[0].file,
   path: [],
   lang: 'en',
   docs: new Map(),
   issues: new Map(),
   checking: 0,
+  media: null,
+  mediaError: '',
 };
 
 const el = (id) => document.getElementById(id);
@@ -263,10 +266,28 @@ function subtitleOf(node, value) {
 /// would refuse it, and the only way to guarantee that is to ask the thing
 /// that decides.
 let checkTimer = null;
+let outstanding = 0;
+
+/// Marks the panel as having a check in flight.
+///
+/// Read off the body by the verification runs, so a scenario can wait for the
+/// answer instead of sleeping for a guessed number of milliseconds. A test
+/// that passes because the sleep was long enough is a test that will fail on a
+/// slower machine for a reason nobody can reproduce.
+function busy(delta) {
+  outstanding += delta;
+  if (outstanding > 0) document.body.dataset.checking = '1';
+  else delete document.body.dataset.checking;
+}
 
 function scheduleCheck() {
   if (checkTimer !== null) clearTimeout(checkTimer);
-  checkTimer = setTimeout(check, 400);
+  else busy(1);
+  checkTimer = setTimeout(() => {
+    checkTimer = null;
+    busy(-1);
+    check();
+  }, 400);
 }
 
 async function check() {
@@ -274,6 +295,7 @@ async function check() {
   const entry = state.docs.get(file);
   if (!entry) return;
   const ticket = ++state.checking;
+  busy(1);
   try {
     const response = await api('/v1/admin/validate', {
       method: 'POST',
@@ -292,6 +314,8 @@ async function check() {
   } catch (error) {
     if (ticket !== state.checking) return;
     say(error.message, 'bad');
+  } finally {
+    busy(-1);
   }
 }
 
@@ -309,6 +333,89 @@ function knownReferences(file) {
     sets[name] = referencableEntries(name).map((entry) => entry.value);
   }
   return sets;
+}
+
+// --- stored media ----------------------------------------------------------
+
+/// Everything the owner has uploaded, newest information first.
+async function loadMedia() {
+  try {
+    const response = await api('/v1/admin/media');
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error || 'Could not read the library');
+    state.media = body.media;
+    state.mediaError = '';
+  } catch (error) {
+    state.media = state.media || [];
+    state.mediaError = error.message;
+  }
+}
+
+/// Sends one file, reporting how far it has got.
+///
+/// XMLHttpRequest rather than fetch, for the one thing it still does better:
+/// it reports upload progress. A picture from a phone on a train takes long
+/// enough that a control with no progress looks broken, and the owner's
+/// answer to a control that looks broken is to press it again.
+function sendFile(file, kind, onProgress) {
+  return new Promise((resolve, reject) => {
+    const path = kind === 'audio' ? '/v1/admin/media/audio' : '/v1/admin/media';
+    const request = new XMLHttpRequest();
+    request.open('POST', path);
+    request.setRequestHeader('authorization', 'Bearer ' + state.token);
+    request.setRequestHeader('content-type', file.type);
+    request.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      onProgress(event.loaded / event.total);
+    };
+    request.onload = () => {
+      let body = {};
+      try {
+        body = JSON.parse(request.responseText);
+      } catch (error) {
+        body = {};
+      }
+      if (request.status === 401) return reject(new Error('The token was refused'));
+      if (request.status >= 400) {
+        return reject(new Error(body.error || 'The upload was refused'));
+      }
+      state.media = null;
+      resolve(body);
+    };
+    request.onerror = () => reject(new Error('The upload could not be sent'));
+    request.onabort = () => reject(new Error('The upload was cancelled'));
+    request.send(file);
+  });
+}
+
+/// Where a stored file is referred to, across every document loaded.
+///
+/// Deleting an image that a page is still pointing at leaves a broken
+/// reference the owner will not find until someone tells him, so the library
+/// says who is using a file before offering to remove it.
+function usesOf(url) {
+  const found = [];
+  for (const document_ of SCHEMA.documents) {
+    const entry = state.docs.get(document_.file);
+    if (!entry) continue;
+    walkFor(entry.draft, url, [], (path) => {
+      found.push({file: document_.file, section: document_.section, path: path});
+    });
+  }
+  return found;
+}
+
+function walkFor(value, wanted, path, found) {
+  if (value === wanted) return found(path.join('.'));
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => walkFor(entry, wanted, path.concat([index]), found));
+    return;
+  }
+  if (value !== null && typeof value === 'object') {
+    for (const key of Object.keys(value)) {
+      walkFor(value[key], wanted, path.concat([key]), found);
+    }
+  }
 }
 
 function issuesAt(pathText) {
