@@ -8,6 +8,8 @@ R0 is the audit/documentation session. R1–R9 are **not complete or visually ap
 
 **2026-09-12:** owner confirmed Claude is working on admin. Codex's first app repair passes all four FVM checks (676 tests); [final browser evidence](audits/2026-09-12/README.md). Production remains unchanged.
 
+**Later owner clarification:** finish all milestones, review Claude before integration, and explain the cost of replacing Flutter. Astro's first slice is committed at `034d50e`; keeping Flutter as the UI authoring source is now being clarified. Do not maintain two complete public UIs. [Admin review](24-ADMIN-MERGE-REVIEW.md) records nine reproduced defects despite 229 passing Worker tests. Claude fixes his branch before integration. A renderer-independent [entrance material study](audits/2026-09-12/r2-entrance/README.md) starts the R2 visual work.
+
 ## Product direction
 
 Make the portfolio discoverable by the owner's name and make exploring it feel like entering an Egyptian architectural world. Public content must be readable before an animation or app runtime finishes. The game exists for enjoyment. The admin lets the owner manage the whole experience without editing code.

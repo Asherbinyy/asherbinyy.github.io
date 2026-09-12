@@ -38,13 +38,13 @@ Evidence: [audit](18-REINNOVATION-AUDIT.md). Historical issue numbers remain sea
 
 | ID | Still true | Closes when | Milestone |
 |---|---|---|---|
-| ADM-1 | Narrow JSON-shaped forms; Nocturne branding; no live preview or language tabs | Professional workspace demonstrates editing and preview on real components | R3 |
-| ADM-2 | Fixed object fields, missing links/components and heuristic upload controls | Supported flexible content/media authoring reaches every corresponding site surface | R3 |
-| ADM-3 | Switching tabs discards draft; no enforced before/after publish confirmation or revision conflict check | Retained drafts, page save/review/cancel and stale-edit handling verified | R3 |
-| ADM-4 | JSON shape/provenance validation incomplete on server | Invalid schema/references/unsupported claims rejected before public revision changes | R1/R3 |
-| ADM-5 | No in-panel password change/logout; shared failed-login counter | Auth lifecycle and lockout behavior reviewed and verified in isolated data | R3 |
+| ADM-1 | Claude's branch adds schema-driven editor, language tabs and preview frame; real public adapter remains absent | Professional workspace demonstrates editing and preview on real components | R3, under review |
+| ADM-2 | Claude adds flexible field/media editors; review reproduced async upload writing into another document (AR-3) | Supported flexible authoring reaches each surface without cross-draft corruption | R3, under review |
+| ADM-3 | Draft/review/history UI exists, but concurrent writes, stale rollback and silently refreshed draft bases can overwrite edits (AR-1/4/5) | Atomic revisions and preserved draft baselines pass concurrent and delayed-response checks | R3, merge blocked |
+| ADM-4 | Server schemas/provenance added; snapshot references can be spoofed, malformed M4A can throw, preview accepts an unvalidated draft (AR-6/7/8) | Invalid schema/references/media are rejected and preview sends only its exact validated draft | R1/R3, merge blocked |
+| ADM-5 | Password/session/logout UI exists; ordinary password throttle is ineffective and idle renewal differs from documented policy (AR-2/9) | Auth lifecycle and actual pre-verification throttling pass isolated regressions | R3, merge blocked |
 | ADM-6 | Extra themes, fonts and per-page patterns absent | Base themes retained and customization previews/publishes/resets correctly | R8 |
-| ADM-7 | Analytics home absent; production client collection disabled | Dashboard reports available data honestly and any new collection follows explicit consent design | R8 |
+| ADM-7 | Claude's branch adds an aggregate dashboard; production client collection remains disabled. Public integration not certified | Dashboard reports available data honestly and any new collection follows explicit consent design | R8, under review |
 | CON-1 | App screenshot/gallery assets absent; no screenshot fields in bundled apps | Appropriate real public/supplied media and gallery records are available | R3/R5 |
 | CON-2 | Birth year/photo request not implemented | Owner-supplied 1997/Mansoura stop and cleared photo supported without invented exact dates | R4 |
 | CON-3 | “The Writer” may be an erroneous third book rather than a request for authors | Original phrase clarified before editing the interests record | R6 |
@@ -65,7 +65,7 @@ Evidence: [audit](18-REINNOVATION-AUDIT.md). Historical issue numbers remain sea
 | QA-3 | Once-per-tab intro, rotation, dynamic browser bars and full accessibility need browser acceptance | Exercise actual interactions, safe areas, large text, keyboard, screen reader and reduced motion |
 | QA-4 | Material/Cupertino icon-font build warning remains | Determine which retained dependency needs it; don't silently bundle unwanted UI libraries |
 | QA-5 | Historical Wasm deferred-loading limitation and below-threshold decorative hairlines | Re-measure for retained modules/surfaces under the chosen architecture; don't claim runtime savings without evidence |
-| DEC-1 | Public rendering settled: owner delegated the choice; Astro selected. About/Courtyard arrangement and game input remain open | Proceed with R1 HTML foundation; resolve remaining choices before dependent milestones |
+| DEC-1 | Astro first slice is local. Owner subsequently asked whether Flutter edits would need duplicating; requirement to retain Flutter UI authoring is being clarified. About/Courtyard arrangement and game input remain open | Maintain one authoritative public UI; resolve rendering concern before expanding migration |
 | DEC-2 | Subscribers cancelled; daily digest cancellation ambiguous in handover | Keep digest dormant; no account setup or email until clarified |
 | DEC-3 | Real phone/3D asset access may become necessary | Ask only for the specific missing device/asset/service after preparing a reviewable slice |
 
