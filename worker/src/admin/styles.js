@@ -173,6 +173,28 @@ select { appearance: none; padding-right: 34px;
 .inlineItem > .body { padding: 4px 14px 14px; border-top: 1px solid var(--line-soft); }
 .inlineItem > .body[hidden] { display: none; }
 
+/* --- home ---------------------------------------------------------------- */
+
+.rangeNote { border-left: 3px solid var(--line); padding: 8px 12px;
+  margin: 0 0 18px; color: var(--muted); font-size: 13px; }
+.rangeNote p { margin: 0; }
+.figures { display: grid; gap: 10px; margin: 0 0 18px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.figure { border: 1px solid var(--line); border-radius: 10px; padding: 14px;
+  background: var(--surface); }
+.figure strong { display: block; font-size: 30px; line-height: 1.1;
+  font-variant-numeric: tabular-nums; }
+.figure .k { display: block; margin-top: 4px; color: var(--muted); font-size: 12px;
+  text-transform: uppercase; letter-spacing: .08em; }
+.figure .note { display: block; margin-top: 6px; font-size: 12px; }
+.bar { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
+.barName { flex: 0 0 34%; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; font-size: 13.5px; }
+.barTrack { flex: 1; height: 8px; border-radius: 4px; background: var(--raised); }
+.barFill { display: block; height: 100%; border-radius: 4px; background: var(--gold); }
+.barCount { flex: none; font-size: 13px; color: var(--muted);
+  font-variant-numeric: tabular-nums; min-width: 3ch; text-align: end; }
+
 /* --- media -------------------------------------------------------------- */
 
 .mediaThumb { display: block; max-width: 100%; max-height: 180px;

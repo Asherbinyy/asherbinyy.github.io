@@ -6,6 +6,7 @@ import {
   validateDocument,
 } from '../contracts/validate.js';
 import {adminPage} from './admin.js';
+import {defaultRange, summarise, validDay} from './insights.js';
 
 const saltKey = 'system|salt';
 const counterPrefix = 'counter|';
@@ -170,6 +171,9 @@ export async function handleRequest(request, env, now = new Date()) {
     }
     if (url.pathname === '/v1/admin/changes' && request.method === 'GET') {
       return listChanges(env, headers);
+    }
+    if (url.pathname === '/v1/admin/insights' && request.method === 'GET') {
+      return readInsights(url, env, now, headers);
     }
     if (url.pathname === '/v1/admin/validate' && request.method === 'POST') {
       return checkDraft(request, env, headers, false);
@@ -1729,6 +1733,43 @@ export async function visitorHash(salt, address, agent, siteId) {
     `${salt}\u0000${address}\u0000${agent}\u0000${siteId}`,
   );
   return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256', material)));
+}
+
+/// What the counters already hold, over a range of days.
+///
+/// Reads. It does not enable collection, it does not write a counter, and it
+/// does not fill a gap with an estimate. A range with nothing in it comes back
+/// with nothing in it.
+async function readInsights(url, env, now, headers) {
+  const asked = {
+    from: url.searchParams.get('from'),
+    to: url.searchParams.get('to'),
+  };
+  const fallback = defaultRange(now);
+  const from = validDay(asked.from) ? asked.from : fallback.from;
+  const to = validDay(asked.to) ? asked.to : fallback.to;
+  if (from > to) {
+    return response({error: 'That range ends before it starts'}, 400, headers);
+  }
+
+  const snapshot = await aggregateSnapshot(env);
+  return response(
+    {
+      ...summarise(snapshot.counters, snapshot.totals, {from, to}),
+      // Stated rather than inferred: this Worker cannot see how the public
+      // build was configured, and guessing would be worse than citing.
+      configuration: {
+        knownDisabled: true,
+        note:
+          'The published site is built without an analytics endpoint, so it ' +
+          'sends nothing. Until that changes these counters can only grow ' +
+          'from a consented session or a test.',
+        reference: 'docs/06-ANALYTICS-AND-PRIVACY.md',
+      },
+    },
+    200,
+    headers,
+  );
 }
 
 export async function aggregateSnapshot(env) {

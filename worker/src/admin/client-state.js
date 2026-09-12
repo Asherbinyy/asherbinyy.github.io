@@ -35,6 +35,13 @@ const state = {
   mediaError: '',
   account: null,
   expires: null,
+  insights: null,
+  insightsError: '',
+  range: {
+    id: '28',
+    from: new Date(Date.now() - 27 * 86400000).toISOString().slice(0, 10),
+    to: new Date().toISOString().slice(0, 10),
+  },
 };
 
 const el = (id) => document.getElementById(id);

@@ -37,6 +37,11 @@ async function main() {
       await page.eval("$('frame').classList.contains('on')"),
     );
 
+    // The panel opens on Home from A6 onwards; these checks are about the
+    // editing side of it.
+    await page.eval("clickText('#rail .section', 'Profile')");
+    await page.settle(500);
+
     // --- the layout the owner asked for ------------------------------------
     const layout = await page.eval(`(() => {
       const rail = $('rail').getBoundingClientRect();

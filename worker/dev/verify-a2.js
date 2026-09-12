@@ -14,6 +14,11 @@ async function main() {
   const page = await openPanel();
 
   try {
+    // The panel opens on Home from A6 onwards; these checks are about the
+    // editing side of it.
+    await page.eval("clickText('#rail .section', 'Profile')");
+    await page.settle(500);
+
     // --- the library is a place you can get to ----------------------------
     check(
       'the library is a section of its own',

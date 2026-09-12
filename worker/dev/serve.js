@@ -102,6 +102,27 @@ const server = createServer(async (incoming, outgoing) => {
     return;
   }
 
+  // Puts a counter straight into the store, so the dashboard can be exercised
+  // against data without turning collection on anywhere.
+  //
+  // This lives in the harness and **only** in the harness. There is no such
+  // route in `worker/src/index.js` and there must never be one: an endpoint
+  // that writes analytics counters on request is an endpoint that can make the
+  // owner's own numbers say anything.
+  if (url.pathname === '/__seed' && incoming.method === 'POST') {
+    if (incoming.headers.authorization !== 'Bearer ' + token) {
+      outgoing.writeHead(401).end('no');
+      return;
+    }
+    const body = [];
+    for await (const chunk of incoming) body.push(chunk);
+    const {key, value} = JSON.parse(Buffer.concat(body).toString());
+    await env.ANALYTICS.put(key, String(value));
+    outgoing.writeHead(200, {'content-type': 'application/json'});
+    outgoing.end('{"seeded":true}');
+    return;
+  }
+
   const chunks = [];
   for await (const chunk of incoming) chunks.push(chunk);
   const body = chunks.length > 0 ? Buffer.concat(chunks) : undefined;

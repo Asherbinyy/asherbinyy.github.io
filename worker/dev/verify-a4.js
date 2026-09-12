@@ -16,6 +16,11 @@ async function main() {
   const page = await openPanel();
 
   try {
+    // The panel opens on Home from A6 onwards; these checks are about the
+    // editing side of it.
+    await page.eval("clickText('#rail .section', 'Profile')");
+    await page.settle(500);
+
     // --- what the browser is actually holding -----------------------------
     const held = await page.eval(
       "sessionStorage.getItem('portfolio.admin.session')",

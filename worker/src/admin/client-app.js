@@ -29,6 +29,12 @@ function go(file, path) {
 /// The sections that are not one of the owner's documents.
 function goTo(view) {
   say('');
+  // Coming back to the dashboard reads the counters again. A figure that is
+  // as old as the tab is a figure nobody can trust.
+  if (view === 'home') {
+    state.insights = null;
+    state.insightsError = '';
+  }
   state.view = view;
   if (location.hash !== '#' + view) history.replaceState(null, '', '#' + view);
   render();
@@ -40,9 +46,13 @@ const otherViews = [
   {id: 'account', label: 'Account', head: 'You'},
 ];
 
+/// The section the panel opens on.
+const homeView = {id: 'home', label: 'Home'};
+
 function readHash() {
   const raw = decodeURIComponent(location.hash.slice(1));
   if (!raw) return null;
+  if (raw === homeView.id) return {view: 'home'};
   if (otherViews.some((view) => view.id === raw)) return {view: raw};
   const parts = raw.split('/');
   const file = parts[0];
@@ -72,7 +82,8 @@ function render() {
   }
 
   renderRail();
-  if (state.view === 'media') renderLibrary();
+  if (state.view === 'home') renderHome();
+  else if (state.view === 'media') renderLibrary();
   else if (state.view === 'account') renderAccount();
   else renderEditor();
   renderOutline();
@@ -96,6 +107,14 @@ function render() {
 function renderRail() {
   const rail = el('rail');
   rail.replaceChildren();
+  const home = document.createElement('button');
+  home.type = 'button';
+  home.className = 'section';
+  home.setAttribute('aria-current', state.view === 'home' ? 'page' : 'false');
+  home.append(node('span', 'name', homeView.label));
+  home.onclick = () => goTo('home');
+  rail.append(home);
+
   rail.append(node('div', 'railHead', 'Content'));
   for (const document_ of SCHEMA.documents) {
     const button = document.createElement('button');
@@ -308,7 +327,9 @@ function renderBar() {
   if (state.view !== 'document') {
     el('changeCount').textContent = state.view === 'media'
       ? 'Media is stored as soon as it is uploaded'
-      : 'Nothing on this page is published';
+      : state.view === 'home'
+        ? 'Counters only. Nothing here is published or collected.'
+        : 'Nothing on this page is published';
     el('problemCount').hidden = true;
     for (const id of ['publish', 'discard', 'history', 'withdraw']) {
       el(id).disabled = true;
@@ -416,6 +437,8 @@ async function unlock() {
       state.path = wanted.path;
     } else if (wanted) {
       state.view = wanted.view;
+    } else {
+      state.view = 'home';
     }
     render();
     say('');
@@ -478,6 +501,8 @@ async function resume() {
       state.path = wanted.path;
     } else if (wanted) {
       state.view = wanted.view;
+    } else {
+      state.view = 'home';
     }
     render();
     say('');
