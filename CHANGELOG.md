@@ -5,15 +5,13 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
-### Added
-
-- Isolated Astro public foundation: Home, Work and 14 project pages in English and Arabic, readable without JavaScript, with route metadata and one immutable content revision. Local proof only; remaining routes and production publication are open.
-- Repeatable built-HTML and HTTP checks, including existing unslashed URLs and real missing-page responses; documented the public snapshot/preview contract for Claude's admin integration.
-
 ### Documentation
 
+- Removed the rejected separate frontend, generated entrance studies and migration documentation at the owner’s request. Flutter remains the public UI; the existing Journey and sitemap repairs are retained.
+- Re-reviewed admin commit `afc8969`: 262 Worker tests pass and local Cloudflare content-write concurrency passes; three remaining read/auth races block integration.
+
 - Audited the original requests, repository and deployed browser views; saved 11 visual baseline captures.
-- Added Re-innovation milestones R0–R9 with request-by-request coverage and acceptance criteria.
+- Replaced the rejected frontend experiment with a Flutter enhancement plan and preserved the original request inventory.
 - Replaced stale current-state issues, brief, game and admin specifications; marked historical design/screen/schema instructions that conflict with later requests.
 - Shortened the README and documented the current SEO/publication gap. No application redesign, content edit or deployment is included in this audit.
 

@@ -1,9 +1,9 @@
 # Admin and media
 
-Current-state audit: 2026-09-11. Implementation baseline: `1cfd039`.
-Target workflow and acceptance: [R3](19-REINNOVATION-ROADMAP.md#r3--admin-as-an-editing-workspace). Customization and analytics: [R8](19-REINNOVATION-ROADMAP.md#r8--customization-and-analytics).
+Updated 2026-09-12. Root/deployed baseline below is separate from Claude’s unmerged `afc8969` branch. That branch adds schema-driven editors, independent drafts, EN/AR tabs, media/audio controls, revision/review UI, account controls and a preview frame tested against a stand-in. Its 262 Worker tests pass, but [three re-review defects](25-ADMIN-REREVIEW.md) block integration. Actual Flutter preview, additive field consumers, appearance allowlist and coordinated releases remain open. The old baseline limitations below must not be read as a claim that Claude implemented none of those features.
+Target workflow and acceptance: [F1](19-FLUTTER-ENHANCEMENT-PLAN.md#f1--admin-reliability-and-real-flutter-preview). Customization and analytics: [F7](19-FLUTTER-ENHANCEMENT-PLAN.md#f7--appearance-and-dashboard).
 
-## What exists
+## Existing root/deployed baseline
 
 The Worker serves `/admin` from `worker/src/admin.js`. The HTML is public and marked noindex; write endpoints require a separate `ADMIN_TOKEN`. The panel edits profile, apps, career, education and interests as forms generated from existing JSON shapes.
 
@@ -11,7 +11,7 @@ Public content reads use `/v1/content/<file>`. Authenticated content writes/with
 
 The admin HTML is deployed according to the prior handover. This audit rendered a local fixture of the panel, not a production authenticated editing session. Public content reads during browser captures returned 404 for the requested overrides, so those views used bundled content. That does not by itself prove whether the content binding is configured.
 
-## Current limitations
+## Baseline limitations (before the unmerged admin branch)
 
 - No preview of the actual website. Image thumbnails are not the requested live preview.
 - Objects expose existing keys; lists clone an existing item. There is no generic supported-field/component system and no flexible contact-link model.
@@ -28,15 +28,15 @@ The admin HTML is deployed according to the prior handover. This audit rendered 
 
 ## Media behavior
 
-The existing endpoint accepts PNG, JPEG and WebP with size/type/dimension checks and rejects SVG. Media IDs are hashes of their contents. Current upload limit and dimensions are defined in `worker/src/index.js`; R3 must preserve validation while adding explicit media controls.
+The existing endpoint accepts PNG, JPEG and WebP with size/type/dimension checks and rejects SVG. Media IDs are hashes of their contents. Current upload limit and dimensions are defined in `worker/src/index.js`; F1 must preserve validation while adding explicit media controls.
 
-Video currently uses external URLs and deliberate click-to-load playback. R3 must expose that honestly. Direct video storage is a separate hosting decision if needed, not something already supported by image KV storage.
+Video currently uses external URLs and deliberate click-to-load playback. F1 must expose that honestly. Direct video storage is a separate hosting decision if needed, not something already supported by image KV storage.
 
 Real app screenshots are absent from the bundled app entries. `assets/media/apps/` contains guidance only and is not currently declared as a Flutter asset directory. Adding a file there alone does not finish the gallery or publishing pipeline.
 
 ## Publishing contract to establish
 
-R1 must choose the public HTML and content-revision strategy before R3 promises a live publish. At present the app reads Worker overrides while CV/Brief are generated from local files and the main shell metadata is written separately.
+F8 will extend the existing Dart static generator and coordinate one content revision with Flutter before publication is labelled complete. At present the app reads Worker overrides while CV/Brief are generated from local files and the main shell metadata is written separately.
 
 A draft preview must not publish. A publication must validate schema, references and claim provenance, protect against stale edits, and expose failure. The public document, metadata and interactive view must all refer to the same published revision, with the last successful revision available on failure.
 

@@ -1,8 +1,8 @@
-# Re-innovation audit
+# Project audit
 
 Date: 2026-09-11. Repository baseline: `1cfd039`, originally on `docs/handover`.
 This is an assessment of the existing product, not a claim that the redesign is complete.
-Execution plan: [Re-innovation milestones](19-REINNOVATION-ROADMAP.md).
+Execution plan: [Flutter enhancement plan](19-FLUTTER-ENHANCEMENT-PLAN.md).
 
 ## Findings that determine the next work
 
@@ -64,11 +64,11 @@ The admin capture does **not** verify production authentication, publishing or p
 | S7 | EN/AR switches change client state; no independent Arabic page URLs or alternate-language links are generated | Arabic needs an explicit crawlable route strategy, not just RTL rendering |
 | S8 | OG image is the small brand icon; README references missing `docs/assets/screenshot.webp` | Sharing does not introduce the person or work effectively |
 
-**Recommendation:** deliver semantic HTML for public content, with CSS and lazily loaded scene/game modules for motion. Keep the existing Worker, verified content and reusable geometry. The choice of frontend framework and public serving/publishing strategy belongs to R1 and is pending the owner's answer; this audit does not install or migrate anything.
+**Current decision (2026-09-12):** retain and enhance Flutter. The owner cancelled the separate frontend after reviewing it. The search defects below remain valid; address them through the existing Dart static generator and shared release contract, without another designed interactive UI.
 
 **If Flutter is retained:** generate complete HTML documents at each public URL, with matching visible content, correct status codes and route metadata, and define how admin publishing updates them. Do not use a hidden keyword block, user-agent-specific bot page, or the 404 shell as the SEO solution. Maintaining two renderers has an ongoing parity cost.
 
-R1 must resolve publishing consistency, not just generate another static snapshot. Either publish a validated content revision and rebuild before marking it live, or serve HTML and interactive views from the same published revision. A saved draft and a live release must be visibly different states in the admin.
+The publishing phase must resolve publishing consistency, not just generate another static snapshot. Either publish a validated content revision and rebuild before marking it live, or serve HTML and interactive views from the same published revision. A saved draft and a live release must be visibly different states in the admin.
 
 Google documents the importance of crawlable links, rendered HTML and meaningful status codes in its [JavaScript SEO guidance](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics). Flutter's [web FAQ](https://docs.flutter.dev/platform-integration/web/faq) recommends separating search-oriented document content from app experiences. Those recommendations support the architectural direction; they are not a guarantee of ranking.
 
@@ -90,7 +90,7 @@ Search checks surfaced the owner's Medium and LinkedIn profiles and several unre
 | V10 | App media folder contains only guidance; no app declares a screenshot; that directory is also absent from `pubspec.yaml` asset roots | Complete the media path, gallery model and actual media population, rather than just telling the owner to upload |
 | V11 | Footer is an empty reserved bar | Revisit the composition; no replacement tagline is needed merely to fill it |
 
-There is no need for access to another 3D platform merely to start. R2 should choose an asset pipeline after a small visual proof. The entrance should have no bottom CC caption. Prefer original or CC0 entrance assets so the composition is not dependent on a persistent caption; keep an asset-source/license inventory. No asset or credit was changed during this audit.
+There is no need for access to another 3D platform merely to start. F2 should choose an asset pipeline after a small visual proof. The entrance should have no bottom CC caption. Prefer original or CC0 entrance assets so the composition is not dependent on a persistent caption; keep an asset-source/license inventory. No asset or credit was changed during this audit.
 
 ## Content
 
@@ -110,17 +110,17 @@ The bundled records contain 14 applications, 8 journey stops, 2 education entrie
 
 | ID | Finding and evidence | Milestone |
 |---|---|---|
-| A-F1 | `admin.js` iterates existing object keys and clones list shapes; it cannot create a reusable arbitrary link/component schema | R3 |
-| A-F2 | `open(name)` replaces `live` and `draft` when tabs change without preserving or warning about unsaved edits | R3 |
-| A-F3 | Publish already sends only the selected file, despite the global-looking toolbar. The real gap is visible per-page saves, retained drafts and mandatory change confirmation | R3 |
-| A-F4 | Image controls are selected by a regex on the final key. `portrait.src`, evidence `src`, and the absent app screenshot fields do not form a reliable upload UI | R3 |
-| A-F5 | Fields are often labeled with a visual `<label>` not associated with an input ID. There is no application preview pane | R3 |
-| A-F6 | Worker publishing checks JSON syntax and a top-level object, not the Dart schema. Invalid shapes can be accepted and then silently rejected by the app | R1/R3 |
-| A-F7 | Numeric provenance is prompted only in the browser and is optional at the Worker; there is no revision-conflict protection or publication/HTML parity | R1/R3 |
-| A-F8 | Auth is a separate bearer token, not the session-cookie design described in the old spec. The panel persists it in `sessionStorage`; there is no in-panel rotation or explicit logout control | R3 |
-| A-F9 | Failed login counting uses a shared hourly key; a series of failures can also block the correct token | R3 auth review |
-| A-F10 | No theme/font/pattern controls or analytics homepage | R8 |
-| A-F11 | Analytics client has no endpoint in the release build. `aggregateSnapshot` reads counters; it does not mean the site currently collects the requested data | R8 |
+| A-F1 | `admin.js` iterates existing object keys and clones list shapes; it cannot create a reusable arbitrary link/component schema | F1 |
+| A-F2 | `open(name)` replaces `live` and `draft` when tabs change without preserving or warning about unsaved edits | F1 |
+| A-F3 | Publish already sends only the selected file, despite the global-looking toolbar. The real gap is visible per-page saves, retained drafts and mandatory change confirmation | F1 |
+| A-F4 | Image controls are selected by a regex on the final key. `portrait.src`, evidence `src`, and the absent app screenshot fields do not form a reliable upload UI | F1 |
+| A-F5 | Fields are often labeled with a visual `<label>` not associated with an input ID. There is no application preview pane | F1 |
+| A-F6 | Worker publishing checks JSON syntax and a top-level object, not the Dart schema. Invalid shapes can be accepted and then silently rejected by the app | F8/F1 |
+| A-F7 | Numeric provenance is prompted only in the browser and is optional at the Worker; there is no revision-conflict protection or publication/HTML parity | F8/F1 |
+| A-F8 | Auth is a separate bearer token, not the session-cookie design described in the old spec. The panel persists it in `sessionStorage`; there is no in-panel rotation or explicit logout control | F1 |
+| A-F9 | Failed login counting uses a shared hourly key; a series of failures can also block the correct token | F1 auth review |
+| A-F10 | No theme/font/pattern controls or analytics homepage | F7 |
+| A-F11 | Analytics client has no endpoint in the release build. `aggregateSnapshot` reads counters; it does not mean the site currently collects the requested data | F7 |
 
 An analytics dashboard must distinguish no data, disabled collection and real zero values. Daily rotating identifiers cannot produce deduplicated weekly/monthly people by summing daily unique counts. Existing events also need inspection before promising clicks broken down by exact target. No collection is enabled by this audit. Existing privacy constraints remain binding.
 

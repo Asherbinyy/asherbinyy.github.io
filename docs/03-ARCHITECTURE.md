@@ -1,8 +1,8 @@
 # Architecture — NOCTURNE
 
-> **Decision, 2026-09-12:** the owner delegated the public-rendering choice ("idk do the best"). Codex selected Astro 7.3.2 for semantic public pages in `site/`, with isolated Node 22.23.2. Versions/engine requirements were verified against the npm registry and official documentation. Flutter and its pinned SDK remain operational during migration; Worker/admin remains Claude's scope. This authorizes the local foundation, not deployment or a completed R1. See [HTML foundation](22-HTML-FOUNDATION.md).
+> **Decision, 2026-09-12:** Flutter remains the only interactive public UI. The owner cancelled the separate frontend; its directory and migration documentation have been removed. Preserve the pinned SDK, current Three.js intro and Worker contracts. See the [Flutter plan](19-FLUTTER-ENHANCEMENT-PLAN.md).
 
-> Architecture audit, 2026-09-11: Flutter remains pinned and unchanged. The content source now includes Worker overrides and an admin; the app is not local-JSON-only. A 404 app shell does not make a valid indexable public route, and runtime admin updates can drift from generated HTML. [R1](19-REINNOVATION-ROADMAP.md#r1--search-visibility-and-publishing-foundation) proposes semantic HTML public pages and a consistent publication revision; the frontend decision is pending. The old assertions that no other 3D embedding/renderer approach is possible, and blanket asset/engine exclusions, are not grounds to reject a reviewed solution. Package versions must be verified when selected.
+> The app reads Worker overrides as well as bundled JSON. Deep-link status and search-readable HTML remain open. Extend `tool/generate_static.dart` using the same validated release as Flutter; no separate public UI framework is selected. Admin release acknowledgement and the real Flutter preview adapter are not implemented.
 
 **Flutter 3.47.2 / Dart 3.13.2** (August 2026 stable), pinned with **FVM**. **Web target only.** Feature-first clean architecture.
 

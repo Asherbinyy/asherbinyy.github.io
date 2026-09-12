@@ -30,7 +30,7 @@ Prepare Claude's isolated admin checkout and continue the public app concurrentl
 - `README.md` — modified — link the separate ownership handoff and contract.
 - `CHANGELOG.md` — modified — identify local public repairs separately from historical deployments.
 - `docs/11-OPEN-ISSUES.md` — modified — record partial local repairs without closing R1/R4.
-- `docs/19-REINNOVATION-ROADMAP.md` — modified — expose the first app increment and remaining milestone scope.
+- `docs/19-FLUTTER-ENHANCEMENT-PLAN.md` — modified — expose the first app increment and remaining milestone scope.
 - `docs/worklog/2026-09-11-02-public-baseline-repairs.md` — created — this record.
 - `docs/audits/2026-09-12/README.md` and five Journey PNGs — created — final local-browser evidence, including selected/closed states and two phone sizes.
 

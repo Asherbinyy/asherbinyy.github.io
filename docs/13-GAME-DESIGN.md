@@ -1,7 +1,7 @@
-# Game design — Re-innovation R7
+# Game design — Flutter F3
 
 Updated 2026-09-11 from the original owner conversations and current request.
-Detailed execution and acceptance: [R7](19-REINNOVATION-ROADMAP.md#r7--the-game).
+Detailed execution and acceptance: [F3](19-FLUTTER-ENHANCEMENT-PLAN.md#f3--game-feel-character-and-progression).
 
 ## Purpose
 
@@ -13,7 +13,7 @@ The game opens full-screen from `/courtyard`. The implementation lives in `lib/f
 
 It has static, cracked and moving platforms, manual Space/tap jumping from the ground, stronger jumps on upward wall contact, a rising floor, level numbers, score and sound/restart/exit controls. The owner rejects the current feel and art. An implementation existing is not completion.
 
-The old continuous-auto-bounce specification is no longer current. The latest explicit original request replaced it with Space/tap. The owner has now asked for more bouncing/springiness; manual versus automatic jumping was asked again in the audit and remains pending.
+The old continuous-auto-bounce specification is no longer current. The latest explicit original request replaced it with Space/tap. The owner has now asked for more bouncing/springiness; the current plan keeps manual Space/tap and improves spring through physics and feedback, to be reviewed in a playable prototype.
 
 ## Proposed movement
 
@@ -44,4 +44,4 @@ The exact reward balance and level count belong to the prototype, not invented c
 
 ## Completion
 
-Review a playable movement prototype, then full runs through early/middle/late difficulty with final art. Verify keyboard, touch, focus, lifecycle and fair platform generation. Measure performance in a browser; physical phone acceptance belongs to R9. Passing collision or painter tests alone cannot establish that the game is enjoyable.
+Review a playable movement prototype, then full runs through early/middle/late difficulty with final art. Verify keyboard, touch, focus, lifecycle and fair platform generation. Measure performance in a browser; physical phone acceptance belongs to F9. Passing collision or painter tests alone cannot establish that the game is enjoyable.

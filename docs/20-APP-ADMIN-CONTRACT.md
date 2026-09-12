@@ -1,6 +1,6 @@
 # Public app / admin integration contract
 
-2026-09-11. Coordination specification, not an implemented API. The owner assigned all admin work to Claude and the public app to Codex. Existing behavior below remains supported until both implementations pass integration checks.
+Updated 2026-09-12. See the [current Flutter integration reply](23-ADMIN-INTEGRATION-REPLY.md) and [admin re-review](25-ADMIN-REREVIEW.md). Coordination specification, not an implemented API. The owner assigned all admin work to Claude and the public app to Codex. Existing behavior below remains supported until both implementations pass integration checks.
 
 ## Ownership
 
@@ -24,7 +24,7 @@ Separate worktrees prevent file collisions; they do not make incompatible interf
 
 ## Schema work sequence
 
-Claude first creates proposed schemas, migrations and sanitized fixtures under `worker/contracts/`. Keep this work independent of a Flutter-versus-HTML decision. Codex reviews/implements public consumers before any new field is described as supported or published to production.
+Claude first creates proposed schemas, migrations and sanitized fixtures under `worker/contracts/`. Flutter is the only interactive public UI. Keep the schema contract independent of rendering internals. Codex reviews/implements public consumers before any new field is described as supported or published to production.
 
 Every proposed component must specify:
 
@@ -55,7 +55,7 @@ No bearer token, password, management credential, production analytics or viewer
 
 ## Publication and revisions
 
-Claude can implement schema validation, independent in-memory page drafts, review/cancel, conflict detection and an isolated revision store now. The final public-release coordinator depends on R1's rendering decision; do not quietly choose a host or enable a deployment trigger.
+Claude can implement schema validation, independent in-memory page drafts, review/cancel, conflict detection and an isolated revision store now. The final public-release coordinator will join Flutter and the existing Dart static generator under one revision; it remains unimplemented. Do not quietly choose a host or enable a deployment trigger.
 
 Required states: draft → validated → publication pending → published, or failed. A write accepted into a content store is not proof of publication. Publishing compares the expected base revision with the current revision; stale edits return a conflict instead of silently overwriting. A retry must not create duplicate releases. Rollback points at a previously validated complete revision.
 

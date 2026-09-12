@@ -1,13 +1,13 @@
 # Claude handoff — all admin work
 
-Prepared 2026-09-11 at the owner's request. Claude is not running yet; the owner will launch him separately. Codex continues the public app in parallel.
+Updated 2026-09-12. Claude is working in the separate admin checkout; latest reviewed SHA is `afc8969`. First fix the [three re-review blockers](25-ADMIN-REREVIEW.md). Flutter remains the only interactive public app. Codex prepares its integration and enhancement plan in parallel.
 
 ## Start here
 
 Use the dedicated `phase/reinnovation-admin` worktree, not Codex's active checkout. Read `AGENTS.md`, [brief](00-PROJECT-BRIEF.md), the required design/architecture/standards and recent worklogs, then these current documents:
 
-1. [Independent audit](18-REINNOVATION-AUDIT.md), especially admin findings A-F1–A-F11.
-2. [Re-innovation roadmap](19-REINNOVATION-ROADMAP.md): own R3 and R8 admin/backend work, plus backend support for R1/R4–R7.
+1. [Independent audit](18-PROJECT-AUDIT.md), especially admin findings A-F1–A-F11.
+2. [Flutter plan](19-FLUTTER-ENHANCEMENT-PLAN.md): own F1/F7 admin/backend work and backend support for the public integration phases.
 3. [App/admin contract](20-APP-ADMIN-CONTRACT.md): ownership, compatibility, proposed preview and publication protocols.
 4. [Current admin state](15-ADMIN-AND-MEDIA.md) and [open issues](11-OPEN-ISSUES.md).
 
@@ -28,9 +28,11 @@ All the following are required; deliver in reviewable phases with real browser e
 | A5: customization | Preserve Kemet/Deshret; extra theme choices, font selection, per-page background/pattern controls, preview and reset. Coordinate allowlisted renderer IDs with Codex; unsupported options must not appear to work. |
 | A6: analytics home | Clear home dashboard, dates/ranges, available visits and interactions, useful empty/error states. Accurate aggregate labels. Existing collection is disabled; implement against fixtures/available data without activating tracking or inventing counts. |
 
-R3/R8 tasks and the request-by-request matrix remain the acceptance inventory; this table is not a reduced replacement. Do not stop after cosmetic form restyling.
+F1/F7 tasks and the request-by-request matrix remain the acceptance inventory; this table is not a reduced replacement. Do not stop after cosmetic form restyling.
 
-## Defects to account for
+## Historical audit baseline
+
+The following describes the original audit, not unfixed defects on afc8969. The [re-review](25-ADMIN-REREVIEW.md) is the current fix queue.
 
 - `admin.js` is shape-driven, but cannot create arbitrary object fields with actual public consumers. Five documents are supported.
 - Switching `open(name)` discards the draft. Publishing already targets one document; the missing parts are independent drafts and page-specific review/confirmation.
@@ -49,6 +51,6 @@ Use isolated content and credentials. Exercise add/edit/reorder/delete, EN/AR sw
 
 Run `node --test worker/test/*.test.js` and the repository's four FVM checks before claiming an integrated phase finished. If a separate worktree cannot run a check, record the precise limitation; never copy Codex's passing result as your own. Write a unique `docs/worklog/YYYY-MM-DD-NN-claude-admin-<phase>.md` following the required template. Include files, schema changes, screenshots, test results and unresolved public integration dependencies. Commit coherent phases on the admin branch and leave deployment to the owner.
 
-## Prompt the owner can paste
+## Current Claude prompt
 
-> You own all admin-panel and Worker backend work. Codex owns the public app, SEO, visuals, animation and game concurrently. Work only in the dedicated admin worktree on `phase/reinnovation-admin`. Read `docs/21-CLAUDE-ADMIN-HANDOFF.md` and `docs/20-APP-ADMIN-CONTRACT.md`, then the linked audit/roadmap and required repository docs. Deliver admin phases A1–A6 one at a time, document and visually verify each, and coordinate shared schemas through `worker/contracts/INTEGRATION.md`. Do not edit Codex's checkout, change public content without coordination, deploy, enable tracking or merge to main. Begin with the current code audit and A1; prepare concrete schema proposals alongside it.
+Use the [re-review prompt](25-ADMIN-REREVIEW.md#prompt-for-claude). It targets the latest SHA, remaining defects and the Flutter-only contract. After re-review passes, resume unfinished A3/A5 integration with Codex; do not restart the already implemented editor.

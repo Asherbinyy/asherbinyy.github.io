@@ -2,6 +2,8 @@
 
 2026-09-12. Reviewed `phase/reinnovation-admin` at `fd5139a`, against shared base `6cfb1f1`. Codex inspected source and ran the Worker suite: **229 pass, 0 fail**. Additional fixture-only reproductions below reveal defects outside that suite. No production data or credentials were used. Claude's checkout remains unchanged.
 
+**Historical review of fd5139a. Current re-review: [afc8969 and three remaining blockers](25-ADMIN-REREVIEW.md).** Do not treat the original nine findings as all still unfixed.
+
 **Do not merge this revision yet.** Fix the issues below, then integrate on the app/integration branch and run combined checks. `main` is the published site; this review does not authorize a production deployment.
 
 ## Required fixes
@@ -85,36 +87,8 @@ Implement bounded idle renewal while retaining the absolute limit, or explicitly
 - Replace “nothing on the admin side” with the remaining evidenced work. A5 is still unbuilt, and accepted field editors still lack public consumers.
 - Keep theme IDs `nocturne` / `daybreak` compatible; display labels may be Kemet / Deshret. This is a valid compatibility finding, not a reason to rename stored IDs.
 - The pinned digest of the owner's live bundle is not a durable interoperability test: ordinary legitimate content edits change it. Use a fixed synthetic fixture with a known digest, plus a direct cross-implementation comparison in integration tests.
-- The owner has now asked explicitly about maintaining Flutter. The Astro first slice is committed locally at `034d50e`; long-term rendering is being clarified. Keep Worker snapshot/protocol contracts renderer-neutral and do not edit `lib/**` or `site/**` to get ahead of that answer.
+- Current owner decision: retain Flutter. The rejected separate frontend is removed. Keep snapshot/protocol contracts renderer-neutral and use the updated integration reply.
 
-## Prompt to give Claude
+## Current Claude follow-up
 
-```text
-Continue in /Users/sherbini/Flutter Projects/nocturne-admin on phase/reinnovation-admin.
-Codex independently reviewed fd5139a. Read the complete review at:
-/Users/sherbini/Flutter Projects/nocturne/docs/24-ADMIN-MERGE-REVIEW.md
-
-Fix AR-1 through AR-9 before calling the branch ready to merge. The 229 existing
-tests pass, but the review contains additional reproduced failures. Add meaningful
-regressions for each failure, particularly genuinely concurrent content writes,
-throttle-before-password-verification, delayed uploads across navigation/reorder,
-dirty drafts across reauthentication, and exact-draft preview validation.
-
-You own all Worker/admin fixes. Keep public raw GET response shapes compatible;
-do not edit Codex's lib/**, site/**, web/** or assets/content/**. For transactional
-storage, choose a provider-supported approach, document local bindings/migration
-and free-tier implications, and test it locally. Do not deploy or change production
-bindings, credentials, content or analytics. A per-isolate mutex is not sufficient.
-
-Correct the stale/contradictory INTEGRATION.md sections and worklog claims. Preserve
-the real theme IDs nocturne/daybreak. The public renderer choice is being clarified
-with the owner; keep snapshot and preview contracts renderer-neutral. Do not build
-a second public UI in the admin checkout.
-
-Run Worker and browser regressions plus the four FVM checks. Record exact results,
-remaining integration gaps and commits. Commit and push your fixes on the admin
-branch, then give Codex the new SHA and evidence for re-review. Codex will integrate
-the corrected admin branch with the public work and resolve combined checks.
-Do not merge to main: main publishes the site. Do not report live preview,
-appearance or HTML publication complete until the real public integration passes.
-```
+Use the prompt in [the re-review](25-ADMIN-REREVIEW.md); it targets the corrected SHA and remaining failures.
