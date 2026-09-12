@@ -278,7 +278,9 @@ async function readPublished(file, env, headers) {
   const backend = contentBackend(env);
   if (!backend) return response({error: 'Not found'}, 404, headers);
 
-  const document = await backend.readDocument(file);
+  // Together, so the header cannot describe a different revision from the
+  // body it is attached to.
+  const {document, head} = await backend.readWithHead(file);
   if (document === null) return response({error: 'Not found'}, 404, headers);
 
   const published = new Headers(headers);
@@ -288,7 +290,6 @@ async function readPublished(file, env, headers) {
   published.set('cache-control', 'public, max-age=60');
   // Additive, and in a header rather than the body: the body is the document
   // the app parses, and it stays exactly what it was.
-  const head = await backend.head(file);
   if (head?.revision) published.set('x-content-revision', String(head.revision));
   return new Response(JSON.stringify(document), {status: 200, headers: published});
 }
@@ -469,8 +470,11 @@ async function readForEditing(file, env, headers) {
   if (!backend) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
-  const head = await backend.head(file);
-  const document = await backend.readDocument(file);
+  // One operation (ARR-3). Two reads with a commit landing between them hand
+  // the editor revision one paired with revision two's document -- and the
+  // draft built on it then carries a base that was never true of it. An
+  // envelope around two separate reads is still two separate reads.
+  const {document, head} = await backend.readWithHead(file);
   return response(
     {
       file,
@@ -768,6 +772,11 @@ async function refuseUnauthorisedAdmin(request, env, now, headers) {
 /// what it holds in the browser; and the deployment secret, which is the
 /// recovery path and works even if the password store is unreachable. The
 /// browser never receives a Cloudflare credential either way.
+/// The store, or nothing, without throwing when neither binding exists.
+function backendFor(env) {
+  return contentBackend(env);
+}
+
 async function identify(request, env, now) {
   const offered = (request.headers.get('authorization') ?? '')
     .replace(/^Bearer\s+/i, '');
@@ -781,32 +790,14 @@ async function identify(request, env, now) {
     return {kind: 'recovery'};
   }
 
-  const store = contentStore(env);
-  if (!store) return null;
-  const name = sessionKey(await fingerprint(offered));
-  const held = await store.get(name, 'json');
+  const held = await backendFor(env)?.session({
+    action: 'use',
+    id: await fingerprint(offered),
+    now: now.getTime(),
+    idleMs: sessionIdleMs,
+    lifetimeMs: sessionLifetimeMs,
+  });
   if (!held) return null;
-  if (Date.parse(held.expires) <= now.getTime()) return null;
-  if (Date.parse(held.absoluteExpiry) <= now.getTime()) return null;
-
-  // Twelve hours *idle*, which means using it has to push the idle clock back
-  // (AR-9). Before this a session that had been in use all day still died
-  // twelve hours after it began, which is not what the panel promises.
-  //
-  // Renewed only once the remaining idle time has fallen below half the
-  // window, so an ordinary afternoon of editing costs one write rather than
-  // one per request. The absolute limit is never extended.
-  const remaining = Date.parse(held.expires) - now.getTime();
-  const ceiling = Date.parse(held.absoluteExpiry);
-  if (remaining < sessionIdleMs / 2) {
-    const extended = Math.min(now.getTime() + sessionIdleMs, ceiling);
-    if (extended > Date.parse(held.expires)) {
-      held.expires = new Date(extended).toISOString();
-      await store.put(name, JSON.stringify(held), {
-        expirationTtl: Math.max(60, Math.ceil((ceiling - now.getTime()) / 1000)),
-      });
-    }
-  }
   return {kind: 'session', token: offered, session: held};
 }
 
@@ -829,12 +820,6 @@ const minimumPasswordLength = 12;
 /// Recorded with each hash rather than fixed in code, so it can be raised
 /// later without making every existing password unverifiable.
 const passwordIterations = 50000;
-
-function sessionKey(id) {
-  return `session:${id}`;
-}
-
-const passwordRecordKey = 'auth:password';
 
 /// A token's fingerprint, which is what gets stored.
 ///
@@ -884,18 +869,18 @@ function sameSecret(left, right) {
 }
 
 async function issueSession(env, now, headers) {
-  const store = contentStore(env);
-  if (!store) {
+  const backend = contentBackend(env);
+  if (!backend) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
   const raw = bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
   const expires = new Date(now.getTime() + sessionIdleMs).toISOString();
   const absoluteExpiry = new Date(now.getTime() + sessionLifetimeMs).toISOString();
-  await store.put(
-    sessionKey(await fingerprint(raw)),
-    JSON.stringify({started: now.toISOString(), expires, absoluteExpiry}),
-    {expirationTtl: Math.floor(sessionLifetimeMs / 1000)},
-  );
+  await backend.session({
+    action: 'create',
+    id: await fingerprint(raw),
+    record: {started: now.toISOString(), expires, absoluteExpiry},
+  });
   return response({token: raw, expires, absoluteExpiry}, 200, headers);
 }
 
@@ -930,17 +915,26 @@ async function openSession(request, env, now, headers) {
     return issueSession(env, now, headers);
   }
 
-  // Then the limit, and only then the password (AR-2). The previous order
-  // derived a key for every guess and merely changed the answer once the
-  // limit was reached, so an attacker could keep testing passwords for as
-  // long as he liked -- and a correct guess would still have been let in.
-  const {count} = await backend.attempts('sign-in', 'read', now.getTime());
-  if (count >= maximumFailedAttempts) {
+  // A slot is taken and the limit checked in one indivisible step, before any
+  // key is derived (ARR-1). Reading the count, deciding, and recording the
+  // failure afterwards left a gap: thirty guesses arriving together all read
+  // the same number, all passed the check, and all thirty went on to derive.
+  //
+  // The reservation is kept whatever happens next -- a failure, a success, or
+  // a request that dies half way. Holding one costs an attempt from the hour's
+  // allowance, which is the conservative direction: the alternative is
+  // releasing it and handing a burst its bypass back.
+  const {admitted} = await backend.attempts(
+    'sign-in',
+    'reserve',
+    now.getTime(),
+    maximumFailedAttempts,
+  );
+  if (!admitted) {
     return response({error: 'Too many attempts'}, 429, headers);
   }
 
-  const store = contentStore(env);
-  const record = store ? await store.get(passwordRecordKey, 'json') : null;
+  const record = await backend.password('get');
   let accepted = false;
   if (record) {
     const derived = await derive(offered, record.salt, record.iterations);
@@ -948,7 +942,6 @@ async function openSession(request, env, now, headers) {
   }
 
   if (!accepted) {
-    await backend.attempts('sign-in', 'record', now.getTime());
     return response({error: 'That was not right'}, 401, headers);
   }
   await backend.attempts('sign-in', 'clear', now.getTime());
@@ -956,8 +949,7 @@ async function openSession(request, env, now, headers) {
 }
 
 async function describeSession(request, env, headers) {
-  const store = contentStore(env);
-  const record = store ? await store.get(passwordRecordKey, 'json') : null;
+  const record = await contentBackend(env)?.password('get');
   return response(
     {
       kind: request.admin?.kind ?? 'recovery',
@@ -973,17 +965,20 @@ async function describeSession(request, env, headers) {
 }
 
 async function closeSession(request, env, headers) {
-  const store = contentStore(env);
-  if (store && request.admin?.kind === 'session') {
-    await store.delete(sessionKey(await fingerprint(request.admin.token)));
+  const backend = contentBackend(env);
+  if (backend && request.admin?.kind === 'session') {
+    await backend.session({
+      action: 'end',
+      id: await fingerprint(request.admin.token),
+    });
   }
   return response({signedOut: true}, 200, headers);
 }
 
 /// Sets or changes the password, and signs every other session out.
 async function changePassword(request, env, now, headers) {
-  const store = contentStore(env);
-  if (!store) {
+  const backend = contentBackend(env);
+  if (!backend) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
   let body;
@@ -1008,7 +1003,7 @@ async function changePassword(request, env, now, headers) {
   // Re-authenticated at the moment of the change, even though the request is
   // already authorised. A session left open on a borrowed machine should not
   // be enough to take the site away from its owner.
-  const record = await store.get(passwordRecordKey, 'json');
+  const record = await backend.password('get');
   let allowed = false;
   if (record) {
     const derived = await derive(current, record.salt, record.iterations);
@@ -1027,21 +1022,18 @@ async function changePassword(request, env, now, headers) {
 
   const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
   const hash = await derive(next, salt, passwordIterations);
-  await store.put(
-    passwordRecordKey,
-    JSON.stringify({
-      salt,
-      hash,
-      iterations: passwordIterations,
-      at: now.toISOString(),
-    }),
-  );
+  await backend.password('set', {
+    salt,
+    hash,
+    iterations: passwordIterations,
+    at: now.toISOString(),
+  });
 
   // Everything signed in with the old password stops working. A password
   // change that leaves the old sessions alive has not changed anything for
-  // whoever the owner was changing it because of.
-  const sessions = await store.list({prefix: 'session:'});
-  for (const entry of sessions.keys) await store.delete(entry.name);
+  // whoever the owner was changing it because of. Serialised with renewal, so
+  // a use already in flight cannot put one back afterwards.
+  await backend.session({action: 'endAll'});
 
   return issueSession(env, now, headers);
 }
@@ -1823,15 +1815,30 @@ async function describeRelease(request, env, headers) {
   }
   const offered = plainObject(body?.documents) ? body.documents : {};
 
+  // Every override at one instant (ARR-3). Read one at a time, a release could
+  // contain the first half of one edit and the second half of another, and a
+  // digest over that identifies a state of the site that never existed.
+  const backend = contentBackend(env);
+  if (!backend) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  const captured = await backend.capture([...publishableFiles]);
+
   // The published copy wins wherever there is one. The panel supplies the
   // bundled documents because only it can read them, but it does not get to
   // describe a document this Worker is already serving.
   const documents = {};
+  const revisions = {};
   for (const file of publishableFiles) {
-    const published = await liveDocument(file, env);
+    const published = captured.documents[file] ?? null;
     const supplied = offered[file];
-    if (published !== null) documents[file] = published;
-    else if (plainObject(supplied)) documents[file] = supplied;
+    if (published !== null) {
+      documents[file] = published;
+      revisions[file] = captured.heads[file]?.revision ?? 0;
+    } else if (plainObject(supplied)) {
+      documents[file] = supplied;
+      revisions[file] = 0;
+    }
   }
 
   // No reference hints. A release is validated against the documents it is
@@ -1858,6 +1865,9 @@ async function describeRelease(request, env, headers) {
       problems: [],
       revision: snapshot.revision,
       snapshot,
+      // Which revision each override was at when the capture was taken. A
+      // reader can see exactly what went into the digest.
+      capturedAt: revisions,
       release: compareRelease(snapshot.revision, live),
     },
     200,

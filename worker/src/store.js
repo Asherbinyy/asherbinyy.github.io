@@ -46,6 +46,8 @@ const headKey = (file) => `head:${file}`;
 const revisionKey = (file, revision) =>
   `rev:${file}:${String(revision).padStart(6, '0')}`;
 const attemptKey = (scope) => `attempt:${scope}`;
+const sessionKey = (id) => `session:${id}`;
+const passwordRecordName = 'auth:password';
 
 /// How long a failed-attempt counter is kept, in milliseconds.
 const attemptWindowMs = 60 * 60 * 1000;
@@ -72,16 +74,50 @@ export class ContentStore {
           return json(await this.storage.get(documentKey(asked.file)) ?? null);
         case 'head':
           return json(await this.storage.get(headKey(asked.file)) ?? null);
+        // One operation, so the document and the revision it is cannot be
+        // read either side of somebody else's commit (ARR-3).
+        case 'readWithHead':
+          return json(await this.readWithHead(asked.file));
+        case 'capture':
+          return json(await this.capture(asked.files));
         case 'revisions':
           return json(await this.listRevisions(asked.file));
         case 'commit':
           return json(await this.commit(asked));
         case 'attempts':
           return json(await this.attempts(asked));
+        case 'session':
+          return json(await this.session(asked));
+        case 'password':
+          return json(await this.password(asked));
         default:
           return json({error: 'Unknown operation'});
       }
     });
+  }
+
+  /// A document and its head, read together.
+  async readWithHead(file) {
+    return {
+      document: (await this.storage.get(documentKey(file))) ?? null,
+      head: (await this.storage.get(headKey(file))) ?? null,
+    };
+  }
+
+  /// Every published override at one instant.
+  ///
+  /// A release assembled from five separate reads can contain half of one
+  /// edit and half of another, and a digest over that describes a state that
+  /// never existed (ARR-3). This runs inside the serialised section, so
+  /// nothing commits part-way through it.
+  async capture(files) {
+    const documents = {};
+    const heads = {};
+    for (const file of files) {
+      documents[file] = (await this.storage.get(documentKey(file))) ?? null;
+      heads[file] = (await this.storage.get(headKey(file))) ?? null;
+    }
+    return {documents, heads};
   }
 
   async listRevisions(file) {
@@ -142,7 +178,7 @@ export class ContentStore {
   /// guesses arriving together against KV would both read the same number and
   /// both write the same increment -- so the limit could be walked past by
   /// simply being fast (AR-2).
-  async attempts({scope, action, now}) {
+  async attempts({scope, action, now, limit}) {
     const held = (await this.storage.get(attemptKey(scope))) ?? null;
     const fresh = held && now - held.since < attemptWindowMs ? held : null;
 
@@ -150,12 +186,74 @@ export class ContentStore {
       await this.storage.delete(attemptKey(scope));
       return {count: 0};
     }
+    // Check and take a slot in one indivisible step (ARR-1). Reading the
+    // count, deciding, and recording the failure afterwards left a window in
+    // which every request in a burst read the same number and every one of
+    // them went on to derive a key.
+    if (action === 'reserve') {
+      const count = (fresh?.count ?? 0) + 1;
+      await this.storage.put(attemptKey(scope), {
+        count,
+        since: fresh?.since ?? now,
+      });
+      return {admitted: count <= limit, count};
+    }
     if (action === 'record') {
       const next = {count: (fresh?.count ?? 0) + 1, since: fresh?.since ?? now};
       await this.storage.put(attemptKey(scope), next);
       return {count: next.count};
     }
     return {count: fresh?.count ?? 0};
+  }
+
+  /// The whole session lifecycle, in one serialised place.
+  ///
+  /// Renewal used to be a read from one store and a write to another, so a
+  /// logout landing between them was undone by the write that followed it
+  /// (ARR-2). Here `use` and `end` cannot interleave: a use that runs first
+  /// extends and is then deleted; a use that runs after finds nothing. There
+  /// is no ordering in which a revoked session comes back.
+  async session({action, id, record, now, idleMs, lifetimeMs}) {
+    if (action === 'create') {
+      await this.storage.put(sessionKey(id), record);
+      return {created: true};
+    }
+    if (action === 'end') {
+      await this.storage.delete(sessionKey(id));
+      return {ended: true};
+    }
+    if (action === 'endAll') {
+      const held = await this.storage.list({prefix: 'session:'});
+      for (const key of held.keys()) await this.storage.delete(key);
+      return {ended: held.size};
+    }
+
+    const held = (await this.storage.get(sessionKey(id))) ?? null;
+    if (!held) return null;
+    if (Date.parse(held.expires) <= now) return null;
+    if (Date.parse(held.absoluteExpiry) <= now) return null;
+
+    // Twelve hours idle, not twelve hours old. Renewed only once the
+    // remaining window has fallen below half, so ordinary use costs one write
+    // rather than one per request, and never past the absolute limit.
+    const ceiling = Date.parse(held.absoluteExpiry);
+    if (Date.parse(held.expires) - now < idleMs / 2) {
+      const extended = Math.min(now + idleMs, ceiling);
+      if (extended > Date.parse(held.expires)) {
+        held.expires = new Date(extended).toISOString();
+        await this.storage.put(sessionKey(id), held);
+      }
+    }
+    return held;
+  }
+
+  /// The password verifier, kept beside the sessions it invalidates.
+  async password({action, record}) {
+    if (action === 'set') {
+      await this.storage.put(passwordRecordName, record);
+      return {set: true};
+    }
+    return (await this.storage.get(passwordRecordName)) ?? null;
   }
 }
 
@@ -190,10 +288,14 @@ function durableBackend(env) {
     atomic: true,
     readDocument: (file) => call({op: 'read', file}),
     head: (file) => call({op: 'head', file}),
+    readWithHead: (file) => call({op: 'readWithHead', file}),
+    capture: (files) => call({op: 'capture', files}),
     revisions: (file) => call({op: 'revisions', file}),
     commit: (mutation) => call({op: 'commit', ...mutation}),
-    attempts: (scope, action, now) =>
-      call({op: 'attempts', scope, action, now}),
+    attempts: (scope, action, now, limit) =>
+      call({op: 'attempts', scope, action, now, limit}),
+    session: (asked) => call({op: 'session', ...asked}),
+    password: (action, record) => call({op: 'password', action, record}),
   };
 }
 
@@ -259,22 +361,74 @@ function kvBackend(env) {
       );
       return {ok: true, revision};
     },
-    async attempts(scope, action, now) {
-      const name = `${attemptKey(scope)}`;
+    async readWithHead(file) {
+      // Two reads, because that is all this store can do. Not atomic, which
+      // is one of the things `atomic: false` is telling the panel.
+      return {
+        document: await store.get(contentKey(file), 'json'),
+        head: await store.get(headName(file), 'json'),
+      };
+    },
+    async capture(files) {
+      const documents = {};
+      const heads = {};
+      for (const file of files) {
+        documents[file] = await store.get(contentKey(file), 'json');
+        heads[file] = await store.get(headName(file), 'json');
+      }
+      return {documents, heads};
+    },
+    async attempts(scope, action, now, limit) {
+      const name = attemptKey(scope);
       const held = await env.ANALYTICS.get(name, 'json');
       const fresh = held && now - held.since < attemptWindowMs ? held : null;
       if (action === 'clear') {
         await env.ANALYTICS.delete(name);
         return {count: 0};
       }
-      if (action === 'record') {
-        const next = {count: (fresh?.count ?? 0) + 1, since: fresh?.since ?? now};
-        await env.ANALYTICS.put(name, JSON.stringify(next), {
-          expirationTtl: 3600,
-        });
-        return {count: next.count};
+      if (action === 'reserve' || action === 'record') {
+        const count = (fresh?.count ?? 0) + 1;
+        await env.ANALYTICS.put(
+          name,
+          JSON.stringify({count, since: fresh?.since ?? now}),
+          {expirationTtl: 3600},
+        );
+        return {admitted: count <= limit, count};
       }
       return {count: fresh?.count ?? 0};
+    },
+    async session({action, id, record, now}) {
+      const name = `session:${id}`;
+      if (action === 'create') {
+        await store.put(name, JSON.stringify(record));
+        return {created: true};
+      }
+      if (action === 'end') {
+        await store.delete(name);
+        return {ended: true};
+      }
+      if (action === 'endAll') {
+        const listing = await store.list({prefix: 'session:'});
+        for (const entry of listing.keys) await store.delete(entry.name);
+        return {ended: listing.keys.length};
+      }
+      const held = await store.get(name, 'json');
+      if (!held) return null;
+      if (Date.parse(held.expires) <= now) return null;
+      if (Date.parse(held.absoluteExpiry) <= now) return null;
+      // Deliberately no renewal here (ARR-2). Reading and then writing a
+      // renewal cannot be made safe against a logout landing between the two,
+      // and a stale renewal that resurrects a revoked session is worse than a
+      // session that expires twelve hours after it was created. On this store
+      // it does. The panel already reports that this deployment is unprotected.
+      return held;
+    },
+    async password(action, record) {
+      if (action === 'set') {
+        await store.put('auth:password', JSON.stringify(record));
+        return {set: true};
+      }
+      return store.get('auth:password', 'json');
     },
   };
 }

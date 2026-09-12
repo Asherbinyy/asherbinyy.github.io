@@ -101,52 +101,25 @@ test('a second implementation of the canonical form agrees', async () => {
   }
 });
 
-test('the builder itself agrees, where it is checked out', async () => {
-  // The real cross-implementation check. Skipped here because `site/` belongs
-  // to Codex and is not in this checkout; it runs where the two are together,
-  // which is exactly where a mismatch would matter.
-  let reference = null;
-  try {
-    reference = await import('../../site/src/lib/content.mjs');
-  } catch {
-    reference = null;
+test('the canonical form is exactly what the specification says', async () => {
+  // There is no second implementation to compare against any more: the
+  // separate frontend was rejected and removed. So the specification itself is
+  // the reference -- object keys sorted recursively, array order kept, scalars
+  // as ordinary JSON -- written out here as literal expected strings that can
+  // be checked by eye.
+  const cases = [
+    [{}, '{}'],
+    [[], '[]'],
+    [{b: 1, a: 2}, '{"a":2,"b":1}'],
+    [{a: [3, 1, 2]}, '{"a":[3,1,2]}'],
+    [{a: {z: {y: 1, x: 2}}}, '{"a":{"z":{"x":2,"y":1}}}'],
+    [{a: null, b: true, c: 1.5}, '{"a":null,"b":true,"c":1.5}'],
+    [{'"': 'x'}, '{"\\"":"x"}'],
+    [{'é': 'ü'}, '{"é":"ü"}'],
+  ];
+  for (const [value, expected] of cases) {
+    assert.equal(stableJson(value), expected, JSON.stringify(value));
   }
-  if (reference === null) {
-    assert.ok(true, 'site/ is not in this checkout');
-    return;
-  }
-  for (const documents of [frozenDocuments, await bundled()]) {
-    assert.equal(await digest(documents), reference.digest(documents));
-    assert.equal(
-      (await import('../contracts/snapshot.js')).stableJson(documents),
-      reference.stableJson(documents),
-    );
-  }
-});
-
-test('object keys are sorted and array order is kept', () => {
-  assert.equal(
-    stableJson({b: 1, a: [3, {d: 4, c: 5}]}),
-    '{"a":[3,{"c":5,"d":4}],"b":1}',
-  );
-});
-
-test('two documents that differ only in key order have one revision', async () => {
-  // The point of a canonical form. Re-saving a document should not rebuild the
-  // site to produce identical bytes.
-  const one = {a: {x: 1, y: 2}};
-  const other = {a: {y: 2, x: 1}};
-  assert.equal(await digest(one), await digest(other));
-});
-
-test('array order changes the revision', async () => {
-  // Order is content here: it is the order things appear on the page.
-  assert.notEqual(await digest({a: [1, 2]}), await digest({a: [2, 1]}));
-});
-
-test('scalars encode as ordinary JSON', () => {
-  assert.equal(stableJson({a: null, b: true, c: 1.5, d: 'x"y'}),
-    '{"a":null,"b":true,"c":1.5,"d":"x\\"y"}');
 });
 
 // --- building the artifact -------------------------------------------------

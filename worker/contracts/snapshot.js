@@ -1,24 +1,26 @@
 /**
  * The immutable artifact a public build is made from.
  *
- * Codex answered R1 in `docs/23-ADMIN-INTEGRATION-REPLY.md`: semantic HTML,
- * build-and-release, with the first slice in Astro. The builder takes
- * `PORTFOLIO_SNAPSHOT`, a path to a JSON file of exactly this shape, and
- * refuses to build if the revision inside it does not match a digest it
- * recomputes itself.
+ * A build takes `PORTFOLIO_SNAPSHOT`, a path to a JSON file of exactly this
+ * shape, and refuses to build if the revision inside it does not match a
+ * digest it recomputes itself.
  *
  * Nothing here knows or cares which renderer consumes it. The artifact is a
- * set of documents and a digest over them; the long-term rendering choice is
- * still being settled with the owner, and this contract survives any answer.
+ * set of documents and a digest over them. The owner has settled on Flutter
+ * as the only interactive UI; this contract did not have to change for that,
+ * and would not have to change again.
  *
- * So the two sides have to agree on the digest to the byte. The canonical form
- * is defined by `site/src/lib/content.mjs`: objects have their keys sorted
- * recursively, arrays keep their order, scalars encode as ordinary JSON. This
- * file is the Worker's implementation of the same thing, and
- * `worker/test/snapshot.test.js` pins it to a digest produced by Codex's
- * reference over the documents currently in `assets/content/`. If either side
- * drifts, that test fails rather than a build failing later with a mismatch
- * nobody can place.
+ * So whoever builds the site and whoever produces the artifact have to agree
+ * on the digest to the byte. The canonical form is: object keys sorted
+ * recursively, array order kept, scalars encoded as ordinary JSON.
+ *
+ * That definition, not any particular implementation, is the contract. The
+ * first one to exist was in the separate frontend, which the owner rejected
+ * and which has been removed; the renderer is Flutter and its generator will
+ * be a third implementation. `worker/test/snapshot.test.js` pins a frozen
+ * synthetic document set to a literal digest and checks the canonical form
+ * against literal expected strings, so a drift fails there rather than as a
+ * build refusing an artifact for reasons nobody can place.
  *
  * The digest is over the documents only. It deliberately does not include the
  * revision numbers, the change notes or anything else this Worker knows: two
@@ -36,8 +38,8 @@ export const snapshotSchemaVersion = 1;
 
 /// Canonical JSON: object keys sorted, array order kept, ordinary scalars.
 ///
-/// Matches `stableJson` in `site/src/lib/content.mjs`. Do not "improve" it --
-/// any change here changes every revision identifier in existence.
+/// Do not "improve" it: any change here changes every revision identifier in
+/// existence, and every consumer that recomputes one.
 export function stableJson(value) {
   if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
   if (value !== null && typeof value === 'object' && !Array.isArray(value)) {

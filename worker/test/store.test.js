@@ -341,3 +341,365 @@ test('the same race against plain key/value storage is not safe, which is why th
   // Two writers, one surviving revision. This is the defect, reproduced.
   assert.equal(history.revisions.length, 1);
 });
+
+// --- ARR-1: admission is one indivisible step ------------------------------
+
+test('a burst of guesses gets exactly the slots that were left', async () => {
+  // The defect: reading the count, deciding, and recording the failure
+  // afterwards left a gap. Nine failures in, thirty simultaneous guesses all
+  // read "nine", all passed the check, and all thirty derived a key. Codex
+  // measured exactly that: 30 derivations, 30 answers of 401, no 429.
+  const env = transactional();
+  await handleRequest(
+    admin('/v1/admin/password', {
+      method: 'POST',
+      body: {current: adminToken, next: 'a-long-enough-fixture-password'},
+    }),
+    env,
+  );
+
+  const signIn = (password) =>
+    handleRequest(
+      new Request('https://worker.example/v1/admin/session', {
+        method: 'POST',
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify({password}),
+      }),
+      env,
+    );
+
+  // Nine failures, sequentially. One slot of ten remains.
+  for (let attempt = 0; attempt < 9; attempt += 1) {
+    assert.equal((await signIn('wrong ' + attempt)).status, 401);
+  }
+
+  let derivations = 0;
+  const real = crypto.subtle.deriveBits.bind(crypto.subtle);
+  crypto.subtle.deriveBits = (...args) => {
+    derivations += 1;
+    return real(...args);
+  };
+  try {
+    const burst = await Promise.all(
+      Array.from({length: 30}, (_, index) => signIn('burst ' + index)),
+    );
+    const answered = burst.map((response) => response.status);
+    // The measurement that matters: how many actually derived a key, not what
+    // the counter says afterwards.
+    assert.equal(derivations, 1, 'exactly the one remaining slot was admitted');
+    assert.equal(answered.filter((code) => code === 401).length, 1);
+    assert.equal(answered.filter((code) => code === 429).length, 29);
+  } finally {
+    crypto.subtle.deriveBits = real;
+  }
+});
+
+test('a reservation is kept when the attempt fails', async () => {
+  const env = transactional();
+  const signIn = () =>
+    handleRequest(
+      new Request('https://worker.example/v1/admin/session', {
+        method: 'POST',
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify({password: 'wrong'}),
+      }),
+      env,
+    );
+  for (let attempt = 0; attempt < 10; attempt += 1) await signIn();
+  assert.equal((await signIn()).status, 429);
+});
+
+test('recovery is not throttled, and getting in releases the hour', async () => {
+  const env = transactional();
+  const signIn = (password) =>
+    handleRequest(
+      new Request('https://worker.example/v1/admin/session', {
+        method: 'POST',
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify({password}),
+      }),
+      env,
+    );
+  await handleRequest(
+    admin('/v1/admin/password', {
+      method: 'POST',
+      body: {current: adminToken, next: 'a-long-enough-fixture-password'},
+    }),
+    env,
+  );
+  for (let attempt = 0; attempt < 15; attempt += 1) await signIn('wrong');
+  assert.equal((await signIn('a-long-enough-fixture-password')).status, 429);
+  assert.equal((await signIn(adminToken)).status, 200);
+  assert.equal((await signIn('a-long-enough-fixture-password')).status, 200);
+});
+
+// --- ARR-2: a renewal cannot bring back a revoked session ------------------
+
+/// Signs in and returns the session token.
+async function signedIn(env) {
+  const response = await handleRequest(
+    new Request('https://worker.example/v1/admin/session', {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({password: adminToken}),
+    }),
+    env,
+  );
+  return (await response.json()).token;
+}
+
+/// Winds a session's clocks back so the next use renews it.
+function ageSession(env, hours) {
+  const storage = env.CONTENT_STORE.state.storage.map;
+  const name = [...storage.keys()].find((key) => key.startsWith('session:'));
+  const held = storage.get(name);
+  const shift = hours * 60 * 60 * 1000;
+  held.expires = new Date(Date.parse(held.expires) - shift).toISOString();
+  storage.set(name, held);
+}
+
+test('a renewal held open cannot undo a logout that lands during it', async () => {
+  // Codex's reproduction: hold the renewal write at hour eleven, log out, let
+  // the write finish, then use the token again. It answered 200 -- the stale
+  // renewal had put the revoked session back.
+  const env = transactional();
+  const token = await signedIn(env);
+  ageSession(env, 11);
+
+  const storage = env.CONTENT_STORE.state.storage;
+  let entered;
+  const renewalStarted = new Promise((resolve) => {
+    entered = resolve;
+  });
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  storage.onPut = async (key) => {
+    if (!key.startsWith('session:')) return;
+    storage.onPut = null;
+    entered();
+    await gate;
+  };
+
+  const renewing = handleRequest(admin('/v1/admin/content', {token}), env);
+  await renewalStarted;
+
+  const signOut = handleRequest(
+    admin('/v1/admin/session', {method: 'DELETE', token}),
+    env,
+  );
+  release();
+  await renewing;
+  assert.equal((await signOut).status, 200);
+
+  const after = await handleRequest(admin('/v1/admin/content', {token}), env);
+  assert.equal(after.status, 401, 'the revoked session stayed revoked');
+});
+
+test('a renewal arriving after a logout does not recreate the session', async () => {
+  const env = transactional();
+  const token = await signedIn(env);
+  ageSession(env, 11);
+
+  await handleRequest(
+    admin('/v1/admin/session', {method: 'DELETE', token}),
+    env,
+  );
+  // The use that would have renewed it, arriving late.
+  assert.equal(
+    (await handleRequest(admin('/v1/admin/content', {token}), env)).status,
+    401,
+  );
+  const storage = env.CONTENT_STORE.state.storage.map;
+  assert.equal(
+    [...storage.keys()].filter((key) => key.startsWith('session:')).length,
+    0,
+    'nothing was written back',
+  );
+});
+
+test('a renewal cannot survive a password change either', async () => {
+  const env = transactional();
+  const token = await signedIn(env);
+  ageSession(env, 11);
+  await handleRequest(
+    admin('/v1/admin/password', {
+      method: 'POST',
+      body: {current: adminToken, next: 'a-long-enough-fixture-password'},
+      token,
+    }),
+    env,
+  );
+  assert.equal(
+    (await handleRequest(admin('/v1/admin/content', {token}), env)).status,
+    401,
+  );
+});
+
+// --- ARR-3: a read is one fact ---------------------------------------------
+
+/// The document a revision actually holds, read out of the store.
+///
+/// The listing endpoint deliberately leaves documents out, so consistency is
+/// checked against what was stored rather than against what is reported.
+function documentOfRevision(env, file, revision) {
+  const name = `rev:${file}:${String(revision).padStart(6, '0')}`;
+  return env.CONTENT_STORE.state.storage.map.get(name)?.document ?? null;
+}
+
+/// Publishes in the background the first time [key] is read.
+function commitDuringRead(env, key, document) {
+  const storage = env.CONTENT_STORE.state.storage;
+  let started = null;
+  storage.onGet = async (name) => {
+    if (!name.startsWith(key)) return;
+    storage.onGet = null;
+    // Deliberately not awaited: it queues behind whatever is running, which
+    // is exactly the interleaving being tested. The yields let it actually
+    // reach the queue before the caller's next read is dispatched -- without
+    // them the race is set up but never runs.
+    started = handleRequest(put('interests.json', document, {base: 1}), env);
+    for (let tick = 0; tick < 4; tick += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  };
+  return () => started;
+}
+
+test('the editor never receives one revision paired with another document', async () => {
+  // Codex's reproduction: commit revision two between the head read and the
+  // document read, and the editor is handed revision one with revision two's
+  // content -- so the draft built on it carries a base that was never true.
+  const env = transactional();
+  const first = await interests();
+  first.interests[0].label.en = 'Revision one';
+  await handleRequest(put('interests.json', first, {base: 0}), env);
+
+  const second = await interests();
+  second.interests[0].label.en = 'Revision two';
+  const pending = commitDuringRead(env, 'head:interests.json', second);
+
+  const read = await handleRequest(
+    admin('/v1/admin/content/interests.json'),
+    env,
+  );
+  const body = await read.json();
+  await pending();
+
+  // The pair has to describe one moment. Which moment it is does not matter.
+  const held = documentOfRevision(env, 'interests.json', body.revision);
+  assert.ok(held, `revision ${body.revision} exists`);
+  assert.deepEqual(
+    body.document,
+    held,
+    'the document is the one that revision actually holds',
+  );
+});
+
+test('the public read never labels a document with another revision', async () => {
+  const env = transactional();
+  const first = await interests();
+  first.interests[0].label.en = 'Revision one';
+  await handleRequest(put('interests.json', first, {base: 0}), env);
+
+  const second = await interests();
+  second.interests[0].label.en = 'Revision two';
+  const pending = commitDuringRead(env, 'head:interests.json', second);
+
+  const read = await handleRequest(fromSite('/v1/content/interests.json'), env);
+  const document = await read.json();
+  const revision = Number(read.headers.get('x-content-revision'));
+  await pending();
+
+  assert.deepEqual(
+    document,
+    documentOfRevision(env, 'interests.json', revision),
+  );
+});
+
+test('a release capture is one instant, not five reads', async () => {
+  const env = transactional();
+  const first = await interests();
+  first.interests[0].label.en = 'Revision one';
+  await handleRequest(put('interests.json', first, {base: 0}), env);
+
+  const second = await interests();
+  second.interests[0].label.en = 'Revision two';
+  // Commits while the capture is part-way through the five documents.
+  const pending = commitDuringRead(env, 'doc:apps.json', second);
+
+  const documents = {};
+  for (const file of ['profile.json', 'career.json', 'apps.json',
+    'education.json', 'interests.json']) {
+    documents[file] = await fixture(file);
+  }
+  const body = await (
+    await handleRequest(
+      admin('/v1/admin/release', {method: 'POST', body: {documents}}),
+      environmentFrom(env),
+    )
+  ).json();
+  await pending();
+
+  const captured = body.capturedAt['interests.json'];
+  assert.deepEqual(
+    body.snapshot.documents['interests.json'],
+    documentOfRevision(env, 'interests.json', captured),
+    'the captured document is the one its reported revision holds',
+  );
+});
+
+/// The same environment, with the release endpoint's own settings.
+function environmentFrom(env) {
+  return Object.assign({}, env, {RELEASE_URL: ''});
+}
+
+test('two separate reads can disagree, which is why there is one operation', async () => {
+  // Not an assertion that separate reads are acceptable -- an assertion that
+  // this suite can tell the difference. This is the shape the editor read had
+  // before ARR-3, with a commit landing in the window between its two calls.
+  const env = transactional();
+  const backend = (await import('../src/store.js')).contentBackend(env);
+  const first = await interests();
+  first.interests[0].label.en = 'Revision one';
+  await handleRequest(put('interests.json', first, {base: 0}), env);
+
+  const head = await backend.head('interests.json');
+
+  const second = await interests();
+  second.interests[0].label.en = 'Revision two';
+  await handleRequest(put('interests.json', second, {base: 1}), env);
+
+  const document = await backend.readDocument('interests.json');
+
+  assert.equal(head.revision, 1);
+  assert.equal(document.interests[0].label.en, 'Revision two');
+  // Revision one's number paired with revision two's document: the defect.
+  assert.notDeepEqual(
+    document,
+    documentOfRevision(env, 'interests.json', head.revision),
+  );
+});
+
+test('the one operation cannot be split the same way', async () => {
+  // The same interleave, against `readWithHead`. There is no window between
+  // the two values, so whatever comes back describes one moment.
+  const env = transactional();
+  const backend = (await import('../src/store.js')).contentBackend(env);
+  const first = await interests();
+  first.interests[0].label.en = 'Revision one';
+  await handleRequest(put('interests.json', first, {base: 0}), env);
+
+  const second = await interests();
+  second.interests[0].label.en = 'Revision two';
+  const racing = handleRequest(put('interests.json', second, {base: 1}), env);
+
+  const {document, head} = await backend.readWithHead('interests.json');
+  await racing;
+
+  assert.deepEqual(
+    document,
+    documentOfRevision(env, 'interests.json', head.revision),
+  );
+});

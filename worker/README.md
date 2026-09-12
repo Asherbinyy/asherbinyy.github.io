@@ -131,7 +131,7 @@ first. Using a session pushes the idle clock back, but only once the remaining
 window has fallen below half — so an afternoon of editing costs one write
 rather than one per request, and the absolute limit is never extended.
 
-## Where content mutations are serialised
+## Where content mutations and sessions are serialised
 
 Workers KV has no compare-and-set and no transaction, so publishing used to
 read the head, decide the base matched, and then write the document, the
@@ -141,17 +141,62 @@ answered "revision 1" — one of them silently gone, history entry and all.
 
 A `ContentStore` Durable Object now owns publish, rollback and withdrawal.
 There is one instance across the network, its execution is serialised, and the
-commit happens in a single `storage.transaction`. The same object counts failed
-credential attempts, for the same reason.
+commit happens in a single `storage.transaction`.
+
+The same object owns three other things that turned out to have the same
+problem:
+
+- **Failed-attempt counting**, and the admission decision itself. A slot is
+  taken and the limit checked in one step, before any key is derived, so a
+  burst of guesses gets exactly the attempts that were left rather than all
+  deriving against the same stale count.
+- **The session lifecycle.** Renewal, logout and password-change invalidation
+  cannot interleave, so a renewal already in flight cannot put back a session
+  that was just revoked.
+- **The password verifier**, so a change and the invalidation it triggers are
+  one ordered pair.
+
+Reads that have to agree go through it in one operation too: a document and the
+revision it is, and the whole set of overrides that goes into a release.
+
+### The fallback is not protected
+
+Without the binding the Worker keeps working, and keeps being honest about what
+that means:
+
+- Concurrent publishes can still lose a revision. `GET /v1/admin/content`
+  reports `atomic: false` and the panel says so in the editing bar.
+- **Session renewal is switched off entirely.** Read-then-write renewal cannot
+  be made safe against a logout landing between the two, and a stale renewal
+  that resurrects a revoked session is worse than a session that expires twelve
+  hours after it was created. Where it cannot be done safely it is not done.
+
+Do not describe a deployment running this way as having concurrency
+protection.
+
+### Enabling it
 
 **The binding is deliberately not enabled.** `wrangler.toml` carries it
-commented out with the two things to confirm first — plan availability for
-SQLite-backed objects, and what moving public reads onto a different meter
-costs — plus the migration note: the object starts empty, so existing KV
-content must be copied in before it is switched on. Without the binding the
-Worker behaves exactly as it does today, `atomic` is false in
-`GET /v1/admin/content`, and the panel says in the editing bar that concurrent
-edits are not protected.
+commented out. Before switching it on:
+
+1. **Confirm plan availability** for SQLite-backed Durable Objects
+   (`new_sqlite_classes`), and **what it costs** — every public content read
+   becomes a request to the object rather than a KV read.
+2. **Migrate the content.** The object starts empty. Copy the existing
+   `content:*`, `revision:*` and `revision-head:*` values from the CONTENT
+   namespace into `doc:*`, `rev:*` and `head:*` in the object *before* the
+   binding goes live, or the first read finds nothing and the site falls back
+   to its bundle. Do it against a preview environment first.
+3. **Know the way back.** Re-commenting the binding returns the Worker to KV
+   immediately, and the KV values are untouched by the object — so a rollback
+   loses whatever was published after the switch, and nothing before it. Copy
+   the object's contents back out if anything was published in between.
+
+Codex has run the content-write path in local Wrangler/workerd with a
+temporary enabled binding: eight concurrent same-base saves produced one 200
+and seven 409s, with one retained revision. That verifies the path locally. It
+does not establish plan availability, cost, migration safety or production
+readiness.
 
 Nothing about the public response shape changes either way.
 

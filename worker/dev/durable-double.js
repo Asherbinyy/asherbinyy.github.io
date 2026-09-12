@@ -17,11 +17,19 @@ export class FakeStorage {
   map = new Map();
   failOn = null;
 
+  /// Called before a read or a write, so a test can make something else happen
+  /// at an exact point. This is how an interleaving is made deterministic
+  /// rather than hoped for.
+  onGet = null;
+  onPut = null;
+
   async get(key) {
+    if (this.onGet) await this.onGet(key);
     return this.map.has(key) ? structuredClone(this.map.get(key)) : undefined;
   }
 
   async put(key, value) {
+    if (this.onPut) await this.onPut(key);
     if (this.failOn === key) throw new Error('injected storage failure');
     this.map.set(key, structuredClone(value));
   }

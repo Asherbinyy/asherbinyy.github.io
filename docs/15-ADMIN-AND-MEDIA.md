@@ -100,10 +100,11 @@ exist. The double is served by the local harness on a different origin so both
 sides' origin checks do real work; it is not shipped, and the panel says the
 preview has not answered when nothing does.
 
-**The release contract.** Codex chose Astro and build-and-release.
+**The release contract.** Build-and-release, from an immutable snapshot.
 `worker/contracts/snapshot.js` produces the `PORTFOLIO_SNAPSHOT` artifact and
-its canonical digest, pinned by test to the digest Codex's own reference
-implementation produces. `POST /v1/admin/release` reports whether the public
+its canonical digest, pinned by test to a frozen synthetic document set. The
+renderer is Flutter; the contract describes documents and a digest, and did not
+have to change when that was settled. `POST /v1/admin/release` reports whether the public
 HTML is serving that revision, and the dashboard says so — including, as
 instructed, refusing to call anything published to HTML while nothing serves a
 release file.
@@ -113,12 +114,20 @@ release file.
 marked "not on the site yet" until its consumer lands. The recording's length
 is read from the file rather than typed.
 
-**Concurrency and credentials.** Content mutations are serialised through a
-Durable Object with a revision precondition and one transactional commit, so
-two publishes racing on the same base produce one revision and one conflict
-rather than two "successes" and a lost history entry. Sign-in checks the
-attempt limit before deriving a key, so a blocked guess costs nothing and
-cannot be tested indefinitely. See [Worker operations](../worker/README.md).
+**Concurrency, sessions and credentials.** Content mutations, the session
+lifecycle, the password verifier and the failed-attempt counter all live in one
+Durable Object, so each is serialised: two publishes racing on the same base
+produce one revision and one conflict; a renewal cannot resurrect a session a
+logout has revoked; and admission takes a slot atomically before any key is
+derived, so a burst of guesses gets exactly the attempts that were left. A
+document and the revision it is are read in one operation, as is the whole set
+that goes into a release.
+
+**None of that is active in a deployment today.** The binding is deliberately
+not enabled, so the Worker runs on the unsafe fallback: concurrent publishes
+can still lose a revision, session renewal is switched off entirely rather than
+left racy, and the panel says so in the editing bar. See
+[Worker operations](../worker/README.md).
 
 Verified in Chrome against `worker/dev/serve.js`: 134 browser checks across
 seven scenarios, screenshots under `docs/audits/`.

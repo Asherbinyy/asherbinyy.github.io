@@ -8,8 +8,12 @@ to be true on the public side before the admin can describe it as supported.
 Nothing here has been implemented in `lib/**`, and nothing here changes an
 existing route, response shape or field.
 
-Last updated: 2026-09-12, after Codex's merge review
-(`docs/24-ADMIN-MERGE-REVIEW.md`) and the AR-1 to AR-9 fixes.
+Last updated: 2026-09-12, after Codex's re-review
+(`docs/25-ADMIN-REREVIEW.md`) and the ARR-1 to ARR-3 fixes.
+
+**The owner rejected the separate frontend. Flutter is the only interactive
+UI.** Nothing in this file assumes otherwise: the snapshot and preview
+contracts describe documents, digests and messages, not a renderer.
 
 ---
 
@@ -106,35 +110,38 @@ implements this:
 `appearanceReady` in that file is `false` and a test asserts every blocker is
 still open, so this cannot quietly drift into looking finished.
 
-### 3.2 The preview adapter — the only thing standing between this and a real preview
+### 3.2 The preview adapter — a Flutter one, now
 
-The editor's half of protocol v1 is **built and verified**. What is missing is
-the page on your side that answers it.
+The editor's half of protocol v1 is built and verified. What is missing is the
+page on your side that answers it, and it will be Flutter.
 
-Implemented here, to your reply's specifics: the frame, an ephemeral session
-per frame load, the handshake, a validated draft, selection on every
-navigation, locale re-sent when the language tab changes, stale `rendered`
-acknowledgements dropped, retry, and an honest line saying what is happening.
-`componentId` is `"<file>:<path>"`. `targetOrigin` is the exact configured
-origin and never `*`. Every arriving message is checked for origin, source
-window, channel, version and session before a field of it is read. A test
-asserts the session token appears nowhere in anything the preview receives.
+Implemented here: the frame, an ephemeral session per frame load, the
+handshake, a validated draft, selection on every navigation, locale re-sent
+when the language tab changes, stale `rendered` acknowledgements dropped,
+retry, and an honest line saying what is happening. `componentId` is
+`"<file>:<path>"`. `targetOrigin` is the exact configured origin and never `*`.
+Every arriving message is checked for origin, source window, channel, version
+and session before a field of it is read. A test asserts the session token
+appears nowhere in anything the preview receives.
 
-**The status, stated as you asked:** what has been proved is the admin side of
-the protocol, against a test double. It is *not* end-to-end rendering of the
+None of that assumed a particular renderer, and none of it changes now the
+answer is Flutter. What the adapter has to do is unchanged: serve a page that
+speaks v1 and carries `data-content-file` and `data-content-path`.
+
+**The status, stated plainly:** what is proved is the admin side of the
+protocol against a test double. It is **not** end-to-end rendering of the
 site, and nothing in the panel or the documentation says it is. The double
 lives in `worker/dev/serve.js`, is served on a different origin from the panel
-so both sides' origin checks do real work, and is not shipped.
+so both sides' origin checks do real work, and is not shipped. It is a test
+fixture, not a second public UI.
 
 Two things to know when you build the real one:
 
 1. **A `select` may name a group, not a leaf.** Opening an entry sends
    `interests.json:interests.0`. Your reply covers the opposite case — a leaf
    with no element of its own, which takes the closest rendered parent. For a
-   group, the component that renders that group is the match. The double falls
-   back to the first descendant.
-2. **Point `PREVIEW_ORIGIN` at it** and this side should work unchanged. If it
-   does not, `worker/dev/serve.js` is the reference for what is expected.
+   group, the component that renders that group is the match.
+2. **Point `PREVIEW_ORIGIN` at it** and this side should work unchanged.
 
 ### 3.3 Release parity — built to your snapshot contract
 
@@ -152,10 +159,12 @@ your reply:
   serves a release file**, which is today's state.
 
 The digest is pinned in `worker/test/snapshot.test.js` against a frozen
-synthetic document set, checked against a second implementation of the
-canonical form written from the specification, and — where `site/` is checked
-out alongside — against your `stableJson` and `digest` directly. The earlier
-pin used the owner's live bundle, which made it a test of his content.
+synthetic document set, and the canonical form is checked against literal
+expected strings written from the specification. The reference implementation
+in the removed frontend is gone, so **the specification is the contract**:
+object keys sorted recursively, array order kept, scalars as ordinary JSON.
+When the Flutter generator produces its own implementation, compare it against
+those same vectors.
 
 **Still yours:** CI triggering, delivering the artifact to a build, failure
 recovery and rollback of a release. Your reply lists these as integration
@@ -201,17 +210,24 @@ A field with no consumer does not get built.
 
 ## 4. What is left on the admin side
 
-Not "nothing". Each of these is built up to the boundary and labelled honestly
-in the interface, but none of them is finished work:
+Not "nothing". Each is built up to a boundary and labelled honestly in the
+interface; none of them is finished work.
 
 | Open | State | Waiting on |
 |---|---|---|
 | Live preview | Protocol verified against a test double, not against the site | §3.2 |
-| HTML publication | Revision and comparison built; nothing serves a release file, and CI/artifact delivery are unwritten | §3.3 |
+| HTML publication | Revision and comparison built; nothing serves a release file, and CI, artifact delivery, failure recovery and release rollback are unwritten | §3.3 |
 | A5 appearance | Nothing built. No controls, by design | §3.1 |
 | The four accepted fields | Editable and validated; nothing renders them | §3.4 |
-| Concurrency protection in production | Implemented and tested; the binding is deliberately not enabled | `wrangler.toml` |
-| Real-device and screen-reader checks | Never run. Headless Chrome at three viewport sizes is not a phone or a screen reader | R9 |
+| Concurrency and session safety in production | Implemented and tested against a double and, for content writes, against local workerd by Codex. The binding is deliberately not enabled, so a deployment today runs on the unsafe fallback | `wrangler.toml` |
+| Real-device and screen-reader checks | Never run | R9 |
+
+**The fallback is not protected, and must not be described as if it were.**
+Without the `CONTENT_STORE` binding: concurrent publishes can still lose a
+revision, session renewal is switched off entirely rather than left racy, and
+`GET /v1/admin/content` reports `atomic: false`. The panel says so in the
+editing bar. A combined release cannot claim concurrency protection while it
+is running that way.
 
 ## 5. What I will not do without you asking
 

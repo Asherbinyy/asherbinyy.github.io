@@ -2,7 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {handleRequest} from '../src/index.js';
+import {durableNamespace} from '../dev/durable-double.js';
+import {ContentStore} from '../src/store.js';
 import {admin, adminToken, environment} from './support.js';
+
+/// An environment whose sessions live in the transactional store.
+const transactional = (overrides = {}) =>
+  environment({CONTENT_STORE: durableNamespace(ContentStore), ...overrides});
 
 const password = 'a-long-enough-fixture-password';
 
@@ -284,24 +290,28 @@ test('the session endpoints are behind the gate', async () => {
 
 /// Moves a session's clocks back, the way waiting would.
 function agedBy(env, hours) {
-  const name = [...env.CONTENT.values.keys()].find((k) => k.startsWith('session:'));
-  const held = JSON.parse(env.CONTENT.values.get(name).value);
+  const storage = env.CONTENT_STORE.state.storage.map;
+  const name = [...storage.keys()].find((key) => key.startsWith('session:'));
+  const held = storage.get(name);
   const shift = hours * 60 * 60 * 1000;
   held.expires = new Date(Date.parse(held.expires) - shift).toISOString();
-  held.absoluteExpiry = new Date(Date.parse(held.absoluteExpiry) - shift).toISOString();
-  env.CONTENT.values.set(name, {value: JSON.stringify(held)});
+  held.absoluteExpiry = new Date(
+    Date.parse(held.absoluteExpiry) - shift,
+  ).toISOString();
+  storage.set(name, held);
   return held;
 }
 
 function sessionRecord(env) {
-  const name = [...env.CONTENT.values.keys()].find((k) => k.startsWith('session:'));
-  return JSON.parse(env.CONTENT.values.get(name).value);
+  const storage = env.CONTENT_STORE.state.storage.map;
+  const name = [...storage.keys()].find((key) => key.startsWith('session:'));
+  return storage.get(name);
 }
 
 test('using a session pushes the idle clock back', async () => {
   // The defect: a session that had been in use all day still died twelve
   // hours after it began, because nothing extended it.
-  const env = environment();
+  const env = transactional();
   const token = await sessionFor(env);
   const before = sessionRecord(env).expires;
 
@@ -315,10 +325,8 @@ test('using a session pushes the idle clock back', async () => {
 });
 
 test('a session kept in use keeps working past the idle window', async () => {
-  const env = environment();
+  const env = transactional();
   const token = await sessionFor(env);
-  // Eleven hours, use it, eleven hours again, use it. Under the old rule the
-  // second one failed.
   for (const round of [1, 2]) {
     agedBy(env, 11);
     const used = await handleRequest(admin('/v1/admin/content', {token}), env);
@@ -327,7 +335,7 @@ test('a session kept in use keeps working past the idle window', async () => {
 });
 
 test('a session nobody touches still expires', async () => {
-  const env = environment();
+  const env = transactional();
   const token = await sessionFor(env);
   agedBy(env, 13);
   assert.equal(
@@ -337,10 +345,8 @@ test('a session nobody touches still expires', async () => {
 });
 
 test('renewal never pushes past the absolute limit', async () => {
-  const env = environment();
+  const env = transactional();
   const token = await sessionFor(env);
-  // Six days in: renewal may extend the idle clock, but not beyond the seven
-  // day ceiling.
   agedBy(env, 6 * 24);
   await handleRequest(admin('/v1/admin/content', {token}), env);
   const held = sessionRecord(env);
@@ -348,7 +354,7 @@ test('renewal never pushes past the absolute limit', async () => {
 });
 
 test('the absolute limit still ends a session that is in constant use', async () => {
-  const env = environment();
+  const env = transactional();
   const token = await sessionFor(env);
   agedBy(env, 8 * 24);
   assert.equal(
@@ -358,12 +364,31 @@ test('the absolute limit still ends a session that is in constant use', async ()
 });
 
 test('an ordinary request does not rewrite the session every time', async () => {
-  // Renewal is worth one write, not one per request.
-  const env = environment();
+  const env = transactional();
   const token = await sessionFor(env);
   const before = sessionRecord(env).expires;
   for (let round = 0; round < 5; round += 1) {
     await handleRequest(admin('/v1/admin/content', {token}), env);
   }
   assert.equal(sessionRecord(env).expires, before);
+});
+
+test('the fallback store does not renew at all, on purpose', async () => {
+  // Read-then-write renewal cannot be made safe against a logout landing
+  // between the two (ARR-2), and a stale renewal that resurrects a revoked
+  // session is worse than a session that expires twelve hours after it was
+  // created. Where the store cannot do it safely, it is not done.
+  const env = environment();
+  const token = await sessionFor(env);
+  const name = [...env.CONTENT.values.keys()].find((k) => k.startsWith('session:'));
+  const held = JSON.parse(env.CONTENT.values.get(name).value);
+  held.expires = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+  env.CONTENT.values.set(name, {value: JSON.stringify(held)});
+
+  assert.equal(
+    (await handleRequest(admin('/v1/admin/content', {token}), env)).status,
+    200,
+  );
+  const after = JSON.parse(env.CONTENT.values.get(name).value);
+  assert.equal(after.expires, held.expires);
 });
