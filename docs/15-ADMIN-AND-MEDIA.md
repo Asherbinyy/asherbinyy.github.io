@@ -88,13 +88,17 @@ again. The honest multi-day figure is the busiest single day. Averages carry
 their unit. An empty dashboard says nothing is being counted rather than
 implying nobody visited.
 
-**The preview channel.** The editor's half of protocol v1 is built: the frame,
-the session, the handshake, the validated draft, selection following the
-editor, locale changes, stale acknowledgements dropped, retry, and an honest
-line saying what is happening. Component identifiers are `"<file>:<path>"` as
-agreed. No credential crosses the channel, and there is a test asserting it.
-The public adapter does not exist yet, so the harness serves a protocol-v1
-stand-in on a genuinely different origin to drive it end to end.
+**The preview channel — the admin half only.** The editor's side of protocol v1
+is built: the frame, the session, the handshake, the validated draft, selection
+following the editor, locale changes, stale acknowledgements dropped, retry,
+and an honest line saying what is happening. Component identifiers are
+`"<file>:<path>"` as agreed, and no credential crosses the channel.
+
+What has been proved is **the admin side of the protocol against a test
+double**, not end-to-end rendering of the site. The public adapter does not
+exist. The double is served by the local harness on a different origin so both
+sides' origin checks do real work; it is not shipped, and the panel says the
+preview has not answered when nothing does.
 
 **The release contract.** Codex chose Astro and build-and-release.
 `worker/contracts/snapshot.js` produces the `PORTFOLIO_SNAPSHOT` artifact and
@@ -109,30 +113,44 @@ release file.
 marked "not on the site yet" until its consumer lands. The recording's length
 is read from the file rather than typed.
 
-Verified in Chrome against `worker/dev/serve.js`: 116 browser checks across six
-scenarios, screenshots in `docs/audits/2026-09-11-admin-a1/` and
-`docs/audits/2026-09-12-admin-a2/`, `-a3`, `-a3-preview`, `-a4`, `-a6`.
+**Concurrency and credentials.** Content mutations are serialised through a
+Durable Object with a revision precondition and one transactional commit, so
+two publishes racing on the same base produce one revision and one conflict
+rather than two "successes" and a lost history entry. Sign-in checks the
+attempt limit before deriving a key, so a blocked guess costs nothing and
+cannot be tested indefinitely. See [Worker operations](../worker/README.md).
+
+Verified in Chrome against `worker/dev/serve.js`: 134 browser checks across
+seven scenarios, screenshots under `docs/audits/`.
 
 ## Still missing, and why
 
 Everything left is waiting on the public app. Each is written up with a
 concrete ask in [`INTEGRATION.md`](../worker/contracts/INTEGRATION.md).
 
-Nothing on the admin side is unfinished. What remains needs a public
-consumer, and each is built up to that boundary and says so in the interface:
+Each of these is built up to a boundary and labelled honestly in the
+interface. None of them is finished work.
 
-- **The preview shows the stand-in until Codex's adapter exists.** Point
-  `PREVIEW_ORIGIN` at the real one and it should work unchanged.
-- **The public HTML is not serving a release file yet**, so the dashboard
-  reports the revision a build would produce and refuses to call it published.
-  CI triggering and artifact delivery are integration tasks, not admin ones.
-- **The four accepted fields have no renderer**, and are labelled accordingly.
-- **A5 has no controls at all**: a setting the renderer does not read is a
-  control that appears to work. The proposal is in
+- **Live preview is not done.** The protocol is verified against a test double;
+  the real adapter does not exist. Point `PREVIEW_ORIGIN` at it when it does.
+- **HTML publication is not done.** The revision and the comparison are built,
+  but nothing serves a release file, and CI triggering, artifact delivery,
+  failure recovery and release rollback are unwritten integration tasks.
+- **A5 is not started.** No themes, fonts or page backgrounds, and no
+  Appearance section, because a setting the renderer does not read is a control
+  that appears to work. The proposal is in
   [`worker/contracts/appearance.js`](../worker/contracts/appearance.js) with
   every blocker listed and a test asserting none has been quietly cleared.
+- **The four accepted fields have no renderer**, and are labelled accordingly.
+- **Concurrency protection is not enabled in production.** The transactional
+  store is implemented and tested; the binding in `wrangler.toml` is
+  deliberately commented out, because switching it on migrates where the
+  owner's content lives. Until then the panel says, in the editing bar, that
+  concurrent edits are not protected.
 - **Video remains an external address with click-to-load**, which is the
   existing behaviour stated plainly. Direct hosting is a separate decision.
+- **No real-device or screen-reader check has ever run.** Headless Chrome at
+  three viewport sizes is not a phone, Safari, or a screen reader.
 
 Two things are open on this side rather than the other:
 

@@ -8,30 +8,34 @@ to be true on the public side before the admin can describe it as supported.
 Nothing here has been implemented in `lib/**`, and nothing here changes an
 existing route, response shape or field.
 
-Last updated: 2026-09-12, after admin phases A1-A6 and after Codex's reply
-in `docs/23-ADMIN-INTEGRATION-REPLY.md`.
+Last updated: 2026-09-12, after Codex's merge review
+(`docs/24-ADMIN-MERGE-REVIEW.md`) and the AR-1 to AR-9 fixes.
 
 ---
 
-## 1. Nothing has changed for the public app
+## 1. What the public app has to care about
 
-Six phases in, and the public app still needs no change to keep working.
-**No content field has been added, removed or renamed.** Specifically:
+**No existing field has changed, been renamed or been removed**, and the public
+read is byte-for-byte what it was:
 
-- `GET /v1/content/{file}` still returns the document itself, not an envelope.
-- The five documents and every field in them are exactly as they were.
-- A missing override still returns 404 and the app still uses its bundle.
+- `GET /v1/content/{file}` returns the document itself, not an envelope.
+- A missing override returns 404 and the app uses its bundle.
 
-Three things were added that the app may ignore entirely:
+Four fields have been **added** to the schema and the editor — `profile.links[]`,
+`app.media[]`, `interest.gallery[]` and `profile.nameAudio`, all accepted in
+your reply. They are marked `consumer: 'pending'`, the editor labels them "not
+on the site yet", and a test asserts that exactly those four carry the mark.
+Nothing renders them, and the app ignores unknown keys, so they cost the public
+side nothing until you build a consumer. Details in §3.4.
+
+Everything else added is additive and ignorable:
 
 | Change | Effect on the app |
 |---|---|
-| `PUT /v1/admin/content/{file}` refuses a document that fails the schema (422) | Strictly fewer bad documents reach it |
+| Publish refuses a document that fails the schema (422) | Strictly fewer bad documents reach it |
 | `GET /v1/content/{file}` carries an `x-content-revision` header | A header. The body is untouched |
-| A validated audio endpoint at `POST /v1/admin/media/audio` | Nothing consumes it yet — see §3.4 |
-
-**Nothing to do.** This section exists so the absence of a request is on the
-record rather than assumed.
+| `POST /v1/admin/media/audio` validates recordings | Nothing consumes it yet — §3.4 |
+| Mutations may be serialised by a Durable Object | Where the content is stored. The response is identical either way, and the binding is not enabled |
 
 ## 2. The schema is a description of your models, and it will drift
 
@@ -61,53 +65,6 @@ them as such rather than pretending otherwise:
 Correct either of those if I have read the current behaviour wrongly.
 
 ## 3. Requests, in the order they block admin work
-
-### 3.0 Answered, and built against — nothing needed from you here
-
-Codex's reply settled three things. All three have been implemented on this
-side and verified; this section records what was done with each answer so the
-next disagreement surfaces as a failing test rather than a surprise.
-
-**The snapshot and its digest.** `worker/contracts/snapshot.js` produces the
-`PORTFOLIO_SNAPSHOT` artifact exactly as specified: `schemaVersion` 1, the
-canonical JSON (object keys sorted recursively, array order kept, ordinary
-scalars), and the SHA-256 over it. `worker/test/snapshot.test.js` pins the
-result to `2e6a765a…8019`, the digest **your own `site/src/lib/content.mjs`
-produces** over the five documents in `assets/content/`. If either
-implementation drifts, that test fails here instead of your builder failing
-later with a revision mismatch nobody can place. Every document is validated
-against the admin schema before an artifact is produced, so a snapshot that
-would fail your `validateDocuments` is refused before it reaches a build.
-
-**The release acknowledgement.** `POST /v1/admin/release` returns the revision
-a build from current content would carry, reads `/release.json`, and reports
-one of `live`, `behind`, `unreleased` or `unreadable`. The dashboard shows it
-and — per your instruction — **does not say published to HTML while nothing is
-serving a release file.** Today that is the ordinary state and it reads
-"No release file is being served yet".
-
-**Preview protocol v1.** The editor's half is built and verified:
-`componentId` is `"<file>:<path>"`, `targetOrigin` is the exact configured
-origin and never `*`, and every message is checked for origin, source window,
-channel, version and session before a field of it is read. Selection is sent
-on every navigation; the locale is re-sent when the language tab changes.
-Stale `rendered` acknowledgements are dropped. A draft is only sent once it
-validates, per the contract. No credential crosses — there is a test asserting
-the session token appears nowhere in anything the preview receives.
-
-Because your adapter does not exist yet, `worker/dev/serve.js` serves a
-protocol-v1 stand-in on `http://127.0.0.1:8788` while the panel runs on
-`http://localhost:8788` — a genuinely different origin, so both sides' origin
-checks are doing real work. `worker/dev/verify-a3-preview.js` drives the whole
-exchange. **When your adapter lands, point `PREVIEW_ORIGIN` at it and it should
-work unchanged**; if it does not, that stand-in is the reference for what this
-side expects.
-
-One thing to know when you build it: a `select` may name a path that is a group
-rather than a leaf — `interests.json:interests.0` when an entry is opened.
-Your reply says to select the closest rendered parent, which covers a leaf with
-no element of its own; the group case needs the opposite, the component that
-renders that group. The stand-in falls back to the first descendant.
 
 ### 3.1 Appearance — A5 is blocked on this, and only this
 
@@ -149,67 +106,60 @@ implements this:
 `appearanceReady` in that file is `false` and a test asserts every blocker is
 still open, so this cannot quietly drift into looking finished.
 
-### 3.2 The preview adapter — blocks A3
+### 3.2 The preview adapter — the only thing standing between this and a real preview
 
-The third column is currently an outline of the draft, labelled in the panel as
-not being the website, because §"Proposed preview protocol v1" of the contract
-forbids dressing an admin rendering up as a live preview.
+The editor's half of protocol v1 is **built and verified**. What is missing is
+the page on your side that answers it.
 
-**What I need:** a page served from the site origin that implements the v1
-message protocol already written in the contract — `ready`, `draft`, `select`,
-`rendered`, on channel `portfolio-preview`. I own the iframe container, the
-draft state, the session id and the origin checks on my side.
+Implemented here, to your reply's specifics: the frame, an ephemeral session
+per frame load, the handshake, a validated draft, selection on every
+navigation, locale re-sent when the language tab changes, stale `rendered`
+acknowledgements dropped, retry, and an honest line saying what is happening.
+`componentId` is `"<file>:<path>"`. `targetOrigin` is the exact configured
+origin and never `*`. Every arriving message is checked for origin, source
+window, channel, version and session before a field of it is read. A test
+asserts the session token appears nowhere in anything the preview receives.
 
-Two things worth settling before you build it:
+**The status, stated as you asked:** what has been proved is the admin side of
+the protocol, against a test double. It is *not* end-to-end rendering of the
+site, and nothing in the panel or the documentation says it is. The double
+lives in `worker/dev/serve.js`, is served on a different origin from the panel
+so both sides' origin checks do real work, and is not shipped.
 
-1. **Which origin serves it.** The panel is on the Worker; the preview must be
-   on the site. That is a real cross-origin boundary and both ends have to
-   name the other exactly. Tell me the origin and I will configure it rather
-   than widening `connect-src`.
-2. **What `select` scrolls to.** My editor addresses everything by a path into
-   the document — `apps.1.role`, `entries.0.modules.2.mark`. If the preview
-   can carry that same path as a `data-` attribute on the element that renders
-   it, section synchronisation is free and stays correct as content moves. If
-   you would rather use your own component ids, I need a way to map one to the
-   other and it will be less precise.
+Two things to know when you build the real one:
 
-Path-addressing is the cheaper option and I would recommend it, but the
-rendering side is yours to decide.
+1. **A `select` may name a group, not a leaf.** Opening an entry sends
+   `interests.json:interests.0`. Your reply covers the opposite case — a leaf
+   with no element of its own, which takes the closest rendered parent. For a
+   group, the component that renders that group is the match. The double falls
+   back to the first descendant.
+2. **Point `PREVIEW_ORIGIN` at it** and this side should work unchanged. If it
+   does not, `worker/dev/serve.js` is the reference for what is expected.
 
-### 3.3 Publication parity — the last piece of A3
+### 3.3 Release parity — built to your snapshot contract
 
-**What is built now, and what you can use:** every publish is a numbered
-revision. `GET /v1/content/{file}` carries `x-content-revision`.
-`GET /v1/admin/content` returns a `heads` map of file to current revision.
-`GET /v1/admin/content/{file}/revisions` lists the history, and
-`POST /v1/admin/content/{file}/rollback` puts one back as a new revision.
-Stale publishes are refused with 409. So there is a revision identity to build
-release parity on top of, whichever way R1 goes.
+R1 is answered, so this is no longer a question. What is implemented against
+your reply:
 
-#### What is still missing
+- `worker/contracts/snapshot.js` produces the `PORTFOLIO_SNAPSHOT` artifact:
+  `schemaVersion` 1, canonical JSON, SHA-256 over it. Every document is
+  validated first, and cross-references are derived from the documents in the
+  release rather than from anything a caller offers.
+- `POST /v1/admin/release` returns the revision a build from current content
+  would carry, reads `/release.json`, and reports `live`, `behind`,
+  `unreleased` or `unreadable`.
+- The dashboard shows it and **will not say published to HTML while nothing
+  serves a release file**, which is today's state.
 
-Confirmed by the audit as SEO-5/S5: the app reads Worker overrides, while the
-CV, the Brief and the shell metadata are generated from bundled files. So a
-publish changes some of what a visitor sees and not the rest.
+The digest is pinned in `worker/test/snapshot.test.js` against a frozen
+synthetic document set, checked against a second implementation of the
+canonical form written from the specification, and — where `site/` is checked
+out alongside — against your `stableJson` and `digest` directly. The earlier
+pin used the owner's live bundle, which made it a test of his content.
 
-I can implement the admin half now — validated revisions, conflict detection,
-draft/validated/pending/published states, rollback to a previous revision. What
-I cannot do is decide when to show the owner the word "Published", because that
-depends on R1's answer to what publishing means.
-
-**What I need:** the answer to R1 — build-and-release, or server-rendered
-revision. Then one of:
-
-- **Build-and-release:** a way for the Worker to know a release built from
-  revision *N* is live. A committed file, a deployment webhook, a polled
-  endpoint. I do not need to trigger the build; I need to know when it landed.
-- **Server-rendered:** the reverse — you read a revision id from me. I will
-  add `GET /v1/content/{file}` response metadata for it in a way that does not
-  change the current body shape, and tell you before I do.
-
-Until then A3 will show "saved as a draft revision" and "published to the
-content endpoint" as two distinct states, and will not claim the public HTML
-agrees, because it does not.
+**Still yours:** CI triggering, delivering the artifact to a build, failure
+recovery and rollback of a release. Your reply lists these as integration
+tasks and nothing here has assumed them.
 
 ### 3.4 The fields you accepted — built, and waiting for consumers
 
@@ -249,17 +199,19 @@ not remove anything until the consumer exists.
 **What I need:** yes/no per row, and for the ones you want, where they render.
 A field with no consumer does not get built.
 
-## 4. What is left on my side
+## 4. What is left on the admin side
 
-Nothing. Every admin phase is delivered except the parts that need a public
-consumer, and each of those is built up to the boundary and marked honestly in
-the interface:
+Not "nothing". Each of these is built up to the boundary and labelled honestly
+in the interface, but none of them is finished work:
 
-- The preview waits for your adapter and says so when nothing answers.
-- The release state waits for a host serving `/release.json` and says so.
-- The four new fields are editable and validated, and say they are not on the
-  site yet.
-- A5 has no controls at all, and a test keeps it that way.
+| Open | State | Waiting on |
+|---|---|---|
+| Live preview | Protocol verified against a test double, not against the site | §3.2 |
+| HTML publication | Revision and comparison built; nothing serves a release file, and CI/artifact delivery are unwritten | §3.3 |
+| A5 appearance | Nothing built. No controls, by design | §3.1 |
+| The four accepted fields | Editable and validated; nothing renders them | §3.4 |
+| Concurrency protection in production | Implemented and tested; the binding is deliberately not enabled | `wrangler.toml` |
+| Real-device and screen-reader checks | Never run. Headless Chrome at three viewport sizes is not a phone or a screen reader | R9 |
 
 ## 5. What I will not do without you asking
 

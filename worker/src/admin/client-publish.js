@@ -30,7 +30,9 @@ function changeRow(change) {
 
 /// Asks the Worker what would change, then shows it with a way to go ahead.
 async function openReview() {
-  const entry = current();
+  const file = state.file;
+  const entry = state.docs.get(file);
+  if (!entry) return;
   if (countChanges(entry) === 0) return say('Nothing has changed on this page');
   say('Checking the draft...');
   let review;
@@ -39,10 +41,10 @@ async function openReview() {
       method: 'POST',
       headers: {'content-type': 'application/json'},
       body: JSON.stringify({
-        file: state.file,
+        file: file,
         document: entry.draft,
         baseline: entry.live,
-        references: knownReferences(state.file),
+        references: knownReferences(file),
       }),
     });
     review = await response.json();
@@ -50,11 +52,10 @@ async function openReview() {
   } catch (error) {
     return say(error.message, 'bad');
   }
-  state.issues.set(state.file, {errors: review.errors, warnings: review.warnings});
   render();
   say('');
 
-  openSheet('Review ' + schemaFor(state.file).section, (into) => {
+  openSheet('Review ' + schemaFor(file).section, (into) => {
     into.append(node(
       'p',
       'note',
@@ -136,7 +137,7 @@ async function openReview() {
     const go = document.createElement('button');
     go.type = 'button';
     go.className = 'primary';
-    go.textContent = 'Publish ' + schemaFor(state.file).section;
+    go.textContent = 'Publish ' + schemaFor(file).section;
     go.disabled = review.errors.length > 0;
     go.onclick = () => {
       const note = source ? source.value.trim() : '';
@@ -146,7 +147,7 @@ async function openReview() {
         return;
       }
       el('sheet').close();
-      publishNow(note);
+      publishNow(note, file);
     };
     actions.append(cancel, go);
     into.append(actions);
@@ -154,26 +155,31 @@ async function openReview() {
 }
 
 /// Sends the draft, saying which revision it was built on.
-async function publishNow(note) {
-  const entry = current();
-  say('Publishing ' + schemaFor(state.file).section + '...');
+async function publishNow(note, forFile) {
+  // The document this publish is for, and the exact bytes going out. Both
+  // captured before the request, because by the time it answers the owner may
+  // have opened something else or typed something new -- and acknowledging
+  // "published" against a draft that has moved on marks unsaved work as saved
+  // (AR-3).
+  const file = forFile || state.file;
+  const entry = state.docs.get(file);
+  if (!entry) return;
+  const submitted = JSON.parse(JSON.stringify(entry.draft));
+  const base = entry.revision;
+  say('Publishing ' + schemaFor(file).section + '...');
   const headers = {
     'content-type': 'application/json',
     'x-change-note': encodeURIComponent(note || ''),
   };
-  // Absent on a document that has never been published, which is what the
-  // Worker treats as "no expectation about what is there".
-  if (typeof entry.revision === 'number') {
-    headers['x-base-revision'] = String(entry.revision);
-  }
+  if (typeof base === 'number') headers['x-base-revision'] = String(base);
   try {
-    const response = await api('/v1/admin/content/' + state.file, {
+    const response = await api('/v1/admin/content/' + file, {
       method: 'PUT',
       headers: headers,
-      body: JSON.stringify(entry.draft),
+      body: JSON.stringify(submitted),
     });
     const body = await response.json();
-    if (response.status === 409) return showConflict(body);
+    if (response.status === 409) return showConflict(body, file);
     if (!response.ok) {
       if (body.claims) {
         say('The Worker refused it: a claim needs a source', 'bad');
@@ -181,11 +187,21 @@ async function publishNow(note) {
       }
       throw new Error(body.error || 'The publish was refused');
     }
-    entry.live = JSON.parse(JSON.stringify(entry.draft));
+    // What is live is what was sent, not what the draft says now. If the owner
+    // kept typing while this was in flight, the page is still dirty and the
+    // bar keeps saying so.
+    entry.live = submitted;
     entry.source = 'published';
     entry.revision = body.revision;
+    entry.diverged = null;
     render();
-    say('Published as revision ' + body.revision, 'good');
+    const still = countChanges(entry);
+    say(
+      'Published as revision ' + body.revision +
+        (still > 0 ? '. You have since made ' + still + ' more change' +
+          (still === 1 ? '' : 's') + '.' : ''),
+      'good',
+    );
   } catch (error) {
     say(error.message, 'bad');
   }
@@ -195,8 +211,9 @@ async function publishNow(note) {
 ///
 /// Both ways out are offered by name, because the one thing that must not
 /// happen is the panel choosing for him and losing an afternoon either way.
-function showConflict(body) {
-  const entry = current();
+function showConflict(body, forFile) {
+  const file = forFile || state.file;
+  const entry = state.docs.get(file);
   const theirs = body.document;
   say('This page changed while you were editing it', 'bad');
   openSheet('Someone else changed this page', (into) => {
@@ -282,9 +299,11 @@ function differencesFor(before, after, path) {
 
 /// Throws away the draft and starts again from what the site shows.
 function discardDraft() {
-  const entry = current();
+  const file = state.file;
+  const entry = state.docs.get(file);
+  if (!entry) return;
   if (countChanges(entry) === 0) return say('Nothing to discard');
-  const section = schemaFor(state.file).section;
+  const section = schemaFor(file).section;
   if (!confirm('Throw away your unpublished changes to ' + section +
       '? This cannot be undone.')) {
     return;
@@ -297,19 +316,18 @@ function discardDraft() {
 
 /// Every revision of this page, and a way back to one.
 async function openHistory() {
+  const file = state.file;
   say('Reading the history...');
   let body;
   try {
-    const response = await api(
-      '/v1/admin/content/' + state.file + '/revisions',
-    );
+    const response = await api('/v1/admin/content/' + file + '/revisions');
     body = await response.json();
     if (!response.ok) throw new Error(body.error || 'Could not read the history');
   } catch (error) {
     return say(error.message, 'bad');
   }
   say('');
-  openSheet('History of ' + schemaFor(state.file).section, (into) => {
+  openSheet('History of ' + schemaFor(file).section, (into) => {
     if (body.revisions.length === 0) {
       into.append(node('p', 'note', 'This page has never been published.'));
       return;
@@ -345,7 +363,9 @@ async function openHistory() {
 }
 
 async function rollTo(revision) {
-  const entry = current();
+  const file = state.file;
+  const entry = state.docs.get(file);
+  if (!entry) return;
   const unsaved = countChanges(entry) > 0;
   if (!confirm('Put revision ' + revision + ' back on the site?' +
       (unsaved ? ' Your unpublished changes to this page will be lost.' : ''))) {
@@ -355,18 +375,26 @@ async function rollTo(revision) {
   say('Going back to revision ' + revision + '...');
   try {
     const response = await api(
-      '/v1/admin/content/' + state.file + '/rollback',
+      '/v1/admin/content/' + file + '/rollback',
       {
         method: 'POST',
-        headers: {'content-type': 'application/json'},
+        headers: {
+          'content-type': 'application/json',
+          // The same precondition a publish carries. Putting an old revision
+          // back on top of something this panel has not seen is still an
+          // overwrite (AR-5).
+          'x-base-revision': String(entry.revision),
+        },
         body: JSON.stringify({revision: revision}),
       },
     );
+    if (response.status === 409) {
+      const clash = await response.json();
+      return showConflict(clash, file);
+    }
     const body = await response.json();
     if (!response.ok) throw new Error(body.error || 'That could not be put back');
-    state.docs.delete(state.file);
-    await ensure(state.file);
-    await loadHeads();
+    await reload(file);
     render();
     check();
     say('Revision ' + revision + ' is back, as revision ' + body.revision, 'good');
@@ -375,18 +403,54 @@ async function rollTo(revision) {
   }
 }
 
-/// Which revision each document is at, so a publish can declare its base.
+/// Checks whether anything has moved, without moving anything here.
+///
+/// This used to write the remote revision straight onto every loaded entry
+/// (AR-4). A draft built on revision 1, refreshed after somebody published
+/// revision 2, came away believing it was based on 2 -- while its baseline and
+/// its draft were untouched. Its next publish carried the wrong base, matched,
+/// and overwrote a revision nobody here had ever seen.
+///
+/// A document and the revision it is are one fact. A clean page is reloaded so
+/// both move together; a page with unpublished work keeps its base and is told
+/// that someone else has published.
 async function loadHeads() {
+  let body;
   try {
     const response = await api('/v1/admin/content');
-    const body = await response.json();
+    body = await response.json();
     if (!response.ok) return;
-    for (const [file, revision] of Object.entries(body.heads || {})) {
-      const entry = state.docs.get(file);
-      if (entry) entry.revision = revision;
-    }
   } catch (error) {
     // The panel works without it; publishing simply will not declare a base.
+    return;
   }
+  state.atomicStore = body.atomic === true;
+
+  for (const document_ of SCHEMA.documents) {
+    const file = document_.file;
+    const entry = state.docs.get(file);
+    if (!entry) continue;
+    const remote = (body.heads || {})[file] ?? 0;
+    if (remote === entry.revision) {
+      entry.diverged = null;
+      continue;
+    }
+    if (countChanges(entry) > 0) {
+      // Reported, not applied. Publishing will be refused with a conflict the
+      // owner can look at, and the draft survives.
+      entry.diverged = remote;
+      continue;
+    }
+    await reload(file);
+  }
+}
+
+/// Replaces a clean page with what the site is showing, and its revision.
+async function reload(file) {
+  const held = state.docs.get(file);
+  if (!held) return;
+  state.docs.delete(file);
+  await ensure(file);
+  state.issues.delete(file);
 }
 `;

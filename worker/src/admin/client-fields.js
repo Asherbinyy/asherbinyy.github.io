@@ -402,12 +402,18 @@ function assetControl(field, value, path) {
   const pickLabel = node('label', 'buttonish', 'Upload');
   pickLabel.htmlFor = pickerId;
 
+  // Everything below finishes later, so it remembers where it started rather
+  // than asking where we are when it lands (AR-3).
+  const target = anchorAt(state.file, path);
+
   const fromLibrary = document.createElement('button');
   fromLibrary.type = 'button';
   fromLibrary.className = 'small';
   fromLibrary.textContent = 'Choose from library';
   fromLibrary.onclick = () => openMediaPicker(field.media, (url) => {
-    write(path, url, true);
+    if (!writeAnchored(target, url, true)) {
+      return say('That field is no longer there, so nothing was changed', 'bad');
+    }
     render();
   });
 
@@ -439,12 +445,23 @@ function assetControl(field, value, path) {
       const body = await sendFile(file, field.media, (fraction) => {
         bar.style.width = Math.round(fraction * 100) + '%';
       });
-      write(path, body.url, true);
+      if (!writeAnchored(target, body.url, true)) {
+        progress.hidden = true;
+        line.textContent =
+          'The upload finished, but the field it was for is gone. It is in ' +
+          'the Media library: ' + body.url;
+        say('Uploaded, but the field it was for is gone', 'bad');
+        return;
+      }
       // Where the schema says a sibling holds the length, it comes from the
       // file's own header or not at all.
       if (field.durationInto) {
-        const beside = path.slice(0, -1).concat([field.durationInto]);
-        write(beside, typeof body.seconds === 'number' ? body.seconds : undefined);
+        const beside = anchorAt(target.file, resolveAnchor(target)
+          .slice(0, -1).concat([field.durationInto]));
+        writeAnchored(
+          beside,
+          typeof body.seconds === 'number' ? body.seconds : undefined,
+        );
       }
       say('Uploaded ' + file.name, 'good');
       render();

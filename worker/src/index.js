@@ -8,6 +8,11 @@ import {
 import {adminPage} from './admin.js';
 import {buildSnapshot, compareRelease} from '../contracts/snapshot.js';
 import {defaultRange, summarise, validDay} from './insights.js';
+import {ContentStore, contentBackend} from './store.js';
+
+// The Durable Object has to be reachable from the entry module for the
+// runtime to bind it. See `worker/src/store.js` for why it exists.
+export {ContentStore};
 
 const saltKey = 'system|salt';
 const counterPrefix = 'counter|';
@@ -213,11 +218,19 @@ export async function handleRequest(request, env, now = new Date()) {
       if (action === 'rollback' && request.method === 'POST') {
         return rollback(file, request, env, now, headers);
       }
+      // The document and the revision it is, in one answer. The panel used to
+      // read content through the public route, which is origin-gated and so
+      // refuses a same-origin request from the panel itself -- and it had to
+      // learn the revision separately, which is how a draft ended up paired
+      // with somebody else's revision number (AR-4).
+      if (action === undefined && request.method === 'GET') {
+        return readForEditing(file, env, headers);
+      }
       if (action === undefined && request.method === 'PUT') {
         return publish(file, request, env, now, headers);
       }
       if (action === undefined && request.method === 'DELETE') {
-        return withdraw(file, env, now, headers);
+        return withdraw(file, request, env, now, headers);
       }
     }
     return response({error: 'Not found'}, 404, headers);
@@ -249,38 +262,6 @@ const maximumDocumentBytes = 256 * 1024;
 /// Failed admin attempts allowed per hour before the endpoint stops answering.
 const maximumFailedAttempts = 10;
 
-function contentKey(file) {
-  return `content:${file}`;
-}
-
-/// Where the history of a document lives.
-///
-/// Separate keys from the document itself, so `/v1/content/<file>` keeps
-/// answering with the document and nothing else. The site parses that
-/// response straight into its content models, and wrapping it in an envelope
-/// to carry a revision number would break every reader for the sake of a
-/// number only the panel needs.
-function revisionKey(file, number) {
-  return `revision:${file}:${String(number).padStart(6, '0')}`;
-}
-
-function revisionHeadKey(file) {
-  return `revision-head:${file}`;
-}
-
-/// What the document is at now, and how it got there.
-async function revisionHead(file, env) {
-  const store = contentStore(env);
-  if (!store) return null;
-  return store.get(revisionHeadKey(file), 'json');
-}
-
-/// The number a new revision of [file] will take.
-async function nextRevision(file, env) {
-  const head = await revisionHead(file, env);
-  return (head?.revision ?? 0) + 1;
-}
-
 /// Whether the store that holds published content is configured at all.
 ///
 /// It is optional on purpose. The namespace has to be created by hand, and
@@ -294,10 +275,10 @@ async function readPublished(file, env, headers) {
   if (!publishableFiles.has(file)) {
     return response({error: 'Not found'}, 404, headers);
   }
-  const store = contentStore(env);
-  if (!store) return response({error: 'Not found'}, 404, headers);
+  const backend = contentBackend(env);
+  if (!backend) return response({error: 'Not found'}, 404, headers);
 
-  const document = await store.get(contentKey(file));
+  const document = await backend.readDocument(file);
   if (document === null) return response({error: 'Not found'}, 404, headers);
 
   const published = new Headers(headers);
@@ -306,27 +287,39 @@ async function readPublished(file, env, headers) {
   // quickly, and the site falls back to its bundle if this is slow anyway.
   published.set('cache-control', 'public, max-age=60');
   // Additive, and in a header rather than the body: the body is the document
-  // the app parses, and it stays that way.
-  const head = await revisionHead(file, env);
+  // the app parses, and it stays exactly what it was.
+  const head = await backend.head(file);
   if (head?.revision) published.set('x-content-revision', String(head.revision));
-  return new Response(document, {status: 200, headers: published});
+  return new Response(JSON.stringify(document), {status: 200, headers: published});
 }
 
 async function listPublished(env, headers) {
-  const store = contentStore(env);
-  if (!store) {
+  const backend = contentBackend(env);
+  if (!backend) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
-  const listing = await store.list({prefix: 'content:'});
-  const published = listing.keys.map((entry) => entry.name.slice('content:'.length));
+  // Asked of whichever store is in use. Reading the KV prefix directly meant
+  // that once mutations moved into the object, the panel was told nothing had
+  // ever been published.
+  const published = [];
+  for (const file of publishableFiles) {
+    if ((await backend.readDocument(file)) !== null) published.push(file);
+  }
+  published.sort();
   // The revision each document is at, so the panel can declare a base when it
   // publishes without asking five more times.
   const heads = {};
   for (const file of publishableFiles) {
-    const head = await revisionHead(file, env);
+    const head = await backend.head(file);
     if (head) heads[file] = head.revision;
   }
-  return response({published, heads}, 200, headers);
+  // Said plainly, because the panel must not imply a protection that is not
+  // configured. See `worker/src/store.js`.
+  return response(
+    {published, heads, atomic: contentBackend(env)?.atomic === true},
+    200,
+    headers,
+  );
 }
 
 /// Every source the owner has given for a figure, newest first.
@@ -347,7 +340,8 @@ async function publish(file, request, env, now, headers) {
     return response({error: 'Not a publishable document'}, 400, headers);
   }
   const store = contentStore(env);
-  if (!store) {
+  const backend = contentBackend(env);
+  if (!store || !backend) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
 
@@ -389,28 +383,6 @@ async function publish(file, request, env, now, headers) {
     );
   }
 
-  // Two people, or one person in two tabs, editing the same page. Whoever
-  // arrives second is told rather than silently winning: the base revision is
-  // the one the draft was built from, and if the document has moved on since,
-  // publishing would erase whatever moved it.
-  const head = await revisionHead(file, env);
-  const current = head?.revision ?? 0;
-  const declaredBase = request.headers.get('x-base-revision');
-  const base = declaredBase === null ? null : Number(declaredBase);
-  if (base !== null && Number.isFinite(base) && base !== current) {
-    return response(
-      {
-        error: 'This page has changed since you started editing it',
-        expected: base,
-        current: current,
-        document: await store.get(contentKey(file), 'json'),
-        changedAt: head?.at ?? null,
-      },
-      409,
-      headers,
-    );
-  }
-
   // A figure is a claim and a claim needs a source. Enforced here rather than
   // only asked for in the browser (A-F7): a note that the panel prompts for
   // and the Worker does not require is a convention, not a rule.
@@ -418,7 +390,7 @@ async function publish(file, request, env, now, headers) {
   // The comparison is against the published copy, or against nothing. Never
   // against a baseline the caller supplied, which is the whole point of doing
   // it here.
-  const live = await store.get(contentKey(file), 'json');
+  const live = await backend.readDocument(file);
   const claims = live === null
     ? collectClaims(file, document)
     : changedClaims(file, live, document);
@@ -434,25 +406,20 @@ async function publish(file, request, env, now, headers) {
     );
   }
 
-  const revision = current + 1;
-  // Stored re-serialised rather than as received, so the bytes in KV are
-  // exactly what was parsed and nothing rides along outside the JSON.
-  const body = JSON.stringify(document);
-  await store.put(contentKey(file), body);
-  await store.put(revisionKey(file, revision), JSON.stringify({
-    revision,
+  // Two people, or one person in two tabs, editing the same page. The base
+  // revision is the one the draft was built from; whether it is still current
+  // is decided inside the store, where nothing can move between the check and
+  // the write.
+  const committed = await backend.commit({
     file,
-    at: now.toISOString(),
+    kind: 'publish',
+    document,
     note,
     claims: claims.map((claim) => claim.path),
-    document,
-  }));
-  await store.put(revisionHeadKey(file), JSON.stringify({
-    revision,
+    base: baseRevisionFrom(request),
     at: now.toISOString(),
-    note,
-    withdrawn: false,
-  }));
+  });
+  if (committed.conflict) return conflictResponse(committed, headers);
 
   // Kept as it was: the change log is the ledger the provenance practice
   // already reads, and moving it would orphan what is in there.
@@ -462,7 +429,59 @@ async function publish(file, request, env, now, headers) {
       JSON.stringify({file, note, at: now.toISOString()}),
     );
   }
-  return response({published: file, revision}, 200, headers);
+  return response({published: file, revision: committed.revision}, 200, headers);
+}
+
+/// The revision the caller believes it is writing on top of.
+///
+/// Absent means "no expectation", which is what a client that does not track
+/// revisions sends. Present and wrong is a conflict.
+function baseRevisionFrom(request) {
+  const declared = request.headers.get('x-base-revision');
+  if (declared === null) return null;
+  const base = Number(declared);
+  return Number.isFinite(base) ? base : null;
+}
+
+function conflictResponse(committed, headers) {
+  return response(
+    {
+      error: 'This page has changed since you started editing it',
+      expected: committed.expected,
+      current: committed.current,
+      document: committed.document,
+      changedAt: committed.changedAt,
+    },
+    409,
+    headers,
+  );
+}
+
+/// What the editor should open: the document, and the revision it is.
+///
+/// Both together, always. Fetching them separately is what let a draft based
+/// on revision 1 be told it was based on revision 2.
+async function readForEditing(file, env, headers) {
+  if (!publishableFiles.has(file)) {
+    return response({error: 'Not a publishable document'}, 400, headers);
+  }
+  const backend = contentBackend(env);
+  if (!backend) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  const head = await backend.head(file);
+  const document = await backend.readDocument(file);
+  return response(
+    {
+      file,
+      document,
+      revision: head?.revision ?? 0,
+      published: document !== null,
+      withdrawn: head?.withdrawn === true,
+    },
+    200,
+    headers,
+  );
 }
 
 /// Every revision of a document, newest first.
@@ -473,15 +492,12 @@ async function listRevisions(file, env, headers) {
   if (!publishableFiles.has(file)) {
     return response({error: 'Not a publishable document'}, 400, headers);
   }
-  const store = contentStore(env);
-  if (!store) {
+  const backend = contentBackend(env);
+  if (!backend) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
-  const listing = await store.list({prefix: `revision:${file}:`});
-  const entries = await Promise.all(
-    listing.keys.map((entry) => store.get(entry.name, 'json')),
-  );
-  const head = await revisionHead(file, env);
+  const entries = await backend.revisions(file);
+  const head = await backend.head(file);
   return response(
     {
       current: head?.revision ?? 0,
@@ -511,8 +527,8 @@ async function rollback(file, request, env, now, headers) {
   if (!publishableFiles.has(file)) {
     return response({error: 'Not a publishable document'}, 400, headers);
   }
-  const store = contentStore(env);
-  if (!store) {
+  const backend = contentBackend(env);
+  if (!backend) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
   let asked;
@@ -525,7 +541,8 @@ async function rollback(file, request, env, now, headers) {
   if (!Number.isInteger(wanted) || wanted < 1) {
     return response({error: 'Which revision?'}, 400, headers);
   }
-  const stored = await store.get(revisionKey(file, wanted), 'json');
+  const history = await backend.revisions(file);
+  const stored = history.find((entry) => entry.revision === wanted);
   if (!stored || stored.withdrawal === true) {
     return response({error: 'No such revision to go back to'}, 404, headers);
   }
@@ -547,24 +564,25 @@ async function rollback(file, request, env, now, headers) {
     );
   }
 
-  const revision = (await nextRevision(file, env));
-  await store.put(contentKey(file), JSON.stringify(stored.document));
-  await store.put(revisionKey(file, revision), JSON.stringify({
-    revision,
+  // The same precondition a publish carries (AR-5). Putting an old revision
+  // back is a write like any other, and doing it on top of something the
+  // caller has not seen replaces content it did not know existed.
+  const committed = await backend.commit({
     file,
-    at: now.toISOString(),
+    kind: 'publish',
+    document: stored.document,
     note: `Went back to revision ${wanted}`,
     claims: stored.claims ?? [],
-    restoredFrom: wanted,
-    document: stored.document,
-  }));
-  await store.put(revisionHeadKey(file), JSON.stringify({
-    revision,
+    base: baseRevisionFrom(request),
     at: now.toISOString(),
-    note: `Went back to revision ${wanted}`,
-    withdrawn: false,
-  }));
-  return response({published: file, revision, restoredFrom: wanted}, 200, headers);
+  });
+  if (committed.conflict) return conflictResponse(committed, headers);
+
+  return response(
+    {published: file, revision: committed.revision, restoredFrom: wanted},
+    200,
+    headers,
+  );
 }
 
 /// Checks a draft, and for a review also says what would change.
@@ -637,9 +655,9 @@ async function checkDraft(request, env, headers, full) {
 
 /// The published document, or null when the site is using its own bundle.
 async function liveDocument(file, env) {
-  const store = contentStore(env);
-  if (!store) return null;
-  return store.get(contentKey(file), 'json');
+  const backend = contentBackend(env);
+  if (!backend) return null;
+  return backend.readDocument(file);
 }
 
 /// The identifiers another document offers, so a reference can be checked.
@@ -686,37 +704,31 @@ function collectIdentifiers(document) {
   return [];
 }
 
-async function withdraw(file, env, now, headers) {
+async function withdraw(file, request, env, now, headers) {
   if (!publishableFiles.has(file)) {
     return response({error: 'Not a publishable document'}, 400, headers);
   }
-  const store = contentStore(env);
-  if (!store) {
+  const backend = contentBackend(env);
+  if (!backend) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
-  await store.delete(contentKey(file));
 
-  // Recorded, because withdrawing is a change to what the site shows and a
-  // history with a hole in it is not a history. The revisions themselves stay
-  // where they are, so this is still undoable.
-  const revision = await nextRevision(file, env);
-  await store.put(revisionKey(file, revision), JSON.stringify({
-    revision,
+  // Recorded, and with the same precondition as every other mutation (AR-5).
+  // Withdrawing is a change to what the site shows, and a history with a hole
+  // in it is not a history. The revisions themselves stay where they are, so
+  // this is still undoable.
+  const committed = await backend.commit({
     file,
-    at: now.toISOString(),
+    kind: 'withdraw',
     note: 'Withdrawn; the site went back to the copy in its bundle',
-    claims: [],
-    withdrawal: true,
-  }));
-  await store.put(revisionHeadKey(file), JSON.stringify({
-    revision,
+    base: baseRevisionFrom(request),
     at: now.toISOString(),
-    note: 'Withdrawn',
-    withdrawn: true,
-  }));
+  });
+  if (committed.conflict) return conflictResponse(committed, headers);
+
   // Withdrawing is not deleting content: the bundled document is still there
   // and the site goes back to it.
-  return response({withdrawn: file, revision}, 200, headers);
+  return response({withdrawn: file, revision: committed.revision}, 200, headers);
 }
 
 /// Refuses an admin request, or returns null to let it through.
@@ -726,30 +738,25 @@ async function withdraw(file, env, now, headers) {
 /// that will answer an unlimited number of guesses is a different claim from
 /// one that will not, and the second is cheap.
 async function refuseUnauthorisedAdmin(request, env, now, headers) {
-  // The correct credential is checked *first*, and a success clears the
-  // counter. Before this, ten wrong guesses in an hour shut the endpoint for
-  // everybody, the owner included (A-F9) -- so anyone who could reach the
-  // Worker could lock him out of his own site by typing rubbish.
+  // A bearer credential is a constant-time comparison and one lookup, so the
+  // limit is applied after it rather than before: there is nothing expensive
+  // here to protect, and the owner arriving with a valid session must not be
+  // turned away because somebody else has been guessing (A-F9).
   //
-  // Guessing is still bounded: a wrong credential is what increments, and
-  // once the limit is reached wrong credentials stop being answered at all.
+  // Guessing is still bounded, and the counting is atomic so two guesses
+  // arriving together cannot both read the same number (AR-2).
+  const backend = contentBackend(env);
   const who = await identify(request, env, now);
-  const attemptKey = key(adminFailurePrefix, [
-    isoDate(now),
-    String(now.getUTCHours()),
-  ]);
   if (who) {
-    if ((await env.ANALYTICS.get(attemptKey)) !== null) {
-      await env.ANALYTICS.delete(attemptKey);
-    }
+    if (backend) await backend.attempts('bearer', 'clear', now.getTime());
     request.admin = who;
     return null;
   }
-  const failures = Number((await env.ANALYTICS.get(attemptKey)) ?? 0);
-  await env.ANALYTICS.put(attemptKey, String(failures + 1), {
-    expirationTtl: 3600,
-  });
-  if (failures + 1 > maximumFailedAttempts) {
+  if (!backend) {
+    return response({error: 'Unauthorised', reason: 'signed-out'}, 401, headers);
+  }
+  const {count} = await backend.attempts('bearer', 'record', now.getTime());
+  if (count > maximumFailedAttempts) {
     return response({error: 'Too many attempts'}, 429, headers);
   }
   return response({error: 'Unauthorised', reason: 'signed-out'}, 401, headers);
@@ -776,10 +783,30 @@ async function identify(request, env, now) {
 
   const store = contentStore(env);
   if (!store) return null;
-  const held = await store.get(sessionKey(await fingerprint(offered)), 'json');
+  const name = sessionKey(await fingerprint(offered));
+  const held = await store.get(name, 'json');
   if (!held) return null;
   if (Date.parse(held.expires) <= now.getTime()) return null;
   if (Date.parse(held.absoluteExpiry) <= now.getTime()) return null;
+
+  // Twelve hours *idle*, which means using it has to push the idle clock back
+  // (AR-9). Before this a session that had been in use all day still died
+  // twelve hours after it began, which is not what the panel promises.
+  //
+  // Renewed only once the remaining idle time has fallen below half the
+  // window, so an ordinary afternoon of editing costs one write rather than
+  // one per request. The absolute limit is never extended.
+  const remaining = Date.parse(held.expires) - now.getTime();
+  const ceiling = Date.parse(held.absoluteExpiry);
+  if (remaining < sessionIdleMs / 2) {
+    const extended = Math.min(now.getTime() + sessionIdleMs, ceiling);
+    if (extended > Date.parse(held.expires)) {
+      held.expires = new Date(extended).toISOString();
+      await store.put(name, JSON.stringify(held), {
+        expirationTtl: Math.max(60, Math.ceil((ceiling - now.getTime()) / 1000)),
+      });
+    }
+  }
   return {kind: 'session', token: offered, session: held};
 }
 
@@ -874,10 +901,6 @@ async function issueSession(env, now, headers) {
 
 /// Signs in with the password, or with the deployment secret.
 async function openSession(request, env, now, headers) {
-  const attemptKey = key(adminFailurePrefix, [
-    isoDate(now),
-    String(now.getUTCHours()),
-  ]);
   let body;
   try {
     body = JSON.parse(await request.text());
@@ -888,6 +911,33 @@ async function openSession(request, env, now, headers) {
   if (offered === '') {
     return response({error: 'No password given'}, 400, headers);
   }
+  const backend = contentBackend(env);
+  if (!backend) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+
+  // The deployment secret first, because it is a constant-time comparison of
+  // a 48-character random value: nothing to protect from repetition, and it
+  // has to keep working when everything else is throttled. It is how the owner
+  // gets back in if he forgets the password, and why a store that is slow or
+  // unreachable cannot lock him out of his own site.
+  if (
+    typeof env.ADMIN_TOKEN === 'string' &&
+    env.ADMIN_TOKEN.length >= 32 &&
+    sameSecret(offered, env.ADMIN_TOKEN)
+  ) {
+    await backend.attempts('sign-in', 'clear', now.getTime());
+    return issueSession(env, now, headers);
+  }
+
+  // Then the limit, and only then the password (AR-2). The previous order
+  // derived a key for every guess and merely changed the answer once the
+  // limit was reached, so an attacker could keep testing passwords for as
+  // long as he liked -- and a correct guess would still have been let in.
+  const {count} = await backend.attempts('sign-in', 'read', now.getTime());
+  if (count >= maximumFailedAttempts) {
+    return response({error: 'Too many attempts'}, 429, headers);
+  }
 
   const store = contentStore(env);
   const record = store ? await store.get(passwordRecordKey, 'json') : null;
@@ -896,28 +946,12 @@ async function openSession(request, env, now, headers) {
     const derived = await derive(offered, record.salt, record.iterations);
     accepted = sameSecret(derived, record.hash);
   }
-  // The deployment secret always works. It is how the owner gets back in if he
-  // forgets the password, and it is why a slow or unreachable password store
-  // can never lock him out of his own site.
-  if (
-    !accepted &&
-    typeof env.ADMIN_TOKEN === 'string' &&
-    env.ADMIN_TOKEN.length >= 32
-  ) {
-    accepted = sameSecret(offered, env.ADMIN_TOKEN);
-  }
 
   if (!accepted) {
-    const failures = Number((await env.ANALYTICS.get(attemptKey)) ?? 0);
-    await env.ANALYTICS.put(attemptKey, String(failures + 1), {
-      expirationTtl: 3600,
-    });
-    if (failures + 1 > maximumFailedAttempts) {
-      return response({error: 'Too many attempts'}, 429, headers);
-    }
+    await backend.attempts('sign-in', 'record', now.getTime());
     return response({error: 'That was not right'}, 401, headers);
   }
-  await env.ANALYTICS.delete(attemptKey);
+  await backend.attempts('sign-in', 'clear', now.getTime());
   return issueSession(env, now, headers);
 }
 
@@ -1123,7 +1157,12 @@ async function uploadMedia(request, env, headers) {
   // The declared type is a claim by the client. This reads the actual bytes,
   // so a script renamed to .png with an image content-type is refused on what
   // it is rather than on what it says it is.
-  const measured = measureImage(bytes);
+  let measured = null;
+  try {
+    measured = measureImage(bytes);
+  } catch {
+    measured = null;
+  }
   if (!measured) {
     return response({error: 'Not a readable image'}, 400, headers);
   }
@@ -1211,7 +1250,15 @@ async function uploadAudio(request, env, headers) {
     return response({error: 'Recording is empty'}, 400, headers);
   }
 
-  const measured = measureAudio(bytes);
+  // A malformed file is a 400, always. Parsing something a stranger uploaded
+  // is exactly where an unexpected shape turns into a thrown error, and a
+  // thrown error here would be a 500 for what is really "that file is broken".
+  let measured = null;
+  try {
+    measured = measureAudio(bytes);
+  } catch {
+    measured = null;
+  }
   if (!measured) {
     return response({error: 'Not a readable recording'}, 400, headers);
   }
@@ -1282,7 +1329,14 @@ function measureAudio(bytes) {
   if (bytes.byteLength > 12 && ascii(4, 4) === 'ftyp') {
     const brand = ascii(8, 4);
     if (!['M4A ', 'mp42', 'isom', 'M4B ', 'mp41'].includes(brand)) return null;
-    return {type: 'audio/mp4', seconds: mpeg4Seconds(view, bytes, ascii)};
+    // Unlike MP3 and Ogg, an MPEG-4 file always states its length in the movie
+    // header. Not being able to read one means the container is truncated or
+    // inconsistent, which is a broken file rather than a format that keeps its
+    // length to itself -- so it is refused rather than stored with an unknown
+    // duration (AR-8).
+    const seconds = mpeg4Seconds(view, bytes, ascii);
+    if (seconds === null) return null;
+    return {type: 'audio/mp4', seconds};
   }
 
   // MP3: either an ID3 tag or a bare frame sync. Its length needs every frame
@@ -1311,10 +1365,18 @@ function mpeg4Seconds(view, bytes, ascii) {
   const moov = findAtom('moov', 0, bytes.byteLength);
   if (!moov) return null;
   const mvhd = findAtom('mvhd', moov.at, Math.min(moov.end, bytes.byteLength));
-  if (!mvhd || mvhd.at + 20 > bytes.byteLength) return null;
+  if (!mvhd) return null;
 
   const version = bytes[mvhd.at];
-  // Version 1 widened the timestamps to 64 bits, which moves both fields.
+  // Version 1 widened the timestamps to 64 bits, which moves both fields and
+  // makes the header twelve bytes longer. Checking one length for both (AR-8)
+  // let a 52-byte truncated file walk a DataView off the end of the buffer and
+  // throw, which reached the client as a 500 instead of "not a readable
+  // recording". Both the file and the atom's own stated end are checked.
+  const needed = version === 1 ? 32 : 20;
+  const limit = Math.min(mvhd.end, bytes.byteLength);
+  if (mvhd.at + needed > limit) return null;
+
   const timescale = version === 1
     ? view.getUint32(mvhd.at + 20)
     : view.getUint32(mvhd.at + 12);
@@ -1772,9 +1834,9 @@ async function describeRelease(request, env, headers) {
     else if (plainObject(supplied)) documents[file] = supplied;
   }
 
-  const {problems, snapshot} = await buildSnapshot(documents, {
-    references: await referenceSets('career.json', env, body?.references),
-  });
+  // No reference hints. A release is validated against the documents it is
+  // made of and nothing else (AR-7).
+  const {problems, snapshot} = await buildSnapshot(documents);
   if (snapshot === null) {
     return response(
       {

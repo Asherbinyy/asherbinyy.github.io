@@ -27,3 +27,33 @@ id = "f93e4a6cc18b499f89eb67b743b3e0db"
 [[kv_namespaces]]
 binding = "CONTENT"
 id = "cd8e3febcf4c4ea5beacaeb65a514f5c"
+
+# Where content mutations are serialised.
+#
+# Deliberately commented out. Enabling it migrates where the owner's published
+# content lives, which is his decision and not a side effect of a bug fix.
+# Without it the Worker behaves exactly as it does today, and the panel says so
+# in the editing bar rather than implying a protection it does not have.
+#
+# Before uncommenting, confirm two things against Cloudflare's current terms,
+# because they change and this file should not pretend to know them:
+#
+#   1. That the account's plan includes Durable Objects with SQLite storage.
+#      `new_sqlite_classes` below is that class; the older key-value class is
+#      `new_classes` and is billed differently.
+#   2. What it costs here. Every public content read becomes a request to the
+#      object rather than a KV read. Five documents per cold visit on a site
+#      with very little traffic is a small number, but it is a different meter.
+#
+# Then migrate before switching it on: the object starts empty, so the content
+# already in KV has to be copied into it first, or the first read finds nothing
+# and the site falls back to its bundle. Do that against a preview environment
+# first. Nothing in this repository does it for you.
+#
+# [[durable_objects.bindings]]
+# name = "CONTENT_STORE"
+# class_name = "ContentStore"
+#
+# [[migrations]]
+# tag = "v1"
+# new_sqlite_classes = ["ContentStore"]

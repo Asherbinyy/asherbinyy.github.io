@@ -108,10 +108,52 @@ password.
 
 ### Being locked out
 
-Wrong credentials are counted per hour and stop being answered after ten. The
-**correct** credential is checked first and clears the count, so guessing is
-still bounded but the owner is never collateral. Before this, ten wrong guesses
-from anyone who could reach the Worker shut the endpoint for him too.
+Two credentials, two rules, and the split is the point.
+
+**An ordinary password** is throttled: ten wrong attempts an hour, counted
+atomically, and once the limit is reached the endpoint stops answering
+*without deriving a key at all* — including for a correct password. An earlier
+version derived for every guess and only changed the answer once the limit was
+reached, which meant guessing was never actually bounded.
+
+**The deployment secret** is a constant-time comparison of a 48-character
+random value. It is not throttled, because there is nothing to protect from
+repetition and it has to keep working when everything else is stopped. It is
+how the owner gets back in, and getting in clears the count.
+
+So guessing is bounded, and nobody can lock the owner out of his own site by
+typing rubbish at it.
+
+### Sessions expire on idleness, not on age
+
+Twelve hours after last use, seven days after they began, whichever comes
+first. Using a session pushes the idle clock back, but only once the remaining
+window has fallen below half — so an afternoon of editing costs one write
+rather than one per request, and the absolute limit is never extended.
+
+## Where content mutations are serialised
+
+Workers KV has no compare-and-set and no transaction, so publishing used to
+read the head, decide the base matched, and then write the document, the
+revision and the head as three separate operations. Two publishes arriving
+together both read revision 0, both decided they were current, and both
+answered "revision 1" — one of them silently gone, history entry and all.
+
+A `ContentStore` Durable Object now owns publish, rollback and withdrawal.
+There is one instance across the network, its execution is serialised, and the
+commit happens in a single `storage.transaction`. The same object counts failed
+credential attempts, for the same reason.
+
+**The binding is deliberately not enabled.** `wrangler.toml` carries it
+commented out with the two things to confirm first — plan availability for
+SQLite-backed objects, and what moving public reads onto a different meter
+costs — plus the migration note: the object starts empty, so existing KV
+content must be copied in before it is switched on. Without the binding the
+Worker behaves exactly as it does today, `atomic` is false in
+`GET /v1/admin/content`, and the panel says in the editing bar that concurrent
+edits are not protected.
+
+Nothing about the public response shape changes either way.
 
 ## Content validation
 

@@ -29,9 +29,13 @@
  * A settings document that said `kemet` would be describing something no
  * `AppTheme.fromStorage` call can resolve; it would silently fall back to the
  * dark theme and look like it half worked. So the ids below are the storage
- * keys and the design names are carried alongside as labels. Renaming the enum
- * is a separate decision, and it would invalidate every viewer's stored
- * preference, so it should not be made casually.
+ * keys and the design names are carried alongside as labels.
+ *
+ * **This is a compatibility note, not a proposal to rename anything.**
+ * `nocturne` and `daybreak` are the right identifiers and should stay: they
+ * are in every viewer's storage already, and changing them would silently
+ * reset the theme for everyone who has ever chosen one. Display labels are
+ * free to say Kemet and Deshret; the stored values are not.
  */
 
 /// The two palettes that exist, keyed as the app keys them.

@@ -17,6 +17,8 @@ import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 
 import {handleRequest} from '../src/index.js';
+import {ContentStore} from '../src/store.js';
+import {durableNamespace} from './durable-double.js';
 
 const port = Number(process.argv[2] ?? 8788);
 const origin = `http://localhost:${port}`;
@@ -71,9 +73,14 @@ class MemoryKv {
 const panelOrigin = `http://localhost:${port}`;
 const previewOrigin = `http://127.0.0.1:${port}`;
 
+/// The same object the deployed Worker would bind, standing in locally, so the
+/// browser runs exercise the transactional path rather than the fallback.
+const contentStore = durableNamespace(ContentStore);
+
 const env = {
   ANALYTICS: new MemoryKv(),
   CONTENT: new MemoryKv(),
+  CONTENT_STORE: contentStore,
   ADMIN_TOKEN: token,
   CONSOLE_TOKEN: 'local-console-token-' + 'y'.repeat(24),
   SITE_ORIGIN: origin,
@@ -313,6 +320,16 @@ const server = createServer(async (incoming, outgoing) => {
     outgoing.end('{"seeded":true}');
     return;
   }
+
+  // Holds a write open, so a browser run can navigate away, reorder something
+  // or keep typing while one is still in flight. Harness only, and driven by
+  // the environment so the panel itself is unchanged.
+  const slow = url.pathname.startsWith('/v1/admin/media')
+    ? Number(process.env.UPLOAD_DELAY ?? 0)
+    : url.pathname.startsWith('/v1/admin/content/') && incoming.method === 'PUT'
+      ? Number(process.env.PUBLISH_DELAY ?? 0)
+      : 0;
+  if (slow > 0) await new Promise((done) => setTimeout(done, slow));
 
   const chunks = [];
   for await (const chunk of incoming) chunks.push(chunk);

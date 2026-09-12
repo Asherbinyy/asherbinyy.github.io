@@ -81,6 +81,7 @@ export const markup = `
   <div id="bar">
     <span id="changeCount" class="note"></span>
     <span id="problemCount" class="count bad" hidden></span>
+    <span id="divergence" class="count bad" hidden></span>
     <span class="grow"></span>
     <button id="discard" type="button">Discard</button>
     <button id="history" type="button">History</button>

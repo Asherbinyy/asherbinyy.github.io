@@ -288,3 +288,78 @@ test('a stored recording is served with its own type', async () => {
   assert.match(served.headers.get('content-security-policy'), /sandbox/);
   assert.equal(served.headers.get('x-content-type-options'), 'nosniff');
 });
+
+// --- AR-8: a truncated file is a validation error, not a crash -------------
+
+/// An MPEG-4 whose movie header is cut short.
+///
+/// [version] 1 widened the timestamps, so its header runs twelve bytes longer
+/// than version 0. Checking one length for both walked a DataView off the end
+/// of the buffer and threw, which reached the caller as a 500 for what is
+/// really "that file is broken".
+function truncatedM4a(version, keep) {
+  const full = m4aBytes(1.4);
+  const bytes = full.slice(0, keep);
+  if (bytes.length > 32) bytes[32] = version;
+  return bytes;
+}
+
+test('a truncated version-1 recording is refused, not a crash', async () => {
+  const response = await handleRequest(
+    upload('/v1/admin/media/audio', 'audio/mp4', truncatedM4a(1, 52)),
+    environment(),
+  );
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /readable/i);
+});
+
+test('a truncated version-0 recording is refused too', async () => {
+  const response = await handleRequest(
+    upload('/v1/admin/media/audio', 'audio/mp4', truncatedM4a(0, 40)),
+    environment(),
+  );
+  assert.equal(response.status, 400);
+});
+
+test('every truncation of a valid recording answers 400 or 200, never 500', async () => {
+  // Walked byte by byte rather than at one chosen length: the point is that no
+  // cut produces an unhandled error.
+  const env = environment();
+  const full = m4aBytes(1.4);
+  for (let keep = 1; keep <= full.length; keep += 1) {
+    const response = await handleRequest(
+      upload('/v1/admin/media/audio', 'audio/mp4', full.slice(0, keep)),
+      env,
+    );
+    assert.ok(
+      response.status === 400 || response.status === 200,
+      `${keep} bytes answered ${response.status}`,
+    );
+  }
+});
+
+test('a truncated image is refused rather than throwing', async () => {
+  const env = environment();
+  const full = pngBytes(64, 64);
+  for (let keep = 1; keep <= full.length; keep += 1) {
+    const response = await handleRequest(
+      upload('/v1/admin/media', 'image/png', full.slice(0, keep)),
+      env,
+    );
+    assert.ok(
+      response.status === 400 || response.status === 200,
+      `${keep} bytes answered ${response.status}`,
+    );
+  }
+});
+
+test('an mvhd claiming to be longer than the file is refused', async () => {
+  const bytes = m4aBytes(1.4);
+  // Version 1, but the file only holds a version-0 header.
+  bytes[32] = 1;
+  const response = await handleRequest(
+    upload('/v1/admin/media/audio', 'audio/mp4', bytes),
+    environment(),
+  );
+  assert.equal(response.status, 400);
+});

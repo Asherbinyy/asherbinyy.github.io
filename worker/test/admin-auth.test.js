@@ -279,3 +279,91 @@ test('the session endpoints are behind the gate', async () => {
     assert.equal((await handleRequest(request, env)).status, 401);
   }
 });
+
+// --- AR-9: twelve hours idle means idle ------------------------------------
+
+/// Moves a session's clocks back, the way waiting would.
+function agedBy(env, hours) {
+  const name = [...env.CONTENT.values.keys()].find((k) => k.startsWith('session:'));
+  const held = JSON.parse(env.CONTENT.values.get(name).value);
+  const shift = hours * 60 * 60 * 1000;
+  held.expires = new Date(Date.parse(held.expires) - shift).toISOString();
+  held.absoluteExpiry = new Date(Date.parse(held.absoluteExpiry) - shift).toISOString();
+  env.CONTENT.values.set(name, {value: JSON.stringify(held)});
+  return held;
+}
+
+function sessionRecord(env) {
+  const name = [...env.CONTENT.values.keys()].find((k) => k.startsWith('session:'));
+  return JSON.parse(env.CONTENT.values.get(name).value);
+}
+
+test('using a session pushes the idle clock back', async () => {
+  // The defect: a session that had been in use all day still died twelve
+  // hours after it began, because nothing extended it.
+  const env = environment();
+  const token = await sessionFor(env);
+  const before = sessionRecord(env).expires;
+
+  agedBy(env, 11);
+  const used = await handleRequest(admin('/v1/admin/content', {token}), env);
+  assert.equal(used.status, 200);
+
+  const after = sessionRecord(env).expires;
+  assert.ok(Date.parse(after) > Date.parse(before) - 11 * 3600 * 1000);
+  assert.ok(Date.parse(after) > Date.now() + 11 * 3600 * 1000);
+});
+
+test('a session kept in use keeps working past the idle window', async () => {
+  const env = environment();
+  const token = await sessionFor(env);
+  // Eleven hours, use it, eleven hours again, use it. Under the old rule the
+  // second one failed.
+  for (const round of [1, 2]) {
+    agedBy(env, 11);
+    const used = await handleRequest(admin('/v1/admin/content', {token}), env);
+    assert.equal(used.status, 200, `round ${round}`);
+  }
+});
+
+test('a session nobody touches still expires', async () => {
+  const env = environment();
+  const token = await sessionFor(env);
+  agedBy(env, 13);
+  assert.equal(
+    (await handleRequest(admin('/v1/admin/content', {token}), env)).status,
+    401,
+  );
+});
+
+test('renewal never pushes past the absolute limit', async () => {
+  const env = environment();
+  const token = await sessionFor(env);
+  // Six days in: renewal may extend the idle clock, but not beyond the seven
+  // day ceiling.
+  agedBy(env, 6 * 24);
+  await handleRequest(admin('/v1/admin/content', {token}), env);
+  const held = sessionRecord(env);
+  assert.ok(Date.parse(held.expires) <= Date.parse(held.absoluteExpiry));
+});
+
+test('the absolute limit still ends a session that is in constant use', async () => {
+  const env = environment();
+  const token = await sessionFor(env);
+  agedBy(env, 8 * 24);
+  assert.equal(
+    (await handleRequest(admin('/v1/admin/content', {token}), env)).status,
+    401,
+  );
+});
+
+test('an ordinary request does not rewrite the session every time', async () => {
+  // Renewal is worth one write, not one per request.
+  const env = environment();
+  const token = await sessionFor(env);
+  const before = sessionRecord(env).expires;
+  for (let round = 0; round < 5; round += 1) {
+    await handleRequest(admin('/v1/admin/content', {token}), env);
+  }
+  assert.equal(sessionRecord(env).expires, before);
+});

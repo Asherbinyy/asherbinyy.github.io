@@ -343,6 +343,7 @@ function renderBar() {
     for (const id of ['publish', 'discard', 'history', 'withdraw']) {
       el(id).disabled = true;
     }
+    el('divergence').hidden = true;
     el('source').textContent = '';
     return;
   }
@@ -358,6 +359,21 @@ function renderBar() {
   badge.hidden = problems === 0;
   badge.className = 'count bad';
   badge.textContent = problems + (problems === 1 ? ' problem' : ' problems');
+
+  // Someone else has published while this page had unpublished work on it.
+  // Said here rather than discovered at the moment of saving.
+  const warning = el('divergence');
+  if (entry && entry.diverged !== null && entry.diverged !== undefined) {
+    warning.hidden = false;
+    warning.textContent = 'Someone else published revision ' + entry.diverged +
+      ' while you were working. Reviewing will show you both.';
+  } else if (state.atomicStore === false) {
+    warning.hidden = false;
+    warning.textContent = 'Concurrent edits are not protected on this ' +
+      'deployment: the transactional store is not configured.';
+  } else {
+    warning.hidden = true;
+  }
 
   el('publish').disabled = changes === 0 || problems > 0;
   el('discard').disabled = changes === 0;
@@ -400,17 +416,26 @@ function openSheet(title, build) {
 }
 
 async function withdraw() {
-  const section = schemaFor(state.file).section;
+  const file = state.file;
+  const entry = state.docs.get(file);
+  if (!entry) return;
+  const section = schemaFor(file).section;
   if (!confirm('Withdraw ' + section + '? The site goes back to the copy shipped with the app.')) {
     return;
   }
   say('Withdrawing...');
   try {
-    const response = await api('/v1/admin/content/' + state.file, {method: 'DELETE'});
+    const response = await api('/v1/admin/content/' + file, {
+      method: 'DELETE',
+      // Withdrawing is a write like any other and takes the same precondition
+      // (AR-5).
+      headers: {'x-base-revision': String(entry.revision)},
+    });
+    if (response.status === 409) {
+      return showConflict(await response.json(), file);
+    }
     if (!response.ok) throw new Error('The withdrawal was refused');
-    state.docs.delete(state.file);
-    await ensure(state.file);
-    await loadHeads();
+    await reload(file);
     render();
     say('Withdrawn. The site uses the copy in its bundle.', 'good');
   } catch (error) {

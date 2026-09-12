@@ -167,15 +167,43 @@ async function main() {
         body: JSON.stringify({password: 'guess ' + attempt}),
       });
     }
-    const stillIn = await fetch(`${base}/v1/admin/session`, {
+    // The ordinary password is throttled, and that is the point: before the
+    // review, guessing was unbounded because derivation ran for every attempt
+    // and only the answer changed once the limit was reached (AR-2).
+    const throttled = await fetch(`${base}/v1/admin/session`, {
       method: 'POST',
       headers: {'content-type': 'application/json'},
       body: JSON.stringify({password}),
     });
     check(
-      'fifteen wrong guesses do not lock the owner out of his own site',
-      stillIn.status === 200,
-      String(stillIn.status),
+      'after enough wrong guesses the password stops being answered at all',
+      throttled.status === 429,
+      String(throttled.status),
+    );
+
+    // And the owner is still not locked out of his own site: the deployment
+    // secret is the way back in, and needs no derivation to check.
+    const recovered = await fetch(`${base}/v1/admin/session`, {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({password: token}),
+    });
+    check(
+      'the recovery credential still gets him in',
+      recovered.status === 200,
+      String(recovered.status),
+    );
+
+    // Getting in clears the count, so the password works again.
+    const afterRecovery = await fetch(`${base}/v1/admin/session`, {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({password}),
+    });
+    check(
+      'and the password works again once he has',
+      afterRecovery.status === 200,
+      String(afterRecovery.status),
     );
 
     // --- signing out -------------------------------------------------------

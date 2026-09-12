@@ -41,6 +41,7 @@ const preview = {
   lastRequest: 0,
   acknowledged: 0,
   error: '',
+  pending: false,
   components: [],
   remoteErrors: [],
 };
@@ -78,10 +79,25 @@ function postToPreview(type, payload) {
 /// half of it would show the owner a page the site would never produce.
 function sendDraft() {
   if (!preview.ready) return;
-  const entry = current();
+  const file = state.file;
+  const entry = state.docs.get(file);
   if (!entry) return;
-  const issues = state.issues.get(state.file);
-  if (issues && issues.errors.length > 0) {
+
+  // The gate is not "the last answer for this file was clean". It is "this
+  // exact draft was checked, and nothing has been typed since" (AR-6).
+  // Emptying a required field and switching language inside the debounce used
+  // to send the broken draft and call it rendered.
+  const issues = state.issues.get(file);
+  if (!issues || issues.generation !== entry.generation) {
+    preview.waiting = false;
+    preview.error = '';
+    preview.pending = true;
+    drawPreviewState();
+    return;
+  }
+  preview.pending = false;
+  if (issues.errors.length > 0) {
+    preview.waiting = false;
     preview.error = 'Fix the problems on this page and the preview will follow.';
     drawPreviewState();
     return;
@@ -91,10 +107,11 @@ function sendDraft() {
   preview.waiting = true;
   postToPreview('draft', {
     requestId: preview.lastRequest,
-    file: state.file,
+    file: file,
     schemaVersion: previewVersion,
     locale: state.lang,
-    document: entry.draft,
+    // The snapshot that was validated, not whatever the draft holds now.
+    document: issues.document,
   });
   drawPreviewState();
   // A preview that never answers must not leave the panel saying "rendering"
@@ -209,6 +226,8 @@ function drawPreviewState() {
   if (preview.error) {
     line.textContent = preview.error;
     line.classList.add('bad');
+  } else if (preview.pending) {
+    line.textContent = 'Checking this draft before showing it...';
   } else if (!preview.ready) {
     line.textContent = 'Waiting for the preview to answer...';
   } else if (preview.waiting) {

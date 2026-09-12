@@ -12,15 +12,65 @@ import {
 import {handleRequest} from '../src/index.js';
 import {admin, environment, fixture} from './support.js';
 
-/// The digest Codex's own `site/src/lib/content.mjs` produces over the five
-/// documents in `assets/content/`, captured on 2026-09-12.
+/// A frozen set of documents that exists only to pin the digest.
 ///
-/// This is the pin. The builder recomputes the revision and refuses to build
-/// on a mismatch, so if these two implementations ever disagree the failure
-/// would otherwise surface as a build error nobody can place. It surfaces
-/// here instead.
-const referenceDigest =
-  '2e6a765a3130fa5ce5d596fffef604b7eedf07311df10cbe34212d2bcb348019';
+/// The first version of this test hashed the owner's live bundle, which made
+/// it a test of his content rather than of the algorithm: editing a sentence
+/// changed the expected value and the pin had to be rewritten, which is the
+/// opposite of a pin. Nothing in here ever changes.
+const frozenDocuments = {
+  'apps.json': {
+    apps: [{domain: 'Travel', id: 'a', name: 'A', platforms: ['ios'], store: {}}],
+  },
+  'career.json': {
+    roles: [{
+      city: 'C',
+      coords: [1.5, -2.25],
+      country: 'GB',
+      id: 'r',
+      kind: 'role',
+      start: '2020-01',
+    }],
+  },
+  'education.json': {
+    entries: [{
+      award: {en: 'B'},
+      end: '2021-09',
+      institution: {en: 'I'},
+      start: '2020-09',
+    }],
+  },
+  'interests.json': {interests: [{id: 'i', label: {ar: 'ا', en: 'L'}}]},
+  'profile.json': {
+    contact: {email: 'a@b.co'},
+    name: {en: 'N'},
+    positioning: {en: 'P'},
+  },
+};
+
+/// SHA-256 of the canonical form of the documents above.
+const frozenDigest =
+  'ffca86e817a6d513e18c7b82147c280d8b2b1d18faa81b7041feb42636de5f9b';
+
+/// The canonical form again, written from the specification rather than
+/// factored out of the implementation.
+///
+/// The point of a cross-implementation check is that it is a second
+/// implementation. Calling `stableJson` here would only prove it equals
+/// itself.
+function independentCanonicalJson(value) {
+  if (Array.isArray(value)) {
+    return '[' + value.map(independentCanonicalJson).join(',') + ']';
+  }
+  if (value !== null && typeof value === 'object') {
+    const keys = Object.keys(value).sort();
+    const pairs = keys.map(
+      (key) => JSON.stringify(key) + ':' + independentCanonicalJson(value[key]),
+    );
+    return '{' + pairs.join(',') + '}';
+  }
+  return JSON.stringify(value);
+}
 
 async function bundled() {
   const documents = {};
@@ -34,8 +84,44 @@ async function bundled() {
 
 // --- the canonical form ----------------------------------------------------
 
-test('the digest matches the builder reference exactly', async () => {
-  assert.equal(await digest(await bundled()), referenceDigest);
+test('the digest of a frozen document set never moves', async () => {
+  // The builder recomputes the revision and refuses to build on a mismatch, so
+  // a drift between the two implementations would otherwise surface as a build
+  // failure nobody can place. It surfaces here instead.
+  assert.equal(await digest(frozenDocuments), frozenDigest);
+});
+
+test('a second implementation of the canonical form agrees', async () => {
+  const {createHash} = await import('node:crypto');
+  for (const documents of [frozenDocuments, await bundled()]) {
+    const expected = createHash('sha256')
+      .update(independentCanonicalJson(documents))
+      .digest('hex');
+    assert.equal(await digest(documents), expected);
+  }
+});
+
+test('the builder itself agrees, where it is checked out', async () => {
+  // The real cross-implementation check. Skipped here because `site/` belongs
+  // to Codex and is not in this checkout; it runs where the two are together,
+  // which is exactly where a mismatch would matter.
+  let reference = null;
+  try {
+    reference = await import('../../site/src/lib/content.mjs');
+  } catch {
+    reference = null;
+  }
+  if (reference === null) {
+    assert.ok(true, 'site/ is not in this checkout');
+    return;
+  }
+  for (const documents of [frozenDocuments, await bundled()]) {
+    assert.equal(await digest(documents), reference.digest(documents));
+    assert.equal(
+      (await import('../contracts/snapshot.js')).stableJson(documents),
+      reference.stableJson(documents),
+    );
+  }
 });
 
 test('object keys are sorted and array order is kept', () => {
@@ -228,4 +314,47 @@ test('content that would fail the build is reported as invalid, not as behind', 
   assert.equal(body.state, 'invalid');
   assert.equal(body.revision, null);
   assert.ok(body.problems.length > 0);
+});
+
+// --- AR-7: references come from the release, not from the caller -----------
+
+test('a stop pointing at an application that is not in the release is refused', async () => {
+  // The defect: reference checking used a list the caller supplied, so a
+  // release could ship a career stop linking to a project that does not exist.
+  const documents = await allFixtures();
+  documents['career.json'].roles[1].appIds = ['missing-app'];
+  const {problems, snapshot} = await buildSnapshot(documents);
+  assert.equal(snapshot, null);
+  assert.ok(problems.some((entry) => entry.file === 'career.json'));
+});
+
+test('a caller cannot vouch for an identifier that is not there', async () => {
+  const documents = await allFixtures();
+  documents['career.json'].roles[1].appIds = ['missing-app'];
+  // Offered and ignored: buildSnapshot takes no hints any more.
+  const {snapshot} = await buildSnapshot(documents, {
+    references: {'apps.json': ['missing-app']},
+  });
+  assert.equal(snapshot, null);
+});
+
+test('references that really are in the release still pass', async () => {
+  const {problems} = await buildSnapshot(await allFixtures());
+  assert.deepEqual(problems, []);
+});
+
+test('the release endpoint does not accept reference hints either', async () => {
+  const documents = await allFixtures();
+  documents['career.json'].roles[1].appIds = ['missing-app'];
+  const body = await (
+    await handleRequest(
+      admin('/v1/admin/release', {
+        method: 'POST',
+        body: {documents, references: {'apps.json': ['missing-app']}},
+      }),
+      environment({RELEASE_URL: ''}),
+    )
+  ).json();
+  assert.equal(body.state, 'invalid');
+  assert.equal(body.revision, null);
 });

@@ -40,6 +40,7 @@ const state = {
   rightPane: 'preview',
   release: null,
   releaseError: '',
+  atomicStore: null,
   range: {
     id: '28',
     from: new Date(Date.now() - 27 * 86400000).toISOString().slice(0, 10),
@@ -84,13 +85,24 @@ async function api(path, options) {
 ///
 /// Both are fetched so the panel can tell the difference between the two,
 /// which is what makes "Withdraw" meaningful.
+/// What the site is showing, and which revision that is.
+///
+/// One request for both (AR-4). They are two halves of one fact: a document
+/// and the revision it is. Read separately they can disagree, and a draft
+/// carrying somebody else's revision number is a draft with permission to
+/// overwrite work it has never seen.
 async function fetchDocument(name) {
   const shipped = await fetch(BUNDLE + '/' + name).then((r) => r.json());
-  const response = await fetch('/v1/content/' + name).catch(() => null);
+  const response = await api('/v1/admin/content/' + name).catch(() => null);
   if (response && response.ok) {
-    return {shipped: shipped, published: await response.json()};
+    const body = await response.json();
+    return {
+      shipped: shipped,
+      published: body.published ? body.document : null,
+      revision: body.revision,
+    };
   }
-  return {shipped: shipped, published: null};
+  return {shipped: shipped, published: null, revision: 0};
 }
 
 /// Loads a document once. A second visit gets the draft already in progress.
@@ -102,6 +114,12 @@ async function ensure(name) {
     live: live,
     draft: JSON.parse(JSON.stringify(live)),
     source: loaded.published ? 'published' : 'shipped',
+    revision: loaded.revision,
+    // Bumped on every edit. What makes it possible to say whether a
+    // validation result, or a draft about to be sent to the preview, belongs
+    // to what is on screen now (AR-6).
+    generation: 0,
+    diverged: null,
   };
   state.docs.set(name, entry);
   return entry;
@@ -169,10 +187,85 @@ function setIn(root, path, value) {
 
 /// Writes a value into the current draft, removing the key when it is empty.
 function write(path, value, keep) {
-  const entry = current();
+  writeInto(state.file, path, value, keep);
+}
+
+/// Writes into a named document, not into whichever one happens to be open.
+///
+/// Reading the open document at the moment of the call is fine for a
+/// keystroke and wrong for anything that finishes later. An upload started on
+/// Profile and completed after opening Off duty wrote the picture into Off
+/// duty (AR-3).
+function writeInto(file, path, value, keep) {
+  const entry = state.docs.get(file);
+  if (!entry) return false;
   const next = blank(value) && keep !== true ? undefined : value;
   entry.draft = setIn(entry.draft, path, next);
-  scheduleCheck();
+  // Any edit makes the last validation result describe a draft that no longer
+  // exists, so nothing may act on it until a new one arrives.
+  entry.generation += 1;
+  if (file === state.file) scheduleCheck();
+  return true;
+}
+
+// --- holding onto a place while something else happens ---------------------
+
+/// Where a value lives, in terms that survive the list being reordered.
+///
+/// A path is positional: apps.1.screenshot means whatever is second right
+/// now. For anything that finishes later, that is not an address -- the entry
+/// may have moved or gone. This records the document, the path, and the stable
+/// identifier of every list entry the path passes through.
+function anchorAt(file, path) {
+  const entry = state.docs.get(file);
+  const ids = {};
+  if (entry) {
+    let at = entry.draft;
+    path.forEach((step, index) => {
+      if (typeof step === 'number' && Array.isArray(at)) {
+        const item = at[step];
+        if (item && typeof item === 'object' && typeof item.id === 'string') {
+          ids[index] = item.id;
+        }
+      }
+      at = at === null || at === undefined ? at : at[step];
+    });
+  }
+  return {file: file, path: path.slice(), ids: ids};
+}
+
+/// Where that value is now, or null if it is gone.
+function resolveAnchor(anchor) {
+  const entry = state.docs.get(anchor.file);
+  if (!entry) return null;
+  const path = [];
+  let at = entry.draft;
+  for (let index = 0; index < anchor.path.length; index += 1) {
+    const step = anchor.path[index];
+    const wanted = anchor.ids[index];
+    if (wanted !== undefined) {
+      if (!Array.isArray(at)) return null;
+      const moved = at.findIndex(
+        (item) => item && typeof item === 'object' && item.id === wanted,
+      );
+      // Removed while the upload was in flight. Nothing to write into, and
+      // writing into whatever took its place would be worse.
+      if (moved === -1) return null;
+      path.push(moved);
+      at = at[moved];
+      continue;
+    }
+    path.push(step);
+    at = at === null || at === undefined ? at : at[step];
+  }
+  return path;
+}
+
+/// Applies a delayed result to the place it was started from.
+function writeAnchored(anchor, value, keep) {
+  const path = resolveAnchor(anchor);
+  if (path === null) return false;
+  return writeInto(anchor.file, path, value, keep);
 }
 
 /// A value for a newly added entry.
@@ -313,6 +406,10 @@ async function check() {
   const entry = state.docs.get(file);
   if (!entry) return;
   const ticket = ++state.checking;
+  // The exact draft being asked about, and which edit it was. The answer is
+  // only usable while both still describe what is on screen (AR-6).
+  const generation = entry.generation;
+  const asked = JSON.parse(JSON.stringify(entry.draft));
   busy(1);
   try {
     const response = await api('/v1/admin/validate', {
@@ -320,17 +417,24 @@ async function check() {
       headers: {'content-type': 'application/json'},
       body: JSON.stringify({
         file: file,
-        document: entry.draft,
+        document: asked,
         references: knownReferences(file),
       }),
     });
     const body = await response.json();
     if (ticket !== state.checking) return;
     if (!response.ok) throw new Error(body.error || 'Could not check the draft');
-    state.issues.set(file, body);
+    // Kept with the draft it describes and the edit it belongs to. A result
+    // that arrives after another keystroke certifies nothing.
+    state.issues.set(file, {
+      errors: body.errors,
+      warnings: body.warnings,
+      generation: generation,
+      document: asked,
+    });
     render();
-    // The contract says a validated draft, so this is the moment it is known
-    // to be one.
+    // The contract says a validated draft. This is the only moment one is
+    // known to exist, and sendDraft checks that it still is.
     if (state.rightPane === 'preview') sendDraft();
   } catch (error) {
     if (ticket !== state.checking) return;

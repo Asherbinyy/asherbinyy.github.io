@@ -1,10 +1,15 @@
 /**
  * The immutable artifact a public build is made from.
  *
- * Codex answered R1 in `docs/23-ADMIN-INTEGRATION-REPLY.md`: Astro, semantic
- * HTML, build-and-release. The builder takes `PORTFOLIO_SNAPSHOT`, a path to a
- * JSON file of exactly this shape, and refuses to build if the revision inside
- * it does not match a digest it recomputes itself.
+ * Codex answered R1 in `docs/23-ADMIN-INTEGRATION-REPLY.md`: semantic HTML,
+ * build-and-release, with the first slice in Astro. The builder takes
+ * `PORTFOLIO_SNAPSHOT`, a path to a JSON file of exactly this shape, and
+ * refuses to build if the revision inside it does not match a digest it
+ * recomputes itself.
+ *
+ * Nothing here knows or cares which renderer consumes it. The artifact is a
+ * set of documents and a digest over them; the long-term rendering choice is
+ * still being settled with the owner, and this contract survives any answer.
  *
  * So the two sides have to agree on the digest to the byte. The canonical form
  * is defined by `site/src/lib/content.mjs`: objects have their keys sorted
@@ -62,7 +67,14 @@ export async function digest(documents) {
 /// uses. A snapshot that would fail the builder's own checks is not worth
 /// handing to a build, and a build that fails halfway is harder to explain
 /// than a refusal here.
-export async function buildSnapshot(documents, {references = null} = {}) {
+export async function buildSnapshot(documents) {
+  // Derived from the documents being released, never from a hint the caller
+  // supplied (AR-7). A release validated against somebody's list of
+  // identifiers is validated against nothing: a career stop could point at an
+  // application that is not in the snapshot, and the build would produce a
+  // page linking to something that does not exist.
+  const references = referencesWithin(documents);
+
   const problems = [];
   for (const file of editableFiles) {
     if (!documents[file]) {
@@ -99,6 +111,32 @@ export async function buildSnapshot(documents, {references = null} = {}) {
   };
 }
 
+/// Every identifier the documents in this release actually contain.
+///
+/// Only the resolved documents are consulted. Anything a caller offered is
+/// ignored, which is the point: a snapshot is the last check before a build,
+/// and it has every document in front of it, so there is nothing it needs to
+/// be told.
+function referencesWithin(documents) {
+  const found = {};
+  for (const [file, document] of Object.entries(documents)) {
+    if (document === null || typeof document !== 'object') continue;
+    for (const value of Object.values(document)) {
+      if (!Array.isArray(value)) continue;
+      const ids = value
+        .filter((entry) => entry !== null && typeof entry === 'object')
+        .map((entry) => entry.id)
+        .filter((id) => typeof id === 'string');
+      if (ids.length > 0) {
+        found[file] = ids;
+        break;
+      }
+    }
+    if (!found[file]) found[file] = [];
+  }
+  return found;
+}
+
 /// What the public HTML is currently serving, read from its own release file.
 ///
 /// `/release.json` is written by Codex's build and carries the digest of the
@@ -111,8 +149,8 @@ export function compareRelease(expected, release) {
       state: 'unreleased',
       expected,
       live: null,
-      // Not a failure. The Astro slice is not the production host yet, so
-      // there is nothing serving a release file to read.
+      // Not a failure. Nothing is serving a release file from the production
+      // host yet, so there is nothing to read.
       because: 'No release file is being served yet, so nothing can confirm the site was rebuilt.',
     };
   }
