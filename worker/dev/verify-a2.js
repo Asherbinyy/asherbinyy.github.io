@@ -26,7 +26,10 @@ async function main() {
     );
     check(
       'publishing controls are inert on a section that is not a page',
-      await page.eval("$('publish').disabled && $('review').disabled"),
+      await page.eval(
+        "['publish', 'discard', 'history', 'withdraw']" +
+          ".every((id) => $(id).disabled)",
+      ),
     );
 
     // --- uploading a picture ----------------------------------------------

@@ -1,6 +1,7 @@
 import {editableFiles} from '../contracts/content-schema.js';
 import {
   changedClaims,
+  collectClaims,
   differences,
   validateDocument,
 } from '../contracts/validate.js';
@@ -176,12 +177,19 @@ export async function handleRequest(request, env, now = new Date()) {
       return removeMedia(url.pathname.slice('/v1/admin/media/'.length), env, headers);
     }
     if (url.pathname.startsWith('/v1/admin/content/')) {
-      const file = url.pathname.slice('/v1/admin/content/'.length);
-      if (request.method === 'PUT') {
+      const rest = url.pathname.slice('/v1/admin/content/'.length);
+      const [file, action] = rest.split('/');
+      if (action === 'revisions' && request.method === 'GET') {
+        return listRevisions(file, env, headers);
+      }
+      if (action === 'rollback' && request.method === 'POST') {
+        return rollback(file, request, env, now, headers);
+      }
+      if (action === undefined && request.method === 'PUT') {
         return publish(file, request, env, now, headers);
       }
-      if (request.method === 'DELETE') {
-        return withdraw(file, env, headers);
+      if (action === undefined && request.method === 'DELETE') {
+        return withdraw(file, env, now, headers);
       }
     }
     return response({error: 'Not found'}, 404, headers);
@@ -217,6 +225,34 @@ function contentKey(file) {
   return `content:${file}`;
 }
 
+/// Where the history of a document lives.
+///
+/// Separate keys from the document itself, so `/v1/content/<file>` keeps
+/// answering with the document and nothing else. The site parses that
+/// response straight into its content models, and wrapping it in an envelope
+/// to carry a revision number would break every reader for the sake of a
+/// number only the panel needs.
+function revisionKey(file, number) {
+  return `revision:${file}:${String(number).padStart(6, '0')}`;
+}
+
+function revisionHeadKey(file) {
+  return `revision-head:${file}`;
+}
+
+/// What the document is at now, and how it got there.
+async function revisionHead(file, env) {
+  const store = contentStore(env);
+  if (!store) return null;
+  return store.get(revisionHeadKey(file), 'json');
+}
+
+/// The number a new revision of [file] will take.
+async function nextRevision(file, env) {
+  const head = await revisionHead(file, env);
+  return (head?.revision ?? 0) + 1;
+}
+
 /// Whether the store that holds published content is configured at all.
 ///
 /// It is optional on purpose. The namespace has to be created by hand, and
@@ -241,6 +277,10 @@ async function readPublished(file, env, headers) {
   // Short, because the point of publishing is that a correction is live
   // quickly, and the site falls back to its bundle if this is slow anyway.
   published.set('cache-control', 'public, max-age=60');
+  // Additive, and in a header rather than the body: the body is the document
+  // the app parses, and it stays that way.
+  const head = await revisionHead(file, env);
+  if (head?.revision) published.set('x-content-revision', String(head.revision));
   return new Response(document, {status: 200, headers: published});
 }
 
@@ -250,11 +290,15 @@ async function listPublished(env, headers) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
   const listing = await store.list({prefix: 'content:'});
-  return response(
-    {published: listing.keys.map((entry) => entry.name.slice('content:'.length))},
-    200,
-    headers,
-  );
+  const published = listing.keys.map((entry) => entry.name.slice('content:'.length));
+  // The revision each document is at, so the panel can declare a base when it
+  // publishes without asking five more times.
+  const heads = {};
+  for (const file of publishableFiles) {
+    const head = await revisionHead(file, env);
+    if (head) heads[file] = head.revision;
+  }
+  return response({published, heads}, 200, headers);
 }
 
 /// Every source the owner has given for a figure, newest first.
@@ -317,22 +361,182 @@ async function publish(file, request, env, now, headers) {
     );
   }
 
+  // Two people, or one person in two tabs, editing the same page. Whoever
+  // arrives second is told rather than silently winning: the base revision is
+  // the one the draft was built from, and if the document has moved on since,
+  // publishing would erase whatever moved it.
+  const head = await revisionHead(file, env);
+  const current = head?.revision ?? 0;
+  const declaredBase = request.headers.get('x-base-revision');
+  const base = declaredBase === null ? null : Number(declaredBase);
+  if (base !== null && Number.isFinite(base) && base !== current) {
+    return response(
+      {
+        error: 'This page has changed since you started editing it',
+        expected: base,
+        current: current,
+        document: await store.get(contentKey(file), 'json'),
+        changedAt: head?.at ?? null,
+      },
+      409,
+      headers,
+    );
+  }
+
+  // A figure is a claim and a claim needs a source. Enforced here rather than
+  // only asked for in the browser (A-F7): a note that the panel prompts for
+  // and the Worker does not require is a convention, not a rule.
+  //
+  // The comparison is against the published copy, or against nothing. Never
+  // against a baseline the caller supplied, which is the whole point of doing
+  // it here.
+  const live = await store.get(contentKey(file), 'json');
+  const claims = live === null
+    ? collectClaims(file, document)
+    : changedClaims(file, live, document);
+  const note = decodeURIComponent(request.headers.get('x-change-note') ?? '').trim();
+  if (claims.length > 0 && note === '') {
+    return response(
+      {
+        error: 'A claim cannot be published without a source',
+        claims: claims.map((claim) => ({path: claim.path, label: claim.label})),
+      },
+      422,
+      headers,
+    );
+  }
+
+  const revision = current + 1;
   // Stored re-serialised rather than as received, so the bytes in KV are
   // exactly what was parsed and nothing rides along outside the JSON.
-  await store.put(contentKey(file), JSON.stringify(document));
+  const body = JSON.stringify(document);
+  await store.put(contentKey(file), body);
+  await store.put(revisionKey(file, revision), JSON.stringify({
+    revision,
+    file,
+    at: now.toISOString(),
+    note,
+    claims: claims.map((claim) => claim.path),
+    document,
+  }));
+  await store.put(revisionHeadKey(file), JSON.stringify({
+    revision,
+    at: now.toISOString(),
+    note,
+    withdrawn: false,
+  }));
 
-  // §7.5: a figure is a claim and a claim needs a source. The panel asks for
-  // one whenever a number changed and sends it here, and it is recorded beside
-  // the document rather than inside it, because a source belongs to the act of
-  // publishing and not to the content the site renders.
-  const note = decodeURIComponent(request.headers.get('x-change-note') ?? '');
+  // Kept as it was: the change log is the ledger the provenance practice
+  // already reads, and moving it would orphan what is in there.
   if (note) {
     await store.put(
       key(changeLogPrefix, [now.toISOString(), file]),
       JSON.stringify({file, note, at: now.toISOString()}),
     );
   }
-  return response({published: file}, 200, headers);
+  return response({published: file, revision}, 200, headers);
+}
+
+/// Every revision of a document, newest first.
+///
+/// The stored document is left out of the listing: five of these would be most
+/// of a response for something the panel only needs when rolling back.
+async function listRevisions(file, env, headers) {
+  if (!publishableFiles.has(file)) {
+    return response({error: 'Not a publishable document'}, 400, headers);
+  }
+  const store = contentStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  const listing = await store.list({prefix: `revision:${file}:`});
+  const entries = await Promise.all(
+    listing.keys.map((entry) => store.get(entry.name, 'json')),
+  );
+  const head = await revisionHead(file, env);
+  return response(
+    {
+      current: head?.revision ?? 0,
+      withdrawn: head?.withdrawn ?? false,
+      revisions: entries
+        .filter(Boolean)
+        .map((entry) => ({
+          revision: entry.revision,
+          at: entry.at,
+          note: entry.note,
+          claims: entry.claims ?? [],
+          withdrawal: entry.withdrawal === true,
+        }))
+        .reverse(),
+    },
+    200,
+    headers,
+  );
+}
+
+/// Puts a previous revision back, as a new revision.
+///
+/// Append-only. Rewinding the counter would make two different documents
+/// share a revision number, and a number that does not identify one document
+/// is worse than no number.
+async function rollback(file, request, env, now, headers) {
+  if (!publishableFiles.has(file)) {
+    return response({error: 'Not a publishable document'}, 400, headers);
+  }
+  const store = contentStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  let asked;
+  try {
+    asked = JSON.parse(await request.text());
+  } catch {
+    return response({error: 'Request is not valid JSON'}, 400, headers);
+  }
+  const wanted = Number(asked?.revision);
+  if (!Number.isInteger(wanted) || wanted < 1) {
+    return response({error: 'Which revision?'}, 400, headers);
+  }
+  const stored = await store.get(revisionKey(file, wanted), 'json');
+  if (!stored || stored.withdrawal === true) {
+    return response({error: 'No such revision to go back to'}, 404, headers);
+  }
+
+  // Checked again on the way back in. A revision that was valid when it was
+  // published can stop being valid when the schema tightens, and restoring
+  // one the app can no longer parse would be a new outage, not a recovery.
+  const verdict = validateDocument(file, stored.document, {
+    references: await referenceSets(file, env),
+  });
+  if (verdict.errors.length > 0) {
+    return response(
+      {
+        error: 'That revision no longer matches the schema',
+        errors: verdict.errors,
+      },
+      422,
+      headers,
+    );
+  }
+
+  const revision = (await nextRevision(file, env));
+  await store.put(contentKey(file), JSON.stringify(stored.document));
+  await store.put(revisionKey(file, revision), JSON.stringify({
+    revision,
+    file,
+    at: now.toISOString(),
+    note: `Went back to revision ${wanted}`,
+    claims: stored.claims ?? [],
+    restoredFrom: wanted,
+    document: stored.document,
+  }));
+  await store.put(revisionHeadKey(file), JSON.stringify({
+    revision,
+    at: now.toISOString(),
+    note: `Went back to revision ${wanted}`,
+    withdrawn: false,
+  }));
+  return response({published: file, revision, restoredFrom: wanted}, 200, headers);
 }
 
 /// Checks a draft, and for a review also says what would change.
@@ -371,11 +575,30 @@ async function checkDraft(request, env, headers, full) {
   const published = await liveDocument(body.file, env);
   const offered = plainObject(body.baseline) ? body.baseline : null;
   const live = published ?? offered;
+
+  // What the publish endpoint will actually insist on, worked out the same
+  // way it works it out: against the published copy, or against nothing.
+  // Without this the panel would not ask for a source on a first publish and
+  // the Worker would refuse it, which is a worse experience than either rule
+  // on its own.
+  const sourceClaims = published === null
+    ? collectClaims(body.file, body.document)
+    : changedClaims(body.file, published, body.document);
+
   return response(
     {
       ...verdict,
       changes: live === null ? [] : differences(live, body.document),
       claims: live === null ? [] : changedClaims(body.file, live, body.document),
+      sourceRequired: sourceClaims.length > 0,
+      sourceClaims: sourceClaims.map((claim) => ({
+        path: claim.path,
+        label: claim.label,
+        value: claim.value,
+      })),
+      // Nothing has been published, so every figure in the document is one
+      // the Worker has never been given a source for.
+      sourceReason: published === null ? 'first-publish' : 'changed',
       comparedWith:
         published !== null ? 'published' : offered !== null ? 'shipped' : 'nothing',
     },
@@ -435,7 +658,7 @@ function collectIdentifiers(document) {
   return [];
 }
 
-async function withdraw(file, env, headers) {
+async function withdraw(file, env, now, headers) {
   if (!publishableFiles.has(file)) {
     return response({error: 'Not a publishable document'}, 400, headers);
   }
@@ -444,9 +667,28 @@ async function withdraw(file, env, headers) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
   await store.delete(contentKey(file));
+
+  // Recorded, because withdrawing is a change to what the site shows and a
+  // history with a hole in it is not a history. The revisions themselves stay
+  // where they are, so this is still undoable.
+  const revision = await nextRevision(file, env);
+  await store.put(revisionKey(file, revision), JSON.stringify({
+    revision,
+    file,
+    at: now.toISOString(),
+    note: 'Withdrawn; the site went back to the copy in its bundle',
+    claims: [],
+    withdrawal: true,
+  }));
+  await store.put(revisionHeadKey(file), JSON.stringify({
+    revision,
+    at: now.toISOString(),
+    note: 'Withdrawn',
+    withdrawn: true,
+  }));
   // Withdrawing is not deleting content: the bundled document is still there
   // and the site goes back to it.
-  return response({withdrawn: file}, 200, headers);
+  return response({withdrawn: file, revision}, 200, headers);
 }
 
 /// Refuses an admin request, or returns null to let it through.

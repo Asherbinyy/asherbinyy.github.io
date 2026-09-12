@@ -848,7 +848,11 @@ test('the listing says what is currently published', async () => {
     env,
   );
   const listed = await handleRequest(adminRequest('/v1/admin/content'), env);
-  assert.deepEqual(await listed.json(), {published: ['apps.json']});
+  const listing = await listed.json();
+  assert.deepEqual(listing.published, ['apps.json']);
+  // The revision each published document is at, so the panel can name a base
+  // when it publishes rather than asking per document.
+  assert.equal(listing.heads['apps.json'], 1);
 });
 
 test('a site read from another origin is refused', async () => {

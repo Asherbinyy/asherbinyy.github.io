@@ -63,9 +63,10 @@ export const markup = `
     <span id="changeCount" class="note"></span>
     <span id="problemCount" class="count bad" hidden></span>
     <span class="grow"></span>
-    <button id="review" type="button">Review</button>
+    <button id="discard" type="button">Discard</button>
+    <button id="history" type="button">History</button>
     <button id="withdraw" type="button" class="danger">Withdraw</button>
-    <button id="publish" type="button" class="primary">Publish page</button>
+    <button id="publish" type="button" class="primary">Review and publish</button>
   </div>
 </div>
 

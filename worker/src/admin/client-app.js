@@ -300,9 +300,9 @@ function renderBar() {
   if (state.view !== 'document') {
     el('changeCount').textContent = 'Media is stored as soon as it is uploaded';
     el('problemCount').hidden = true;
-    el('publish').disabled = true;
-    el('review').disabled = true;
-    el('withdraw').disabled = true;
+    for (const id of ['publish', 'discard', 'history', 'withdraw']) {
+      el(id).disabled = true;
+    }
     el('source').textContent = '';
     return;
   }
@@ -320,10 +320,14 @@ function renderBar() {
   badge.textContent = problems + (problems === 1 ? ' problem' : ' problems');
 
   el('publish').disabled = changes === 0 || problems > 0;
-  el('review').disabled = changes === 0;
+  el('discard').disabled = changes === 0;
+  el('history').disabled = false;
   el('withdraw').disabled = entry ? entry.source !== 'published' : true;
   el('source').textContent = entry
-    ? (entry.source === 'published' ? 'Showing your published copy' : 'Showing the copy shipped with the app')
+    ? (entry.source === 'published'
+        ? 'Published copy' +
+          (typeof entry.revision === 'number' ? ', revision ' + entry.revision : '')
+        : 'Showing the copy shipped with the app')
     : '';
 }
 
@@ -355,121 +359,6 @@ function openSheet(title, build) {
   sheet.showModal();
 }
 
-async function review() {
-  const entry = current();
-  say('Checking the draft...');
-  try {
-    const response = await api('/v1/admin/review', {
-      method: 'POST',
-      headers: {'content-type': 'application/json'},
-      body: JSON.stringify({\n        file: state.file,\n        document: entry.draft,\n        references: knownReferences(state.file),\n      }),
-    });
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.error || 'Could not review the draft');
-    state.issues.set(state.file, {errors: body.errors, warnings: body.warnings});
-    render();
-    say('');
-    openSheet('Review ' + schemaFor(state.file).section, (into) => {
-      into.append(node(
-        'p',
-        'note',
-        'Against what the site is showing now. Nothing here has been published.',
-      ));
-      if (body.changes.length === 0) into.append(node('p', null, 'Nothing has changed.'));
-      for (const change of body.changes) {
-        const block = node('div', 'group');
-        block.append(node('h3', null, change.path));
-        block.append(node('p', 'diff removed', '- ' + JSON.stringify(change.before)));
-        block.append(node('p', 'diff added', '+ ' + JSON.stringify(change.after)));
-        into.append(block);
-      }
-      if (body.claims.length > 0) {
-        const block = node('div', 'warn');
-        block.append(node(
-          'p',
-          null,
-          'These are claims about you. Publishing them asks for a source:',
-        ));
-        for (const claim of body.claims) {
-          block.append(node('p', null, claim.label + ': ' + JSON.stringify(claim.was) +
-            ' becomes ' + JSON.stringify(claim.value)));
-        }
-        into.append(block);
-      }
-      for (const issue of body.errors) {
-        into.append(node('p', 'issue', issue.path + ': ' + issue.message));
-      }
-      for (const issue of body.warnings) {
-        into.append(node('p', 'issue warn', issue.path + ': ' + issue.message));
-      }
-    });
-  } catch (error) {
-    say(error.message, 'bad');
-  }
-}
-
-async function publish() {
-  const entry = current();
-  say('Checking the draft...');
-  let review_;
-  try {
-    const response = await api('/v1/admin/review', {
-      method: 'POST',
-      headers: {'content-type': 'application/json'},
-      body: JSON.stringify({\n        file: state.file,\n        document: entry.draft,\n        references: knownReferences(state.file),\n      }),
-    });
-    review_ = await response.json();
-    if (!response.ok) throw new Error(review_.error || 'Could not check the draft');
-  } catch (error) {
-    return say(error.message, 'bad');
-  }
-  state.issues.set(state.file, {errors: review_.errors, warnings: review_.warnings});
-  render();
-  if (review_.errors.length > 0) {
-    return say('Fix the problems on this page before publishing', 'bad');
-  }
-  // Whether there is anything to do is the panel's own question: it holds
-  // both the draft and the copy the site is showing, which on a first publish
-  // is the bundle the Worker cannot read.
-  if (countChanges(entry) === 0) return say('Nothing to publish');
-
-  // A figure is a claim, and a claim needs a source. Asked for at the moment
-  // of publishing, while the owner still knows why he changed it. The list
-  // comes from the schema, so a figure written as text -- "5+", "50%
-  // retention lift" -- is caught, which the old numeric check was not.
-  let note = '';
-  if (review_.claims.length > 0) {
-    const asked = 'These claims changed:\\n\\n' +
-      review_.claims
-        .map((claim) => '  ' + claim.label + ': ' +
-          JSON.stringify(claim.was) + ' -> ' + JSON.stringify(claim.value))
-        .join('\\n') +
-      '\\n\\nWhere does the new figure come from? A transcript, a payslip, a store listing.';
-    note = (prompt(asked) || '').trim();
-    if (!note) return say('A claim cannot be published without a source', 'bad');
-  }
-
-  say('Publishing ' + schemaFor(state.file).section + '...');
-  try {
-    const response = await api('/v1/admin/content/' + state.file, {
-      method: 'PUT',
-      headers: {
-        'content-type': 'application/json',
-        'x-change-note': encodeURIComponent(note),
-      },
-      body: JSON.stringify(entry.draft),
-    });
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.error || 'The publish was refused');
-    entry.live = JSON.parse(JSON.stringify(entry.draft));
-    entry.source = 'published';
-    render();
-    say('Published ' + schemaFor(state.file).section, 'good');
-  } catch (error) {
-    say(error.message, 'bad');
-  }
-}
-
 async function withdraw() {
   const section = schemaFor(state.file).section;
   if (!confirm('Withdraw ' + section + '? The site goes back to the copy shipped with the app.')) {
@@ -481,6 +370,7 @@ async function withdraw() {
     if (!response.ok) throw new Error('The withdrawal was refused');
     state.docs.delete(state.file);
     await ensure(state.file);
+    await loadHeads();
     render();
     say('Withdrawn. The site uses the copy in its bundle.', 'good');
   } catch (error) {
@@ -506,6 +396,9 @@ async function unlock() {
     // for the rail to show which pages have unsaved work, and a stop pointing
     // at an application cannot be checked against a document nobody loaded.
     await Promise.all(SCHEMA.documents.map((entry) => ensure(entry.file)));
+    // Which revision each page is at, so a publish can say what it was built
+    // on and be told when that is no longer true.
+    await loadHeads();
     const wanted = readHash();
     if (wanted && wanted.view === 'document') {
       state.file = wanted.file;
@@ -526,8 +419,9 @@ el('unlock').onclick = unlock;
 el('token').onkeydown = (event) => {
   if (event.key === 'Enter') unlock();
 };
-el('review').onclick = review;
-el('publish').onclick = publish;
+el('publish').onclick = openReview;
+el('discard').onclick = discardDraft;
+el('history').onclick = openHistory;
 el('withdraw').onclick = withdraw;
 el('sheetClose').onclick = () => el('sheet').close();
 el('previewToggle').onclick = () => {

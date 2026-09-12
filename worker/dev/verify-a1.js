@@ -266,9 +266,16 @@ async function main() {
     );
 
     // --- publishing --------------------------------------------------------
+    // Publishing goes through the review sheet from A3 onwards: the confirmation
+    // is the point, so there is no longer a button that skips it.
+    await page.eval("$('publish').click()");
+    await page.settle(900);
+    await page.eval(
+      "setValue('sourceNote', 'Fixture, for verification only')",
+    );
     const published = await page.eval(`(async () => {
-      window.prompt = () => 'Fixture, for verification only';
-      $('publish').click();
+      [...document.querySelectorAll('#sheetBody button')]
+        .find((b) => b.textContent.trim().startsWith('Publish')).click();
       await new Promise((done) => setTimeout(done, 1200));
       const listed = await fetch('/v1/admin/content', {
         headers: {authorization: 'Bearer ' + ${JSON.stringify(token)}},
@@ -281,7 +288,7 @@ async function main() {
       };
     })()`, true);
     check(
-      'publishing a valid page stores it and clears the unsaved marker',
+      'publishing through the review sheet stores it and clears the marker',
       published.published.includes('profile.json') &&
         /No changes/.test(published.changes),
       JSON.stringify(published),

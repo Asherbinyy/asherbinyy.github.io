@@ -31,6 +31,7 @@ import {documents, knownCountries} from '../contracts/content-schema.js';
 import {clientApp} from './admin/client-app.js';
 import {clientFields} from './admin/client-fields.js';
 import {clientMedia} from './admin/client-media.js';
+import {clientPublish} from './admin/client-publish.js';
 import {clientState} from './admin/client-state.js';
 import {brandName, countryList, markup} from './admin/markup.js';
 import {styles} from './admin/styles.js';
@@ -83,6 +84,7 @@ const SCHEMA = ${schema};
 ${clientState}
 ${clientFields}
 ${clientMedia}
+${clientPublish}
 ${clientApp}
 </script>
 </body>
