@@ -2,9 +2,11 @@
 
 Current plan, 2026-09-11. This replaces the old milestone queue for new work.
 Read the [audit](18-REINNOVATION-AUDIT.md) for code, browser and conversation evidence.
-R0 is the audit/documentation session. R1–R9 are **planned**, not implemented or visually approved.
+R0 is the audit/documentation session. R1–R9 are **not complete or visually approved**. The first local app increment repairs Journey height/selection behavior and sitemap generation; it does not replace the full R1/R4 acceptance below.
 
 **Owner assignment, 2026-09-11:** Claude owns all admin/Worker work; Codex owns the public app, SEO, design, motion and game. The owner starts Claude separately using the [admin handoff](21-CLAUDE-ADMIN-HANDOFF.md). Work proceeds concurrently in separate worktrees under the [integration contract](20-APP-ADMIN-CONTRACT.md). Claude can begin admin layout/drafts and schema proposals while the public-rendering decision is pending. Final preview/publication integration still depends on R1. Codex can repair confirmed defects in the retained app without treating that as a migration decision or completion of a whole milestone.
+
+**2026-09-12:** owner confirmed Claude is working on admin. Codex's first app repair passes all four FVM checks (676 tests); [final browser evidence](audits/2026-09-12/README.md). Production remains unchanged.
 
 ## Product direction
 
@@ -43,10 +45,10 @@ These are decisions for the relevant milestone, not a request for the owner to a
 | Milestone | Deliverable | Depends on | State |
 |---|---|---|---|
 | R0 | Audit, original-request recovery, corrected docs and concise README | — | This session; verification in worklog |
-| R1 | SEO and a consistent public publishing foundation | Rendering decision | Planned |
+| R1 | SEO and a consistent public publishing foundation | Rendering decision | Sitemap generator repaired locally; foundation planned |
 | R2 | Visual system, home and entrance proof | R1 | Planned |
-| R3 | Professional admin, content components, preview and media | R1; R2 component contract | Planned |
-| R4 | Journey and timeline in one view | R2, R3 | Planned |
+| R3 | Professional admin, content components, preview and media | R1; R2 component contract | Claude working on admin per owner; integration pending |
+| R4 | Journey and timeline in one view | R2, R3 | Baseline viewport/selection repair local; redesign planned |
 | R5 | Projects, galleries and Writing | R2, R3 | Planned |
 | R6 | About, education, Off duty and quick résumé | R2, R3; navigation decision | Planned |
 | R7 | Rebuilt game feel, character, rewards and levels | R2; input decision | Planned |

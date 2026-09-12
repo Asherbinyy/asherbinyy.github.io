@@ -12,7 +12,7 @@ Evidence: [audit](18-REINNOVATION-AUDIT.md). Historical issue numbers remain sea
 |---|---|---|---|
 | SEO-1 | Public Flutter deep links return 404 while drawing working pages | Valid public URLs return correct successful responses with readable content; missing URLs return a real 404 | R1 |
 | SEO-2 | Home/app HTML lacks the main portfolio content; generated CV/Brief cover only part of the site | Semantic public documents work without the app/scene runtime | R1 |
-| SEO-3 | Sitemap includes retired `/signal` and `/privacy`; project URLs and Journey are absent | Sitemap matches canonical public routes and content-change dates | R1 |
+| SEO-3 | Generator now derives current public routes and project IDs; retired routes/build-clock dates removed locally. Production still has the old sitemap | Deploy and verify route responses plus the generated sitemap; add modification dates only from trusted revision metadata | R1, partial local repair |
 | SEO-4 | Shell metadata uses rejected copy, homepage canonical and icon-only social art | Each public route has correct metadata and sharing preview from its content revision | R1/R2 |
 | SEO-5 | Admin overrides drift from static HTML and metadata | Publishing coordinates one public content revision across renderers | R1/R3 |
 | SEO-6 | Search Console/indexing status has not been inspected | Property is verified, sitemap submitted and actual index/name-query results recorded | R9 |
@@ -23,7 +23,7 @@ Evidence: [audit](18-REINNOVATION-AUDIT.md). Historical issue numbers remain sea
 | ID | Still true | Closes when | Milestone |
 |---|---|---|---|
 | UI-1 | Minimal ornament rows and instrumentation frame do not meet requested Egyptian realism | Approved Home/entrance visual slice establishes materials, figures, relief composition and motion | R2 |
-| UI-2 | Map pushes timeline below desktop viewport before selection | Initial map plus timeline fit the supported viewport layouts; selected/closed behavior is verified | R4 |
+| UI-2 | Local repair bounds the map by visible content height, adds inline Close and restores narrow-pointer details. Full Journey redesign and physical-device review remain | Verify the repaired build in real browser/device layouts, then deliver R4's timeline, materials and supplied birth stop | R4, partial local repair |
 | UI-3 | Phone intro is tightly cropped; figures absent in captured view; CC caption occupies bottom | Responsive camera/composition and revised assets/fallback pass visual review | R2 |
 | UI-4 | Home/career composition and copy still need refinement; route transitions are absent | No repeated floating content/overlap; distinct readable hierarchy and deliberate motion | R2 |
 | UI-5 | Work has procedural artwork, uneven summaries and no gallery population | Real product presentation and media workflow pass R5 acceptance | R5 |

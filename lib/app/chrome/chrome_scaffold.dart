@@ -334,7 +334,10 @@ class _ContentColumn extends StatelessWidget {
                     constraints: const BoxConstraints(
                       maxWidth: Tokens.contentMaxWidth,
                     ),
-                    child: child,
+                    child: ContentViewport(
+                      height: constraints.maxHeight,
+                      child: child,
+                    ),
                   ),
                 ),
               ),

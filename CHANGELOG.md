@@ -14,6 +14,8 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ### Fixed
 
+- Bounded Journey's map using the measured content viewport so the timeline remains visible; added inline Close and a detail surface for narrow pointer windows. Local branch only.
+- Generated sitemap routes from the route enum and actual project IDs; removed retired URLs and misleading build-date modification timestamps. Public response/HTML fixes remain open.
 - Deployed the Milestone 4 Worker from the repository root. The `/v1/cover`
   fake-image check returns the expected 502; Pages is deployed separately.
 

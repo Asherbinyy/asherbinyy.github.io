@@ -44,6 +44,8 @@ Hosting uses GitHub Pages and Cloudflare free tiers, subject to their limits: [W
 
 The redesign is not finished. Start with the [audit](docs/18-REINNOVATION-AUDIT.md), [Re-innovation milestones](docs/19-REINNOVATION-ROADMAP.md) and [open issues](docs/11-OPEN-ISSUES.md). Read [AGENTS.md](AGENTS.md) before contributing. Session records are in [the worklog](docs/worklog/).
 
+Codex owns the public app; Claude owns the admin/Worker in a separate checkout. [Claude handoff](docs/21-CLAUDE-ADMIN-HANDOFF.md) · [Shared contract](docs/20-APP-ADMIN-CONTRACT.md).
+
 Public pages currently run in Flutter; `/cv/` and `/brief/` are generated HTML. The audit recommends HTML-based public pages for SEO; migration is not yet approved or implemented. Pages and the Worker deploy separately. [Worker operations](worker/README.md).
 
 ## Assets

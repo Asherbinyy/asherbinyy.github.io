@@ -360,6 +360,9 @@ abstract final class Tokens {
   /// The map's aspect ratio. Equirectangular is 2:1 by construction.
   static const double mapAspectRatio = 2;
 
+  /// Below this content height Journey scrolls instead of clipping controls.
+  static const double journeyMinContentHeight = 320;
+
   /// Scroll velocity above which the signal degrades toward noise, px/s.
   static const double traceScanningVelocity = 900;
 
