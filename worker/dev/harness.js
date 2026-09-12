@@ -119,7 +119,7 @@ export async function captures(folder) {
 export async function openPanel({width = 1440, height = 900} = {}) {
   const page = await launch({width, height});
   await page.goto(base + '/admin');
-  await page.eval(helpers);
+  await page.setup(helpers);
   await page.eval(`setValue('token', ${JSON.stringify(token)})`);
   await page.eval("$('unlock').click()");
   await page.settle(1200);

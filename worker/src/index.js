@@ -145,9 +145,25 @@ export async function handleRequest(request, env, now = new Date()) {
     return readMedia(url.pathname.slice('/v1/media/'.length), env, origin);
   }
 
+  // Signing in is the one admin route that cannot require being signed in.
+  // It has the same failure counting as everything else behind the gate.
+  if (url.pathname === '/v1/admin/session' && request.method === 'POST') {
+    return openSession(request, env, now, headers);
+  }
+
   if (url.pathname.startsWith('/v1/admin/')) {
     const refusal = await refuseUnauthorisedAdmin(request, env, now, headers);
     if (refusal) return refusal;
+
+    if (url.pathname === '/v1/admin/session' && request.method === 'GET') {
+      return describeSession(request, env, headers);
+    }
+    if (url.pathname === '/v1/admin/session' && request.method === 'DELETE') {
+      return closeSession(request, env, headers);
+    }
+    if (url.pathname === '/v1/admin/password' && request.method === 'POST') {
+      return changePassword(request, env, now, headers);
+    }
 
     if (url.pathname === '/v1/admin/content' && request.method === 'GET') {
       return listPublished(env, headers);
@@ -698,21 +714,290 @@ async function withdraw(file, env, now, headers) {
 /// that will answer an unlimited number of guesses is a different claim from
 /// one that will not, and the second is cheap.
 async function refuseUnauthorisedAdmin(request, env, now, headers) {
+  // The correct credential is checked *first*, and a success clears the
+  // counter. Before this, ten wrong guesses in an hour shut the endpoint for
+  // everybody, the owner included (A-F9) -- so anyone who could reach the
+  // Worker could lock him out of his own site by typing rubbish.
+  //
+  // Guessing is still bounded: a wrong credential is what increments, and
+  // once the limit is reached wrong credentials stop being answered at all.
+  const who = await identify(request, env, now);
   const attemptKey = key(adminFailurePrefix, [
     isoDate(now),
     String(now.getUTCHours()),
   ]);
+  if (who) {
+    if ((await env.ANALYTICS.get(attemptKey)) !== null) {
+      await env.ANALYTICS.delete(attemptKey);
+    }
+    request.admin = who;
+    return null;
+  }
   const failures = Number((await env.ANALYTICS.get(attemptKey)) ?? 0);
-  if (failures >= maximumFailedAttempts) {
+  await env.ANALYTICS.put(attemptKey, String(failures + 1), {
+    expirationTtl: 3600,
+  });
+  if (failures + 1 > maximumFailedAttempts) {
     return response({error: 'Too many attempts'}, 429, headers);
   }
-  if (!authorised(request, env.ADMIN_TOKEN)) {
+  return response({error: 'Unauthorised', reason: 'signed-out'}, 401, headers);
+}
+
+/// Who is making this request, or null.
+///
+/// Two ways in. A session, which is what the panel gets after signing in and
+/// what it holds in the browser; and the deployment secret, which is the
+/// recovery path and works even if the password store is unreachable. The
+/// browser never receives a Cloudflare credential either way.
+async function identify(request, env, now) {
+  const offered = (request.headers.get('authorization') ?? '')
+    .replace(/^Bearer\s+/i, '');
+  if (offered === '') return null;
+
+  if (
+    typeof env.ADMIN_TOKEN === 'string' &&
+    env.ADMIN_TOKEN.length >= 32 &&
+    offered === env.ADMIN_TOKEN
+  ) {
+    return {kind: 'recovery'};
+  }
+
+  const store = contentStore(env);
+  if (!store) return null;
+  const held = await store.get(sessionKey(await fingerprint(offered)), 'json');
+  if (!held) return null;
+  if (Date.parse(held.expires) <= now.getTime()) return null;
+  if (Date.parse(held.absoluteExpiry) <= now.getTime()) return null;
+  return {kind: 'session', token: offered, session: held};
+}
+
+// --- sessions and the password ---------------------------------------------
+
+/// How long a session lasts without being used, and the longest it can live
+/// however often it is used.
+const sessionIdleMs = 12 * 60 * 60 * 1000;
+const sessionLifetimeMs = 7 * 24 * 60 * 60 * 1000;
+
+/// The shortest password the panel will set.
+///
+/// The stretching below is bounded by how much processor time a Worker may
+/// spend on one request, so length is what carries the strength here. See
+/// `worker/README.md`.
+const minimumPasswordLength = 12;
+
+/// Stretching applied to a password before it is stored.
+///
+/// Recorded with each hash rather than fixed in code, so it can be raised
+/// later without making every existing password unverifiable.
+const passwordIterations = 50000;
+
+function sessionKey(id) {
+  return `session:${id}`;
+}
+
+const passwordRecordKey = 'auth:password';
+
+/// A token's fingerprint, which is what gets stored.
+///
+/// The session token itself is never written down. A dump of the namespace
+/// yields hashes, not credentials that can be replayed.
+async function fingerprint(value) {
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(value),
+  );
+  return bytesToHex(new Uint8Array(digest));
+}
+
+async function derive(password, salt, iterations) {
+  const key_ = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits'],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {name: 'PBKDF2', hash: 'SHA-256', salt: hexToBytes(salt), iterations},
+    key_,
+    256,
+  );
+  return bytesToHex(new Uint8Array(bits));
+}
+
+function hexToBytes(hex) {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let at = 0; at < bytes.length; at += 1) {
+    bytes[at] = parseInt(hex.slice(at * 2, at * 2 + 2), 16);
+  }
+  return bytes;
+}
+
+/// Compares two hex strings without returning early on the first difference.
+function sameSecret(left, right) {
+  if (typeof left !== 'string' || typeof right !== 'string') return false;
+  if (left.length !== right.length) return false;
+  let difference = 0;
+  for (let at = 0; at < left.length; at += 1) {
+    difference |= left.charCodeAt(at) ^ right.charCodeAt(at);
+  }
+  return difference === 0;
+}
+
+async function issueSession(env, now, headers) {
+  const store = contentStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  const raw = bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
+  const expires = new Date(now.getTime() + sessionIdleMs).toISOString();
+  const absoluteExpiry = new Date(now.getTime() + sessionLifetimeMs).toISOString();
+  await store.put(
+    sessionKey(await fingerprint(raw)),
+    JSON.stringify({started: now.toISOString(), expires, absoluteExpiry}),
+    {expirationTtl: Math.floor(sessionLifetimeMs / 1000)},
+  );
+  return response({token: raw, expires, absoluteExpiry}, 200, headers);
+}
+
+/// Signs in with the password, or with the deployment secret.
+async function openSession(request, env, now, headers) {
+  const attemptKey = key(adminFailurePrefix, [
+    isoDate(now),
+    String(now.getUTCHours()),
+  ]);
+  let body;
+  try {
+    body = JSON.parse(await request.text());
+  } catch {
+    return response({error: 'Request is not valid JSON'}, 400, headers);
+  }
+  const offered = typeof body?.password === 'string' ? body.password : '';
+  if (offered === '') {
+    return response({error: 'No password given'}, 400, headers);
+  }
+
+  const store = contentStore(env);
+  const record = store ? await store.get(passwordRecordKey, 'json') : null;
+  let accepted = false;
+  if (record) {
+    const derived = await derive(offered, record.salt, record.iterations);
+    accepted = sameSecret(derived, record.hash);
+  }
+  // The deployment secret always works. It is how the owner gets back in if he
+  // forgets the password, and it is why a slow or unreachable password store
+  // can never lock him out of his own site.
+  if (
+    !accepted &&
+    typeof env.ADMIN_TOKEN === 'string' &&
+    env.ADMIN_TOKEN.length >= 32
+  ) {
+    accepted = sameSecret(offered, env.ADMIN_TOKEN);
+  }
+
+  if (!accepted) {
+    const failures = Number((await env.ANALYTICS.get(attemptKey)) ?? 0);
     await env.ANALYTICS.put(attemptKey, String(failures + 1), {
       expirationTtl: 3600,
     });
-    return response({error: 'Unauthorised'}, 401, headers);
+    if (failures + 1 > maximumFailedAttempts) {
+      return response({error: 'Too many attempts'}, 429, headers);
+    }
+    return response({error: 'That was not right'}, 401, headers);
   }
-  return null;
+  await env.ANALYTICS.delete(attemptKey);
+  return issueSession(env, now, headers);
+}
+
+async function describeSession(request, env, headers) {
+  const store = contentStore(env);
+  const record = store ? await store.get(passwordRecordKey, 'json') : null;
+  return response(
+    {
+      kind: request.admin?.kind ?? 'recovery',
+      expires: request.admin?.session?.expires ?? null,
+      passwordSet: record !== null,
+      // Said plainly, because a panel that looks signed in with the master
+      // credential and one signed in with a session are different situations.
+      recovery: request.admin?.kind === 'recovery',
+    },
+    200,
+    headers,
+  );
+}
+
+async function closeSession(request, env, headers) {
+  const store = contentStore(env);
+  if (store && request.admin?.kind === 'session') {
+    await store.delete(sessionKey(await fingerprint(request.admin.token)));
+  }
+  return response({signedOut: true}, 200, headers);
+}
+
+/// Sets or changes the password, and signs every other session out.
+async function changePassword(request, env, now, headers) {
+  const store = contentStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  let body;
+  try {
+    body = JSON.parse(await request.text());
+  } catch {
+    return response({error: 'Request is not valid JSON'}, 400, headers);
+  }
+  const next = typeof body?.next === 'string' ? body.next : '';
+  const current = typeof body?.current === 'string' ? body.current : '';
+  if (next.length < minimumPasswordLength) {
+    return response(
+      {
+        error: `A password needs at least ${minimumPasswordLength} characters`,
+        minimum: minimumPasswordLength,
+      },
+      400,
+      headers,
+    );
+  }
+
+  // Re-authenticated at the moment of the change, even though the request is
+  // already authorised. A session left open on a borrowed machine should not
+  // be enough to take the site away from its owner.
+  const record = await store.get(passwordRecordKey, 'json');
+  let allowed = false;
+  if (record) {
+    const derived = await derive(current, record.salt, record.iterations);
+    allowed = sameSecret(derived, record.hash);
+  }
+  if (
+    !allowed &&
+    typeof env.ADMIN_TOKEN === 'string' &&
+    env.ADMIN_TOKEN.length >= 32
+  ) {
+    allowed = sameSecret(current, env.ADMIN_TOKEN);
+  }
+  if (!allowed) {
+    return response({error: 'The current password was not right'}, 403, headers);
+  }
+
+  const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+  const hash = await derive(next, salt, passwordIterations);
+  await store.put(
+    passwordRecordKey,
+    JSON.stringify({
+      salt,
+      hash,
+      iterations: passwordIterations,
+      at: now.toISOString(),
+    }),
+  );
+
+  // Everything signed in with the old password stops working. A password
+  // change that leaves the old sessions alive has not changed anything for
+  // whoever the owner was changing it because of.
+  const sessions = await store.list({prefix: 'session:'});
+  for (const entry of sessions.keys) await store.delete(entry.name);
+
+  return issueSession(env, now, headers);
 }
 
 /// Image types the upload endpoint will take.

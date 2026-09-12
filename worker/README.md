@@ -70,6 +70,49 @@ Use the harness for anything that involves typing into the panel. Editing the
 owner's live content with his real token to find out whether a button works is
 not a test.
 
+## Signing in to the admin
+
+Two credentials, and they do different jobs.
+
+**`ADMIN_TOKEN`** is the deployment secret, set with `wrangler secret put`. It
+is the way back in when the password is forgotten, and the reason an
+unreachable password store cannot lock the owner out of his own site. Keep it
+somewhere he can actually find it.
+
+**A password**, set from the Account section of the panel and stored beside the
+content as a PBKDF2-SHA256 verifier with a per-record salt and iteration count.
+Never as itself.
+
+Either one is exchanged at `POST /v1/admin/session` for a **session token**,
+and that is all the browser ever holds. Sessions expire twelve hours after
+their last use and seven days after they were created, whichever comes first,
+and are stored under a hash of themselves so a dump of the namespace yields
+nothing replayable. `DELETE /v1/admin/session` ends one. Changing the password
+ends all of them and issues a replacement to whoever made the change.
+
+**No Cloudflare account credential ever reaches the browser**, and nothing in
+the panel can touch the hosting account.
+
+### The iteration count
+
+`passwordIterations` in `worker/src/index.js` is 50,000. That is a compromise
+with the Workers free plan's per-request processor budget, which a password
+hash has to fit inside — stretching only happens at sign-in and at a password
+change, never on an ordinary request, but a sign-in that exceeds the budget
+fails. Verify a sign-in after the first deployment that sets a password.
+
+Because of that ceiling, **length is what protects this password**; the panel
+requires at least twelve characters. Each stored hash records the count it was
+made with, so the number can be raised later without invalidating the existing
+password.
+
+### Being locked out
+
+Wrong credentials are counted per hour and stop being answered after ten. The
+**correct** credential is checked first and clears the count, so guessing is
+still bounded but the owner is never collateral. Before this, ten wrong guesses
+from anyone who could reach the Worker shut the endpoint for him too.
+
 ## Content validation
 
 `worker/contracts/content-schema.js` describes the five editable documents and

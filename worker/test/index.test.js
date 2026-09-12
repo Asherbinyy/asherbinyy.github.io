@@ -824,10 +824,21 @@ test('repeated wrong tokens stop being answered', async () => {
   );
   assert.equal(limited.status, 429);
 
-  // And the right token is refused too while the limit holds: the point is
-  // that the endpoint stops answering, not that it keeps a door open.
+  // The owner still gets in. This used to answer 429 as well, on the reasoning
+  // that the endpoint should stop answering entirely -- but the effect was
+  // that anyone who could reach the Worker could lock the owner out of his own
+  // site by typing rubbish at it ten times (A-F9). The correct credential is
+  // checked first now, so guessing is still bounded and he is not collateral.
   const correct = await handleRequest(adminRequest('/v1/admin/content'), env);
-  assert.equal(correct.status, 429);
+  assert.equal(correct.status, 200);
+
+  // And getting in clears the count, so the next wrong guess starts over
+  // rather than landing on a limit someone else filled up.
+  const after = await handleRequest(
+    adminRequest('/v1/admin/content', {token: 'c'.repeat(48)}),
+    env,
+  );
+  assert.equal(after.status, 401);
 });
 
 test('a correct token does not count against the limit', async () => {
@@ -1134,11 +1145,15 @@ test('the panel is served at /admin', async () => {
   assert.match(page.headers.get('content-type'), /text\/html/);
 
   const html = await page.text();
-  // The five documents the owner is allowed to edit, and the token gate.
+  // The five documents the owner is allowed to edit, and a gate in front of
+  // them. Checked by structure rather than by the words on the label, which
+  // are wording and change.
   for (const file of ['profile.json', 'career.json', 'education.json']) {
     assert.ok(html.includes(file), file);
   }
-  assert.ok(html.includes('Admin token'));
+  assert.match(html, /<input id="token" type="password"/);
+  assert.match(html, /<label for="token">/);
+  assert.match(html, /id="unlock"/);
 });
 
 test('the panel is not indexable and cannot be framed', async () => {

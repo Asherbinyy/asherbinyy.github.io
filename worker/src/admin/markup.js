@@ -19,12 +19,16 @@ export const markup = `
   <h1>${brandName}</h1>
   <p>Sign in to change what the site says.</p>
   <div class="field">
-    <label for="token">Admin token</label>
+    <label for="token">Password</label>
     <input id="token" type="password" autocomplete="current-password"
-           placeholder="The value of ADMIN_TOKEN">
+           placeholder="Your password, or the deployment secret">
   </div>
-  <button class="primary" id="unlock" style="width:100%">Unlock</button>
-  <p class="note" id="gateStatus">Held for this tab only, never written to disk.</p>
+  <button class="primary" id="unlock" style="width:100%">Sign in</button>
+  <p class="note" id="gateStatus">
+    This exchanges what you type for a session that expires and can be ended.
+    The deployment secret works here too, and is the way in if the password is
+    forgotten.
+  </p>
 </section>
 
 <div id="frame">
@@ -69,6 +73,26 @@ export const markup = `
     <button id="publish" type="button" class="primary">Review and publish</button>
   </div>
 </div>
+
+<dialog id="reauth" aria-labelledby="reauthTitle">
+  <div class="sheetHead">
+    <h2 id="reauthTitle">Your session ended</h2>
+  </div>
+  <div id="sheetBody">
+    <p class="note">
+      Nothing has been lost. Your unpublished drafts are still here; sign in
+      again to carry on.
+    </p>
+    <div class="field">
+      <label for="reauthPassword">Password</label>
+      <input id="reauthPassword" type="password" autocomplete="current-password">
+    </div>
+    <p class="issue" id="reauthError"></p>
+    <div class="listFoot">
+      <button id="reauthGo" type="button" class="primary">Sign in</button>
+    </div>
+  </div>
+</dialog>
 
 <dialog id="sheet" aria-labelledby="sheetTitle">
   <div class="sheetHead">

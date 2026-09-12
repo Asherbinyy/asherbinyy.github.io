@@ -35,7 +35,10 @@ function goTo(view) {
   el('editorPane').scrollTop = 0;
 }
 
-const otherViews = [{id: 'media', label: 'Media'}];
+const otherViews = [
+  {id: 'media', label: 'Media', head: 'Library'},
+  {id: 'account', label: 'Account', head: 'You'},
+];
 
 function readHash() {
   const raw = decodeURIComponent(location.hash.slice(1));
@@ -70,6 +73,7 @@ function render() {
 
   renderRail();
   if (state.view === 'media') renderLibrary();
+  else if (state.view === 'account') renderAccount();
   else renderEditor();
   renderOutline();
   renderBar();
@@ -108,8 +112,12 @@ function renderRail() {
     button.onclick = () => go(document_.file, []);
     rail.append(button);
   }
-  rail.append(node('div', 'railHead', 'Library'));
+  let heading = null;
   for (const view of otherViews) {
+    if (view.head !== heading) {
+      rail.append(node('div', 'railHead', view.head));
+      heading = view.head;
+    }
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'section';
@@ -298,7 +306,9 @@ function renderBar() {
   // nothing here to press. Shown disabled rather than hidden, so the bar does
   // not move about as the owner walks around the panel.
   if (state.view !== 'document') {
-    el('changeCount').textContent = 'Media is stored as soon as it is uploaded';
+    el('changeCount').textContent = state.view === 'media'
+      ? 'Media is stored as soon as it is uploaded'
+      : 'Nothing on this page is published';
     el('problemCount').hidden = true;
     for (const id of ['publish', 'discard', 'history', 'withdraw']) {
       el(id).disabled = true;
@@ -381,13 +391,14 @@ async function withdraw() {
 // --- starting up -----------------------------------------------------------
 
 async function unlock() {
-  state.token = el('token').value.trim();
-  if (!state.token) return;
+  const secret = el('token').value.trim();
+  if (!secret) return;
   say('Checking...');
   try {
-    const response = await api('/v1/admin/content');
-    if (!response.ok) throw new Error('The token was refused');
-    sessionStorage.setItem('portfolio.admin', state.token);
+    // What the browser keeps from here on is a session, not the credential
+    // that can rewrite the site.
+    await signInWith(secret);
+    el('token').value = '';
     document.body.classList.remove('locked');
     el('gate').hidden = true;
     el('frame').classList.add('on');
@@ -435,11 +446,54 @@ window.addEventListener('beforeunload', (event) => {
   event.returnValue = '';
 });
 
-const remembered = sessionStorage.getItem('portfolio.admin');
-if (remembered) {
-  el('token').value = remembered;
-  unlock();
-} else {
-  el('token').focus();
+el('reauthGo').onclick = finishReauth;
+el('reauthPassword').onkeydown = (event) => {
+  if (event.key === 'Enter') finishReauth();
+};
+
+/// Comes back to a reload with the session, if the browser kept one.
+async function resume() {
+  let remembered = null;
+  try {
+    remembered = sessionStorage.getItem('portfolio.admin.session');
+  } catch (error) {
+    remembered = null;
+  }
+  if (!remembered) return el('token').focus();
+  state.token = remembered;
+  try {
+    const response = await fetch('/v1/admin/content', {
+      headers: {authorization: 'Bearer ' + remembered},
+    });
+    if (!response.ok) throw new Error('gone');
+    document.body.classList.remove('locked');
+    el('gate').hidden = true;
+    el('frame').classList.add('on');
+    say('Loading your content...');
+    await Promise.all(SCHEMA.documents.map((entry) => ensure(entry.file)));
+    await loadHeads();
+    const wanted = readHash();
+    if (wanted && wanted.view === 'document') {
+      state.file = wanted.file;
+      state.path = wanted.path;
+    } else if (wanted) {
+      state.view = wanted.view;
+    }
+    render();
+    say('');
+    await check();
+  } catch (error) {
+    // The session did not survive. Back to the gate, with nothing to lose:
+    // drafts only exist once the panel is open.
+    state.token = '';
+    try {
+      sessionStorage.removeItem('portfolio.admin.session');
+    } catch (removeError) {
+      // Nothing to clear.
+    }
+    el('token').focus();
+  }
 }
+
+resume();
 `;

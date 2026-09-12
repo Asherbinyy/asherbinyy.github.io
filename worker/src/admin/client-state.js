@@ -33,6 +33,8 @@ const state = {
   checking: 0,
   media: null,
   mediaError: '',
+  account: null,
+  expires: null,
 };
 
 const el = (id) => document.getElementById(id);
@@ -55,9 +57,15 @@ async function api(path, options) {
       settings.headers || {},
     ),
   }));
-  if (response.status === 401) throw new Error('The token was refused');
+  if (response.status === 401) {
+    // A session that ran out mid-edit is not a reason to throw the drafts
+    // away. Ask for the password over the top of the panel and leave
+    // everything else exactly where it is.
+    askAgain();
+    throw new Error('Your session ended; sign in again to carry on');
+  }
   if (response.status === 429) {
-    throw new Error('Too many failed attempts; the endpoint is closed for the hour');
+    throw new Error('Too many wrong attempts; the endpoint is closed for the hour');
   }
   return response;
 }

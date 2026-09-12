@@ -28,6 +28,7 @@
  */
 
 import {documents, knownCountries} from '../contracts/content-schema.js';
+import {clientAccount} from './admin/client-account.js';
 import {clientApp} from './admin/client-app.js';
 import {clientFields} from './admin/client-fields.js';
 import {clientMedia} from './admin/client-media.js';
@@ -85,6 +86,7 @@ ${clientState}
 ${clientFields}
 ${clientMedia}
 ${clientPublish}
+${clientAccount}
 ${clientApp}
 </script>
 </body>

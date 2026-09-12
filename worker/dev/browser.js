@@ -76,6 +76,7 @@ export async function launch({width = 1440, height = 900} = {}) {
   });
 
   let nextId = 0;
+  let dialogHandler = null;
   const pending = new Map();
   const waiters = [];
   const logs = [];
@@ -88,6 +89,10 @@ export async function launch({width = 1440, height = 900} = {}) {
       if (!held) return;
       if (frame.error) held.reject(new Error(JSON.stringify(frame.error)));
       else held.resolve(frame.result);
+      return;
+    }
+    if (frame.method === 'Page.javascriptDialogOpening' && dialogHandler) {
+      dialogHandler(frame.params);
       return;
     }
     if (frame.method === 'Runtime.consoleAPICalled') {
@@ -144,6 +149,16 @@ export async function launch({width = 1440, height = 900} = {}) {
 
   await send('Page.enable');
   await send('Runtime.enable');
+  // A native confirm() or a beforeunload prompt blocks the page, and a
+  // blocked page never answers another evaluation -- which looks exactly like
+  // a hang. Accepted by default; a scenario that wants a different answer
+  // stubs window.confirm itself, which takes precedence over this.
+  dialogHandler = (params) => {
+    send('Page.handleJavaScriptDialog', {
+      accept: true,
+      promptText: params.defaultPrompt ?? '',
+    }).catch(() => {});
+  };
   await send('Emulation.setDeviceMetricsOverride', {
     width,
     height,
@@ -151,13 +166,24 @@ export async function launch({width = 1440, height = 900} = {}) {
     mobile: false,
   });
 
+  /// Scripts that have to exist on every page this driver visits.
+  const setups = [];
+
   const page = {
     logs,
+
+    /// Installs a helper script and remembers it, so a navigation does not
+    /// quietly leave the next page without it.
+    async setup(expression) {
+      setups.push(expression);
+      await page.eval(expression);
+    },
 
     async goto(url) {
       const loaded = once('Page.loadEventFired');
       await send('Page.navigate', {url});
       await loaded;
+      for (const expression of setups) await page.eval(expression);
       await page.settle();
     },
 
@@ -185,6 +211,21 @@ export async function launch({width = 1440, height = 900} = {}) {
         );
       }
       return result.result.value;
+    },
+
+    /// Runs something that navigates, and waits for the new page.
+    ///
+    /// The evaluation itself is expected to be lost: the target goes away
+    /// mid-call and the protocol answers "navigated or closed" rather than
+    /// returning. That is the success case here, not an error.
+    async navigateBy(expression) {
+      const loaded = once('Page.loadEventFired', 20000);
+      await page.eval(expression).catch((error) => {
+        if (!/navigated or closed/.test(String(error))) throw error;
+      });
+      await loaded;
+      for (const expression of setups) await page.eval(expression);
+      await page.settle(400);
     },
 
     async viewport(width_, height_, mobile = false) {
