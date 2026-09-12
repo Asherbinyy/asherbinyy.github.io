@@ -1,6 +1,6 @@
 # Admin and media
 
-Current state: 2026-09-11, after admin phase **A1**. Audit baseline was `1cfd039`.
+Current state: 2026-09-12, after admin phases **A1-A4 and A6**. A5 is blocked; see below. Audit baseline was `1cfd039`.
 Target workflow and acceptance: [R3](19-REINNOVATION-ROADMAP.md#r3--admin-as-an-editing-workspace). Customization and analytics: [R8](19-REINNOVATION-ROADMAP.md#r8--customization-and-analytics).
 Phases and ownership: [handoff](21-CLAUDE-ADMIN-HANDOFF.md). Requests to the public app: [`worker/contracts/INTEGRATION.md`](../worker/contracts/INTEGRATION.md).
 
@@ -32,7 +32,7 @@ which is what makes a field the owner has never filled in editable at all.
 The panel has no copy: it asks `/v1/admin/validate`, so it cannot report
 something as publishable that `PUT /v1/admin/content/<file>` would refuse.
 
-### Phase A1, delivered
+### What is delivered
 
 - Sections, editor and a third column at desk widths; one column on a phone,
   with the third column behind a control between the two.
@@ -54,31 +54,74 @@ something as publishable that `PUT /v1/admin/content/<file>` would refuse.
 - Image uploaders are attached because the schema says a field holds an image,
   not because its key was spelled like one.
 
-Verified in Chrome against `worker/dev/serve.js`: 27 browser checks, screenshots
-in `docs/audits/2026-09-11-admin-a1/`.
+**A2, media.** A Media section listing everything stored, with dimensions,
+size, a player for recordings, and the pages pointing at each file; deleting
+one still in use names where, by name, before it goes. Image fields can upload,
+take something already stored, or be cleared. Uploads report real progress and
+offer to try again. Recordings have their own endpoint validating four sound
+formats on their bytes — the image endpoint's argument is that it reads enough
+of each container to know it is a raster image, and widening it would throw
+that away.
 
-## Still missing
+**A3, publishing.** Every publish is a numbered revision with its own copy of
+the document and the source given for it. A publish declares the revision it
+was built on; a stale one is refused with a sheet showing where the two
+disagree and both ways out named. The history can put a revision back, as a new
+revision, revalidated on the way in. A claim needs a source and the **Worker**
+now insists, comparing against the published copy or against nothing — never
+against a baseline the caller supplied.
+
+**A4, accounts.** The deployment secret is exchanged once for a session; that
+is all the browser holds. Sessions expire, can be ended, and are stored under a
+hash of themselves. The password is set from inside the panel, stored stretched
+with a per-record salt, and changing it ends every other session. A session
+ending mid-edit asks for the password over the panel and keeps every draft. The
+hourly lockout no longer takes the owner down with the attacker.
+
+**A6, home.** A dashboard over the counters that already exist, with ranges in
+UTC days. No weekly or monthly unique-visitor figure, and the reason is on the
+page: the visitor hash is salted daily, so adding days counts returning people
+again. The honest multi-day figure is the busiest single day. Averages carry
+their unit. An empty dashboard says nothing is being counted rather than
+implying nobody visited.
+
+Verified in Chrome against `worker/dev/serve.js`: 101 browser checks across five
+scenarios, screenshots in `docs/audits/2026-09-11-admin-a1/` and
+`docs/audits/2026-09-12-admin-a2/`, `-a3`, `-a4`, `-a6`.
+
+## Still missing, and why
+
+Everything left is waiting on the public app. Each is written up with a
+concrete ask in [`INTEGRATION.md`](../worker/contracts/INTEGRATION.md).
 
 - **The third column is an outline of the draft, not the site.** It says so, in
-  the panel. The real preview needs the adapter in
-  [`INTEGRATION.md`](../worker/contracts/INTEGRATION.md) §3.2 (A3).
-- Media is still one image endpoint and one uploader per image field. No media
-  library, gallery ordering, alt text, progress or retry (A2).
-- Editable links, project media lists, interest galleries and evidence
-  attachments are proposed in `INTEGRATION.md` §3.4 and not built (A2).
-- Video is not uploaded. Name recording has no upload endpoint; an image
-  endpoint must not be used for audio (A2).
-- Review shows a before/after diff, but there is no publish confirmation step,
-  no revision store, no stale-edit conflict detection and no rollback (A3).
-- The server records a provenance note when one is sent; it does not yet
-  require one. That enforcement needs a trustworthy baseline and lands with
-  revisions (A3).
-- No coordinated static HTML publication. A publish changes the app and not the
-  CV, Brief or metadata (A3, blocked on R1).
-- The token is still in tab `sessionStorage`. No in-panel password change or
-  logout, and failed attempts still share an hourly counter that can lock out
-  the correct token (A4).
-- No theme, font or pattern management (A5). No analytics homepage (A6).
+  the panel. Needs the preview adapter (§3.2).
+- **A publish updates what the app reads, and not the CV, the Brief or the
+  page metadata**, which are generated separately from the bundle. The review
+  sheet says this where the owner is looking. Needs R1 (§3.3).
+- **Editable links, project media lists and interest galleries** are proposed
+  and not built. A field nothing reads is the defect A1 closed (§3.4).
+- **The name recording cannot be changed by the owner.** The validated audio
+  endpoint exists; `NamePronunciation` plays a hard-coded path (§3.4).
+- **Alt text** exists only where the model already has a caption — education
+  evidence. Portraits, screenshots and crests have nowhere to put one (§3.4).
+- **Video is not uploaded**, and remains an external URL with click-to-load.
+  Direct hosting is a separate decision, not something image KV already does.
+- **A5 is not built at all**: no themes, fonts or page backgrounds, and no
+  Appearance section in the panel. A setting the renderer does not read is a
+  control that appears to work. The proposal is in
+  [`worker/contracts/appearance.js`](../worker/contracts/appearance.js) with
+  every blocker listed and a test asserting none has been quietly cleared
+  (§3.1).
+
+Two things are open on this side rather than the other:
+
+- The password stretch is 50,000 PBKDF2 iterations, bounded by the Workers
+  free-plan processor budget. Length carries the strength; the panel requires
+  twelve characters. Verify a sign-in after the first deployment that sets a
+  password. See [Worker operations](../worker/README.md).
+- Verification is headless Chrome at three viewport sizes. Not a physical
+  phone, not Safari, and no automated screen-reader pass.
 
 ## Media behavior
 
@@ -88,6 +131,12 @@ A1 changed which fields get an uploader, not what the endpoint accepts. The
 schema marks a field as holding an image, so `portrait.src` and an evidence
 `src` have one now and a caption does not. The validation at the trust boundary
 is untouched.
+
+A2 added `POST /v1/admin/media/audio`, its own endpoint on purpose: MP3, MPEG-4
+audio, WAV and Ogg, each checked on its own header, 2 MiB, with the length read
+where the container states it and reported as unknown where it does not. An
+MPEG-4 file carrying a video brand is refused. Nothing consumes stored audio
+yet — the name recording is played from a hard-coded bundle path.
 
 Video currently uses external URLs and deliberate click-to-load playback. R3 must expose that honestly. Direct video storage is a separate hosting decision if needed, not something already supported by image KV storage.
 

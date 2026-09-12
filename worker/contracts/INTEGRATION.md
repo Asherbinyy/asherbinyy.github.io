@@ -8,23 +8,26 @@ to be true on the public side before the admin can describe it as supported.
 Nothing here has been implemented in `lib/**`, and nothing here changes an
 existing route, response shape or field.
 
-Last updated: 2026-09-11, after admin phase A1.
+Last updated: 2026-09-12, after admin phases A1-A6.
 
 ---
 
-## 1. Nothing has changed for the public app yet
+## 1. Nothing has changed for the public app
 
-A1 added a schema, a validator and a new editor. It added **no new content
-field**, so the public app needs no change to keep working. Specifically:
+Six phases in, and the public app still needs no change to keep working.
+**No content field has been added, removed or renamed.** Specifically:
 
 - `GET /v1/content/{file}` still returns the document itself, not an envelope.
 - The five documents and every field in them are exactly as they were.
 - A missing override still returns 404 and the app still uses its bundle.
 
-The one behavioural change is that `PUT /v1/admin/content/{file}` now rejects a
-document that does not match [`content-schema.js`](content-schema.js) with
-**422** and a list of errors. Previously it accepted anything that parsed as a
-JSON object. This can only reduce what reaches the app.
+Three things were added that the app may ignore entirely:
+
+| Change | Effect on the app |
+|---|---|
+| `PUT /v1/admin/content/{file}` refuses a document that fails the schema (422) | Strictly fewer bad documents reach it |
+| `GET /v1/content/{file}` carries an `x-content-revision` header | A header. The body is untouched |
+| A validated audio endpoint at `POST /v1/admin/media/audio` | Nothing consumes it yet — see §3.4 |
 
 **Nothing to do.** This section exists so the absence of a request is on the
 record rather than assumed.
@@ -58,19 +61,45 @@ Correct either of those if I have read the current behaviour wrongly.
 
 ## 3. Requests, in the order they block admin work
 
-### 3.1 An allowlist of what the renderer can actually show — blocks A5
+### 3.1 Appearance — A5 is blocked on this, and only this
 
-A5 is theme, font and per-page pattern selection. I can build the selectors
-now, but a preset I invent is a control that appears to work and does nothing.
+A5 is theme, font and per-page background selection. **Nothing has been built,
+and the panel has no Appearance section**, because a setting the renderer does
+not read is a control that appears to work. What exists instead is a written
+proposal in [`appearance.js`](appearance.js), against identifiers that are
+real, with a test asserting it stays out of the editor until you say
+otherwise.
 
-**What I need:** an exported, importable list of the identifiers the public
-renderer supports — theme ids, bundled font ids per script, background/pattern
-ids — with a human label for each and a note of which are permanent. Kemet and
-Deshret stay, per R8. A JSON file under `assets/` or a generated file I can
-read is fine; the shape is yours to choose.
+**Read that file before answering.** One thing in it will bite whoever
+implements this:
 
-Until that exists, A5 ships selectors bound to a fixture list and the panel
-says the presets are not connected to the site. It will not claim otherwise.
+> The design system calls the two palettes **Kemet** and **Deshret**. The code
+> calls them **`nocturne`** and **`daybreak`** — those are the values in
+> `AppTheme.storageKey`, and they are what is in every viewer's storage today.
+> A settings document written against the design names resolves to nothing and
+> falls back to dark, which looks like it half worked. The proposal uses the
+> storage keys and carries the design names as labels. Renaming the enum would
+> invalidate every stored preference, so it should not be done casually.
+
+**What I need, in the order it unblocks things:**
+
+1. **A published default theme.** Today the theme is a per-viewer preference.
+   For the owner to set one for the site, the app has to read a published
+   value and decide whether a viewer may still override it.
+2. **Typography per script.** Which bundled family is used for Latin and for
+   Arabic, resolved from published settings. Arabic shaping, fallback and
+   contrast have to be checked before a preset ships, and that check is yours.
+3. **A pattern registry.** `12-MOTIF-LIBRARY.md` documents sixteen motifs, but
+   they are painters chosen at their call sites, not ids anything can select.
+   I need an exported allowlist of identifiers the renderer honours. I have
+   deliberately left the pattern list **empty** rather than inventing slugs
+   from the document headings.
+4. **Whether extra presets are wanted at all**, and what a preset may change.
+   Christmas, tech and Batman were the owner's examples, not approved asset
+   packs, and two of those are trademarked.
+
+`appearanceReady` in that file is `false` and a test asserts every blocker is
+still open, so this cannot quietly drift into looking finished.
 
 ### 3.2 The preview adapter — blocks A3
 
@@ -99,7 +128,17 @@ Two things worth settling before you build it:
 Path-addressing is the cheaper option and I would recommend it, but the
 rendering side is yours to decide.
 
-### 3.3 Publication parity — blocks A3's honest "published" state
+### 3.3 Publication parity — the last piece of A3
+
+**What is built now, and what you can use:** every publish is a numbered
+revision. `GET /v1/content/{file}` carries `x-content-revision`.
+`GET /v1/admin/content` returns a `heads` map of file to current revision.
+`GET /v1/admin/content/{file}/revisions` lists the history, and
+`POST /v1/admin/content/{file}/rollback` puts one back as a new revision.
+Stale publishes are refused with 409. So there is a revision identity to build
+release parity on top of, whichever way R1 goes.
+
+#### What is still missing
 
 Confirmed by the audit as SEO-5/S5: the app reads Worker overrides, while the
 CV, the Brief and the shell metadata are generated from bundled files. So a
@@ -136,7 +175,7 @@ consumer comes before I describe a field as supported.
 | Domain-matched icon for a link, with an owner override | Rendering | "Recognizable real logos" (U4, V8) |
 | `app.media[]` — `{kind: 'image' \| 'video', src, alt: LocalizedText, order}` | Replaces the single `screenshot` | Media-ready project pages (U2, V10, CON-1) |
 | `interest.gallery[]` — same shape | Off duty | Interest galleries (UI-9) |
-| `profile.nameAudio` — `{src, seconds}` | About | Name recording has no upload path today; the image endpoint must not be used for audio |
+| `profile.nameAudio` — `{src, seconds}` | About | **Half done.** `POST /v1/admin/media/audio` exists, validates four sound formats on their bytes, and reads the length from the header where the container states it. What is missing is the field and the consumer: `NamePronunciation` plays `AssetSource('audio/name.m4a')` from a hard-coded path, so the owner cannot change his own recording |
 
 `contact` would stay and keep working; `links` would be additive, and a
 migration that reads the old keys into the new list is mine to write. I will
@@ -157,7 +196,11 @@ A field with no consumer does not get built.
 
 ```bash
 node worker/dev/serve.js 8788          # in-memory store, sanitized fixtures
-npm exec --yes --package=node@22 -- node worker/dev/verify-a1.js
+npm exec --yes --package=node@22 -- node worker/dev/verify-a1.js   # editor
+npm exec --yes --package=node@22 -- node worker/dev/verify-a2.js   # media
+npm exec --yes --package=node@22 -- node worker/dev/verify-a3.js   # publishing
+npm exec --yes --package=node@22 -- node worker/dev/verify-a4.js   # accounts
+npm exec --yes --package=node@22 -- node worker/dev/verify-a6.js   # dashboard
 ```
 
 The harness serves the panel, the content endpoints and a stand-in for the
