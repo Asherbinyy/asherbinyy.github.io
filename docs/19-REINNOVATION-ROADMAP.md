@@ -4,7 +4,7 @@ Current plan, 2026-09-11. This replaces the old milestone queue for new work.
 Read the [audit](18-REINNOVATION-AUDIT.md) for code, browser and conversation evidence.
 R0 is the audit/documentation session. R1–R9 are **not complete or visually approved**. The first local app increment repairs Journey height/selection behavior and sitemap generation; it does not replace the full R1/R4 acceptance below.
 
-**Owner assignment, 2026-09-11:** Claude owns all admin/Worker work; Codex owns the public app, SEO, design, motion and game. The owner starts Claude separately using the [admin handoff](21-CLAUDE-ADMIN-HANDOFF.md). Work proceeds concurrently in separate worktrees under the [integration contract](20-APP-ADMIN-CONTRACT.md). Claude can begin admin layout/drafts and schema proposals while the public-rendering decision is pending. Final preview/publication integration still depends on R1. Codex can repair confirmed defects in the retained app without treating that as a migration decision or completion of a whole milestone.
+**Owner assignment, 2026-09-11:** Claude owns all admin/Worker work; Codex owns the public app, SEO, design, motion and game. The owner starts Claude separately using the [admin handoff](21-CLAUDE-ADMIN-HANDOFF.md). Work proceeds concurrently in separate worktrees under the [integration contract](20-APP-ADMIN-CONTRACT.md). Astro is now selected; the [integration reply](23-ADMIN-INTEGRATION-REPLY.md) specifies snapshots, release acknowledgement and preview field paths. Final preview/publication integration still depends on R1. Repairs in the retained Flutter app do not complete an entire milestone.
 
 **2026-09-12:** owner confirmed Claude is working on admin. Codex's first app repair passes all four FVM checks (676 tests); [final browser evidence](audits/2026-09-12/README.md). Production remains unchanged.
 
@@ -24,7 +24,7 @@ Keep Kemet and Deshret as permanent base themes. Their current token values rema
 
 | Decision | Current position |
 |---|---|
-| Public rendering | Recommend semantic HTML pages with CSS/scene enhancements; owner asked whether a frontend migration is acceptable. **Pending**, no framework selected or installed |
+| Public rendering | Owner delegated the choice on 2026-09-12. **Selected Astro 7.3.2**, semantic HTML with progressive scene enhancements; isolated first slice in `site/`, no production switch |
 | Alternative if Flutter stays | Complete generated HTML at public URLs with correct status and publishing parity; account for two-renderer maintenance |
 | Work/Writing | Separate Projects and Writing tabs in one Work experience, based on the original request. Retain existing links through an explicit redirect/deep-link plan |
 | About/Courtyard | Recommend Off duty in About with a game entry that opens a focused full-screen experience. Owner asked; **pending** |
@@ -45,7 +45,7 @@ These are decisions for the relevant milestone, not a request for the owner to a
 | Milestone | Deliverable | Depends on | State |
 |---|---|---|---|
 | R0 | Audit, original-request recovery, corrected docs and concise README | — | This session; verification in worklog |
-| R1 | SEO and a consistent public publishing foundation | Rendering decision | Sitemap generator repaired locally; foundation planned |
+| R1 | SEO and a consistent public publishing foundation | Shared release/preview integration | First Astro slice verified locally: 32 EN/AR Home/Work/project documents, 63 direct URL forms; remaining routes and publication integration open |
 | R2 | Visual system, home and entrance proof | R1 | Planned |
 | R3 | Professional admin, content components, preview and media | R1; R2 component contract | Claude working on admin per owner; integration pending |
 | R4 | Journey and timeline in one view | R2, R3 | Baseline viewport/selection repair local; redesign planned |
@@ -337,4 +337,4 @@ Additional requests from U1–U8 that the short backlog underrepresented:
 
 For every milestone record: source request IDs, exact delivered behaviors, changed files, rendered review artifact, checks actually run, unresolved items and the next milestone. Move issue rows to closed only when their acceptance condition is demonstrated. Preserve owner corrections as decisions instead of asking the same questions again.
 
-Before the next implementation, settle R1's public-rendering choice. The recommended first deliverable is the semantic Home/project pair with a shared publication revision, followed by the Home/intro visual proof in R2. This prevents a second complete redesign from being built on the same indexing and publishing problems.
+The first semantic Home/Work/project slice is verified locally; see the [HTML foundation](22-HTML-FOUNDATION.md) and [browser evidence](audits/2026-09-12/html-foundation/README.md). Next, establish the R2 Home/entrance visual proof on that foundation while Claude implements admin. Remaining public routes, the real preview adapter and coordinated publication must still pass R1 before a production switch.

@@ -1,6 +1,6 @@
 # Open issues
 
-Reviewed 2026-09-11 against source conversations, code and browser captures.
+Reviewed 2026-09-11 against source conversations, code and browser captures; public progress updated 2026-09-12.
 Current plan: [Re-innovation milestones](19-REINNOVATION-ROADMAP.md).
 Evidence: [audit](18-REINNOVATION-AUDIT.md). Historical issue numbers remain searchable in git and the earlier worklogs; the tables here describe current work.
 
@@ -10,13 +10,13 @@ Evidence: [audit](18-REINNOVATION-AUDIT.md). Historical issue numbers remain sea
 
 | ID | Still true | Closes when | Milestone |
 |---|---|---|---|
-| SEO-1 | Public Flutter deep links return 404 while drawing working pages | Valid public URLs return correct successful responses with readable content; missing URLs return a real 404 | R1 |
-| SEO-2 | Home/app HTML lacks the main portfolio content; generated CV/Brief cover only part of the site | Semantic public documents work without the app/scene runtime | R1 |
+| SEO-1 | Production Flutter deep links return 404. Isolated Astro slice passes 63 slashed/unslashed URL responses and missing-page 404 checks locally | All public routes pass on the production host, including real missing-page 404s | R1, partial local implementation |
+| SEO-2 | Local Astro Home/Work/14 projects in both languages render without JavaScript; other routes and production still use Flutter | Semantic public documents work without the app/scene runtime across the released site | R1, partial local implementation |
 | SEO-3 | Generator now derives current public routes and project IDs; retired routes/build-clock dates removed locally. Production still has the old sitemap | Deploy and verify route responses plus the generated sitemap; add modification dates only from trusted revision metadata | R1, partial local repair |
-| SEO-4 | Shell metadata uses rejected copy, homepage canonical and icon-only social art | Each public route has correct metadata and sharing preview from its content revision | R1/R2 |
+| SEO-4 | Production shell metadata uses rejected copy, homepage canonical and icon-only social art. Local Astro slice has per-route metadata and the supplied portrait; final sharing compositions remain | Each public route has correct metadata and sharing preview from its content revision | R1/R2 |
 | SEO-5 | Admin overrides drift from static HTML and metadata | Publishing coordinates one public content revision across renderers | R1/R3 |
 | SEO-6 | Search Console/indexing status has not been inspected | Property is verified, sitemap submitted and actual index/name-query results recorded | R9 |
-| SEO-7 | No independent Arabic crawlable route/alternate-link strategy | EN/AR documents, alternates and canonical relationships verified | R1 |
+| SEO-7 | Local Astro slice has independent AR routes, RTL and reciprocal language alternates; not deployed or extended to all routes | EN/AR documents, alternates and canonical relationships verified across the released site | R1, partial local implementation |
 
 ## Visual experience
 
@@ -65,7 +65,7 @@ Evidence: [audit](18-REINNOVATION-AUDIT.md). Historical issue numbers remain sea
 | QA-3 | Once-per-tab intro, rotation, dynamic browser bars and full accessibility need browser acceptance | Exercise actual interactions, safe areas, large text, keyboard, screen reader and reduced motion |
 | QA-4 | Material/Cupertino icon-font build warning remains | Determine which retained dependency needs it; don't silently bundle unwanted UI libraries |
 | QA-5 | Historical Wasm deferred-loading limitation and below-threshold decorative hairlines | Re-measure for retained modules/surfaces under the chosen architecture; don't claim runtime savings without evidence |
-| DEC-1 | HTML frontend recommendation, About/Courtyard arrangement and game input await owner answers | Resolve before dependent implementation; roadmap records the recommended defaults |
+| DEC-1 | Public rendering settled: owner delegated the choice; Astro selected. About/Courtyard arrangement and game input remain open | Proceed with R1 HTML foundation; resolve remaining choices before dependent milestones |
 | DEC-2 | Subscribers cancelled; daily digest cancellation ambiguous in handover | Keep digest dormant; no account setup or email until clarified |
 | DEC-3 | Real phone/3D asset access may become necessary | Ask only for the specific missing device/asset/service after preparing a reviewable slice |
 

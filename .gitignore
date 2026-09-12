@@ -67,6 +67,12 @@ key.properties
 .agent/
 *.tmp
 
+# Semantic public frontend (R1); source and lockfile are committed.
+site/node_modules/
+site/dist/
+site/.astro/
+site/public/assets/
+
 # Standalone pattern: the documented inline comment is literal to Git.
 pubspec.lock
 

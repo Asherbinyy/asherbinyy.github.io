@@ -46,7 +46,7 @@ The redesign is not finished. Start with the [audit](docs/18-REINNOVATION-AUDIT.
 
 Codex owns the public app; Claude owns the admin/Worker in a separate checkout. [Claude handoff](docs/21-CLAUDE-ADMIN-HANDOFF.md) · [Shared contract](docs/20-APP-ADMIN-CONTRACT.md).
 
-Public pages currently run in Flutter; `/cv/` and `/brief/` are generated HTML. The audit recommends HTML-based public pages for SEO; migration is not yet approved or implemented. Pages and the Worker deploy separately. [Worker operations](worker/README.md).
+Production still uses Flutter plus generated `/cv/` and `/brief/` HTML. The owner delegated the SEO architecture choice; the new Astro foundation is isolated in [site/](site/README.md). It is not deployed. Pages and the Worker deploy separately. [Worker operations](worker/README.md).
 
 ## Assets
 

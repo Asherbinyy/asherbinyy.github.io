@@ -1,0 +1,73 @@
+@font-face { font-family: Plex; src: url('/assets/fonts/IBMPlexSans-Regular-subset.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: Plex; src: url('/assets/fonts/IBMPlexSans-SemiBold-subset.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+@font-face { font-family: Grotesk; src: url('/assets/fonts/SpaceGrotesk-Medium-subset.ttf') format('truetype'); font-weight: 500; font-display: swap; }
+@font-face { font-family: PlexArabic; src: url('/assets/fonts/IBMPlexSansArabic-Regular-subset.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: PlexArabic; src: url('/assets/fonts/IBMPlexSansArabic-SemiBold-subset.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+
+/* Pigments mirror app/theme/tokens.dart and are checked against that source. */
+:root {
+  color-scheme: dark light;
+  --void: #121826;
+  --surface: #1A2233;
+  --surface-raised: #232D40;
+  --line: #2E3A50;
+  --line-strong: #3F4D66;
+  --gold: #E3A93F;
+  --feedback: #45B8B2;
+  --error: #E3716C;
+  --text: #EDF1F8;
+  --secondary: #A8B4C6;
+  --muted: #8895A8;
+  --font-body: Plex, sans-serif;
+  --font-display: Grotesk, Plex, sans-serif;
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+  --gutter: clamp(var(--space-6), 5vw, var(--space-24));
+  --content-width: 80rem;
+  --reading-width: 42rem;
+  --hero-type: clamp(3.25rem, 7vw, 7rem);
+  --heading-type: clamp(2rem, 4vw, 3.5rem);
+  --card-type: clamp(1.5rem, 2.5vw, 2rem);
+  --body-type: 1rem;
+  --lead-type: clamp(1.125rem, 2vw, 1.5rem);
+  --small-type: .875rem;
+  --leading: 1.65;
+  --display-leading: 1.03;
+  --tracking: -.045em;
+  --eyebrow-tracking: .12em;
+  --edge: 1px;
+  --focus-edge: 2px;
+  --target: 3rem;
+  --radius: .125rem;
+  --quick: 120ms;
+  --standard: 200ms;
+  --enter: 360ms;
+  --motion-ease: cubic-bezier(.2, 0, 0, 1);
+  --card-min: 18rem;
+  --portrait-width: 24rem;
+  --portrait-ratio: 4 / 5;
+  --reveal-distance: .5rem;
+}
+:lang(ar) { --font-body: PlexArabic, sans-serif; --font-display: PlexArabic, sans-serif; --tracking: 0; --eyebrow-tracking: 0; --display-leading: 1.35; }
+@media (prefers-color-scheme: light) {
+  :root {
+    --void: #F2E9D8;
+    --surface: #E9DEC8;
+    --surface-raised: #FCF7EC;
+    --line: #D6C8AC;
+    --line-strong: #AD9C7C;
+    --gold: #885912;
+    --feedback: #1C6B68;
+    --error: #9C2E26;
+    --text: #13181F;
+    --secondary: #48545F;
+    --muted: #5A6470;
+  }
+}

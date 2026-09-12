@@ -1,0 +1,57 @@
+---
+import '../styles/tokens.css';
+import '../styles/site.css';
+import markSource from '../../../assets/brand/mark.svg?raw';
+import { assetUrl, metadata, pathFor, safeJson, siteUrl, text, ui } from '../lib/content.mjs';
+const { page, snapshot } = Astro.props;
+const profile = snapshot.documents['profile.json'];
+const meta = metadata(page, snapshot);
+const otherLocale = page.locale === 'en' ? 'ar' : 'en';
+---
+<!doctype html>
+<html lang={page.locale} dir={page.locale === 'ar' ? 'rtl' : 'ltr'}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={meta.description} />
+    <meta name="content-revision" content={snapshot.revision} />
+    <title>{meta.title}</title>
+    <link rel="canonical" href={meta.canonical} />
+    {['en', 'ar'].map(locale => <link rel="alternate" hreflang={locale} href={new URL(pathFor(page.kind, locale, page.id), siteUrl).href} />)}
+    <link rel="alternate" hreflang="x-default" href={new URL(pathFor(page.kind, 'en', page.id), siteUrl).href} />
+    <link rel="icon" href="/assets/brand/mark.svg" type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={meta.title} />
+    <meta property="og:description" content={meta.description} />
+    <meta property="og:url" content={meta.canonical} />
+    <meta property="og:locale" content={page.locale === 'ar' ? 'ar_EG' : 'en_GB'} />
+    {profile.portrait?.src && !profile.portrait.isPlaceholder && <>
+      <meta property="og:image" content={new URL(assetUrl(profile.portrait.src), siteUrl).href} />
+      <meta property="og:image:alt" content={text(profile.name, page.locale)} />
+    </>}
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={meta.title} />
+    <meta name="twitter:description" content={meta.description} />
+    <script type="application/ld+json" set:html={safeJson(meta.schema)} />
+  </head>
+  <body>
+    <a class="skip-link" href="#content" lang="en">Skip to content</a>
+    <header class="site-header shell">
+      <a class="identity" href={pathFor('home', page.locale)} aria-label={text(profile.name, page.locale)}>
+        <span class="brand-mark" aria-hidden="true" set:html={markSource} />
+        <span>{text(profile.name, page.locale)}</span>
+      </a>
+      <nav>
+        <a href={pathFor('home', page.locale)} aria-current={page.kind === 'home' ? 'page' : undefined}>{ui('navHome', page.locale)}</a>
+        <a href={pathFor('work', page.locale)} aria-current={page.kind !== 'home' ? 'page' : undefined}>{ui('navWork', page.locale)}</a>
+        <a href={`${siteUrl}/brief/`}>{ui('navBrief', page.locale)}</a>
+        <a href={pathFor(page.kind, otherLocale, page.id)} lang={otherLocale} hreflang={otherLocale}>{otherLocale === 'ar' ? 'العربية' : 'English'}</a>
+      </nav>
+    </header>
+    <main id="content" class="shell" tabindex="-1"><slot /></main>
+    <footer class="site-footer shell">
+      <span>{text(profile.name, page.locale)}</span>
+      <a href={`${siteUrl}/cv/`}>{ui('heroReadTheCv', page.locale)}</a>
+    </footer>
+  </body>
+</html>

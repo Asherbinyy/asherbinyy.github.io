@@ -5,6 +5,11 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### Added
+
+- Isolated Astro public foundation: Home, Work and 14 project pages in English and Arabic, readable without JavaScript, with route metadata and one immutable content revision. Local proof only; remaining routes and production publication are open.
+- Repeatable built-HTML and HTTP checks, including existing unslashed URLs and real missing-page responses; documented the public snapshot/preview contract for Claude's admin integration.
+
 ### Documentation
 
 - Audited the original requests, repository and deployed browser views; saved 11 visual baseline captures.
