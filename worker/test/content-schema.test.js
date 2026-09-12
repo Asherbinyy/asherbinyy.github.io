@@ -338,3 +338,146 @@ test('every field an editor has to draw declares a label and a kind', () => {
     for (const field of document.fields) seen(field, document.file);
   }
 });
+
+// --- the fields Codex accepted in the A1 integration reply -----------------
+
+test('a link needs an identifier, a label and a real address', () => {
+  const verdict = validateDocument('profile.json', {
+    name: {en: 'A'},
+    positioning: {en: 'B'},
+    contact: {email: 'a@b.co'},
+    links: [{id: 'medium', label: {en: 'Medium'}, url: 'medium.com/@a'}],
+  });
+  assert.ok(verdict.errors.some((issue) => issue.path === 'links.0.url'));
+});
+
+test('the old contact block keeps working beside the new links', () => {
+  // Additive, per the reply. Nothing is migrated until the consumer exists.
+  const verdict = validateDocument('profile.json', {
+    name: {en: 'A'},
+    positioning: {en: 'B'},
+    contact: {email: 'a@b.co', github: 'https://github.com/a'},
+    links: [{id: 'medium', label: {en: 'Medium'}, url: 'https://medium.com/@a'}],
+  });
+  assert.deepEqual(verdict.errors, []);
+});
+
+test('a gallery picture needs a file and a video needs an address', () => {
+  const base = {
+    id: 'a', name: 'A', platforms: ['ios'], store: {}, domain: 'Travel',
+  };
+  const missingFile = validateDocument('apps.json', {
+    apps: [{...base, media: [{id: 'one', kind: 'image', alt: {en: 'A screen'}}]}],
+  });
+  assert.ok(missingFile.errors.some((issue) => issue.path === 'apps.0.media.0.image'));
+
+  const missingUrl = validateDocument('apps.json', {
+    apps: [{...base, media: [{id: 'one', kind: 'video', alt: {en: 'A clip'}}]}],
+  });
+  assert.ok(missingUrl.errors.some((issue) => issue.path === 'apps.0.media.0.url'));
+});
+
+test('a gallery entry cannot be both a picture and a video', () => {
+  const verdict = validateDocument('apps.json', {
+    apps: [{
+      id: 'a', name: 'A', platforms: ['ios'], store: {}, domain: 'Travel',
+      media: [{
+        id: 'one',
+        kind: 'image',
+        image: 'assets/media/portrait.jpg',
+        url: 'https://example.com/v',
+        alt: {en: 'A screen'},
+      }],
+    }],
+  });
+  assert.ok(verdict.errors.some((issue) => issue.path === 'apps.0.media.0.url'));
+});
+
+test('a gallery entry has to say what it shows', () => {
+  // Alt text is the one thing a gallery cannot ship without: it is what
+  // anyone who cannot see the picture gets instead of it.
+  const verdict = validateDocument('apps.json', {
+    apps: [{
+      id: 'a', name: 'A', platforms: ['ios'], store: {}, domain: 'Travel',
+      media: [{id: 'one', kind: 'image', image: 'assets/media/portrait.jpg'}],
+    }],
+  });
+  assert.ok(verdict.errors.some((issue) => issue.path === 'apps.0.media.0.alt'));
+});
+
+test('a complete gallery entry is accepted', () => {
+  const verdict = validateDocument('apps.json', {
+    apps: [{
+      id: 'a', name: 'A', platforms: ['ios'], store: {}, domain: 'Travel',
+      media: [
+        {
+          id: 'one',
+          kind: 'image',
+          image: '/v1/media/' + 'a'.repeat(32),
+          alt: {en: 'The booking screen'},
+        },
+        {
+          id: 'two',
+          kind: 'video',
+          url: 'https://example.com/clip',
+          alt: {en: 'A walkthrough'},
+        },
+      ],
+    }],
+  });
+  assert.deepEqual(verdict.errors, []);
+});
+
+test('two gallery entries cannot share an identifier', () => {
+  const verdict = validateDocument('interests.json', {
+    interests: [{
+      id: 'a',
+      label: {en: 'A'},
+      gallery: [
+        {id: 'one', kind: 'image', image: 'assets/media/a.jpg', alt: {en: 'x'}},
+        {id: 'one', kind: 'image', image: 'assets/media/b.jpg', alt: {en: 'y'}},
+      ],
+    }],
+  });
+  assert.ok(verdict.errors.some((issue) => issue.path === 'interests.0.gallery.1.id'));
+});
+
+test('the name recording takes a sound file, not a picture', () => {
+  const verdict = validateDocument('profile.json', {
+    name: {en: 'A'},
+    positioning: {en: 'B'},
+    contact: {email: 'a@b.co'},
+    nameAudio: {src: 'https://example.com/name.mp3'},
+  });
+  assert.ok(verdict.errors.some((issue) => issue.path === 'nameAudio.src'));
+});
+
+test('the recording length is optional, because it comes from the file', () => {
+  const verdict = validateDocument('profile.json', {
+    name: {en: 'A'},
+    positioning: {en: 'B'},
+    contact: {email: 'a@b.co'},
+    nameAudio: {src: '/v1/media/' + 'b'.repeat(32)},
+  });
+  assert.deepEqual(verdict.errors, []);
+});
+
+test('every field agreed but not yet rendered says so', () => {
+  // The editor draws this as "not on the site yet". A field that quietly
+  // looked live would be the defect A1 closed, reopened.
+  const pending = [];
+  const walk = (field, where) => {
+    if (field.consumer === 'pending') pending.push(where + '.' + field.key);
+    if (field.kind === 'object') field.fields.forEach((c) => walk(c, where));
+    if (field.kind === 'list') walk(field.of, where);
+  };
+  for (const document of documents) {
+    for (const field of document.fields) walk(field, document.file);
+  }
+  assert.deepEqual(pending.sort(), [
+    'apps.json.media',
+    'interests.json.gallery',
+    'profile.json.links',
+    'profile.json.nameAudio',
+  ]);
+});

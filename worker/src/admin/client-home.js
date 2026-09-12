@@ -136,6 +136,8 @@ async function renderHome() {
     return;
   }
 
+  pane.append(releaseSection());
+
   const seen = state.insights;
   pane.append(collectionState(seen));
 
@@ -223,6 +225,113 @@ async function renderHome() {
       seen.retention.visitorHashes + '. ' + seen.retention.note,
   ));
   pane.append(kept);
+}
+
+/// What a build made from the current content would be, and whether the
+/// public HTML is serving it yet.
+///
+/// These are two different questions and the panel used to be able to answer
+/// only the first. Publishing updates the content endpoint the app reads
+/// immediately; the HTML follows when a release runs. Saying "published" for
+/// both is the claim the contract forbids, so this says which is which.
+function releaseSection() {
+  const group = node('div', 'group');
+  group.append(node('h3', null, 'What the site is serving'));
+
+  if (state.release === null) {
+    group.append(node('p', 'note', 'Working out the revision...'));
+    loadRelease().then(() => {
+      if (state.view === 'home') render();
+    });
+    return group;
+  }
+  if (state.releaseError) {
+    group.append(node('p', 'issue', state.releaseError));
+    return group;
+  }
+
+  const held = state.release;
+  if (held.state === 'invalid' || held.revision === null) {
+    group.append(node(
+      'p',
+      'issue',
+      'The current content would not build. ' +
+        held.problems.map((entry) =>
+          entry.file + (entry.path ? ' ' + entry.path : '') + ': ' + entry.message)
+          .join('; '),
+    ));
+    return group;
+  }
+
+  const short = held.revision.slice(0, 16);
+  group.append(node(
+    'p',
+    null,
+    'A build from what is published now would be revision ' + short + '.',
+  ));
+
+  const release = held.release;
+  const line = node('p', release.state === 'live' ? 'note' : 'issue warn');
+  if (release.state === 'live') {
+    line.textContent = 'The public HTML is serving exactly this. ' + release.because;
+  } else if (release.state === 'behind') {
+    line.textContent = 'The public HTML is serving ' +
+      String(release.live).slice(0, 16) + '. ' + release.because;
+  } else {
+    line.textContent = release.because;
+  }
+  group.append(line);
+
+  group.append(node(
+    'p',
+    'help',
+    'The app reads published content straight away. The HTML pages, the CV and ' +
+      'the page metadata are built from a snapshot, so they change when a ' +
+      'release runs and not before.',
+  ));
+
+  const copy = document.createElement('button');
+  copy.type = 'button';
+  copy.className = 'small';
+  copy.textContent = 'Copy the snapshot';
+  copy.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(held.snapshot, null, 2));
+      say('Snapshot copied. It is what a build takes as PORTFOLIO_SNAPSHOT.', 'good');
+    } catch (error) {
+      say('Could not copy the snapshot', 'bad');
+    }
+  };
+  group.append(copy);
+  return group;
+}
+
+async function loadRelease() {
+  // Every document the panel holds. The Worker uses its own published copy
+  // wherever it has one and only falls back to these, so this cannot be used
+  // to describe a document the site is already serving.
+  const documents = {};
+  for (const entry of SCHEMA.documents) {
+    const held = state.docs.get(entry.file);
+    if (held) documents[entry.file] = held.live;
+  }
+  try {
+    const response = await api('/v1/admin/release', {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({
+        documents: documents,
+        references: knownReferences('career.json'),
+      }),
+    });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error || 'Could not work out the revision');
+    state.release = body;
+    state.releaseError = '';
+  } catch (error) {
+    state.release = null;
+    state.releaseError = error.message;
+  }
 }
 
 /// Whether anything is being counted at all, said plainly.

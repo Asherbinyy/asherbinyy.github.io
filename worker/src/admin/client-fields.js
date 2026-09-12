@@ -97,15 +97,37 @@ function textControl(field, value, path) {
     if (typeof field.max === 'number') input.max = String(field.max);
     input.step = 'any';
   }
-  input.oninput = () => {
-    if (field.kind === 'number') {
-      const held = input.value.trim();
-      write(path, held === '' ? undefined : Number(held), held !== '');
-      return;
-    }
-    write(path, input.value);
-  };
+  // Read from a file rather than typed. A length the owner could disagree with
+  // the recording about is worse than no length at all.
+  if (field.derived === true) {
+    input.readOnly = true;
+    input.tabIndex = -1;
+    if (input.value === '') input.placeholder = 'Set when a file is uploaded';
+  } else {
+    input.oninput = () => {
+      if (field.kind === 'number') {
+        const held = input.value.trim();
+        write(path, held === '' ? undefined : Number(held), held !== '');
+        return;
+      }
+      write(path, input.value);
+    };
+  }
   wrap.append(labelFor(field, id), markInvalid(input, path));
+
+  // The site chooses a mark from the address; showing which address it read
+  // is the difference between a working icon and a silently generic one.
+  if (field.showDomain === true) {
+    const line = node('p', 'help');
+    try {
+      line.textContent = input.value
+        ? 'The site will look for a mark for ' + new URL(input.value).hostname
+        : '';
+    } catch (error) {
+      line.textContent = 'Not an address the site can read a domain from';
+    }
+    if (line.textContent) wrap.append(line);
+  }
   return decorate(wrap, field, path);
 }
 
@@ -418,6 +440,12 @@ function assetControl(field, value, path) {
         bar.style.width = Math.round(fraction * 100) + '%';
       });
       write(path, body.url, true);
+      // Where the schema says a sibling holds the length, it comes from the
+      // file's own header or not at all.
+      if (field.durationInto) {
+        const beside = path.slice(0, -1).concat([field.durationInto]);
+        write(beside, typeof body.seconds === 'number' ? body.seconds : undefined);
+      }
       say('Uploaded ' + file.name, 'good');
       render();
     } catch (error) {

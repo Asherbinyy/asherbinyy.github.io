@@ -34,6 +34,8 @@ function goTo(view) {
   if (view === 'home') {
     state.insights = null;
     state.insightsError = '';
+    state.release = null;
+    state.releaseError = '';
   }
   state.view = view;
   if (location.hash !== '#' + view) history.replaceState(null, '', '#' + view);
@@ -82,6 +84,9 @@ function render() {
   }
 
   renderRail();
+  // The preview follows whatever is being edited, but only once it has
+  // answered. Sent before the redraw so a slow frame does not hold it up.
+  if (state.rightPane === 'preview') selectInPreview();
   if (state.view === 'home') renderHome();
   else if (state.view === 'media') renderLibrary();
   else if (state.view === 'account') renderAccount();
@@ -240,15 +245,19 @@ function languageTabs() {
     button.setAttribute('aria-selected', String(state.lang === language.code));
     button.tabIndex = state.lang === language.code ? 0 : -1;
     button.textContent = language.label;
-    button.onclick = () => {
-      state.lang = language.code;
+    // The preview renders one language at a time, and switching here is not an
+    // edit, so nothing else would tell it. Without this the panel shows Arabic
+    // and the preview keeps showing English.
+    const switchTo = (code) => {
+      state.lang = code;
       render();
+      if (state.rightPane === 'preview') sendDraft();
     };
+    button.onclick = () => switchTo(language.code);
     button.onkeydown = (event) => {
       if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
       event.preventDefault();
-      state.lang = state.lang === 'en' ? 'ar' : 'en';
-      render();
+      switchTo(state.lang === 'en' ? 'ar' : 'en');
       const moved = el('lang-' + state.lang);
       if (moved) moved.focus();
     };
@@ -441,6 +450,7 @@ async function unlock() {
       state.view = 'home';
     }
     render();
+    setRightPane(state.rightPane);
     say('');
     await check();
   } catch (error) {
@@ -462,6 +472,9 @@ el('previewToggle').onclick = () => {
   const showing = document.body.classList.toggle('showPreview');
   el('previewToggle').setAttribute('aria-pressed', String(showing));
 };
+el('showPreview').onclick = () => setRightPane('preview');
+el('showOutline').onclick = () => setRightPane('outline');
+el('previewRetry').onclick = () => mountPreview();
 
 window.addEventListener('beforeunload', (event) => {
   if (!anyDirty()) return;
@@ -505,6 +518,7 @@ async function resume() {
       state.view = 'home';
     }
     render();
+    setRightPane(state.rightPane);
     say('');
     await check();
   } catch (error) {

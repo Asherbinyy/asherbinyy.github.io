@@ -62,6 +62,15 @@ class MemoryKv {
   }
 }
 
+/// Where the panel is served from, as the preview fixture sees it.
+///
+/// The panel runs on `localhost` and the preview on `127.0.0.1`. Same machine,
+/// same port, and -- as far as the browser is concerned -- two different
+/// origins. So the origin checks on both sides are exercised for real rather
+/// than passing because everything happens to be same-origin.
+const panelOrigin = `http://localhost:${port}`;
+const previewOrigin = `http://127.0.0.1:${port}`;
+
 const env = {
   ANALYTICS: new MemoryKv(),
   CONTENT: new MemoryKv(),
@@ -70,9 +79,137 @@ const env = {
   SITE_ORIGIN: origin,
   SITE_ID: `localhost:${port}`,
   BUNDLE_BASE: `${origin}/assets/assets/content`,
+  PREVIEW_ORIGIN: previewOrigin,
+  RELEASE_URL: `${origin}/release.json`,
 };
 
 const fixtures = new URL('../contracts/fixtures/', import.meta.url);
+
+/// A stand-in for the public preview adapter, speaking protocol v1.
+///
+/// Codex has not built the real one. This exists so the editor's half can be
+/// driven end to end -- handshake, draft, select, rendered, stale
+/// acknowledgements -- instead of being declared finished on the strength of
+/// having been written.
+function previewFixture(session) {
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<title>Preview fixture</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; background: #fff; color: #111;
+    margin: 0; padding: 16px; }
+  [data-content-path] { padding: 4px 6px; border-radius: 4px; }
+  [data-content-path].chosen { outline: 3px solid #E3A93F; background: #FFF6E3; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+</style></head>
+<body>
+<h1 id="heading">Preview fixture</h1>
+<div id="rendered"></div>
+<script>
+const SESSION = ${JSON.stringify(session)};
+const PARENT = ${JSON.stringify(panelOrigin)};
+const send = (type, payload) => parent.postMessage(
+  {channel: 'portfolio-preview', version: 1, sessionId: SESSION, type, payload},
+  PARENT,
+);
+
+/// Renders every leaf of the draft with the attributes the real components
+/// have agreed to carry.
+function draw(file, document_, locale) {
+  const into = document.getElementById('rendered');
+  into.replaceChildren();
+  const ids = [];
+  const walk = (value, path) => {
+    if (value !== null && typeof value === 'object') {
+      for (const key of Object.keys(value)) walk(value[key], path.concat([key]));
+      return;
+    }
+    const at = path.join('.');
+    const line = document.createElement('p');
+    line.dataset.contentFile = file;
+    line.dataset.contentPath = at;
+    line.textContent = at + ': ' + String(value);
+    into.append(line);
+    ids.push(file + ':' + at);
+  };
+  walk(document_, []);
+  document.getElementById('heading').textContent = file + ' (' + locale + ')';
+  return ids;
+}
+
+addEventListener('message', (event) => {
+  if (event.origin !== PARENT) return;
+  const message = event.data;
+  if (!message || message.channel !== 'portfolio-preview') return;
+  if (message.version !== 1 || message.sessionId !== SESSION) return;
+
+  if (message.type === 'draft') {
+    const ids = draw(
+      message.payload.file, message.payload.document, message.payload.locale,
+    );
+    send('rendered', {requestId: message.payload.requestId, componentIds: ids, errors: []});
+    report({
+      file: message.payload.file,
+      locale: message.payload.locale,
+      componentIds: ids,
+      text: document.body.innerText,
+      raw: JSON.stringify(message),
+    });
+    return;
+  }
+  if (message.type === 'select') {
+    for (const node of document.querySelectorAll('.chosen')) {
+      node.classList.remove('chosen');
+    }
+    const wanted = String(message.payload.componentId || '');
+    const path = wanted.slice(wanted.indexOf(':') + 1);
+    // Closest rendered parent, as the reply describes: a leaf that is not
+    // drawn on its own highlights whatever contains it.
+    let found = document.querySelector('[data-content-path="' + path + '"]');
+    // A path that names a group rather than a value: this fixture only draws
+    // leaves, so the nearest thing it has is the first one inside the group.
+    // The real components render the group itself and will match directly.
+    if (!found && path) {
+      found = [...document.querySelectorAll('[data-content-path]')]
+        .find((node) => node.dataset.contentPath.startsWith(path + '.')) || null;
+    }
+    if (!found && path) {
+      const parts = path.split('.');
+      while (parts.length > 0 && !found) {
+        parts.pop();
+        found = document.querySelector('[data-content-path="' + parts.join('.') + '"]');
+      }
+    }
+    if (found) {
+      found.classList.add('chosen');
+      found.scrollIntoView({block: 'center'});
+    }
+    report({chosen: found ? found.dataset.contentPath : null, asked: wanted});
+  }
+});
+
+/// Tells the harness what just happened.
+///
+/// The panel and this page are deliberately different origins, so a test
+/// driving the panel cannot read into this document -- which is the point.
+/// This is how the harness observes it instead, and it is not part of the
+/// protocol.
+let reported = {};
+function report(fields) {
+  reported = Object.assign({}, reported, fields);
+  fetch(PARENT + '/__preview-log', {
+    method: 'POST',
+    headers: {'content-type': 'text/plain'},
+    body: JSON.stringify(reported),
+  }).catch(() => {});
+}
+
+// The other side waits for this before sending anything.
+send('ready', {schemaVersions: [1], components: []});
+</script>
+</body></html>`;
+}
 
 async function serveFixture(name) {
   if (!/^[a-z]+\.json$/.test(name)) return null;
@@ -83,8 +220,62 @@ async function serveFixture(name) {
   }
 }
 
+/// The last thing the preview fixture reported. Harness only.
+let previewLog = {};
+
 const server = createServer(async (incoming, outgoing) => {
   const url = new URL(incoming.url, origin);
+
+  // What the preview fixture says it did. Harness only.
+  if (url.pathname === '/__preview-log') {
+    if (incoming.method === 'OPTIONS') {
+      outgoing.writeHead(204, {
+        'access-control-allow-origin': '*',
+        'access-control-allow-headers': 'content-type',
+      }).end();
+      return;
+    }
+    if (incoming.method === 'POST') {
+      const body = [];
+      for await (const chunk of incoming) body.push(chunk);
+      previewLog = JSON.parse(Buffer.concat(body).toString());
+      outgoing.writeHead(200, {'access-control-allow-origin': '*'}).end('{}');
+      return;
+    }
+    outgoing.writeHead(200, {
+      'content-type': 'application/json',
+      'access-control-allow-origin': '*',
+    });
+    outgoing.end(JSON.stringify(previewLog));
+    return;
+  }
+
+  // The preview adapter stand-in, on the other origin.
+  if (url.pathname === '/' && incoming.method === 'GET') {
+    outgoing.writeHead(200, {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+      'x-robots-tag': 'noindex, nofollow',
+    });
+    outgoing.end(previewFixture(url.searchParams.get('session') ?? ''));
+    return;
+  }
+
+  // What the public build writes. Absent unless RELEASE_REVISION is set, so
+  // the "nothing is serving a release yet" state is the default here too.
+  if (url.pathname === '/release.json' && incoming.method === 'GET') {
+    if (!process.env.RELEASE_REVISION) {
+      outgoing.writeHead(404).end('Not found');
+      return;
+    }
+    outgoing.writeHead(200, {'content-type': 'application/json'});
+    outgoing.end(JSON.stringify({
+      schemaVersion: 1,
+      revision: process.env.RELEASE_REVISION,
+      pages: ['/'],
+    }));
+    return;
+  }
 
   // Stands in for the site's own bundle, which is on GitHub Pages in
   // production. The panel reads it to show what the site would fall back to.

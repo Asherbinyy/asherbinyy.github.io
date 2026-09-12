@@ -261,6 +261,19 @@ label.buttonish:hover { border-color: var(--gold); }
   color: var(--muted); margin: 0 0 8px; }
 .previewNote { border: 1px dashed var(--line); border-radius: 8px; padding: 10px 12px;
   color: var(--muted); font-size: 12.5px; line-height: 1.5; margin: 0 0 14px; }
+.paneTabs { display: flex; gap: 4px; margin: 0 0 12px;
+  border: 1px solid var(--line); border-radius: 10px; padding: 4px;
+  background: var(--surface); }
+.paneTabs button { flex: 1; min-height: 34px; padding: 4px 10px; font-size: 12px;
+  letter-spacing: .06em; background: none; border: 1px solid transparent;
+  color: var(--muted); border-radius: 7px; }
+.paneTabs button[aria-selected="true"] { background: var(--raised); color: var(--gold);
+  border-color: var(--line); }
+.previewNote.bad { border-color: var(--alert); color: var(--alert); }
+.previewNote.good { border-color: var(--ok); color: var(--ok); }
+#previewFrame { border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+  background: var(--void); }
+#previewFrame iframe { display: block; width: 100%; height: 62vh; border: 0; }
 .outline { font-size: 13.5px; }
 .outline .o { padding: 8px 10px; border-radius: 8px; border: 1px solid transparent; }
 .outline .o.on { border-color: var(--gold); background: rgba(227,169,63,.07); }

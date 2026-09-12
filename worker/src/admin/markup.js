@@ -52,15 +52,30 @@ export const markup = `
     <div id="editor"></div>
   </div>
 
-  <aside id="previewPane" aria-label="Draft outline">
-    <h2>Draft outline</h2>
-    <p class="previewNote">
-      This is your draft read back to you. It is <strong>not</strong> the
-      website: it does not use the site's own components, and it cannot show
-      you how a page will look. A real preview of the live page arrives with
-      the public preview adapter.
-    </p>
-    <div id="outline" class="outline"></div>
+  <aside id="previewPane" aria-label="Preview">
+    <div class="paneTabs" role="tablist" aria-label="Right-hand panel">
+      <button id="showPreview" type="button" role="tab" aria-selected="true">
+        Preview
+      </button>
+      <button id="showOutline" type="button" role="tab" aria-selected="false">
+        Outline
+      </button>
+    </div>
+
+    <div id="previewWrap">
+      <p class="previewNote" id="previewState">Waiting for the preview...</p>
+      <button id="previewRetry" type="button" class="small" hidden>Try again</button>
+      <div id="previewFrame"></div>
+    </div>
+
+    <div id="outlineWrap" hidden>
+      <p class="previewNote">
+        Your draft read back to you. It is <strong>not</strong> the website: it
+        does not use the site's own components, and it cannot show you how a
+        page will look.
+      </p>
+      <div id="outline" class="outline"></div>
+    </div>
   </aside>
 
   <div id="bar">

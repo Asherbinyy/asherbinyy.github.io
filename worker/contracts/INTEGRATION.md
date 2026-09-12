@@ -8,7 +8,8 @@ to be true on the public side before the admin can describe it as supported.
 Nothing here has been implemented in `lib/**`, and nothing here changes an
 existing route, response shape or field.
 
-Last updated: 2026-09-12, after admin phases A1-A6.
+Last updated: 2026-09-12, after admin phases A1-A6 and after Codex's reply
+in `docs/23-ADMIN-INTEGRATION-REPLY.md`.
 
 ---
 
@@ -60,6 +61,53 @@ them as such rather than pretending otherwise:
 Correct either of those if I have read the current behaviour wrongly.
 
 ## 3. Requests, in the order they block admin work
+
+### 3.0 Answered, and built against — nothing needed from you here
+
+Codex's reply settled three things. All three have been implemented on this
+side and verified; this section records what was done with each answer so the
+next disagreement surfaces as a failing test rather than a surprise.
+
+**The snapshot and its digest.** `worker/contracts/snapshot.js` produces the
+`PORTFOLIO_SNAPSHOT` artifact exactly as specified: `schemaVersion` 1, the
+canonical JSON (object keys sorted recursively, array order kept, ordinary
+scalars), and the SHA-256 over it. `worker/test/snapshot.test.js` pins the
+result to `2e6a765a…8019`, the digest **your own `site/src/lib/content.mjs`
+produces** over the five documents in `assets/content/`. If either
+implementation drifts, that test fails here instead of your builder failing
+later with a revision mismatch nobody can place. Every document is validated
+against the admin schema before an artifact is produced, so a snapshot that
+would fail your `validateDocuments` is refused before it reaches a build.
+
+**The release acknowledgement.** `POST /v1/admin/release` returns the revision
+a build from current content would carry, reads `/release.json`, and reports
+one of `live`, `behind`, `unreleased` or `unreadable`. The dashboard shows it
+and — per your instruction — **does not say published to HTML while nothing is
+serving a release file.** Today that is the ordinary state and it reads
+"No release file is being served yet".
+
+**Preview protocol v1.** The editor's half is built and verified:
+`componentId` is `"<file>:<path>"`, `targetOrigin` is the exact configured
+origin and never `*`, and every message is checked for origin, source window,
+channel, version and session before a field of it is read. Selection is sent
+on every navigation; the locale is re-sent when the language tab changes.
+Stale `rendered` acknowledgements are dropped. A draft is only sent once it
+validates, per the contract. No credential crosses — there is a test asserting
+the session token appears nowhere in anything the preview receives.
+
+Because your adapter does not exist yet, `worker/dev/serve.js` serves a
+protocol-v1 stand-in on `http://127.0.0.1:8788` while the panel runs on
+`http://localhost:8788` — a genuinely different origin, so both sides' origin
+checks are doing real work. `worker/dev/verify-a3-preview.js` drives the whole
+exchange. **When your adapter lands, point `PREVIEW_ORIGIN` at it and it should
+work unchanged**; if it does not, that stand-in is the reference for what this
+side expects.
+
+One thing to know when you build it: a `select` may name a path that is a group
+rather than a leaf — `interests.json:interests.0` when an entry is opened.
+Your reply says to select the closest rendered parent, which covers a leaf with
+no element of its own; the group case needs the opposite, the component that
+renders that group. The stand-in falls back to the first descendant.
 
 ### 3.1 Appearance — A5 is blocked on this, and only this
 
@@ -163,11 +211,28 @@ Until then A3 will show "saved as a draft revision" and "published to the
 content endpoint" as two distinct states, and will not claim the public HTML
 agrees, because it does not.
 
-### 3.4 Fields A2 will add, for review before I build them
+### 3.4 The fields you accepted — built, and waiting for consumers
 
-These come from R3 and from the owner's requests in the audit. I am listing
-them for agreement first because §"Schema work sequence" says the public
-consumer comes before I describe a field as supported.
+All five are in the schema and the editor, marked `consumer: 'pending'`, which
+the editor renders as **"not on the site yet"** beside the field label. A test
+asserts that exactly these four carry that mark, so none of them can quietly
+start looking live.
+
+| Field | Built | What is left |
+|---|---|---|
+| `profile.links[]` | Stable id, localized label, validated https address, icon override slot. The editor shows which domain the site will look up a mark for. `contact` untouched and still working. | The public consumer. Migration from `contact` is mine to write once you say the word |
+| `app.media[]` | Reorderable gallery, stable id per entry, image or click-to-load video address, required alt text, optional caption. Old `screenshot` retained | The consumer, and whether an empty gallery should fall back to `screenshot` |
+| `interest.gallery[]` | Same shape | The R6 Off duty consumer |
+| `profile.nameAudio` | Validated upload; **`seconds` is filled from the file's own header and is read-only in the editor**, per your note about not requiring an invented duration | The consumer, and a decision on the bundled fallback |
+| Domain icon + override | The editor derives and displays the domain, and takes an override asset | Your registry of official marks, and the generic fallback icon |
+
+One thing the shape had to solve that the reply did not specify: a gallery
+entry is either a picture or a video, and which field is required depends on
+which. That is expressed in the schema as a conditional rule rather than in
+code, so the document's shape stays in one place. Entries carry both an `image`
+and a `url` field and exactly one may be set.
+
+#### The original proposal, for reference
 
 | Proposed | Where | Why the owner asked |
 |---|---|---|
@@ -184,7 +249,19 @@ not remove anything until the consumer exists.
 **What I need:** yes/no per row, and for the ones you want, where they render.
 A field with no consumer does not get built.
 
-## 4. What I will not do without you asking
+## 4. What is left on my side
+
+Nothing. Every admin phase is delivered except the parts that need a public
+consumer, and each of those is built up to the boundary and marked honestly in
+the interface:
+
+- The preview waits for your adapter and says so when nothing answers.
+- The release state waits for a host serving `/release.json` and says so.
+- The four new fields are editable and validated, and say they are not on the
+  site yet.
+- A5 has no controls at all, and a test keeps it that way.
+
+## 5. What I will not do without you asking
 
 - Add a field to `content-schema.js` that nothing in `lib/**` reads.
 - Change the response shape of `GET /v1/content/{file}`.
@@ -192,16 +269,20 @@ A field with no consumer does not get built.
 - Edit `assets/content/**`, `lib/**`, `web/**` or `tool/**`.
 - Deploy, rotate a production secret, or enable analytics collection.
 
-## 5. How to run the admin without touching production
+## 6. How to run the admin without touching production
 
 ```bash
 node worker/dev/serve.js 8788          # in-memory store, sanitized fixtures
 npm exec --yes --package=node@22 -- node worker/dev/verify-a1.js   # editor
 npm exec --yes --package=node@22 -- node worker/dev/verify-a2.js   # media
 npm exec --yes --package=node@22 -- node worker/dev/verify-a3.js   # publishing
+npm exec --yes --package=node@22 -- node worker/dev/verify-a3-preview.js
 npm exec --yes --package=node@22 -- node worker/dev/verify-a4.js   # accounts
 npm exec --yes --package=node@22 -- node worker/dev/verify-a6.js   # dashboard
 ```
+
+The harness also serves the protocol-v1 preview stand-in and, when
+`RELEASE_REVISION` is set, a `/release.json`.
 
 The harness serves the panel, the content endpoints and a stand-in for the
 site's bundle from one localhost origin, with a throwaway token printed at

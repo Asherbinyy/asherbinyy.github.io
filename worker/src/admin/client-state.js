@@ -37,6 +37,9 @@ const state = {
   expires: null,
   insights: null,
   insightsError: '',
+  rightPane: 'preview',
+  release: null,
+  releaseError: '',
   range: {
     id: '28',
     from: new Date(Date.now() - 27 * 86400000).toISOString().slice(0, 10),
@@ -326,6 +329,9 @@ async function check() {
     if (!response.ok) throw new Error(body.error || 'Could not check the draft');
     state.issues.set(file, body);
     render();
+    // The contract says a validated draft, so this is the moment it is known
+    // to be one.
+    if (state.rightPane === 'preview') sendDraft();
   } catch (error) {
     if (ticket !== state.checking) return;
     say(error.message, 'bad');

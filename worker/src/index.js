@@ -6,6 +6,7 @@ import {
   validateDocument,
 } from '../contracts/validate.js';
 import {adminPage} from './admin.js';
+import {buildSnapshot, compareRelease} from '../contracts/snapshot.js';
 import {defaultRange, summarise, validDay} from './insights.js';
 
 const saltKey = 'system|salt';
@@ -93,6 +94,10 @@ export async function handleRequest(request, env, now = new Date()) {
           "style-src 'unsafe-inline'",
           `img-src 'self' data: ${env.SITE_ORIGIN}`,
           `connect-src 'self' ${env.SITE_ORIGIN}`,
+          // The preview adapter, and nothing else, may be framed. Messages
+          // between the two are checked on their origin as well; this stops a
+          // different page ever being loaded there in the first place.
+          `frame-src ${env.PREVIEW_ORIGIN ?? env.SITE_ORIGIN}`,
           "form-action 'none'",
           "base-uri 'none'",
           "frame-ancestors 'none'",
@@ -174,6 +179,9 @@ export async function handleRequest(request, env, now = new Date()) {
     }
     if (url.pathname === '/v1/admin/insights' && request.method === 'GET') {
       return readInsights(url, env, now, headers);
+    }
+    if (url.pathname === '/v1/admin/release' && request.method === 'POST') {
+      return describeRelease(request, env, headers);
     }
     if (url.pathname === '/v1/admin/validate' && request.method === 'POST') {
       return checkDraft(request, env, headers, false);
@@ -1733,6 +1741,83 @@ export async function visitorHash(salt, address, agent, siteId) {
     `${salt}\u0000${address}\u0000${agent}\u0000${siteId}`,
   );
   return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256', material)));
+}
+
+/// What a build made from the current content would be, and whether the site
+/// is serving it yet.
+///
+/// R1 was answered in `docs/23-ADMIN-INTEGRATION-REPLY.md`: Astro,
+/// build-and-release. So "published" now has two distinct meanings and the
+/// panel has to be able to tell them apart -- the content endpoint the app
+/// reads can be up to date while the HTML the search engines read is a build
+/// behind. This answers the second question honestly, including when the
+/// answer is "nothing is serving a release file yet".
+async function describeRelease(request, env, headers) {
+  let body;
+  try {
+    body = JSON.parse(await request.text());
+  } catch {
+    return response({error: 'Request is not valid JSON'}, 400, headers);
+  }
+  const offered = plainObject(body?.documents) ? body.documents : {};
+
+  // The published copy wins wherever there is one. The panel supplies the
+  // bundled documents because only it can read them, but it does not get to
+  // describe a document this Worker is already serving.
+  const documents = {};
+  for (const file of publishableFiles) {
+    const published = await liveDocument(file, env);
+    const supplied = offered[file];
+    if (published !== null) documents[file] = published;
+    else if (plainObject(supplied)) documents[file] = supplied;
+  }
+
+  const {problems, snapshot} = await buildSnapshot(documents, {
+    references: await referenceSets('career.json', env, body?.references),
+  });
+  if (snapshot === null) {
+    return response(
+      {
+        problems,
+        revision: null,
+        release: null,
+        // A snapshot that cannot be built is not a release that is behind; it
+        // is content that would fail the build.
+        state: 'invalid',
+      },
+      200,
+      headers,
+    );
+  }
+
+  const live = await readReleaseFile(env);
+  return response(
+    {
+      problems: [],
+      revision: snapshot.revision,
+      snapshot,
+      release: compareRelease(snapshot.revision, live),
+    },
+    200,
+    headers,
+  );
+}
+
+/// Reads the release file the public build writes.
+///
+/// Absent is the ordinary answer today: the Astro slice is not the production
+/// host, so nothing is serving one. That is reported as unreleased rather than
+/// as an error, and never as published.
+async function readReleaseFile(env) {
+  const where = env.RELEASE_URL ?? `${env.SITE_ORIGIN}/release.json`;
+  if (where === '') return null;
+  try {
+    const response_ = await fetch(where, {signal: AbortSignal.timeout(2500)});
+    if (!response_.ok) return null;
+    return await response_.json();
+  } catch {
+    return null;
+  }
 }
 
 /// What the counters already hold, over a range of days.

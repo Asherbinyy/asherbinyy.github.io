@@ -89,6 +89,39 @@ function checkFields(fields, value, path, label, context, report) {
   }
 }
 
+/// Rules that depend on more than one field of the same object.
+///
+/// A gallery entry holds either an uploaded picture or the address of a video,
+/// and which one is required depends on what kind it says it is. That cannot
+/// be expressed by validating each field on its own, and hard-coding it in
+/// code would put half the shape of the document somewhere other than the
+/// schema.
+///
+/// Data only, and deliberately one rule type. The moment this needs a second
+/// one, the answer is probably a clearer document shape rather than a richer
+/// rule language.
+function checkRules(rules, value, path, label, report) {
+  for (const rule of rules) {
+    if (value[rule.when.field] !== rule.when.is) continue;
+    const held = value[rule.require];
+    const missing = held === undefined || held === null || held === '';
+    if (missing) {
+      report.add('error', [...path, rule.require], label, rule.message);
+    }
+    for (const forbidden of rule.forbid ?? []) {
+      const other = value[forbidden];
+      if (other !== undefined && other !== null && other !== '') {
+        report.add(
+          'error',
+          [...path, forbidden],
+          label,
+          `This is a ${rule.when.is}, so it cannot also have that`,
+        );
+      }
+    }
+  }
+}
+
 function checkField(field, value, path, context, report) {
   const label = field.label ?? path[path.length - 1];
   if (absent(value)) {
@@ -290,6 +323,9 @@ function check(field, value, path, label, context, report) {
     case 'object': {
       if (!plainObject(value)) return fail(`${label} must be a group of fields`);
       checkFields(field.fields, value, path, label, context, report);
+      if (Array.isArray(field.rules)) {
+        checkRules(field.rules, value, path, label, report);
+      }
       return;
     }
     case 'map': {

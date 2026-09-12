@@ -33,6 +33,7 @@ import {clientApp} from './admin/client-app.js';
 import {clientFields} from './admin/client-fields.js';
 import {clientHome} from './admin/client-home.js';
 import {clientMedia} from './admin/client-media.js';
+import {clientPreview} from './admin/client-preview.js';
 import {clientPublish} from './admin/client-publish.js';
 import {clientState} from './admin/client-state.js';
 import {brandName, countryList, markup} from './admin/markup.js';
@@ -49,6 +50,10 @@ export function adminPage(env) {
   const siteOrigin = typeof env === 'string' ? env : env.SITE_ORIGIN;
   const bundleBase = (typeof env === 'string' ? null : env.BUNDLE_BASE) ??
     defaultBundleBase;
+  // Where the preview adapter lives. The production public origin by default;
+  // the isolated Astro development origin is configuration, not a default.
+  const previewOrigin = (typeof env === 'string' ? null : env.PREVIEW_ORIGIN) ??
+    siteOrigin;
 
   // Only what the panel needs to draw itself. The schema is data, so it is
   // handed over as JSON rather than as script.
@@ -82,10 +87,12 @@ ${markup}
 <script type="module">
 const SITE = ${JSON.stringify(siteOrigin)};
 const BUNDLE = ${JSON.stringify(bundleBase)};
+const PREVIEW_ORIGIN = ${JSON.stringify(previewOrigin)};
 const SCHEMA = ${schema};
 ${clientState}
 ${clientFields}
 ${clientMedia}
+${clientPreview}
 ${clientPublish}
 ${clientAccount}
 ${clientHome}

@@ -1,6 +1,9 @@
 # Admin and media
 
-Current state: 2026-09-12, after admin phases **A1-A4 and A6**. A5 is blocked; see below. Audit baseline was `1cfd039`.
+Current state: 2026-09-12, after admin phases **A1-A4 and A6**, plus the
+preview channel, the release contract and the fields Codex accepted in
+[`23-ADMIN-INTEGRATION-REPLY.md`](23-ADMIN-INTEGRATION-REPLY.md). A5 remains
+blocked on the renderer allowlist. Audit baseline was `1cfd039`.
 Target workflow and acceptance: [R3](19-REINNOVATION-ROADMAP.md#r3--admin-as-an-editing-workspace). Customization and analytics: [R8](19-REINNOVATION-ROADMAP.md#r8--customization-and-analytics).
 Phases and ownership: [handoff](21-CLAUDE-ADMIN-HANDOFF.md). Requests to the public app: [`worker/contracts/INTEGRATION.md`](../worker/contracts/INTEGRATION.md).
 
@@ -85,34 +88,51 @@ again. The honest multi-day figure is the busiest single day. Averages carry
 their unit. An empty dashboard says nothing is being counted rather than
 implying nobody visited.
 
-Verified in Chrome against `worker/dev/serve.js`: 101 browser checks across five
+**The preview channel.** The editor's half of protocol v1 is built: the frame,
+the session, the handshake, the validated draft, selection following the
+editor, locale changes, stale acknowledgements dropped, retry, and an honest
+line saying what is happening. Component identifiers are `"<file>:<path>"` as
+agreed. No credential crosses the channel, and there is a test asserting it.
+The public adapter does not exist yet, so the harness serves a protocol-v1
+stand-in on a genuinely different origin to drive it end to end.
+
+**The release contract.** Codex chose Astro and build-and-release.
+`worker/contracts/snapshot.js` produces the `PORTFOLIO_SNAPSHOT` artifact and
+its canonical digest, pinned by test to the digest Codex's own reference
+implementation produces. `POST /v1/admin/release` reports whether the public
+HTML is serving that revision, and the dashboard says so — including, as
+instructed, refusing to call anything published to HTML while nothing serves a
+release file.
+
+**The accepted fields.** `profile.links[]`, `app.media[]`,
+`interest.gallery[]` and `profile.nameAudio` are editable and validated, each
+marked "not on the site yet" until its consumer lands. The recording's length
+is read from the file rather than typed.
+
+Verified in Chrome against `worker/dev/serve.js`: 116 browser checks across six
 scenarios, screenshots in `docs/audits/2026-09-11-admin-a1/` and
-`docs/audits/2026-09-12-admin-a2/`, `-a3`, `-a4`, `-a6`.
+`docs/audits/2026-09-12-admin-a2/`, `-a3`, `-a3-preview`, `-a4`, `-a6`.
 
 ## Still missing, and why
 
 Everything left is waiting on the public app. Each is written up with a
 concrete ask in [`INTEGRATION.md`](../worker/contracts/INTEGRATION.md).
 
-- **The third column is an outline of the draft, not the site.** It says so, in
-  the panel. Needs the preview adapter (§3.2).
-- **A publish updates what the app reads, and not the CV, the Brief or the
-  page metadata**, which are generated separately from the bundle. The review
-  sheet says this where the owner is looking. Needs R1 (§3.3).
-- **Editable links, project media lists and interest galleries** are proposed
-  and not built. A field nothing reads is the defect A1 closed (§3.4).
-- **The name recording cannot be changed by the owner.** The validated audio
-  endpoint exists; `NamePronunciation` plays a hard-coded path (§3.4).
-- **Alt text** exists only where the model already has a caption — education
-  evidence. Portraits, screenshots and crests have nowhere to put one (§3.4).
-- **Video is not uploaded**, and remains an external URL with click-to-load.
-  Direct hosting is a separate decision, not something image KV already does.
-- **A5 is not built at all**: no themes, fonts or page backgrounds, and no
-  Appearance section in the panel. A setting the renderer does not read is a
+Nothing on the admin side is unfinished. What remains needs a public
+consumer, and each is built up to that boundary and says so in the interface:
+
+- **The preview shows the stand-in until Codex's adapter exists.** Point
+  `PREVIEW_ORIGIN` at the real one and it should work unchanged.
+- **The public HTML is not serving a release file yet**, so the dashboard
+  reports the revision a build would produce and refuses to call it published.
+  CI triggering and artifact delivery are integration tasks, not admin ones.
+- **The four accepted fields have no renderer**, and are labelled accordingly.
+- **A5 has no controls at all**: a setting the renderer does not read is a
   control that appears to work. The proposal is in
   [`worker/contracts/appearance.js`](../worker/contracts/appearance.js) with
-  every blocker listed and a test asserting none has been quietly cleared
-  (§3.1).
+  every blocker listed and a test asserting none has been quietly cleared.
+- **Video remains an external address with click-to-load**, which is the
+  existing behaviour stated plainly. Direct hosting is a separate decision.
 
 Two things are open on this side rather than the other:
 

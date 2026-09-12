@@ -58,6 +58,68 @@ const localised = (key, label, options = {}) => {
   };
 };
 
+/// One entry in a gallery: an uploaded picture, or the address of a video.
+///
+/// Accepted by Codex in `docs/23-ADMIN-INTEGRATION-REPLY.md` for both project
+/// galleries and Off duty. Video stays an external address with click-to-load
+/// playback, which is the existing behaviour stated plainly rather than a new
+/// hosting decision: the image store is not a video host.
+///
+/// `consumer: 'pending'` on the fields that hold it. The contract is agreed,
+/// the public components are not built, and the editor says so rather than
+/// implying a gallery will appear.
+const galleryEntry = () => ({
+  kind: 'object',
+  titleFrom: 'alt',
+  subtitleFrom: 'kind',
+  rules: [
+    {
+      when: {field: 'kind', is: 'image'},
+      require: 'image',
+      forbid: ['url'],
+      message: 'A picture needs a file',
+    },
+    {
+      when: {field: 'kind', is: 'video'},
+      require: 'url',
+      forbid: ['image'],
+      message: 'A video needs the address it plays from',
+    },
+  ],
+  fields: [
+    {
+      key: 'id',
+      kind: 'id',
+      label: 'Identifier',
+      required: true,
+      unique: true,
+      help: 'Stays with this entry when the order changes.',
+    },
+    {
+      key: 'kind',
+      kind: 'choice',
+      label: 'Kind',
+      required: true,
+      options: [
+        {value: 'image', label: 'A picture'},
+        {value: 'video', label: 'A video, played from its own address'},
+      ],
+    },
+    {key: 'image', kind: 'asset', media: 'image', label: 'Picture'},
+    {
+      key: 'url',
+      kind: 'url',
+      label: 'Video address',
+      help: 'Loaded only when someone asks for it, never on arrival.',
+    },
+    localised('alt', 'What it shows', {
+      required: true,
+      help: 'Read aloud to anyone who cannot see it. Describe the picture, do not repeat the caption.',
+    }),
+    localised('caption', 'Caption'),
+  ],
+});
+
 /// The five documents, in the order the panel lists them.
 ///
 /// `section` is what the owner sees in the navigation. The file name is an
@@ -170,6 +232,70 @@ export const documents = [
         },
       },
       {
+        key: 'links',
+        kind: 'list',
+        label: 'Links',
+        addLabel: 'Add a link',
+        consumer: 'pending',
+        help: 'Agreed with the public app but not rendered yet. Replaces the fixed contact fields above once it is; both work in the meantime.',
+        of: {
+          kind: 'object',
+          titleFrom: 'label',
+          subtitleFrom: 'url',
+          fields: [
+            {
+              key: 'id',
+              kind: 'id',
+              label: 'Identifier',
+              required: true,
+              unique: true,
+            },
+            localised('label', 'What it is called', {required: true}),
+            {
+              key: 'url',
+              kind: 'url',
+              label: 'Address',
+              required: true,
+              showDomain: true,
+              help: 'Only somewhere you actually have an account. An address invented to fill a row is a broken link with your name on it.',
+            },
+            {
+              key: 'icon',
+              kind: 'asset',
+              media: 'image',
+              label: 'Icon override',
+              help: 'Left empty, the site picks a mark from the address. An address it has no mark for gets a plain link icon, never an invented brand.',
+            },
+          ],
+        },
+      },
+      {
+        key: 'nameAudio',
+        kind: 'object',
+        label: 'How your name sounds',
+        consumer: 'pending',
+        help: 'The site plays a bundled recording today. Once it reads this, changing it here changes it there.',
+        fields: [
+          {
+            key: 'src',
+            kind: 'asset',
+            media: 'audio',
+            label: 'Recording',
+            required: true,
+            // Filled in from the file's own header when one is uploaded.
+            durationInto: 'seconds',
+          },
+          {
+            key: 'seconds',
+            kind: 'number',
+            label: 'Length',
+            min: 0,
+            derived: true,
+            help: 'Read from the file when it is uploaded. Not typed, because a length that disagrees with the recording is worse than none.',
+          },
+        ],
+      },
+      {
         key: 'reach',
         kind: 'list',
         label: 'Countries the work has reached',
@@ -262,7 +388,16 @@ export const documents = [
               kind: 'asset',
               media: 'image',
               label: 'Screenshot',
-              help: 'Shown on the Work card in place of the drawn panel.',
+              help: 'Shown on the Work card in place of the drawn panel. Kept while the gallery below is being built.',
+            },
+            {
+              key: 'media',
+              kind: 'list',
+              label: 'Gallery',
+              addLabel: 'Add a picture or video',
+              consumer: 'pending',
+              help: 'Agreed with the public app but not rendered yet. The gallery appears only where there is something in it.',
+              of: galleryEntry(),
             },
             {
               key: 'featured',
@@ -485,6 +620,15 @@ export const documents = [
               media: 'image',
               label: 'Badge or crest',
               help: 'A club crest is a trademark. Use the real one or none; an approximation is worse than nothing.',
+            },
+            {
+              key: 'gallery',
+              kind: 'list',
+              label: 'Gallery',
+              addLabel: 'Add a picture or video',
+              consumer: 'pending',
+              help: 'Agreed with the public app; the Off duty detail view that shows it is R6 work and is not built.',
+              of: galleryEntry(),
             },
           ],
         },
