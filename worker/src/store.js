@@ -48,6 +48,12 @@ const revisionKey = (file, revision) =>
 const attemptKey = (scope) => `attempt:${scope}`;
 const sessionKey = (id) => `session:${id}`;
 const passwordRecordName = 'auth:password';
+/// Which generation of the password is current.
+///
+/// A session belongs to the generation it was issued under. Rotating the
+/// password advances this, which is what makes every session issued before it
+/// -- including one whose login was still in flight -- worthless.
+const epochName = 'auth:epoch';
 
 /// How long a failed-attempt counter is kept, in milliseconds.
 const attemptWindowMs = 60 * 60 * 1000;
@@ -213,10 +219,20 @@ export class ContentStore {
   /// (ARR-2). Here `use` and `end` cannot interleave: a use that runs first
   /// extends and is then deleted; a use that runs after finds nothing. There
   /// is no ordering in which a revoked session comes back.
-  async session({action, id, record, now, idleMs, lifetimeMs}) {
+  async session({action, id, record, now, idleMs, requireEpoch}) {
+    const epoch = (await this.storage.get(epochName)) ?? 0;
+
     if (action === 'create') {
-      await this.storage.put(sessionKey(id), record);
-      return {created: true};
+      // The generation the password was actually verified against, checked
+      // here rather than by the caller. A login held up long enough for a
+      // rotation to complete underneath it has verified against a password
+      // that no longer opens anything, and must not be handed a session.
+      if (requireEpoch !== null && requireEpoch !== undefined &&
+          requireEpoch !== epoch) {
+        return {stale: true, epoch};
+      }
+      await this.storage.put(sessionKey(id), {...record, epoch});
+      return {created: true, epoch};
     }
     if (action === 'end') {
       await this.storage.delete(sessionKey(id));
@@ -230,6 +246,12 @@ export class ContentStore {
 
     const held = (await this.storage.get(sessionKey(id))) ?? null;
     if (!held) return null;
+    // Belt as well as braces: rotation deletes every session, so this should
+    // never be the thing that catches one. It is here because "the sessions
+    // were deleted" and "this session is from before the password changed"
+    // are different claims, and only the second one survives a bug in the
+    // first.
+    if ((held.epoch ?? 0) !== epoch) return null;
     if (Date.parse(held.expires) <= now) return null;
     if (Date.parse(held.absoluteExpiry) <= now) return null;
 
@@ -247,13 +269,28 @@ export class ContentStore {
     return held;
   }
 
-  /// The password verifier, kept beside the sessions it invalidates.
+  /// The password verifier, its generation, and the sessions it invalidates.
+  ///
+  /// Rotation is one transaction over all three. Writing the verifier, then
+  /// advancing the generation, then clearing the sessions as separate steps
+  /// would leave a moment where each of them disagreed with the others -- and
+  /// an interrupted rotation would leave the site with a new password and old
+  /// sessions, or the reverse.
   async password({action, record}) {
-    if (action === 'set') {
-      await this.storage.put(passwordRecordName, record);
-      return {set: true};
+    if (action === 'rotate') {
+      const epoch = ((await this.storage.get(epochName)) ?? 0) + 1;
+      await this.storage.transaction(async (txn) => {
+        await txn.put(passwordRecordName, record);
+        await txn.put(epochName, epoch);
+        const held = await this.storage.list({prefix: 'session:'});
+        for (const key of held.keys()) await txn.delete(key);
+      });
+      return {epoch};
     }
-    return (await this.storage.get(passwordRecordName)) ?? null;
+    return {
+      record: (await this.storage.get(passwordRecordName)) ?? null,
+      epoch: (await this.storage.get(epochName)) ?? 0,
+    };
   }
 }
 
@@ -397,11 +434,19 @@ function kvBackend(env) {
       }
       return {count: fresh?.count ?? 0};
     },
-    async session({action, id, record, now}) {
+    async session({action, id, record, now, requireEpoch}) {
       const name = `session:${id}`;
+      const epoch = (await store.get('auth:epoch', 'json')) ?? 0;
       if (action === 'create') {
-        await store.put(name, JSON.stringify(record));
-        return {created: true};
+        // Checked here too, though nothing makes it atomic on this store. It
+        // narrows the window rather than closing it, which is one more thing
+        // `atomic: false` is telling the panel.
+        if (requireEpoch !== null && requireEpoch !== undefined &&
+            requireEpoch !== epoch) {
+          return {stale: true, epoch};
+        }
+        await store.put(name, JSON.stringify({...record, epoch}));
+        return {created: true, epoch};
       }
       if (action === 'end') {
         await store.delete(name);
@@ -414,6 +459,7 @@ function kvBackend(env) {
       }
       const held = await store.get(name, 'json');
       if (!held) return null;
+      if ((held.epoch ?? 0) !== epoch) return null;
       if (Date.parse(held.expires) <= now) return null;
       if (Date.parse(held.absoluteExpiry) <= now) return null;
       // Deliberately no renewal here (ARR-2). Reading and then writing a
@@ -424,11 +470,18 @@ function kvBackend(env) {
       return held;
     },
     async password(action, record) {
-      if (action === 'set') {
+      if (action === 'rotate') {
+        const epoch = ((await store.get('auth:epoch', 'json')) ?? 0) + 1;
         await store.put('auth:password', JSON.stringify(record));
-        return {set: true};
+        await store.put('auth:epoch', JSON.stringify(epoch));
+        const listing = await store.list({prefix: 'session:'});
+        for (const entry of listing.keys) await store.delete(entry.name);
+        return {epoch};
       }
-      return store.get('auth:password', 'json');
+      return {
+        record: await store.get('auth:password', 'json'),
+        epoch: (await store.get('auth:epoch', 'json')) ?? 0,
+      };
     },
   };
 }

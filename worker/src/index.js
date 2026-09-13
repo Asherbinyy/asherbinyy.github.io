@@ -868,7 +868,16 @@ function sameSecret(left, right) {
   return difference === 0;
 }
 
-async function issueSession(env, now, headers) {
+/// Hands out a session, unless the password it was earned with has been
+/// rotated since it was checked.
+///
+/// [requireEpoch] is the generation the credential was actually verified
+/// against, or null where nothing was verified against a generation at all --
+/// the deployment secret, which rotation does not change. A null takes
+/// whatever the current generation is, inside the same serialised step, so it
+/// is either wiped by a rotation that has not run yet or stamped with the one
+/// that has.
+async function issueSession(env, now, headers, requireEpoch = null) {
   const backend = contentBackend(env);
   if (!backend) {
     return response({error: 'Content store is not configured'}, 503, headers);
@@ -876,11 +885,24 @@ async function issueSession(env, now, headers) {
   const raw = bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
   const expires = new Date(now.getTime() + sessionIdleMs).toISOString();
   const absoluteExpiry = new Date(now.getTime() + sessionLifetimeMs).toISOString();
-  await backend.session({
+  const created = await backend.session({
     action: 'create',
     id: await fingerprint(raw),
     record: {started: now.toISOString(), expires, absoluteExpiry},
+    requireEpoch,
   });
+  if (created?.stale) {
+    return response(
+      {
+        // Reached from a sign-in and from a password change, so the wording
+        // has to make sense after either.
+        error: 'The password changed while this was in progress. Sign in again.',
+        reason: 'password-rotated',
+      },
+      401,
+      headers,
+    );
+  }
   return response({token: raw, expires, absoluteExpiry}, 200, headers);
 }
 
@@ -934,7 +956,11 @@ async function openSession(request, env, now, headers) {
     return response({error: 'Too many attempts'}, 429, headers);
   }
 
-  const record = await backend.password('get');
+  // The generation this password is about to be checked against. Deriving a
+  // key takes long enough for a rotation to finish underneath it, and a
+  // password that was correct when the read happened is not a password that
+  // opens anything now.
+  const {record, epoch} = await backend.password('get');
   let accepted = false;
   if (record) {
     const derived = await derive(offered, record.salt, record.iterations);
@@ -945,11 +971,14 @@ async function openSession(request, env, now, headers) {
     return response({error: 'That was not right'}, 401, headers);
   }
   await backend.attempts('sign-in', 'clear', now.getTime());
-  return issueSession(env, now, headers);
+  // Issued only if that generation is still current, decided inside the store
+  // rather than out here where it could be overtaken again.
+  return issueSession(env, now, headers, epoch);
 }
 
 async function describeSession(request, env, headers) {
-  const record = await contentBackend(env)?.password('get');
+  const held = await contentBackend(env)?.password('get');
+  const record = held?.record ?? null;
   return response(
     {
       kind: request.admin?.kind ?? 'recovery',
@@ -1003,7 +1032,7 @@ async function changePassword(request, env, now, headers) {
   // Re-authenticated at the moment of the change, even though the request is
   // already authorised. A session left open on a borrowed machine should not
   // be enough to take the site away from its owner.
-  const record = await backend.password('get');
+  const {record} = await backend.password('get');
   let allowed = false;
   if (record) {
     const derived = await derive(current, record.salt, record.iterations);
@@ -1022,20 +1051,18 @@ async function changePassword(request, env, now, headers) {
 
   const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
   const hash = await derive(next, salt, passwordIterations);
-  await backend.password('set', {
+  // The verifier, the generation and every existing session, in one
+  // transaction. A password change that leaves the old sessions alive has not
+  // changed anything for whoever the owner was changing it because of; one
+  // that half-applies is worse than either outcome.
+  const {epoch} = await backend.password('rotate', {
     salt,
     hash,
     iterations: passwordIterations,
     at: now.toISOString(),
   });
 
-  // Everything signed in with the old password stops working. A password
-  // change that leaves the old sessions alive has not changed anything for
-  // whoever the owner was changing it because of. Serialised with renewal, so
-  // a use already in flight cannot put one back afterwards.
-  await backend.session({action: 'endAll'});
-
-  return issueSession(env, now, headers);
+  return issueSession(env, now, headers, epoch);
 }
 
 /// Image types the upload endpoint will take.

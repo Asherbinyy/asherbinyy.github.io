@@ -703,3 +703,280 @@ test('the one operation cannot be split the same way', async () => {
     documentOfRevision(env, 'interests.json', head.revision),
   );
 });
+
+// --- the authentication epoch ----------------------------------------------
+
+const fixturePassword = 'a-long-enough-fixture-password';
+const laterPassword = 'a-different-long-enough-password';
+
+function signInWith(env, password) {
+  return handleRequest(
+    new Request('https://worker.example/v1/admin/session', {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({password}),
+    }),
+    env,
+  );
+}
+
+async function withPassword(env, password = fixturePassword) {
+  const set = await handleRequest(
+    admin('/v1/admin/password', {
+      method: 'POST',
+      body: {current: adminToken, next: password},
+    }),
+    env,
+  );
+  assert.equal(set.status, 200);
+  return (await set.json()).token;
+}
+
+/// Holds every password derivation open until the returned gate is released.
+function holdDerivation() {
+  const real = crypto.subtle.deriveBits.bind(crypto.subtle);
+  let entered;
+  const started = new Promise((resolve) => {
+    entered = resolve;
+  });
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  let first = true;
+  crypto.subtle.deriveBits = async (...args) => {
+    if (first) {
+      first = false;
+      entered();
+      await gate;
+    }
+    return real(...args);
+  };
+  return {
+    started,
+    release: () => release(),
+    restore: () => {
+      crypto.subtle.deriveBits = real;
+    },
+  };
+}
+
+test('a login held open across a rotation is refused', async () => {
+  // Codex's reproduction: hold the login after it has read the verifier,
+  // rotate the password, release it. The old password was still accepted and
+  // the session it produced authenticated.
+  const env = transactional();
+  await withPassword(env);
+
+  const held = holdDerivation();
+  try {
+    const loggingIn = signInWith(env, fixturePassword);
+    await held.started;
+
+    const rotated = await handleRequest(
+      admin('/v1/admin/password', {
+        method: 'POST',
+        body: {current: fixturePassword, next: laterPassword},
+        token: adminToken,
+      }),
+      env,
+    );
+    assert.equal(rotated.status, 200);
+
+    held.release();
+    const answered = await loggingIn;
+    assert.equal(answered.status, 401, 'the stale login was refused');
+    assert.equal((await answered.json()).reason, 'password-rotated');
+  } finally {
+    held.restore();
+  }
+});
+
+test('and no session was left behind by it', async () => {
+  const env = transactional();
+  await withPassword(env);
+  const held = holdDerivation();
+  try {
+    const loggingIn = signInWith(env, fixturePassword);
+    await held.started;
+    await handleRequest(
+      admin('/v1/admin/password', {
+        method: 'POST',
+        body: {current: fixturePassword, next: laterPassword},
+        token: adminToken,
+      }),
+      env,
+    );
+    const before = [...env.CONTENT_STORE.state.storage.map.keys()]
+      .filter((key) => key.startsWith('session:')).length;
+    held.release();
+    await loggingIn;
+    const after = [...env.CONTENT_STORE.state.storage.map.keys()]
+      .filter((key) => key.startsWith('session:')).length;
+    assert.equal(after, before, 'nothing was written for the refused login');
+  } finally {
+    held.restore();
+  }
+});
+
+test('the new password works immediately afterwards', async () => {
+  const env = transactional();
+  await withPassword(env);
+  await handleRequest(
+    admin('/v1/admin/password', {
+      method: 'POST',
+      body: {current: fixturePassword, next: laterPassword},
+      token: adminToken,
+    }),
+    env,
+  );
+  assert.equal((await signInWith(env, laterPassword)).status, 200);
+  assert.equal((await signInWith(env, fixturePassword)).status, 401);
+});
+
+test('a session from before a rotation stops authenticating', async () => {
+  const env = transactional();
+  await withPassword(env);
+  const {token} = await (await signInWith(env, fixturePassword)).json();
+  assert.equal(
+    (await handleRequest(admin('/v1/admin/content', {token}), env)).status,
+    200,
+  );
+
+  await handleRequest(
+    admin('/v1/admin/password', {
+      method: 'POST',
+      body: {current: fixturePassword, next: laterPassword},
+      token: adminToken,
+    }),
+    env,
+  );
+  assert.equal(
+    (await handleRequest(admin('/v1/admin/content', {token}), env)).status,
+    401,
+  );
+});
+
+test('a session stamped with a superseded generation is refused', async () => {
+  // Rotation deletes every session, so this should never be the thing that
+  // catches one. It is checked anyway, because "the sessions were deleted"
+  // and "this session predates the password" are different claims.
+  const env = transactional();
+  const token = await signedIn(env);
+  const storage = env.CONTENT_STORE.state.storage.map;
+  const name = [...storage.keys()].find((key) => key.startsWith('session:'));
+  storage.set(name, {...storage.get(name), epoch: -1});
+  assert.equal(
+    (await handleRequest(admin('/v1/admin/content', {token}), env)).status,
+    401,
+  );
+});
+
+test('two rotations racing leave one password and one generation', async () => {
+  const env = transactional();
+  await withPassword(env);
+  // Setting the fixture password was itself a rotation, so the race is
+  // measured as a delta rather than against zero.
+  const before = env.CONTENT_STORE.state.storage.map.get('auth:epoch');
+  const [one, two] = await Promise.all([
+    handleRequest(
+      admin('/v1/admin/password', {
+        method: 'POST',
+        body: {current: fixturePassword, next: laterPassword},
+        token: adminToken,
+      }),
+      env,
+    ),
+    handleRequest(
+      admin('/v1/admin/password', {
+        method: 'POST',
+        body: {current: fixturePassword, next: 'a-third-long-enough-password'},
+        token: adminToken,
+      }),
+      env,
+    ),
+  ]);
+  // Both were authorised by the deployment secret, so both rotations apply and
+  // the generation advances twice. What must not happen is two live passwords,
+  // a generation that goes backwards, or a session issued under the one that
+  // lost.
+  const storage = env.CONTENT_STORE.state.storage.map;
+  const epoch = storage.get('auth:epoch');
+  assert.equal(epoch - before, 2, 'the generation advanced once per rotation');
+
+  const survivors = ['a-third-long-enough-password', laterPassword]
+    .map((password) => signInWith(env, password));
+  const codes = (await Promise.all(survivors)).map((r) => r.status).sort();
+  assert.deepEqual(codes, [200, 401], 'exactly one password opens the panel');
+
+  // Whoever was superseded is told so rather than handed a session that would
+  // not work. Whoever won gets one that does.
+  for (const answered of [one, two]) {
+    assert.ok([200, 401].includes(answered.status), String(answered.status));
+    const body = await answered.json();
+    if (answered.status === 401) {
+      assert.equal(body.reason, 'password-rotated');
+      continue;
+    }
+    const used = await handleRequest(
+      admin('/v1/admin/content', {token: body.token}),
+      env,
+    );
+    assert.equal(used.status, 200);
+  }
+});
+
+test('an interrupted rotation changes nothing', async () => {
+  const env = transactional();
+  await withPassword(env);
+  const {token} = await (await signInWith(env, fixturePassword)).json();
+
+  env.CONTENT_STORE.state.storage.failOn = 'auth:epoch';
+  await handleRequest(
+    admin('/v1/admin/password', {
+      method: 'POST',
+      body: {current: fixturePassword, next: laterPassword},
+      token: adminToken,
+    }),
+    env,
+  ).catch(() => null);
+  env.CONTENT_STORE.state.storage.failOn = null;
+
+  // The old password still opens the panel, the new one does not, and the
+  // session that existed before is still good.
+  assert.equal((await signInWith(env, fixturePassword)).status, 200);
+  assert.equal((await signInWith(env, laterPassword)).status, 401);
+  assert.equal(
+    (await handleRequest(admin('/v1/admin/content', {token}), env)).status,
+    200,
+  );
+});
+
+test('the deployment secret is unaffected by a rotation in flight', async () => {
+  // It is not verified against a generation, so it takes whichever one is
+  // current when its session is written -- inside the same serialised step.
+  const env = transactional();
+  await withPassword(env);
+  const [recovery] = await Promise.all([
+    signInWith(env, adminToken),
+    handleRequest(
+      admin('/v1/admin/password', {
+        method: 'POST',
+        body: {current: fixturePassword, next: laterPassword},
+        token: adminToken,
+      }),
+      env,
+    ),
+  ]);
+  assert.equal(recovery.status, 200);
+  // Whatever the ordering, the token it produced is either wiped by the
+  // rotation or stamped with the generation that survived it. Never both.
+  const {token} = await recovery.json();
+  const used = await handleRequest(admin('/v1/admin/content', {token}), env);
+  assert.ok([200, 401].includes(used.status));
+  if (used.status === 200) {
+    const storage = env.CONTENT_STORE.state.storage.map;
+    const name = [...storage.keys()].find((key) => key.startsWith('session:'));
+    assert.equal(storage.get(name).epoch, storage.get('auth:epoch'));
+  }
+});

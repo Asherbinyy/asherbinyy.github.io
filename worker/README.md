@@ -153,8 +153,13 @@ problem:
 - **The session lifecycle.** Renewal, logout and password-change invalidation
   cannot interleave, so a renewal already in flight cannot put back a session
   that was just revoked.
-- **The password verifier**, so a change and the invalidation it triggers are
-  one ordered pair.
+- **The password verifier and its generation.** Rotating the password writes
+  the verifier, advances the generation and clears every session in one
+  transaction. A login carries the generation it verified against, and the
+  session is only issued if that is still current -- so a login held up long
+  enough for a rotation to finish underneath it is refused rather than handed
+  a session earned with a password that no longer opens anything. A session
+  also carries its generation and is rejected if it is superseded.
 
 Reads that have to agree go through it in one operation too: a document and the
 revision it is, and the whole set of overrides that goes into a release.
