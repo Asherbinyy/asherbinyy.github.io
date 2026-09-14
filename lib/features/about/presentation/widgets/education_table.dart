@@ -71,7 +71,13 @@ class _Entry extends StatefulWidget {
 }
 
 class _EntryState extends State<_Entry> {
-  bool _expanded = true;
+  /// Closed on arrival.
+  ///
+  /// Both entries opened themselves, so the page began with two transcripts
+  /// and a run of coursework before the reader had asked for any of it. The
+  /// control says "Show coursework & highlights"; it should be telling the
+  /// truth when the page loads.
+  bool _expanded = false;
   final _states = WidgetStatesController();
   EducationEntry get entry => widget.entry;
 

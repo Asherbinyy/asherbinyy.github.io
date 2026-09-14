@@ -14,12 +14,32 @@ import '../../support/station_harness.dart';
 
 void main() {
   group('the about page', () {
+    /// Opens every education entry.
+    ///
+    /// They arrive closed now, which is what the control has always claimed:
+    /// the page used to open with two transcripts before anyone asked for
+    /// them. A test about what is inside has to ask for it too.
+    ///
+    /// Pumped by hand rather than settled: the writing feed's loader runs a
+    /// continuous sweep, so `pumpAndSettle` on this page waits forever.
+    Future<void> openEducation(WidgetTester tester) async {
+      final show = find.text('Show coursework & highlights');
+      for (var index = show.evaluate().length - 1; index >= 0; index -= 1) {
+        await tester.ensureVisible(show.at(index));
+        await tester.pump();
+        await tester.tap(show.at(index), warnIfMissed: false);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+    }
+
     testWidgets('lists MSc modules highest mark first', (tester) async {
       await pumpStation(
         tester,
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.about,
       );
+      await openEducation(tester);
 
       // The screen spec wants the strongest result to read first.
       final marks = <int>[];
@@ -48,6 +68,7 @@ void main() {
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.about,
       );
+      await openEducation(tester);
 
       // education.json keeps all seven marks, because that file is the record.
       // The owner asked for the page to carry his strongest results only, so
@@ -84,6 +105,7 @@ void main() {
           breakpoint: ChromeBreakpoint.large,
           initialRoute: AppRoute.about,
         );
+        await openEducation(tester);
 
         // education.json carries overallMark 79 with status "In progress". The
         // spec says no overall average until the award is confirmed, so the
@@ -98,6 +120,7 @@ void main() {
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.about,
       );
+      await openEducation(tester);
 
       expect(find.textContaining('Distinction'), findsWidgets);
     });
@@ -108,6 +131,7 @@ void main() {
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.about,
       );
+      await openEducation(tester);
 
       expect(find.textContaining('Edumundo'), findsOneWidget);
     });
@@ -120,6 +144,7 @@ void main() {
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.about,
       );
+      await openEducation(tester);
 
       expect(find.byType(PortraitFrame), findsOneWidget);
     });
@@ -132,6 +157,7 @@ void main() {
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.about,
       );
+      await openEducation(tester);
 
       // The owner supplied the photograph on 2026-09-07, closing an item open
       // since milestone 1. Asserting the pending label is gone is the half of
@@ -152,6 +178,7 @@ void main() {
         // This exercises evidence controls, not asynchronous feed loading.
         overrides: [articlesProvider.overrideWith((ref) async => [])],
       );
+      await openEducation(tester);
 
       // Only the modules the owner supplied an artefact for carry one, and
       // both of those are above the publish threshold, so both should render.
@@ -191,6 +218,7 @@ void main() {
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.about,
       );
+      await openEducation(tester);
 
       final withEvidence = bundledJson('assets/content/education.json');
       final modules =
@@ -219,6 +247,7 @@ void main() {
         breakpoint: ChromeBreakpoint.compact,
         initialRoute: AppRoute.about,
       );
+      await openEducation(tester);
 
       // Against the education table rather than the positioning line: the
       // hero copy is the owner's own and he rewrites it, and a layout test

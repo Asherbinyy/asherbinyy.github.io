@@ -1,6 +1,8 @@
 // Group immutable scales to keep the single token source under 300 lines.
 // ignore_for_file: avoid_multiple_declarations_per_line
 
+import 'dart:ui' show lerpDouble;
+
 import 'package:material_ui/material_ui.dart';
 
 part 'theme_tokens.dart';
@@ -483,8 +485,9 @@ abstract final class Tokens {
 
   /// Opacity of the ornament field behind every page.
   ///
-  /// One step above the 3% texture beneath it, so the two read as separate
-  /// layers rather than as one muddy surface. `12-MOTIF-LIBRARY.md` §4.
+  /// Superseded by the per-theme `ornamentFieldAlpha`: four percent of a grey
+  /// was in the file and invisible on the screen, and the two grounds do not
+  /// take the same value. Kept because other surfaces still reference it.
   static const double ornamentFieldOpacity = 0.04;
 }
 
@@ -505,6 +508,8 @@ const nocturneTokens = ThemeTokens(
   hairlineStrong: Color(0xFF3F4D66),
   beacon: Color(0xFFE3A93F),
   beaconDim: Color(0xFF92702E),
+  ornamentField: Color(0xFFE3A93F),
+  ornamentFieldAlpha: 0.14,
   beaconGlow: Color(0xFFFFD98A),
   faience: Color(0xFF45B8B2),
   faienceDim: Color(0xFF2D827D),
@@ -531,6 +536,8 @@ const daybreakTokens = ThemeTokens(
   hairlineStrong: Color(0xFFAD9C7C),
   beacon: Color(0xFF885912),
   beaconDim: Color(0xFF9C7534),
+  ornamentField: Color(0xFF7A5410),
+  ornamentFieldAlpha: 0.17,
   beaconGlow: Color(0xFF6F4409),
   faience: Color(0xFF1C6B68),
   faienceDim: Color(0xFF2E8481),

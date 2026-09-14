@@ -12,6 +12,8 @@ class ThemeTokens extends ThemeExtension<ThemeTokens> {
     required this.hairlineStrong,
     required this.beacon,
     required this.beaconDim,
+    required this.ornamentField,
+    required this.ornamentFieldAlpha,
     required this.beaconGlow,
     required this.faience,
     required this.faienceDim,
@@ -45,6 +47,25 @@ class ThemeTokens extends ThemeExtension<ThemeTokens> {
 
   /// Semantic palette role: beaconDim.
   final Color beaconDim;
+
+  /// The ink the inscription behind every page is drawn in.
+  ///
+  /// It was `instrumentDim`, a grey, at four percent — present in the file and
+  /// invisible on the screen. The owner could not find it in either theme and
+  /// asked for gold: warm and faintly lit in the dark, darker and drier in the
+  /// light.
+  ///
+  /// This is the one place gold is allowed to cover the page rather than mark
+  /// something actionable. It earns the exception by being an architectural
+  /// surface — the wall the site is built on — and it stays legible as
+  /// ornament because it never gets close to the weight of a control.
+  final Color ornamentField;
+
+  /// How strongly that inscription is cut.
+  ///
+  /// Per theme, because the same alpha does not read the same on silt and on
+  /// limestone: dark ground needs more of it before anything shows at all.
+  final double ornamentFieldAlpha;
 
   /// Semantic palette role: beaconGlow.
   final Color beaconGlow;
@@ -105,6 +126,8 @@ class ThemeTokens extends ThemeExtension<ThemeTokens> {
     Color? hairlineStrong,
     Color? beacon,
     Color? beaconDim,
+    Color? ornamentField,
+    double? ornamentFieldAlpha,
     Color? beaconGlow,
     Color? faience,
     Color? faienceDim,
@@ -124,6 +147,8 @@ class ThemeTokens extends ThemeExtension<ThemeTokens> {
     hairlineStrong: hairlineStrong ?? this.hairlineStrong,
     beacon: beacon ?? this.beacon,
     beaconDim: beaconDim ?? this.beaconDim,
+    ornamentField: ornamentField ?? this.ornamentField,
+    ornamentFieldAlpha: ornamentFieldAlpha ?? this.ornamentFieldAlpha,
     beaconGlow: beaconGlow ?? this.beaconGlow,
     faience: faience ?? this.faience,
     faienceDim: faienceDim ?? this.faienceDim,
@@ -150,6 +175,11 @@ class ThemeTokens extends ThemeExtension<ThemeTokens> {
           Color.lerp(hairlineStrong, other.hairlineStrong, t) ?? hairlineStrong,
       beacon: Color.lerp(beacon, other.beacon, t) ?? beacon,
       beaconDim: Color.lerp(beaconDim, other.beaconDim, t) ?? beaconDim,
+      ornamentField:
+          Color.lerp(ornamentField, other.ornamentField, t) ?? ornamentField,
+      ornamentFieldAlpha:
+          lerpDouble(ornamentFieldAlpha, other.ornamentFieldAlpha, t) ??
+          ornamentFieldAlpha,
       beaconGlow: Color.lerp(beaconGlow, other.beaconGlow, t) ?? beaconGlow,
       faience: Color.lerp(faience, other.faience, t) ?? faience,
       faienceDim: Color.lerp(faienceDim, other.faienceDim, t) ?? faienceDim,

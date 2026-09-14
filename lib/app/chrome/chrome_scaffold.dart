@@ -384,8 +384,8 @@ class _Grained extends StatelessWidget {
             child: CustomPaint(
               painter: OrnamentFieldPainter(
                 seed: 'field.${route.name}',
-                colour: tokens.instrumentDim,
-                opacity: tokens.ornamentFieldOpacity,
+                colour: tokens.ornamentField,
+                opacity: tokens.ornamentFieldAlpha,
                 hairlineWidth: tokens.hairlineWidth,
               ),
             ),

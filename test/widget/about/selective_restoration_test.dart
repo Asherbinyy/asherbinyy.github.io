@@ -21,11 +21,20 @@ void main() {
       reducedMotion: true,
       overrides: [articlesProvider.overrideWith((_) async => [])],
     );
-    final toggle = find.text('Hide details').first;
-    await tester.ensureVisible(toggle);
-    await tester.tap(toggle);
+    // Entries arrive closed now, so the cycle this covers starts by opening
+    // one rather than by collapsing an entry the page had opened by itself.
+    final open = find.text('Show coursework & highlights').first;
+    await tester.ensureVisible(open);
+    await tester.tap(open);
+    await tester.pumpAndSettle();
+    expect(find.byKey(EducationTable.modulesKey), findsOneWidget);
+
+    final collapse = find.text('Hide details').first;
+    await tester.ensureVisible(collapse);
+    await tester.tap(collapse);
     await tester.pumpAndSettle();
     expect(find.byKey(EducationTable.modulesKey), findsNothing);
+
     await tester.tap(find.text('Show coursework & highlights').first);
     await tester.pumpAndSettle();
     expect(find.byKey(EducationTable.modulesKey), findsOneWidget);

@@ -32,12 +32,22 @@ class CareerSequence extends StatelessWidget {
   /// Supplies the stable keys the fixed trace layer measures.
   final TraceAnchorRegistry anchorRegistry;
 
+  /// The stops, most recent first.
+  ///
+  /// The content is stored oldest-first, which is the order a life happened
+  /// in and the wrong order to introduce it in: a reader meeting this column
+  /// wants to know where he is now, not where he started. Sorted by start
+  /// date rather than reversed, so the display order does not depend on how
+  /// the document happens to be written.
+  List<CareerRole> get _mostRecentFirst =>
+      [...roles]..sort((a, b) => b.start.compareTo(a.start));
+
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [
-      for (final role in roles)
+      for (final role in _mostRecentFirst)
         KeyedSubtree(
           key: anchorRegistry.keyFor(role.id),
           child: _CareerEntry(role: role, locale: locale),
