@@ -34,7 +34,27 @@ class WallPainter extends CustomPainter {
     required this.lockedColour,
     required this.peakColour,
     required this.strokeWidth,
+    required this.stoneColour,
+    required this.carveShadow,
+    required this.carveLight,
   });
+
+  /// The masonry behind the inscription.
+  ///
+  /// A temple wall is built of blocks, and drawing signs on an empty column
+  /// was most of why this read as a wireframe diagram rather than as stone.
+  final Color stoneColour;
+
+  /// The dark side of a cut.
+  ///
+  /// Carving is legible because of its edges, not its line. One flat stroke is
+  /// a drawing of an inscription; a dark edge below it and a lit edge above
+  /// it is a groove, and the difference costs two more passes of the same
+  /// path.
+  final Color carveShadow;
+
+  /// The lit side of a cut, where the torch catches the upper lip.
+  final Color carveLight;
 
   /// Career bursts, already laid out and anchored to rendered sections.
   final List<TraceBurst> bursts;
@@ -93,13 +113,15 @@ class WallPainter extends CustomPainter {
     // The unlit pass. Everything is on the wall whether or not the torch is
     // near it — a wall does not stop existing in the dark, and a viewer who
     // has scrolled past should still see the inscription they left behind.
+    _masonry(canvas, size, from: from, to: to);
+
     final content = _inscription(
       from: from,
       to: to,
       inset: inset,
       runWidth: runWidth,
     );
-    canvas.drawPath(content, _stroke(restColour));
+    _carve(canvas, content, restColour);
 
     if (coherence <= 0) return;
 
@@ -108,9 +130,8 @@ class WallPainter extends CustomPainter {
     // pool painted over dim strokes reads as a spotlight decal, this reads as
     // light falling on carved stone.
     final bounds = Offset.zero & size;
-    canvas
-      ..saveLayer(bounds, Paint())
-      ..drawPath(content, _stroke(lockedColour));
+    canvas.saveLayer(bounds, Paint());
+    _carve(canvas, content, lockedColour);
 
     // Registers under the torch pick up the gold, which is the only chroma the
     // wall itself carries.
@@ -159,6 +180,58 @@ class WallPainter extends CustomPainter {
       ],
       stops: const [0, 1],
     ).createShader(Offset.zero & size);
+  }
+
+  /// Draws one path as a cut in stone rather than as a line on paper.
+  ///
+  /// Three passes of the same geometry: the shadow below the groove, the lit
+  /// lip above it, then the body. Offsets are a fraction of the stroke, so the
+  /// cut stays a cut at any weight instead of separating into three lines.
+  void _carve(Canvas canvas, Path content, Color body) {
+    final relief = strokeWidth * Tokens.wallCarveOffset;
+    canvas
+      ..save()
+      ..translate(relief, relief)
+      ..drawPath(content, _stroke(carveShadow))
+      ..restore()
+      ..save()
+      ..translate(-relief, -relief)
+      ..drawPath(content, _stroke(carveLight))
+      ..restore()
+      ..drawPath(content, _stroke(body));
+  }
+
+  /// The blocks the wall is built from.
+  ///
+  /// Courses with staggered joints, which is how masonry is laid and why a
+  /// grid of squares would read as tile instead. Faint: this is the surface
+  /// the inscription is cut into, not a pattern competing with it.
+  void _masonry(
+    Canvas canvas,
+    Size size, {
+    required double from,
+    required double to,
+  }) {
+    const course = Tokens.wallCourseHeight;
+    final paint = Paint()
+      ..color = stoneColour
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    final first = (from / course).floor() * course;
+    for (var y = first; y <= to + course; y += course) {
+      final dy = y - scrollOffset;
+      if (dy < -course || dy > size.height + course) continue;
+      canvas.drawLine(Offset(0, dy), Offset(size.width, dy), paint);
+
+      // Every other course is offset by half a block, so the vertical joints
+      // break rather than running the height of the wall.
+      final index = (y / course).round();
+      final shift = index.isEven ? 0.0 : Tokens.wallBlockWidth / 2;
+      for (var x = shift; x < size.width; x += Tokens.wallBlockWidth) {
+        canvas.drawLine(Offset(x, dy), Offset(x, dy + course), paint);
+      }
+    }
   }
 
   Paint _stroke(Color colour) => Paint()
@@ -264,5 +337,8 @@ class WallPainter extends CustomPainter {
       oldDelegate.lockedColour != lockedColour ||
       oldDelegate.peakColour != peakColour ||
       oldDelegate.strokeWidth != strokeWidth ||
+      oldDelegate.stoneColour != stoneColour ||
+      oldDelegate.carveShadow != carveShadow ||
+      oldDelegate.carveLight != carveLight ||
       !identical(oldDelegate.bursts, bursts);
 }

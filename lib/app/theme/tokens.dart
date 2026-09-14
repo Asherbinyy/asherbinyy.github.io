@@ -483,6 +483,18 @@ abstract final class Tokens {
   /// A mote's radius at birth.
   static const double cursorTrailRadius = 3;
 
+  /// How far a carved edge sits from the body of its stroke.
+  ///
+  /// A fraction of the stroke weight, so a cut reads as one groove at any
+  /// weight rather than separating into three parallel lines.
+  static const double wallCarveOffset = 0.9;
+
+  /// Height of one masonry course on the wall.
+  static const double wallCourseHeight = 132;
+
+  /// Width of one block in that course.
+  static const double wallBlockWidth = 96;
+
   /// Opacity of the ornament field behind every page.
   ///
   /// Superseded by the per-theme `ornamentFieldAlpha`: four percent of a grey
