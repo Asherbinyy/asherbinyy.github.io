@@ -18,7 +18,9 @@ import 'package:nocturne/features/station/presentation/widgets/cv_button.dart';
 import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
+import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
+import 'package:nocturne/features/station/presentation/widgets/career_stops.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
@@ -65,8 +67,40 @@ class StationScreen extends ConsumerWidget {
             // never reflows the page.
             const CqResponse(),
             _Career(locale: locale),
+            // The way to reach him, at the foot of the page he lands on. A
+            // visitor who has read to the bottom of Home should not have to
+            // find About to send an email.
+            const _Reach(),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Contact, at the end of Home.
+class _Reach extends ConsumerWidget {
+  const _Reach();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final contact = switch (ref.watch(profileProvider).valueOrNull) {
+      ContentReady<Profile>(:final data) => data.contact,
+      ContentFallback<Profile>(:final profile) => profile.contact,
+      _ => null,
+    };
+    if (contact == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: EdgeInsets.only(top: context.tokens.space96),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(context.l10n.aboutContact, style: context.type.heading),
+          SizedBox(height: context.tokens.space24),
+          ContactLinks(contact: contact),
+        ],
       ),
     );
   }
@@ -86,12 +120,26 @@ class _Career extends ConsumerWidget {
     };
     if (roles.isEmpty) return const SizedBox.shrink();
 
+    final anchorRegistry = ref.watch(traceAnchorRegistryProvider);
+    // Most recent first, computed once and handed to both: the index and the
+    // sequence have to agree about the order or clicking the third stop lands
+    // on the fourth entry.
+    final ordered = [...roles]..sort((a, b) => b.start.compareTo(a.start));
+
     return Padding(
       padding: EdgeInsets.only(top: context.tokens.space96),
-      child: CareerSequence(
-        roles: roles,
-        locale: locale,
-        anchorRegistry: ref.watch(traceAnchorRegistryProvider),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CareerStops(roles: ordered, anchorRegistry: anchorRegistry),
+          SizedBox(height: context.tokens.space48),
+          CareerSequence(
+            roles: ordered,
+            locale: locale,
+            anchorRegistry: anchorRegistry,
+          ),
+        ],
       ),
     );
   }

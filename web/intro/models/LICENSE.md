@@ -33,5 +33,4 @@ Ra-Horakhty is the sun at the horizon. The sequence this appears in is a sealed
 door opening onto light, so the god of the sun on the horizon is the one who
 should be standing at it.
 
-Attribution is also shown on screen, in `web/index.html`, for as long as the
-statues are visible.
+Attribution is available through the Artwork credits link on the About page.

@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
-import 'package:nocturne/core/painting/ornament_paths.dart';
+import 'package:nocturne/core/painting/sign_paths.dart';
 import 'package:nocturne/core/painting/station_seed.dart';
 import 'package:nocturne/features/trace/domain/trace_geometry.dart';
 
@@ -34,7 +34,44 @@ class WallPainter extends CustomPainter {
     required this.lockedColour,
     required this.peakColour,
     required this.strokeWidth,
+    required this.stoneColour,
+    required this.carveShadow,
+    required this.carveLight,
+    this.torch,
+    this.torchStrength = 0,
   });
+
+  /// Where the viewer is holding the light, in this painter's own pixels.
+  ///
+  /// Null on touch, and whenever the pointer is off the wall. A hand holding a
+  /// torch is the whole conceit of this column: with a pointer, the light is
+  /// the pointer. Without one there is nothing to follow, so the wall lights
+  /// itself instead -- see [_signPaint].
+  final Offset? torch;
+
+  /// How far the light has come up, 0 to 1.
+  ///
+  /// Separate from [torch] so the wall fades rather than snapping. Moving the
+  /// pointer off the column used to cut the gold out in one frame, which read
+  /// as a bug; the flame now dies down and the stone comes back.
+  final double torchStrength;
+
+  /// The masonry behind the inscription.
+  ///
+  /// A temple wall is built of blocks, and drawing signs on an empty column
+  /// was most of why this read as a wireframe diagram rather than as stone.
+  final Color stoneColour;
+
+  /// The dark side of a cut.
+  ///
+  /// Carving is legible because of its edges, not its line. One flat stroke is
+  /// a drawing of an inscription; a dark edge below it and a lit edge above
+  /// it is a groove, and the difference costs two more passes of the same
+  /// path.
+  final Color carveShadow;
+
+  /// The lit side of a cut, where the torch catches the upper lip.
+  final Color carveLight;
 
   /// Career bursts, already laid out and anchored to rendered sections.
   final List<TraceBurst> bursts;
@@ -66,12 +103,6 @@ class WallPainter extends CustomPainter {
   /// Incised line weight.
   final double strokeWidth;
 
-  /// Spacing between register rules, in logical pixels.
-  static const double _registerSpacing = 132;
-
-  /// How much of a register's width the signs occupy.
-  static const double _inscriptionInset = 0.14;
-
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty || wallHeight <= 0) return;
@@ -86,45 +117,28 @@ class WallPainter extends CustomPainter {
     final to = visibleBottom.clamp(0.0, wallHeight);
     if (to <= from) return;
 
-    final inset = size.width * _inscriptionInset;
-    final runWidth = size.width - inset * 2;
-    if (runWidth <= 0) return;
+    // Clipped to the column. A course that begins just above the viewport is
+    // still drawn -- its lower half is visible -- and a canvas does not clip
+    // itself, so on a phone the top of that sign was painted over the
+    // navigation above the content. It is a wall, not a decal: it ends where
+    // its own box does.
+    canvas.clipRect(Offset.zero & size);
 
     // The unlit pass. Everything is on the wall whether or not the torch is
-    // near it — a wall does not stop existing in the dark, and a viewer who
+    // near it -- a wall does not stop existing in the dark, and a viewer who
     // has scrolled past should still see the inscription they left behind.
-    final content = _inscription(
-      from: from,
-      to: to,
-      inset: inset,
-      runWidth: runWidth,
-    );
-    canvas.drawPath(content, _stroke(restColour));
+    _masonry(canvas, size, from: from, to: to);
+    _signs(canvas, size, from: from, to: to);
 
     if (coherence <= 0) return;
 
     // The lit pass, masked to the torch. Drawn as a layer so the gradient
     // erases it at the edges rather than being drawn on top of it: a bright
-    // pool painted over dim strokes reads as a spotlight decal, this reads as
+    // pool painted over dim signs reads as a spotlight decal, this reads as
     // light falling on carved stone.
     final bounds = Offset.zero & size;
-    canvas
-      ..saveLayer(bounds, Paint())
-      ..drawPath(content, _stroke(lockedColour));
-
-    // Registers under the torch pick up the gold, which is the only chroma the
-    // wall itself carries.
-    final marks = Paint()..color = peakColour;
-    for (final burst in bursts) {
-      final y = burst.anchor * wallHeight;
-      if (y < from || y > to) continue;
-      canvas.drawCircle(
-        Offset(inset / 2, y - scrollOffset),
-        strokeWidth * 1.6,
-        marks,
-      );
-    }
-
+    canvas.saveLayer(bounds, Paint());
+    _signs(canvas, size, from: from, to: to, lit: true);
     canvas
       ..drawRect(
         bounds,
@@ -133,6 +147,119 @@ class WallPainter extends CustomPainter {
           ..shader = _torch(size),
       )
       ..restore();
+  }
+
+  /// One sign to a block, most cut in stone and a few gilded.
+  ///
+  /// This replaced a run of long horizontal rules with signs strung along
+  /// them. The owner's objection was the rules: they ran the width of the
+  /// column, which is not how a wall is laid out, and read as ruled paper. A
+  /// temple wall is registers of blocks, and each block carries its sign.
+  ///
+  /// The gilded ones catch a highlight that travels down the wall, so the gold
+  /// reads as leaf under a moving light rather than as a second colour.
+  void _signs(
+    Canvas canvas,
+    Size size, {
+    required double from,
+    required double to,
+    bool lit = false,
+  }) {
+    const cell = Tokens.wallCourseHeight;
+    const block = Tokens.wallBlockWidth;
+    final columns = math.max(1, (size.width / block).floor());
+    final width = size.width / columns;
+    final box = math.min(width, cell) * Tokens.wallSignFill;
+    if (box <= 0) return;
+
+    final firstRow = (from / cell).floor();
+    final lastRow = (to / cell).ceil();
+
+    for (var row = firstRow; row <= lastRow; row++) {
+      final top = row * cell - scrollOffset;
+      if (top > size.height || top + cell < 0) continue;
+
+      for (var column = 0; column < columns; column++) {
+        // Seeded on the block's own coordinates, so the wall is the same wall
+        // every time it is painted and does not reshuffle as it is scrolled
+        // back up.
+        final seed = StationSeed('sign.$column.$row');
+        final sign = signOrder[seed.nextInt(signOrder.length)];
+        final gilded = seed.nextInt(Tokens.wallGildedInOne) == 0;
+
+        final path = SignPaths.of(sign, box);
+        final dx = column * width + (width - box) / 2;
+        final dy = top + (cell - box) / 2;
+
+        canvas
+          ..save()
+          ..translate(dx, dy);
+        _carveSign(
+          canvas,
+          path,
+          _signPaint(
+            gilded: gilded,
+            row: row,
+            lit: lit,
+            centre: Offset(dx + box / 2, dy + box / 2),
+          ),
+          box,
+        );
+        canvas.restore();
+      }
+    }
+  }
+
+  /// How one sign is filled.
+  ///
+  /// Stone signs are flat. Gilded ones brighten and dim as a highlight passes
+  /// down the wall: the wave is a function of the block's row as well as the
+  /// phase, so neighbouring courses light slightly out of step and the column
+  /// does not pulse all at once like a bulb.
+  Paint _signPaint({
+    required bool gilded,
+    required int row,
+    required bool lit,
+    required Offset centre,
+  }) {
+    // How much of the torch this block is getting. Zero when the light is
+    // elsewhere or absent, which is every block on a phone.
+    var reached = 0.0;
+    if (torch case final held? when torchStrength > 0) {
+      final distance = (held - centre).distance;
+      final falloff = (1 - distance / Tokens.wallTorchReach).clamp(0.0, 1.0);
+      // Eased rather than squared. Squaring kept the pool's whole strength in
+      // the last few pixels, so a block a hand's width from the flame barely
+      // moved and the wall read as tinted instead of lit; this holds the
+      // middle of the range up and still falls to nothing at the edge.
+      reached = falloff * falloff * (3 - 2 * falloff) * torchStrength;
+    }
+
+    // The base state. One block in five is gilded and breathes on its own, so
+    // a wall nobody is touching -- a phone, or a pointer somewhere else -- is
+    // still alive. The rest are stone.
+    final Color base;
+    if (gilded) {
+      final travel = phase * 2 * math.pi - row * Tokens.wallShimmerStagger;
+      final breath = (math.sin(travel) + 1) / 2;
+      base = Color.lerp(carveLight, peakColour, breath)!;
+    } else {
+      base = lit ? lockedColour : restColour;
+    }
+
+    if (reached <= 0) return Paint()..color = base;
+
+    // Under the light everything turns to gold, gilded or not: the owner asked
+    // for the wall to change colour where the torch is and come back when it
+    // leaves, which is what a flame does to a gilded relief.
+    return Paint()
+      ..color = Color.lerp(base, peakColour, reached)!
+      ..maskFilter = reached > Tokens.wallShimmerBloomAt
+          ? MaskFilter.blur(
+              BlurStyle.solid,
+              (reached - Tokens.wallShimmerBloomAt) * Tokens.wallShimmerBloom,
+            )
+          : null;
   }
 
   /// The torch's falloff over the visible wall.
@@ -161,94 +288,54 @@ class WallPainter extends CustomPainter {
     ).createShader(Offset.zero & size);
   }
 
-  Paint _stroke(Color colour) => Paint()
-    ..color = colour
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = strokeWidth
-    ..strokeJoin = StrokeJoin.round
-    ..strokeCap = StrokeCap.round;
-
-  /// The visible inscription: register rules, and signs on the burst lines.
+  /// Draws a silhouette as something cut into stone rather than stuck on it.
   ///
-  /// Built for the visible window only. A wall is as long as the page and
-  /// sampling all of it would cost frames for stone nobody is looking at.
-  Path _inscription({
-    required double from,
-    required double to,
-    required double inset,
-    required double runWidth,
-  }) {
-    final path = Path();
-
-    // Register rules: the horizontal bands a tomb wall is divided into, and
-    // the reason the career reads as a sequence rather than a list. Each
-    // carries a run of signs, because a wall of bare rules is ruled paper.
-    final firstRule = (from / _registerSpacing).floor() * _registerSpacing;
-    for (var y = firstRule; y <= to; y += _registerSpacing) {
-      if (y < from - _registerSpacing) continue;
-      final dy = y - scrollOffset;
-      path
-        ..moveTo(inset, dy)
-        ..lineTo(inset + runWidth, dy);
-
-      // Signs sit on the rule, as they do on a wall. The seed is the rule's
-      // own position, so the wall is identical every time it is painted and
-      // does not reshuffle as the viewer scrolls back up it.
-      _inscribe(
-        path: path,
-        seed: StationSeed('wall.${y.round()}'),
-        left: inset,
-        width: runWidth,
-        baseline: dy,
-        fill: Tokens.wallRestFill,
-      );
-    }
-
-    // A burst's own line is inscribed more fully. Amplitude decides how much
-    // of the run is filled, so a long role carries a denser line than a short
-    // one -- the same quantity the trace expressed as height.
-    for (final burst in bursts) {
-      final y = burst.anchor * wallHeight;
-      if (y < from - _registerSpacing || y > to + _registerSpacing) continue;
-      _inscribe(
-        path: path,
-        seed: StationSeed(burst.id),
-        left: inset,
-        width: runWidth,
-        baseline: y - scrollOffset,
-        fill: burst.amplitude,
-      );
-    }
-
-    return path;
+  /// Three passes of the same shape: the shadow the groove throws below it,
+  /// the lit lip above it, then the body. Offsets are a fraction of the sign,
+  /// so a cut stays one cut whether the block is wide or narrow.
+  void _carveSign(Canvas canvas, Path path, Paint body, double box) {
+    final relief = box * Tokens.wallSignRelief;
+    canvas
+      ..save()
+      ..translate(relief, relief)
+      ..drawPath(path, Paint()..color = carveShadow)
+      ..restore()
+      ..save()
+      ..translate(-relief, -relief)
+      ..drawPath(path, Paint()..color = carveLight)
+      ..restore()
+      ..drawPath(path, body);
   }
 
-  /// Lays a run of signs along one line, filling [fill] of the available run.
+  /// The blocks the wall is built from.
   ///
-  /// Nothing here spells anything, and the site never offers a translation or
-  /// presents these as readable — see `12-MOTIF-LIBRARY.md` §0. The career they
-  /// stand beside is rendered as real text a few pixels away.
-  void _inscribe({
-    required Path path,
-    required StationSeed seed,
-    required double left,
-    required double width,
-    required double baseline,
-    required double fill,
+  /// Courses with staggered joints, which is how masonry is laid and why a
+  /// grid of squares would read as tile instead. Faint: this is the surface
+  /// the inscription is cut into, not a pattern competing with it.
+  void _masonry(
+    Canvas canvas,
+    Size size, {
+    required double from,
+    required double to,
   }) {
-    final box = math.min(Tokens.wallSignPitch * 0.7, _registerSpacing * 0.3);
-    final count = math.max(1, (fill * width / Tokens.wallSignPitch).floor());
-    final top = baseline - box / 2;
+    const course = Tokens.wallCourseHeight;
+    final paint = Paint()
+      ..color = stoneColour
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
 
-    for (var i = 0; i < count; i++) {
-      final x = left + i * Tokens.wallSignPitch;
-      if (x + box > left + width) break;
-      final ornament = Ornament.values[seed.nextInt(Ornament.values.length)];
-      for (final stroke in OrnamentPaths.strokes(ornament, box)) {
-        path.moveTo(x + stroke.first.x, top + stroke.first.y);
-        for (final point in stroke.skip(1)) {
-          path.lineTo(x + point.x, top + point.y);
-        }
+    final first = (from / course).floor() * course;
+    for (var y = first; y <= to + course; y += course) {
+      final dy = y - scrollOffset;
+      if (dy < -course || dy > size.height + course) continue;
+      canvas.drawLine(Offset(0, dy), Offset(size.width, dy), paint);
+
+      // Every other course is offset by half a block, so the vertical joints
+      // break rather than running the height of the wall.
+      final index = (y / course).round();
+      final shift = index.isEven ? 0.0 : Tokens.wallBlockWidth / 2;
+      for (var x = shift; x < size.width; x += Tokens.wallBlockWidth) {
+        canvas.drawLine(Offset(x, dy), Offset(x, dy + course), paint);
       }
     }
   }
@@ -264,5 +351,10 @@ class WallPainter extends CustomPainter {
       oldDelegate.lockedColour != lockedColour ||
       oldDelegate.peakColour != peakColour ||
       oldDelegate.strokeWidth != strokeWidth ||
+      oldDelegate.stoneColour != stoneColour ||
+      oldDelegate.carveShadow != carveShadow ||
+      oldDelegate.carveLight != carveLight ||
+      oldDelegate.torch != torch ||
+      oldDelegate.torchStrength != torchStrength ||
       !identical(oldDelegate.bursts, bursts);
 }

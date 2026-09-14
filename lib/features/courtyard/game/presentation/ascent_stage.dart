@@ -31,8 +31,8 @@ class AscentStage extends StatefulWidget {
   /// Pushes the stage, and restores the page scroll position on the way back.
   static Future<void> open(BuildContext context) => Navigator.of(context).push(
     PageRouteBuilder<void>(
-      transitionDuration: Tokens.considered,
-      reverseTransitionDuration: Tokens.quick,
+      transitionDuration: ReducedMotion.duration(context, Tokens.considered),
+      reverseTransitionDuration: ReducedMotion.duration(context, Tokens.quick),
       pageBuilder: (context, animation, _) =>
           FadeTransition(opacity: animation, child: const AscentStage()),
     ),
@@ -96,6 +96,11 @@ class _AscentStageState extends State<AscentStage>
   /// Seconds since the ticker started, for the scene's own motion.
   double _elapsed = 0;
 
+  /// How many hundred-metre marks this run has passed, and when the last one
+  /// landed, so the banner can fade rather than blink.
+  int _rewards = 0;
+  double _rewardAt = double.negativeInfinity;
+
   void _onTick(Duration elapsed) {
     _elapsed = elapsed.inMicroseconds / 1000000;
     final world = _world;
@@ -115,10 +120,21 @@ class _AscentStageState extends State<AscentStage>
       _kickedAt = _elapsed;
       _audio.play(AscentSound.collect);
     }
-    if (next.registersPassed > _bands) _audio.play(AscentSound.collect);
+    if (next.registersPassed > _bands) _audio.play(AscentSound.level);
     _bands = next.registersPassed;
+
+    // Every hundred metres is worth marking. The climb had nothing to show for
+    // a long run but a number ticking up, which the owner said made it feel
+    // unrewarding; this is the moment the shaft acknowledges the player.
+    final earned = next.metres ~/ Tokens.ascentRewardStep;
+    if (earned > _rewards) {
+      _rewards = earned;
+      _rewardAt = _elapsed;
+      _audio.play(AscentSound.reward);
+    }
+
     if (next.isOver && !before.isOver) {
-      _audio.play(AscentSound.fall);
+      _audio.play(next.metres > _best ? AscentSound.record : AscentSound.fall);
       if (next.metres > _best) _best = next.metres;
       _ticker.stop();
     }
@@ -132,6 +148,8 @@ class _AscentStageState extends State<AscentStage>
 
     _last = Duration.zero;
     _bands = 0;
+    _rewards = 0;
+    _rewardAt = double.negativeInfinity;
     _kickedAt = double.negativeInfinity;
     _steer = 0;
     _leap = false;
@@ -144,9 +162,11 @@ class _AscentStageState extends State<AscentStage>
       );
     });
     _focus.requestFocus();
-    _entrance
-      ..reset()
-      ..forward();
+    if (ReducedMotion.of(context)) {
+      _entrance.value = 1;
+    } else {
+      _entrance.forward(from: 0);
+    }
     _ticker
       ..stop()
       ..start();
@@ -243,6 +263,11 @@ class _AscentStageState extends State<AscentStage>
                 onMute: () => setState(_audio.toggleMute),
                 onClose: () => Navigator.of(context).maybePop(),
               ),
+              if (world != null && !world.isOver)
+                _RewardMark(
+                  metres: _rewards * Tokens.ascentRewardStep,
+                  age: (_elapsed - _rewardAt) / Tokens.ascentRewardHold,
+                ),
               if (world != null && world.isOver)
                 _Over(metres: world.metres, best: _best, onRestart: _start),
               // The pad sits over the shaft on touch, where a thumb can reach
@@ -418,3 +443,57 @@ class _Over extends StatelessWidget {
 ///
 /// The page's own buttons looked pasted on here, which is the owner's word for
 /// it: they are sized and weighted for reading, and this is a HUD.
+
+/// The hundred-metre mark, thrown up over the shaft and fading out.
+///
+/// Drawn rather than announced: a cartouche, which is how this site marks
+/// something as worth naming, with the distance inside it.
+class _RewardMark extends StatelessWidget {
+  const _RewardMark({required this.metres, required this.age});
+
+  /// The mark just passed, in whole metres.
+  final int metres;
+
+  /// How far through its life the mark is, 0 to 1 and beyond.
+  final double age;
+
+  @override
+  Widget build(BuildContext context) {
+    if (metres <= 0 || age > 1 || age < 0) return const SizedBox.shrink();
+    final tokens = context.tokens;
+    // Full for the first third, then out. A mark that starts fading at once
+    // is never actually seen at full strength.
+    final fade = (1 - (age - 0.34) / 0.66).clamp(0.0, 1.0);
+
+    return IgnorePointer(
+      child: Align(
+        alignment: const Alignment(0, -0.35),
+        child: Opacity(
+          opacity: fade,
+          child: Transform.translate(
+            offset: Offset(0, -age * Tokens.space24),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: tokens.beacon,
+                  width: tokens.hairlineWidth,
+                ),
+                borderRadius: BorderRadius.circular(Tokens.space24),
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: tokens.space24,
+                  vertical: tokens.space8,
+                ),
+                child: Text(
+                  '$metres',
+                  style: context.type.displayM.copyWith(color: tokens.beacon),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

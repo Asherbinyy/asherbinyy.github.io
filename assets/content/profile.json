@@ -8,8 +8,8 @@
     "ar": "أحمد الشربيني"
   },
   "positioning": {
-    "en": "Senior mobile developer. Five years building apps people use every day.",
-    "ar": "مطوّر تطبيقات موبايل أول. خمس سنوات في بناء تطبيقات يستخدمها الناس كل يوم."
+    "en": "Senior Software Engineer. Mobile development, IT, and exploring AI automation.",
+    "ar": "Senior Software Engineer. Mobile development, IT, and exploring AI automation."
   },
   "location": {
     "en": "Manchester, United Kingdom",
@@ -45,8 +45,8 @@
     {
       "value": "5+",
       "label": {
-        "en": "years commercial experience",
-        "ar": "سنوات خبرة تجارية"
+        "en": "years experience",
+        "ar": "سنوات خبرة"
       }
     },
     {
@@ -73,5 +73,33 @@
   "biography": {
     "en": "I build mobile apps, mostly in Flutter, and I have been doing it for five years across seven countries. Outside work I am usually at the gym, watching football, reading, or playing something. Lately I spend a lot of my free time on AI automation.",
     "ar": "أبني تطبيقات موبايل، غالباً بـ Flutter، منذ خمس سنوات وفي سبع دول. خارج العمل أكون في النادي، أو أتابع كرة القدم، أو أقرأ، أو ألعب. ومؤخراً أقضي وقت فراغي في أتمتة بالذكاء الاصطناعي."
-  }
+  },
+  "skills": [
+    "Flutter",
+    "Dart",
+    "Swift",
+    "SwiftUI",
+    "CI/CD",
+    "GitHub Actions",
+    "Project management",
+    "Cybersecurity",
+    "Power BI"
+  ],
+  "learning": [
+    "RAG",
+    "LangChain",
+    "AI automation",
+    "AI workflows",
+    "AI agents"
+  ],
+  "tools": [
+    "Claude",
+    "Codex",
+    "Gemini",
+    "DeepSeek",
+    "Antigravity",
+    "Android Studio",
+    "VS Code",
+    "Charles"
+  ]
 }

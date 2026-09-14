@@ -1,5 +1,10 @@
 # Design System — NOCTURNE
 
+> **September 14 ownership transfer:** the owner rejected Codex’s latest visual result and assigned **both public Flutter and all admin/backend work to Claude**. Former Codex-only file restrictions are revoked. Read [the complete handoff and prompt](29-CLAUDE-FULL-PROJECT-HANDOFF.md). Keep the Flutter foundation; no production deployment or destructive reset is implied.
+
+
+> Current direction, 2026-09-11: use [the brief](00-PROJECT-BRIEF.md) and [Flutter F2](19-FLUTTER-ENHANCEMENT-PLAN.md#f2--home-intro-and-shared-motion). The values below document the existing Flutter implementation. The old instrumentation, flat-only material rules, ban on environmental depth and single-animation limit are superseded as creative direction by the owner's later requests. New token values/type choices require the concrete F2 review; none are changed by this audit. Provenance, legibility, focus, reduced motion and shared tokens remain requirements.
+
 Authoritative. Any value not listed here is a bug. No raw hex, no magic numbers, no ad-hoc durations anywhere in feature code.
 
 ---

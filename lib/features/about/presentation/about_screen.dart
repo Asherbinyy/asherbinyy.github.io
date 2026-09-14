@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:nocturne/features/about/presentation/widgets/skills_panel.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:go_router/go_router.dart';
@@ -129,6 +131,11 @@ class _About extends StatelessWidget {
         SizedBox(height: tokens.space16),
         // Three, not the archive: the spec puts writing at the foot of About
         // as evidence it exists, and `/writing` is where the list lives.
+        // The artwork credit used to sit here, under the writing, as a
+        // button. The owner asked for it gone from the page and it is: it
+        // lives in the footer now, which is where a colophon belongs. It
+        // cannot be deleted outright -- the guardian model is CC BY-SA and
+        // attribution is a condition of using it, not a decoration.
         const WritingList(limit: 3),
       ],
     );
@@ -174,6 +181,8 @@ class _Identity extends StatelessWidget {
             style: type.telemetryS.copyWith(color: tokens.textMuted),
           ),
         ],
+        SizedBox(height: tokens.space24),
+        SkillsPanel(profile: profile),
       ],
     );
   }

@@ -14,6 +14,7 @@ import 'package:nocturne/content/period.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
+import 'package:nocturne/core/widgets/beacon_button.dart';
 
 /// One station's transmission: what the content records about that role.
 ///
@@ -25,6 +26,7 @@ class TransmissionPanel extends StatelessWidget {
   const TransmissionPanel({
     required this.role,
     required this.locale,
+    this.onClose,
     super.key,
   });
 
@@ -33,6 +35,9 @@ class TransmissionPanel extends StatelessWidget {
 
   /// Active content channel.
   final AppLocale locale;
+
+  /// Clears an inline selection; sheets provide their own dismissal controls.
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +61,13 @@ class TransmissionPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (onClose case final close?) ...[
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: BeaconButton(label: l10n.signalClose, onPressed: close),
+            ),
+            SizedBox(height: tokens.space12),
+          ],
           // A gold rule above the name, short of the column. The same device
           // the hero uses under the name, so a selected stop announces itself
           // in the site's own vocabulary rather than with a heavier border.

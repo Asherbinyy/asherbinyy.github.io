@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:nocturne/app/chrome/pointer_beacon.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
@@ -49,7 +50,8 @@ class TelemetryTrace extends ConsumerStatefulWidget {
   ConsumerState<TelemetryTrace> createState() => _TelemetryTraceState();
 }
 
-class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
+class _TelemetryTraceState extends ConsumerState<TelemetryTrace>
+    with SingleTickerProviderStateMixin {
   /// The idle carrier at the frequency section 5 caps infinite loops to.
   static final Duration _idlePeriod = Duration(
     microseconds: (Duration.microsecondsPerSecond / Tokens.idleTraceFrequency)
@@ -69,6 +71,29 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
   bool _measurementScheduled = false;
   List<TraceBurst>? _measuredBursts;
 
+  /// Where the torch is now, and where it last was.
+  ///
+  /// The second outlives the first: when the pointer leaves the column the
+  /// light has to die down somewhere, and the place it was last held is the
+  /// only honest answer. Snapping the pool to the origin would throw the gold
+  /// across the top of the wall on the way out.
+  /// Where the light is, and where it last was.
+  ///
+  /// The second outlives the first: when the pointer leaves the column the
+  /// light has to die down somewhere, and the place it was last held is the
+  /// only honest answer. Snapping the pool to the origin would throw the gold
+  /// across the top of the wall on the way out.
+  final ValueNotifier<Offset?> _torchAt = ValueNotifier(null);
+  ValueNotifier<Offset?>? _beacon;
+  bool _isTorchLit = false;
+  late final AnimationController _torchFade = AnimationController(
+    vsync: this,
+    duration: Duration(
+      milliseconds: (Tokens.wallTorchFade * Duration.millisecondsPerSecond)
+          .round(),
+    ),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -78,6 +103,13 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    final beacon = PointerBeacon.notifierOf(context);
+    if (beacon != _beacon) {
+      _beacon?.removeListener(_onPointer);
+      _beacon = beacon?..addListener(_onPointer);
+    }
+
     final settled = ReducedMotion.of(context);
     if (settled == _isSettled) return;
     _isSettled = settled;
@@ -99,6 +131,9 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
   @override
   void dispose() {
     widget.controller.removeListener(_onScroll);
+    _beacon?.removeListener(_onPointer);
+    _torchAt.dispose();
+    _torchFade.dispose();
     _ticker?.dispose();
     _frame.dispose();
     super.dispose();
@@ -239,8 +274,13 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
     required bool isCompact,
   }) {
     if (isCompact) return available * Tokens.traceColumnFractionCompact;
+    // The prose has to clear the wall completely. Reserving one measure was
+    // enough when the wall was thin rules; a column of carved blocks is opaque,
+    // and a career entry that runs under it is unreadable. The gutter is
+    // counted twice -- once either side of the text -- so there is real space
+    // between the last word and the first block.
     final reserved =
-        context.platform.gutter +
+        context.platform.gutter * 2 +
         context.type.measureFor(context.type.body) +
         Tokens.space48;
     final remaining = available - reserved;
@@ -255,9 +295,27 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
     final isSettled = ReducedMotion.of(context);
     final isCompact = context.platform.viewport == ViewportClass.compact;
 
-    return IgnorePointer(
-      child: LayoutBuilder(
-        builder: (context, constraints) => Align(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columnWidth = _columnWidth(
+          context,
+          constraints.maxWidth,
+          isCompact: isCompact,
+        );
+        // The clear ground the moving card is centred on: what is left of the
+        // frame once the copy's own column and the wall have taken theirs.
+        // Zero on a phone, where there is no such ground and no card.
+        final gap = isCompact
+            ? 0.0
+            : math.max<double>(
+                0,
+                constraints.maxWidth -
+                    columnWidth -
+                    context.platform.gutter -
+                    context.type.measureFor(context.type.body),
+              );
+
+        return Align(
           // The wall runs down the trailing part of the page, and must never
           // reach the content column. A fixed fraction cannot promise that:
           // at 1024px the trailing 66 per cent began at x=348 while the hero
@@ -273,72 +331,117 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace> {
           alignment: AlignmentDirectional.centerEnd,
           child: SizedBox(
             key: _traceKey,
-            width: _columnWidth(
-              context,
-              constraints.maxWidth,
-              isCompact: isCompact,
-            ),
+            width: columnWidth,
             height: constraints.maxHeight,
-            child: ValueListenableBuilder<TraceFrame>(
-              valueListenable: _frame,
-              builder: (context, frame, _) {
-                final position = widget.controller.hasClients
-                    ? widget.controller.position
-                    : null;
-                final traceHeight = position == null
-                    ? constraints.maxHeight
-                    : position.maxScrollExtent + position.viewportDimension;
-                _scheduleMeasurement();
-                final bursts = _anchoredBursts();
-                final lockedBurstId = _lockedBurstId(frame.offset);
+            child: IgnorePointer(
+              child: ValueListenableBuilder<TraceFrame>(
+                valueListenable: _frame,
+                builder: (context, frame, _) {
+                  final position = widget.controller.hasClients
+                      ? widget.controller.position
+                      : null;
+                  final traceHeight = position == null
+                      ? constraints.maxHeight
+                      : position.maxScrollExtent + position.viewportDimension;
+                  _scheduleMeasurement();
+                  final bursts = _anchoredBursts();
+                  final lockedBurstId = _lockedBurstId(frame.offset);
 
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    RepaintBoundary(
-                      child: CustomPaint(
-                        painter: WallPainter(
-                          bursts: bursts,
-                          phase: frame.phase,
-                          coherence: isSettled ? 1 : frame.coherence,
-                          scrollOffset: frame.offset,
-                          viewportHeight: constraints.maxHeight,
-                          wallHeight: traceHeight,
-                          restColour: tokens.instrumentDim,
-                          lockedColour: tokens.instrument,
-                          peakColour: tokens.beacon,
-                          strokeWidth: tokens.hairlineWidth,
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      RepaintBoundary(
+                        child: AnimatedBuilder(
+                          // Both halves of the light: how far it has come
+                          // up, and where the hand is holding it.
+                          animation: Listenable.merge([_torchFade, _torchAt]),
+                          builder: (context, _) => CustomPaint(
+                            painter: WallPainter(
+                              bursts: bursts,
+                              phase: frame.phase,
+                              coherence: isSettled ? 1 : frame.coherence,
+                              scrollOffset: frame.offset,
+                              viewportHeight: constraints.maxHeight,
+                              wallHeight: traceHeight,
+                              restColour: tokens.instrumentDim,
+                              lockedColour: tokens.instrument,
+                              peakColour: tokens.beacon,
+                              strokeWidth: tokens.hairlineWidth,
+                              stoneColour: tokens.hairline,
+                              carveShadow: tokens.void_,
+                              carveLight: tokens.ornamentField,
+                              torch: _torchAt.value,
+                              torchStrength: _torchFade.value,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    // No labels on a phone. They are a readout drawn inside
-                    // the trace column, which only has room for them beside a
-                    // measure-limited text column; on a narrow strip they wrap
-                    // over the copy, which is what the owner reported as the
-                    // trace and its titles overlapping the text.
-                    //
-                    // Nothing is lost by dropping them: each label repeats the
-                    // company, dates and country that the career entry it is
-                    // anchored to already prints, in full, a few pixels away.
-                    if (!isCompact)
-                      for (final burst in bursts)
-                        TraceBurstLabel(
-                          label: widget.labels[burst.id],
-                          top:
-                              burst.anchor * traceHeight -
-                              frame.offset -
-                              Tokens.space48,
-                          // Under reduced motion every label stays visible,
-                          // because there is no lock state to reveal them.
-                          isVisible: isSettled || lockedBurstId == burst.id,
-                        ),
-                  ],
-                );
-              },
+                      // No labels on a phone. They are a readout drawn inside
+                      // the trace column, which only has room for them beside
+                      // a measure-limited text column; on a narrow strip they
+                      // wrap over the copy, which is what the owner reported
+                      // as the trace and its titles overlapping the text.
+                      //
+                      // Nothing is lost by dropping them: each label repeats
+                      // the company, dates and country the career entry it is
+                      // anchored to already prints, in full, close by.
+                      if (!isCompact)
+                        for (final burst in bursts)
+                          TraceBurstLabel(
+                            label: widget.labels[burst.id],
+                            top:
+                                burst.anchor * traceHeight -
+                                frame.offset -
+                                Tokens.space48,
+                            // Under reduced motion every label stays visible,
+                            // because there is no lock state to reveal them.
+                            isVisible: isSettled || lockedBurstId == burst.id,
+                            gap: gap,
+                          ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  /// The pointer moved: aim the light, and bring it up or let it die down.
+  void _onPointer() {
+    if (!mounted) return;
+    final torch = _torchInLocalSpace(
+      context.platform.isPointer ? _beacon?.value : null,
+    );
+    if (torch != null) _torchAt.value = torch;
+
+    final wanted = torch != null;
+    if (wanted == _isTorchLit) return;
+    _isTorchLit = wanted;
+    if (ReducedMotion.of(context)) {
+      // No flame under reduced motion: the light is on or it is not.
+      _torchFade.value = wanted ? 1 : 0;
+      return;
+    }
+    wanted ? _torchFade.forward() : _torchFade.reverse();
+  }
+
+  /// Turns a global pointer position into this wall's own pixels.
+  ///
+  /// Null once it is outside the column, so the light goes out when the
+  /// viewer's hand leaves the wall rather than clinging to its edge.
+  Offset? _torchInLocalSpace(Offset? global) {
+    if (global == null) return null;
+    final box = _traceKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return null;
+    final local = box.globalToLocal(global);
+    final within =
+        local.dx >= 0 &&
+        local.dy >= 0 &&
+        local.dx <= box.size.width &&
+        local.dy <= box.size.height;
+    return within ? local : null;
   }
 }

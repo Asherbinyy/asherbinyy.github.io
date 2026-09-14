@@ -7,12 +7,11 @@ import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/app_footer.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/app_nav.dart';
-import 'package:nocturne/app/chrome/app_rail.dart';
+import 'package:nocturne/app/chrome/pointer_beacon.dart';
 import 'package:nocturne/features/recruiter/presentation/recruiter_view.dart';
 import 'package:nocturne/core/painting/ornament_field_painter.dart';
 import 'package:nocturne/core/widgets/cursor_trail.dart';
 import 'package:nocturne/core/painting/grain_painter.dart';
-import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/theme_controller.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
@@ -130,18 +129,12 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
                 Expanded(
                   child: Row(
                     children: [
-                      if (hasRail)
-                        _ChromeReveal(
-                          animation: widget.chromeReveal,
-                          edge: _RevealEdge.start,
-                          child: ValueListenableBuilder<double>(
-                            valueListenable: _progress,
-                            builder: (context, progress, _) => AppRail(
-                              sectionName: _sectionName(context),
-                              progress: progress,
-                            ),
-                          ),
-                        ),
+                      // The 56px rail that used to sit here is gone. It set
+                      // the section name vertically and printed a trace state
+                      // -- "standby" -- beside a tick scale, which imitated a
+                      // machine readout without reporting anything. The owner
+                      // named it as the kind of affectation he wants out of
+                      // the site.
                       Expanded(
                         child: FadeTransition(
                           opacity:
@@ -182,14 +175,6 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
 
   /// The rail's vertical label. Routes that are not nav destinations fall back
   /// to the route's own name rather than inventing a section title.
-  String _sectionName(BuildContext context) {
-    for (final destination in NavDestination.values) {
-      if (destination.route == widget.route) {
-        return destination.label(context.l10n);
-      }
-    }
-    return '';
-  }
 }
 
 enum _RevealEdge { top, bottom, start }
@@ -291,9 +276,27 @@ class _ContentColumn extends StatelessWidget {
   final Widget child;
   final Widget? background;
 
+  /// The live pointer position, shared with whatever is drawn behind.
+  static final ValueNotifier<Offset?> _pointer = ValueNotifier<Offset?>(null);
+
   @override
   Widget build(BuildContext context) {
     final layer = background;
+    // Captured above the scrolling content, because the wall behind it is the
+    // scroll view's sibling and would never see a hover of its own.
+    return MouseRegion(
+      opaque: false,
+      hitTestBehavior: HitTestBehavior.translucent,
+      onHover: (event) => _pointer.value = event.position,
+      onExit: (_) => _pointer.value = null,
+      child: PointerBeacon(
+        position: _pointer,
+        child: _buildStack(context, layer),
+      ),
+    );
+  }
+
+  Widget _buildStack(BuildContext context, Widget? layer) {
     return LayoutBuilder(
       builder: (context, constraints) => Stack(
         children: [
@@ -334,7 +337,10 @@ class _ContentColumn extends StatelessWidget {
                     constraints: const BoxConstraints(
                       maxWidth: Tokens.contentMaxWidth,
                     ),
-                    child: child,
+                    child: ContentViewport(
+                      height: constraints.maxHeight,
+                      child: child,
+                    ),
                   ),
                 ),
               ),
@@ -381,8 +387,8 @@ class _Grained extends StatelessWidget {
             child: CustomPaint(
               painter: OrnamentFieldPainter(
                 seed: 'field.${route.name}',
-                colour: tokens.instrumentDim,
-                opacity: tokens.ornamentFieldOpacity,
+                colour: tokens.ornamentField,
+                opacity: tokens.ornamentFieldAlpha,
                 hairlineWidth: tokens.hairlineWidth,
               ),
             ),

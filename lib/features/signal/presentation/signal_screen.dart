@@ -55,9 +55,10 @@ class _SignalScreenState extends ConsumerState<SignalScreen> {
       route: AppRoute.journey.path,
       inputMode: context.platform.inputMode,
     );
-    // Section 7 decides the surface once: a side panel on pointer, a bottom
-    // sheet on touch. This screen never asks which it is on.
-    if (context.platform.isTouch) {
+    // Inline details need a wide pointer layout. Other layouts use the
+    // platform's secondary surface so a narrow desktop never loses details.
+    if (context.platform.isTouch ||
+        context.platform.viewport.index < ViewportClass.expanded.index) {
       unawaited(
         context.presentSecondary<void>(
           child: TransmissionPanel(role: roles[index], locale: locale),
@@ -71,13 +72,20 @@ class _SignalScreenState extends ConsumerState<SignalScreen> {
     final locale = ref.watch(localeControllerProvider);
     final career = ref.watch(careerProvider);
     final coastlines = ref.watch(coastlineRingsProvider);
+    final compact = context.platform.viewport == ViewportClass.compact;
+    final topPadding = compact
+        ? context.tokens.space24
+        : context.tokens.space48;
+    final bottomPadding = compact
+        ? context.tokens.space24
+        : context.tokens.space64;
 
     return Padding(
       padding: EdgeInsetsDirectional.only(
         start: context.platform.gutter,
         end: context.platform.gutter,
-        top: context.tokens.space48,
-        bottom: context.tokens.space64,
+        top: topPadding,
+        bottom: bottomPadding,
       ),
       child: switch ((career, coastlines)) {
         (
@@ -90,6 +98,7 @@ class _SignalScreenState extends ConsumerState<SignalScreen> {
             locale: locale,
             selected: _selected,
             onSelected: (index) => _select(index, data.roles, locale),
+            verticalPadding: topPadding + bottomPadding,
           ),
         (AsyncData() || AsyncError(), _) ||
         (_, AsyncError()) => const _Unavailable(),
@@ -107,6 +116,7 @@ class _Map extends StatelessWidget {
     required this.locale,
     required this.selected,
     required this.onSelected,
+    required this.verticalPadding,
   });
 
   final List<CareerRole> roles;
@@ -114,6 +124,7 @@ class _Map extends StatelessWidget {
   final AppLocale locale;
   final ValueNotifier<int> selected;
   final ValueChanged<int> onSelected;
+  final double verticalPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +142,7 @@ class _Map extends StatelessWidget {
         ),
     ];
     final isWide =
+        context.platform.isPointer &&
         context.platform.viewport.index >= ViewportClass.expanded.index;
 
     return ValueListenableBuilder<int>(
@@ -140,15 +152,20 @@ class _Map extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            PropagationMap(
-              stations: stations,
-              selectedIndex: index,
-              labels: {
-                for (final role in roles)
-                  role.id: l10n.signalStationLabel(role.city, role.country),
-              },
-              coastlines: coastlines,
-              onSelected: onSelected,
+            Flexible(
+              child: Center(
+                heightFactor: 1,
+                child: PropagationMap(
+                  stations: stations,
+                  selectedIndex: index,
+                  labels: {
+                    for (final role in roles)
+                      role.id: l10n.signalStationLabel(role.city, role.country),
+                  },
+                  coastlines: coastlines,
+                  onSelected: onSelected,
+                ),
+              ),
             ),
             SizedBox(height: tokens.space24),
             ChronologyScrubber(
@@ -163,26 +180,44 @@ class _Map extends StatelessWidget {
           ],
         );
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.signalHeading, style: context.type.displayM),
-            SizedBox(height: tokens.space32),
-            if (isWide)
-              // The map holds the whole width until a stop is chosen, then
-              // gives a third of it back. It used to reserve that third from
-              // the first frame and fill it with nothing, so the page opened
-              // with an empty column beside a squeezed map.
-              _MapAndPanel(
-                map: map,
-                panel: index < 0
-                    ? null
-                    : TransmissionPanel(role: roles[index], locale: locale),
-              )
-            else
-              map,
-          ],
+        // Reserve chrome and page padding before allocating the map. The
+        // heading and timeline take their natural heights; only the map flexes.
+        // Short windows and enlarged text retain a scrollable minimum.
+        final visibleHeight = ContentViewport.heightOf(context);
+        final minimumHeight = MediaQuery.textScalerOf(context)
+            .scale(Tokens.journeyMinContentHeight);
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: visibleHeight == null
+                ? double.infinity
+                : (visibleHeight - verticalPadding).clamp(
+                    minimumHeight,
+                    double.infinity,
+                  ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.signalHeading, style: context.type.displayM),
+              SizedBox(height: tokens.space32),
+              Flexible(
+                child: isWide
+                    // Selection shares the bounded row with a detail panel.
+                    ? _MapAndPanel(
+                        map: map,
+                        panel: index < 0
+                            ? null
+                            : TransmissionPanel(
+                                role: roles[index],
+                                locale: locale,
+                                onClose: () => selected.value = -1,
+                              ),
+                      )
+                    : map,
+              ),
+            ],
+          ),
         );
       },
     );
@@ -261,7 +296,9 @@ class _MapAndPanel extends StatelessWidget {
                   widthFactor: open,
                   child: SizedBox(
                     width: constraints.maxWidth * _panelFraction,
-                    child: panel ?? const SizedBox.shrink(),
+                    child: SingleChildScrollView(
+                      child: panel ?? const SizedBox.shrink(),
+                    ),
                   ),
                 ),
               ),

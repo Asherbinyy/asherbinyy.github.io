@@ -57,6 +57,15 @@ class Profile with _$Profile {
     String? cvFile,
     Portrait? portrait,
     @Default(<ProfileStat>[]) List<ProfileStat> stats,
+
+    /// Owner-supplied established skills, shared with the generated brief.
+    @Default(<String>[]) List<String> skills,
+
+    /// Explicitly learning or experimenting; never presented as work results.
+    @Default(<String>[]) List<String> learning,
+
+    /// Tools the owner states they use.
+    @Default(<String>[]) List<String> tools,
   }) = _Profile;
 
   const Profile._();

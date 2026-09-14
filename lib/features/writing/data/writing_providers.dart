@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/core/net/relay.dart';
+import 'package:nocturne/features/writing/data/feed_parser.dart';
 import 'package:nocturne/features/writing/data/writing_repository.dart';
 import 'package:nocturne/features/writing/domain/article.dart';
 
@@ -48,6 +52,46 @@ final writingRepositoryProvider = Provider<WritingRepository?>((ref) {
 /// not there rather than apologising for itself.
 final articlesProvider = FutureProvider<List<Article>>((ref) async {
   final repository = ref.watch(writingRepositoryProvider);
-  if (repository == null) return const [];
-  return repository.articles();
+  final readAsset = ref.watch(assetReaderProvider);
+  final live = await repository?.articles();
+  if (live != null && live.isNotEmpty) return live;
+  try {
+    // Public title/link/date metadata only. No stale article bodies, tracking
+    // URLs or third-party covers are loaded when the relay is unavailable.
+    return List.unmodifiable(
+      parseFeed(await readAsset('assets/content/writing.xml')),
+    );
+  } on Object {
+    return const [];
+  }
 });
+
+/// Bundled covers keyed by article identity, never by feed position.
+final bundledWritingCoversProvider = FutureProvider<Map<String, String>>((
+  ref,
+) async {
+  try {
+    final raw = jsonDecode(
+      await ref.watch(assetReaderProvider)(
+        'assets/content/writing-covers.json',
+      ),
+    ) as Map<String, dynamic>;
+    return {
+      for (final entry in raw.entries)
+        if (entry.value case {'asset': final String asset}
+            when asset.startsWith('assets/media/article-'))
+          entry.key: asset,
+    };
+  } on Object {
+    return const {};
+  }
+});
+
+/// Ignores RSS tracking parameters without conflating articles or publishers.
+String articleCoverKey(Uri url) => url
+    .replace(query: '', fragment: '')
+    .toString()
+    .split('?')
+    .first
+    .split('#')
+    .first;

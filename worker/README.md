@@ -1,11 +1,13 @@
-# Analytics Worker
+# Portfolio Worker
 
 This service implements the server-side privacy boundary in
 `docs/06-ANALYTICS-AND-PRIVACY.md`. It stores aggregate counters and a daily
 deduplication hash. Raw IP addresses and user-agent values are used only as
 inputs to SHA-256 inside one request invocation and are never written or logged.
 
-Before deployment:
+Current-state note (2026-09-11): this Worker also serves content, media and the admin panel. The Pages release currently omits `ANALYTICS_ENDPOINT`, so visitor collection is disabled. The setup steps below describe initial provisioning; inspect existing bindings before creating any namespace. Admin limitations and the new publication contract are in [`docs/15-ADMIN-AND-MEDIA.md`](../docs/15-ADMIN-AND-MEDIA.md).
+
+Before an explicitly authorized deployment:
 
 1. Authenticate with `npx wrangler login`.
 2. The `ANALYTICS` namespace binding in `wrangler.toml` points to the deployed
@@ -35,10 +37,9 @@ Before deployment:
    the admin token can rewrite what the site says about the owner. Rotating
    either is `wrangler secret put` again, with no code change.
 
-6. Deploy with `npx wrangler deploy`. The Pages release build supplies the
-   checked production endpoint at
-   `https://nocturne-analytics.asherbinyy.workers.dev/v1/beacon`; local builds
-   omit it and therefore make no analytics requests.
+6. Deploy with `npx wrangler deploy` only for an authorized release. Pages
+   currently omits the analytics endpoint. Deploying the Worker does not enable
+   collection in the public client; content relay configuration is separate.
 
 The midnight UTC trigger rotates the 32-byte daily salt. The second trigger runs
 hourly from 01:00 through 23:00 UTC, verifies that rotation happened, and sends

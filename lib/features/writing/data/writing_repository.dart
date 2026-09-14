@@ -1,4 +1,5 @@
 import 'package:http/http.dart' as http;
+import 'package:nocturne/app/theme/tokens.dart';
 
 import 'package:nocturne/features/writing/data/feed_parser.dart';
 import 'package:nocturne/features/writing/domain/article.dart';
@@ -29,7 +30,7 @@ class WritingRepository {
   /// swallows deliberately; it is the one place in the codebase that should.
   Future<List<Article>> articles() async {
     try {
-      final result = await client.get(endpoint);
+      final result = await client.get(endpoint).timeout(Tokens.writingTimeout);
       if (result.statusCode != 200) return const [];
 
       final articles = parseFeed(result.body)

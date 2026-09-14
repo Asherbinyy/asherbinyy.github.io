@@ -5,8 +5,37 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+- September 14: latest visual pass rejected; full app/admin ownership transferred to Claude with a tested isolated password-rotation patch. Fixed missing Material icon-font bundling. No merge/deployment.
+
+### Content
+
+- Updated positioning, experience wording and supplied skills/learning/tools; shared the same content with the static CV/Brief.
+- Home Freelance label reads Remote and omits detail copy.
+- Writing falls back to bundled published article metadata when its relay is unavailable.
+- Rolled back the rejected Flutter redesign. Existing backgrounds, stat cards, navigation, page layouts, game and intro are restored; then selectively restored the improvements below on the owner’s request.
+
+### Restored
+
+- Football now has a grounded player, boot contact, ball flight, net reaction and G O A L; tap/keyboard replay respects reduced motion.
+- Six actual published article covers are bundled for localhost and relay failure.
+- Education cards expand/collapse; About groups supplied skills, learning topics and tools separately.
+- Manual jumps have buffering, coyote time, variable height and smoother steering; an Egyptian humanoid replaces the scarab, with landing squash.
+- Removed the intro’s bottom credit caption; full attribution remains linked from About.
+
+### Documentation
+
+- Removed the rejected separate frontend, generated entrance studies and migration documentation at the owner’s request. Flutter remains the public UI; the existing Journey and sitemap repairs are retained.
+- Re-reviewed admin commit `afc8969`: 262 Worker tests pass and local Cloudflare content-write concurrency passes; three remaining read/auth races block integration.
+
+- Audited the original requests, repository and deployed browser views; saved 11 visual baseline captures.
+- Replaced the rejected frontend experiment with a Flutter enhancement plan and preserved the original request inventory.
+- Replaced stale current-state issues, brief, game and admin specifications; marked historical design/screen/schema instructions that conflict with later requests.
+- Shortened the README and documented the current SEO/publication gap. No application redesign, content edit or deployment is included in this audit.
+
 ### Fixed
 
+- Bounded Journey's map using the measured content viewport so the timeline remains visible; added inline Close and a detail surface for narrow pointer windows. Local branch only.
+- Generated sitemap routes from the route enum and actual project IDs; removed retired URLs and misleading build-date modification timestamps. Public response/HTML fixes remain open.
 - Deployed the Milestone 4 Worker from the repository root. The `/v1/cover`
   fake-image check returns the expected 502; Pages is deployed separately.
 

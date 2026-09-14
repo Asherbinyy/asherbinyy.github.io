@@ -37,6 +37,126 @@ Future<void> _pumpSignal(
 }
 
 void main() {
+  group('viewport layout', () {
+    for (final size in [
+      const Size(1440, 900),
+      const Size(1366, 768),
+      const Size(1024, 768),
+      const Size(800, 600),
+      const Size(390, 844),
+      const Size(320, 568),
+    ]) {
+      testWidgets('map and timeline fit together at $size', (tester) async {
+        await _pumpSignal(tester, reducedMotion: true);
+        tester.view.physicalSize = size;
+        await pumpFrames(tester);
+
+        final viewport = tester.getRect(
+          find
+              .ancestor(
+                of: find.byType(SignalScreen),
+                matching: find.byType(SingleChildScrollView),
+              )
+              .first,
+        );
+        final map = tester.getRect(find.byType(PropagationMap));
+        final timeline = tester.getRect(find.byType(ChronologyScrubber));
+        expect(map.top, greaterThanOrEqualTo(viewport.top));
+        expect(map.bottom, lessThan(timeline.top));
+        expect(map.center.dx, closeTo(timeline.center.dx, 0.5));
+        expect(timeline.bottom, lessThanOrEqualTo(viewport.bottom));
+        expect(tester.takeException(), isNull);
+        expect(viewport.height, greaterThan(0));
+      });
+    }
+
+    testWidgets('a small phone centers the map and keeps full years legible', (
+      tester,
+    ) async {
+      await _pumpSignal(
+        tester,
+        breakpoint: ChromeBreakpoint.compact,
+        capabilities: touchBrowser,
+        reducedMotion: true,
+      );
+      tester.view.physicalSize = const Size(320, 568);
+      await pumpFrames(tester);
+      final map = tester.getRect(find.byType(PropagationMap));
+      final timeline = tester.getRect(find.byType(ChronologyScrubber));
+      expect(map.center.dx, closeTo(timeline.center.dx, 0.5));
+      final years = find.descendant(
+        of: find.byType(ChronologyScrubber),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Text && RegExp(r'^\d{4}$').hasMatch(widget.data ?? ''),
+        ),
+      );
+      expect(years, findsNWidgets(2));
+      for (var i = 0; i < 2; i++) {
+        expect(tester.getSize(years.at(i)).height, lessThan(20));
+      }
+      final stops = bundledStops();
+      final expected = [
+        (stops.first['start'] as String).split('-').first,
+        (stops.last['start'] as String).split('-').first,
+      ];
+      expect(tester.widgetList<Text>(years).map((text) => text.data), expected);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('closing a stop restores the initial map width', (
+      tester,
+    ) async {
+      await _pumpSignal(tester, reducedMotion: true);
+      final initial = tester.getSize(find.byType(PropagationMap));
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+      await tester.tap(find.bySemanticsLabel(l10n.signalNextStop));
+      await pumpFrames(tester);
+      expect(
+        tester.getSize(find.byType(PropagationMap)).width,
+        lessThan(initial.width),
+      );
+      await tester.tap(find.bySemanticsLabel(l10n.signalClose));
+      await pumpFrames(tester);
+      expect(find.byType(TransmissionPanel), findsNothing);
+      expect(tester.getSize(find.byType(PropagationMap)), initial);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('short landscape keeps the timeline reachable by scrolling', (
+      tester,
+    ) async {
+      await _pumpSignal(tester, reducedMotion: true);
+      tester.view.physicalSize = const Size(844, 390);
+      await pumpFrames(tester);
+      await tester.ensureVisible(find.byType(ChronologyScrubber));
+      await pumpFrames(tester);
+      final viewport = tester.getRect(
+        find
+            .ancestor(
+              of: find.byType(SignalScreen),
+              matching: find.byType(SingleChildScrollView),
+            )
+            .first,
+      );
+      final timeline = tester.getRect(find.byType(ChronologyScrubber));
+      expect(timeline.top, greaterThanOrEqualTo(viewport.top));
+      expect(timeline.bottom, lessThanOrEqualTo(viewport.bottom));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a narrow pointer browser still opens stop details', (
+      tester,
+    ) async {
+      await _pumpSignal(tester, breakpoint: ChromeBreakpoint.medium);
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+      await tester.tap(find.bySemanticsLabel(l10n.signalNextStop));
+      await pumpFrames(tester);
+      expect(find.byType(TransmissionPanel), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
   group('the map', () {
     testWidgets('plots one node per career station', (tester) async {
       await _pumpSignal(tester);

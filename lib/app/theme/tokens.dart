@@ -1,6 +1,8 @@
 // Group immutable scales to keep the single token source under 300 lines.
 // ignore_for_file: avoid_multiple_declarations_per_line
 
+import 'dart:ui' show lerpDouble;
+
 import 'package:material_ui/material_ui.dart';
 
 part 'theme_tokens.dart';
@@ -8,6 +10,12 @@ part 'token_values.dart';
 
 /// Exact design-system values. Section 11 is tokenized only, not implemented.
 abstract final class Tokens {
+  /// A complete kick, flight and net reaction at a readable pace.
+  static const Duration footballAction = Duration(milliseconds: 1400);
+
+  /// A stalled Writing request yields to bundled published metadata.
+  static const Duration writingTimeout = Duration(seconds: 8);
+
   /// Bundled type weights, including the semibold body face.
   static const FontWeight weightRegular = FontWeight.w400,
       weightMedium = FontWeight.w500,
@@ -360,6 +368,9 @@ abstract final class Tokens {
   /// The map's aspect ratio. Equirectangular is 2:1 by construction.
   static const double mapAspectRatio = 2;
 
+  /// Below this content height Journey scrolls instead of clipping controls.
+  static const double journeyMinContentHeight = 320;
+
   /// Scroll velocity above which the signal degrades toward noise, px/s.
   static const double traceScanningVelocity = 900;
 
@@ -393,7 +404,7 @@ abstract final class Tokens {
   ///
   /// Below this it stops reading as a wall and becomes a sliver of rules at
   /// the edge of the page.
-  static const double traceColumnFractionMinimum = 0.30;
+  static const double traceColumnFractionMinimum = 0.22;
 
   /// Fraction of the content column the trace occupies, from the trailing edge.
   ///
@@ -405,7 +416,7 @@ abstract final class Tokens {
   ///
   /// On compact the trace keeps to a narrow strip at the trailing edge. It is
   /// still legible as a waveform and it no longer competes with the words.
-  static const double traceColumnFraction = 0.66,
+  static const double traceColumnFraction = 0.38,
       traceColumnFractionCompact = 0.28;
 
   /// Jitter added to the carrier when coherence is entirely lost.
@@ -427,6 +438,54 @@ abstract final class Tokens {
   /// Low: it is a door opening in a dark room, not a flash. The whole point of
   /// the beat is that the page arrives out of the dark.
   static const double openingGlow = 0.28;
+
+  /// Every this many metres, the shaft acknowledges the climb.
+  ///
+  /// A round hundred because that is what the owner asked for and because it
+  /// is a number a player can hold in their head while climbing.
+  static const int ascentRewardStep = 100;
+
+  /// How long the mark stays up afterwards, in seconds.
+  static const double ascentRewardHold = 1.6;
+
+  /// How heavy the kicking figure's limbs are, against the scene's own ink.
+  ///
+  /// It was 1.7, which drew a figure with the build of a snowman -- the owner
+  /// called the stickman too fat and he was right. Just above the scene's own
+  /// line weight reads as a drawn figure rather than a padded one.
+  static const double footballLimbWeight = 1.05;
+
+  /// The head, as a fraction of the scene's height. Smaller than the limbs
+  /// suggest, because a stick figure's head is a mark and not a ball.
+  static const double footballHeadRadius = 0.038;
+
+  /// One contact card's smallest width, so a row of them is a grid and not a
+  /// ragged line of differently sized words.
+  static const double contactCardWidth = 132;
+
+  /// How the gold glow behind a hovered contact card is thrown.
+  static const double contactGlowAlpha = 0.35, contactGlowBlur = 18;
+
+  /// The sign beside a career entry.
+  ///
+  /// Big enough to read as a figure rather than a bullet, small enough that
+  /// the entry's own heading is still the first thing the eye lands on.
+  static const double stopMarkSize = 44;
+
+  /// How strongly its cut edges show.
+  static const double stopMarkReliefAlpha = 0.5;
+
+  /// The itinerary on Home: one stop's node and the cell it sits in.
+  ///
+  /// Small. It is an index to the career below, not a second telling of it,
+  /// and a node the size of the atlas's would compete with the entries.
+  static const double stopNodeRadius = 5;
+
+  /// The width of the column the thread runs down.
+  static const double stopRailWidth = 22;
+
+  /// The height of one stop's cell, which is what sets the thread's length.
+  static const double stopRowHeight = 30;
 
   /// How much wider than tall a station's cartouche sits on the atlas.
   ///
@@ -472,10 +531,63 @@ abstract final class Tokens {
   /// A mote's radius at birth.
   static const double cursorTrailRadius = 3;
 
+  /// How far a carved edge sits from the body of its stroke.
+  ///
+  /// A fraction of the stroke weight, so a cut reads as one groove at any
+  /// weight rather than separating into three parallel lines.
+  static const double wallCarveOffset = 0.9;
+
+  /// Height of one masonry course on the wall.
+  static const double wallCourseHeight = 132;
+
+  /// Width of one block in that course.
+  static const double wallBlockWidth = 96;
+
+  /// How much of a block its sign fills.
+  ///
+  /// Short of the joint on every side, because a sign that touches the edge
+  /// of its block reads as tiling rather than as something cut into it.
+  static const double wallSignFill = 0.54;
+
+  /// How deep a sign is cut, against its own size.
+  static const double wallSignRelief = 0.016;
+
+  /// One block in this many is gilded.
+  ///
+  /// Sparse on purpose. Gold on this site marks the person and anything
+  /// actionable, and a wall of it would spend that meaning on decoration.
+  static const int wallGildedInOne = 5;
+
+  /// How far each course lags the one above it in the shimmer.
+  ///
+  /// Without the lag the whole column brightens at once, which reads as a
+  /// bulb rather than as light moving across a surface.
+  static const double wallShimmerStagger = 0.7;
+
+  /// How far a held torch reaches, in pixels.
+  ///
+  /// Wide enough that moving across the wall lights a group rather than one
+  /// block at a time, which is what makes it read as a lamp rather than a
+  /// hover state.
+  static const double wallTorchReach = 300;
+
+  /// Seconds for the light to come up, and the same to die down.
+  ///
+  /// Long enough to read as a flame being carried in rather than a hover
+  /// state switching on, short enough that it keeps up with the hand.
+  static const double wallTorchFade = 0.26;
+
+  /// Where in the wave a gilded sign starts to bloom.
+  static const double wallShimmerBloomAt = 0.62;
+
+  /// How far it blooms at the peak.
+  static const double wallShimmerBloom = 9;
+
   /// Opacity of the ornament field behind every page.
   ///
-  /// One step above the 3% texture beneath it, so the two read as separate
-  /// layers rather than as one muddy surface. `12-MOTIF-LIBRARY.md` §4.
+  /// Superseded by the per-theme `ornamentFieldAlpha`: four percent of a grey
+  /// was in the file and invisible on the screen, and the two grounds do not
+  /// take the same value. Kept because other surfaces still reference it.
   static const double ornamentFieldOpacity = 0.04;
 }
 
@@ -496,6 +608,8 @@ const nocturneTokens = ThemeTokens(
   hairlineStrong: Color(0xFF3F4D66),
   beacon: Color(0xFFE3A93F),
   beaconDim: Color(0xFF92702E),
+  ornamentField: Color(0xFFE3A93F),
+  ornamentFieldAlpha: 0.14,
   beaconGlow: Color(0xFFFFD98A),
   faience: Color(0xFF45B8B2),
   faienceDim: Color(0xFF2D827D),
@@ -522,6 +636,8 @@ const daybreakTokens = ThemeTokens(
   hairlineStrong: Color(0xFFAD9C7C),
   beacon: Color(0xFF885912),
   beaconDim: Color(0xFF9C7534),
+  ornamentField: Color(0xFF7A5410),
+  ornamentFieldAlpha: 0.17,
   beaconGlow: Color(0xFF6F4409),
   faience: Color(0xFF1C6B68),
   faienceDim: Color(0xFF2E8481),

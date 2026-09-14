@@ -27,6 +27,8 @@ class PapyrusPainter extends CustomPainter {
     required this.fibre,
     required this.edge,
     required this.hairlineWidth,
+    this.fibresAcross = _fibresAcross,
+    this.fibresDown = _fibresDown,
   });
 
   /// The body of the sheet.
@@ -40,6 +42,16 @@ class PapyrusPainter extends CustomPainter {
 
   /// Incised line weight.
   final double hairlineWidth;
+
+  /// Reeds laid across the sheet.
+  ///
+  /// Defaulted for the atlas, which is where this started. A small panel needs
+  /// far fewer: the weave has to stay reed-sized against the sheet, and a map
+  /// count on a card reads as graph paper.
+  final int fibresAcross;
+
+  /// Reeds laid down it.
+  final int fibresDown;
 
   /// Fibres across the sheet, each way.
   ///
@@ -132,8 +144,8 @@ class PapyrusPainter extends CustomPainter {
       ..color = fibre
       ..style = PaintingStyle.stroke;
 
-    for (var i = 1; i < _fibresAcross; i++) {
-      final x = size.width * i / _fibresAcross;
+    for (var i = 1; i < fibresAcross; i++) {
+      final x = size.width * i / fibresAcross;
       // Varied weight and opacity, because a weave of identical lines is a
       // grid and reads as graph paper, which is the thing being replaced.
       paint
@@ -146,8 +158,8 @@ class PapyrusPainter extends CustomPainter {
       );
     }
 
-    for (var i = 1; i < _fibresDown; i++) {
-      final y = size.height * i / _fibresDown;
+    for (var i = 1; i < fibresDown; i++) {
+      final y = size.height * i / fibresDown;
       paint
         ..strokeWidth = hairlineWidth * random.nextRange(0.6, 1.6)
         ..color = fibre.withValues(
@@ -167,5 +179,7 @@ class PapyrusPainter extends CustomPainter {
       oldDelegate.sheet != sheet ||
       oldDelegate.fibre != fibre ||
       oldDelegate.edge != edge ||
-      oldDelegate.hairlineWidth != hairlineWidth;
+      oldDelegate.hairlineWidth != hairlineWidth ||
+      oldDelegate.fibresAcross != fibresAcross ||
+      oldDelegate.fibresDown != fibresDown;
 }

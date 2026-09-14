@@ -94,11 +94,6 @@ class AscentPainter extends CustomPainter {
   /// How many dust motes hang in the shaft.
   static const int _moteCount = 46;
 
-  /// The climber's drawn height, in multiples of its own scale.
-  ///
-  /// Half a shell below the centre, then the sun's offset and radius above it.
-  static const double _climberSpans = 1.75 / 2 + 1.55 + 0.62;
-
   /// Metres of shaft visible at once.
   ///
   /// Lower than it was. The camera used to hold 26 metres, which on a wide
@@ -638,90 +633,75 @@ class AscentPainter extends CustomPainter {
     double y,
     double metresToPixels,
   ) {
-    // Sized in metres, like everything else in the world.
-    //
-    // It used to be a fraction of the shaft's width, which sounds reasonable
-    // and produced a climber 3.06 metres tall in a world where the ledges sit
-    // 2.6 metres apart and a bounce rises 2.75. It was taller than its own
-    // jump. That is the whole reason it read as enormous and the reason the
-    // bouncing looked frantic: the thing was filling the space it was trying
-    // to travel through.
-    //
-    // The drawing runs from half a shell below the centre to the top of the
-    // sun above it, so the scale that yields a given height is that height
-    // divided by the span those parts cover.
-    final scale = math.max(
-      strokeWidth * 2,
-      _climberMetres * metresToPixels / _climberSpans,
-    );
-    final centre = Offset(shaft.left + world.climberX * shaft.width, y - scale);
-    final rising = world.velocity > 0;
-
-    final body = Paint()..color = stone;
-    final ink = Paint()
-      ..color = wall
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-
-    // Six legs, swept back when rising and braced when falling, which is the
-    // whole animation and costs six lines.
-    final sweep = rising ? 0.55 : -0.2;
-    for (final side in [-1, 1]) {
-      for (var i = 0; i < 3; i++) {
-        final origin = centre.translate(
-          side * scale * 0.5,
-          (i - 1) * scale * 0.34,
-        );
-        canvas.drawLine(
-          origin,
-          origin.translate(side * scale * 0.85, scale * (0.42 + sweep * 0.4)),
-          Paint()
-            ..color = stone
-            ..strokeWidth = strokeWidth * 1.4
-            ..strokeCap = StrokeCap.round,
-        );
-      }
-    }
-
-    // The shell: an oval with the central seam a scarab's elytra have.
-    final shell = Rect.fromCenter(
-      center: centre,
-      width: scale * 1.45,
-      height: scale * 1.75,
-    );
+    final height = _climberMetres * metresToPixels;
+    final x = shaft.left + world.climberX * shaft.width;
+    final spring = isReducedMotion
+        ? 0.0
+        : math.exp(-world.landingAge * 13) *
+              math.cos(world.landingAge * 28) *
+              0.16;
     canvas
-      ..drawOval(shell, body)
-      ..drawOval(shell, ink)
-      ..drawLine(shell.topCenter, shell.bottomCenter, ink)
-      // The head plate, notched, at the leading edge.
-      ..drawArc(
-        Rect.fromCenter(
-          center: centre.translate(0, -scale * 0.82),
-          width: scale * 1.15,
-          height: scale * 0.8,
-        ),
-        math.pi,
-        math.pi,
-        true,
-        body,
+      ..save()
+      ..translate(x, y)
+      ..scale(1 + spring, 1 - spring);
+    Offset p(double dx, double dy) => Offset(dx * height, dy * height);
+    final limb = Paint()
+      ..color = stone
+      ..strokeWidth = math.max(strokeWidth * 1.8, height * 0.055)
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+    final spread = isReducedMotion || world.isGrounded ? 0.12 : 0.18;
+    final armY = world.velocity > 0 ? -0.68 : -0.45;
+    canvas
+      ..drawLine(p(0, -0.69), p(0, -0.31), limb)
+      ..drawPath(
+        Path()
+          ..moveTo(0, -height * 0.60)
+          ..lineTo(-height * 0.17, height * armY)
+          ..lineTo(-height * 0.25, height * (armY - 0.08)),
+        limb,
+      )
+      ..drawPath(
+        Path()
+          ..moveTo(0, -height * 0.60)
+          ..lineTo(height * 0.17, height * armY)
+          ..lineTo(height * 0.25, height * (armY - 0.08)),
+        limb,
+      )
+      ..drawLine(p(-0.07, -0.29), p(-spread, -0.04), limb)
+      ..drawLine(p(0.07, -0.29), p(spread, -0.04), limb)
+      ..drawLine(p(-spread, -0.04), p(-spread - 0.06, -0.04), limb)
+      ..drawLine(p(spread, -0.04), p(spread + 0.06, -0.04), limb)
+      // Linen kilt and two arms/legs keep the silhouette human at phone size.
+      ..drawPath(
+        Path()
+          ..moveTo(-height * 0.09, -height * 0.43)
+          ..lineTo(height * 0.09, -height * 0.43)
+          ..lineTo(height * 0.17, -height * 0.25)
+          ..lineTo(-height * 0.17, -height * 0.25)
+          ..close(),
+        Paint()..color = stone,
       );
-
-    // The sun it carries. The one filled bright thing on screen, and the
-    // reason the player never loses track of where they are. Overlapping the
-    // head rather than floating above it.
-    final sun = centre.translate(0, -scale * 1.18);
-    canvas.drawCircle(sun, scale * 0.52, Paint()..color = glow);
-    if (isReducedMotion) return;
-
-    // A short wake below, so upward travel is legible at speed.
-    canvas.drawLine(
-      centre.translate(0, scale),
-      centre.translate(0, scale * 2.4),
-      Paint()
-        ..color = gold.withValues(alpha: 0.3)
-        ..strokeWidth = strokeWidth * 2
-        ..strokeCap = StrokeCap.round,
-    );
+    final head = p(0, -0.81);
+    canvas
+      ..drawCircle(head, height * 0.105, Paint()..color = stone)
+      // Gold nemes: flared sides, forehead band and a small central crest.
+      ..drawPath(
+        Path()
+          ..moveTo(-height * 0.12, -height * 0.90)
+          ..quadraticBezierTo(0, -height * 1.02, height * 0.12, -height * 0.90)
+          ..lineTo(height * 0.19, -height * 0.64)
+          ..lineTo(height * 0.10, -height * 0.66)
+          ..lineTo(height * 0.08, -height * 0.86)
+          ..lineTo(-height * 0.08, -height * 0.86)
+          ..lineTo(-height * 0.10, -height * 0.66)
+          ..lineTo(-height * 0.19, -height * 0.64)
+          ..close(),
+        Paint()..color = gold,
+      )
+      ..drawCircle(p(0, -0.94), height * 0.035, Paint()..color = glow)
+      ..restore();
   }
 
   @override
