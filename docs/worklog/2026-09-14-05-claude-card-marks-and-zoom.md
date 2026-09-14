@@ -117,6 +117,15 @@ in the footer now, which is where a colophon belongs.
 - `assets/content/profile.json` — modified — the dictated skills and tools.
 - `test/widget/trace/trace_test.dart`, `test/unit/features/stop_mark_test.dart` — the card's position, and that the three kinds differ.
 
+### The card was invisible, and a passing test said otherwise
+
+The card is pushed out of the wall's own box on purpose. A `Stack` clips to
+itself by default, so it was being thrown away entirely and the middle of the
+page stayed empty — the exact complaint that started this. The geometry test
+could not see it: a clipped child still reports its rect. It took driving the
+page in a browser, which is the second time on this wall that reading the code
+and passing the tests agreed with each other and were both wrong.
+
 ## Decisions made
 
 **The card says one thing.** Anything else is already printed beside it.
@@ -137,6 +146,8 @@ guess, so there is none.
 - The three kinds of stop are asserted to produce three different signs — two
   sharing one is exactly the failure that would make the mark pointless.
 - Full suite: **704 tests, all passing**, after regenerating the goldens.
+- The card's visibility is still not covered by a test. A rect is not proof
+  that anything was painted, and that is what let the clip through.
 
 ## Verification run
 
