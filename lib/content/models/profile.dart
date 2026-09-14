@@ -66,6 +66,13 @@ class Profile with _$Profile {
 
     /// Tools the owner states they use.
     @Default(<String>[]) List<String> tools,
+
+    /// What the owner will take on as work, in his own words.
+    ///
+    /// Plain strings like [skills] and [tools] rather than localised text:
+    /// these are the names of the things themselves, and a translation would
+    /// have to be invented rather than supplied.
+    @Default(<String>[]) List<String> services,
   }) = _Profile;
 
   const Profile._();
@@ -115,6 +122,10 @@ class Contact with _$Contact {
     Uri? gitlab,
     Uri? medium,
     Uri? calendly,
+
+    /// Present only when the owner supplies it. Nothing here is derived from a
+    /// username or guessed from a pattern.
+    Uri? tiktok,
 
     /// The owner's Linktree, which collects the same destinations in one page.
     Uri? linktree,

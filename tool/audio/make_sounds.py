@@ -6,11 +6,10 @@ kilobytes. Run from the repository root:
 
     python3 tool/audio/make_sounds.py
 
-It only writes the four files it owns; the original five are untouched.
+It only writes the three files it owns; the original five are untouched.
 """
 
 import math
-import random
 import struct
 import wave
 
@@ -70,31 +69,8 @@ def level():
     return frames
 
 
-def paper():
-    """A sheet winding up: filtered noise, brief, with a little body.
-
-    Papyrus is fibre, so the rustle is noise rather than tone; a one-pole low
-    pass takes the hiss off it and a short envelope keeps it from sounding
-    like static.
-    """
-    length = int(RATE * 0.42)
-    rng = random.Random(7)
-    frames = [0.0] * length
-    previous = 0.0
-    for i in range(length):
-        t = i / RATE
-        # Two humps: the sheet starts moving, then the roll seats itself.
-        env = math.exp(-t * 7.0) + 0.55 * math.exp(-((t - 0.19) ** 2) / 0.0016)
-        noise = rng.uniform(-1.0, 1.0)
-        previous += (noise - previous) * 0.18
-        frames[i] = previous * env * 0.8
-    # A soft knock at the end: the roll coming to rest against itself.
-    tone(frames, 196.00, 0.12, 26.0, start=0.3, harmonic=0.4)
-    return frames
-
 
 if __name__ == '__main__':
     write('reward', reward())
     write('record', record())
     write('level', level())
-    write('paper', paper())

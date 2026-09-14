@@ -581,7 +581,7 @@
   "@aboutOffDuty": {
     "description": "About screen: the heading over the owner's interests"
   },
-  "aboutContact": "Contact",
+  "aboutContact": "Contact me",
   "@aboutContact": {
     "description": "About: contact section heading"
   },
@@ -597,6 +597,67 @@
   "stationCqResponse": "CQ answered, station receiving",
   "@stationCqResponse": {
     "description": "Easter egg: the response line shown when a viewer types CQ"
+  },
+  "servicesHeading": "Services",
+  "@servicesHeading": {
+    "description": "Services page: the page heading"
+  },
+  "servicesIntro": "What I take on, and what I build with. If one of these is what you need, the fastest route is to say so directly.",
+  "@servicesIntro": {
+    "description": "Services page: one paragraph under the heading"
+  },
+  "servicesChatHeading": "Wanna chat?",
+  "@servicesChatHeading": {
+    "description": "Services page: heading over the invitation to get in touch"
+  },
+  "servicesChatBody": "Tell me what you are building and when you need it. I will tell you honestly whether I am the right person for it.",
+  "@servicesChatBody": {
+    "description": "Services page: the invitation itself"
+  },
+  "servicesBook": "Book a call",
+  "@servicesBook": {
+    "description": "Services page: opens the owner's booking page"
+  },
+  "navServices": "Services",
+  "@navServices": {
+    "description": "Navigation: the services destination"
+  },
+  "aboutViewWork": "View my work",
+  "@aboutViewWork": {
+    "description": "About: button to the work page"
+  },
+  "aboutBookService": "Book a service",
+  "@aboutBookService": {
+    "description": "About: button to the services page"
+  },
+  "homeServices": "Need something built?",
+  "@homeServices": {
+    "description": "Home: heading over the link to the services page"
+  },
+  "homeServicesAction": "See what I do",
+  "@homeServicesAction": {
+    "description": "Home: the link to the services page"
+  },
+  "stationBackToTop": "Back to the top",
+  "@stationBackToTop": {
+    "description": "Home: the control that scrolls back to the top"
+  },
+  "profileSkillsMore": "{count} more skills",
+  "@profileSkillsMore": {
+      "description": "Home: link to the rest of the skills on About",
+      "placeholders": {
+          "count": {
+              "type": "int"
+          }
+      }
+  },
+  "profileSkillsAll": "All my skills",
+  "@profileSkillsAll": {
+      "description": "Home: link to the skills on About when none are hidden"
+  },
+  "contactSocial": "Social links",
+  "@contactSocial": {
+    "description": "Contact: heading over the profiles, as opposed to the ways to message him"
   },
   "stationStops": "Stops",
   "@stationStops": {

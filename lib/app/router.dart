@@ -18,6 +18,7 @@ import 'package:nocturne/features/about/presentation/about_screen.dart';
 import 'package:nocturne/features/courtyard/presentation/courtyard_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/features/work/presentation/case_study_screen.dart';
+import 'package:nocturne/features/services/presentation/services_screen.dart';
 import 'package:nocturne/features/work/presentation/work_screen.dart';
 import 'package:nocturne/features/writing/presentation/writing_screen.dart';
 import 'package:nocturne/features/station/presentation/widgets/acquisition_sequence.dart';
@@ -106,6 +107,7 @@ abstract final class AppRouter {
     // screen's own "not written yet" state is the honest fallback anyway.
     AppRoute.caseStudy => CaseStudyScreen(slug: slug ?? ''),
     AppRoute.writing => const WritingScreen(),
+    AppRoute.services => const ServicesScreen(),
     AppRoute.about => const AboutScreen(),
     AppRoute.courtyard => const CourtyardScreen(),
     AppRoute.console => const ConsoleScreen(),

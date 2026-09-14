@@ -33,6 +33,7 @@ String routeTitle({
   // section name is the honest reading rather than an invented one.
   AppRoute.caseStudy => '${l10n.navWork} ${l10n.titleSeparator} $name',
   AppRoute.writing => '${l10n.navWriting} ${l10n.titleSeparator} $name',
+  AppRoute.services => '${l10n.navServices} ${l10n.titleSeparator} $name',
   AppRoute.about => '${l10n.navAbout} ${l10n.titleSeparator} $name',
   AppRoute.courtyard => '${l10n.navCourtyard}, $name',
   AppRoute.cv => '$name ${l10n.titleSeparator} ${l10n.navCv}',

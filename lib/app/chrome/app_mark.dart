@@ -1,6 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:nocturne/app/theme/theme_controller.dart';
 
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/theme/tokens.dart';
@@ -13,7 +16,7 @@ import 'package:nocturne/core/widgets/focus_ring.dart';
 /// wayfinding element rather than a decorative one. It is drawn from the trace
 /// curve rather than from an asset, so it cannot drift from the trace and needs
 /// no file to exist before task 1.6b exports one.
-class AppMark extends StatefulWidget {
+class AppMark extends ConsumerStatefulWidget {
   /// [semanticLabel] names the destination, not the shape.
   const AppMark({required this.semanticLabel, super.key});
 
@@ -21,10 +24,10 @@ class AppMark extends StatefulWidget {
   final String semanticLabel;
 
   @override
-  State<AppMark> createState() => _AppMarkState();
+  ConsumerState<AppMark> createState() => _AppMarkState();
 }
 
-class _AppMarkState extends State<AppMark> {
+class _AppMarkState extends ConsumerState<AppMark> {
   final WidgetStatesController _states = WidgetStatesController();
 
   @override
@@ -44,7 +47,16 @@ class _AppMarkState extends State<AppMark> {
         builder: (context, _) => FocusRing(
           isFocused: _states.value.contains(WidgetState.focused),
           child: InkWell(
-            onTap: () => context.goNamed(AppRoute.home.name),
+            // Home, and out of the brief. The mark is the way back to the
+            // site proper, and a viewer who has switched the brief on and
+            // wants the site again reaches for the logo -- leaving them in a
+            // one-page document after pressing it is the wrong answer.
+            onTap: () {
+              ref
+                  .read(recruiterModeProvider.notifier)
+                  .setEnabled(enabled: false);
+              context.goNamed(AppRoute.home.name);
+            },
             statesController: _states,
             borderRadius: BorderRadius.circular(tokens.controlRadius),
             child: Padding(

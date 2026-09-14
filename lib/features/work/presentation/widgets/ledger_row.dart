@@ -16,6 +16,7 @@ import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/core/widgets/loading/station_card.dart';
 import 'package:nocturne/core/widgets/loading/three_stage_image.dart';
+import 'package:nocturne/features/work/presentation/widgets/store_links.dart';
 
 /// One shipped application, as a row on the ledger.
 ///
@@ -295,9 +296,22 @@ class _StoreLinkState extends State<_StoreLink> {
               child: Center(
                 widthFactor: 1,
                 child: ExcludeSemantics(
-                  child: Text(
-                    widget.label,
-                    style: context.type.bodyS.copyWith(color: tokens.beacon),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        storeIconFor(widget.platform),
+                        size: Tokens.contactIconSize,
+                        color: tokens.beacon,
+                      ),
+                      SizedBox(width: tokens.space8),
+                      Text(
+                        widget.label,
+                        style: context.type.bodyS.copyWith(
+                          color: tokens.beacon,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

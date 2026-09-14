@@ -459,6 +459,37 @@ abstract final class Tokens {
   /// suggest, because a stick figure's head is a mark and not a ball.
   static const double footballHeadRadius = 0.038;
 
+  /// How strongly the portrait's gold edge reads.
+  static const double portraitEdgeAlpha = 0.55;
+
+  /// How much light the frame throws behind the picture.
+  static const double portraitGlowAlpha = 0.22;
+
+  /// How far that light carries, and how far it is pushed out first.
+  static const double portraitGlowBlur = 34, portraitGlowSpread = 2;
+
+  /// One country disc on the reach row, and how far the flag inside it is
+  /// blown up before being clipped so no letterboxing shows.
+  static const double flagDiameter = 26, flagOverscan = 1.35;
+
+  /// How wide the year and name column on a stop card may grow.
+  static const double stopCardTextWidth = 168;
+
+  /// How far down the page the way back up appears, in viewports.
+  static const double backToTopAfter = 1.4;
+
+  /// The diameter of that control.
+  static const double backToTopSize = 48;
+
+  /// One service card, and the mark on it.
+  static const double serviceCardWidth = 220, serviceIconSize = 26;
+
+  /// An icon standing in for a word in the header.
+  static const double chromeIconSize = 20;
+
+  /// The platform mark on a contact card.
+  static const double contactIconSize = 18;
+
   /// One contact card's smallest width, so a row of them is a grid and not a
   /// ragged line of differently sized words.
   static const double contactCardWidth = 132;

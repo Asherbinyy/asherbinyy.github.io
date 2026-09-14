@@ -6,6 +6,7 @@ import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/locale_controller.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
+import 'package:nocturne/content/country_names.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/features/trace/domain/trace_geometry.dart';
 import 'package:nocturne/features/trace/presentation/telemetry_trace.dart';
@@ -64,8 +65,10 @@ class StationTrace extends ConsumerWidget {
   /// or the two disagree about the same stop.
   static TraceLabel _labelFor(CareerRole role, AppLocale locale) => (
     id: role.id,
+    // The country spelled out, not its two letters. "Doha, QA" is a database
+    // row; "Doha, Qatar" is a place, and the card has the room for it.
     location: role.id == 'freelance'
         ? 'Remote'
-        : '${role.city}, ${role.country}',
+        : '${role.city}, ${CountryNames.of(role.country, locale)}',
   );
 }

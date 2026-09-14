@@ -23,6 +23,7 @@ dependencies:
   material_ui: ^1.1.0
   riverpod_annotation: ^2.6.0
   shared_preferences: ^2.3.0   # theme + consent persistence only
+  simple_icons: ^16.23.0        # the platforms' own marks, drawn from their brand sets
   url_launcher: ^6.3.0
   xml: ^6.5.0                  # RSS parse
 

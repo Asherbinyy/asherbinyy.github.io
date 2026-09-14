@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
+import 'package:simple_icons/simple_icons.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
@@ -34,24 +36,45 @@ class ContactLinks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final destinations = <(String, Uri)>[
-      // Linktree first: it is the one page that collects the rest, so a reader
-      // who wants "everything" needs exactly one click.
-      if (contact.linktree case final url?) ('Linktree', url),
-      if (contact.linkedin case final url?) ('LinkedIn', url),
-      if (contact.github case final url?) ('GitHub', url),
-      if (contact.gitlab case final url?) ('GitLab', url),
-      if (contact.medium case final url?) ('Medium', url),
-      if (_whatsApp(contact.phone) case final url?) ('WhatsApp', url),
-      ('Email', Uri(scheme: 'mailto', path: contact.email)),
+    final tokens = context.tokens;
+
+    // The two ways of reaching him, kept apart. The first is a message; the
+    // rest are places to go and read. Mixing them made a row of eight
+    // identical cards where the important one was third from the left.
+    final direct = <(String, IconData, Uri)>[
+      ('Email', SimpleIcons.gmail, Uri(scheme: 'mailto', path: contact.email)),
+      if (_whatsApp(contact.phone) case final url?)
+        ('WhatsApp', SimpleIcons.whatsapp, url),
+      if (contact.calendly case final url?)
+        ('Book a call', SimpleIcons.calendly, url),
     ];
 
-    return Wrap(
-      spacing: context.tokens.space12,
-      runSpacing: context.tokens.space12,
+    final social = <(String, IconData, Uri)>[
+      // Linktree first: it is the one page that collects the rest, so a reader
+      // who wants "everything" needs exactly one click.
+      if (contact.linktree case final url?)
+        ('Linktree', SimpleIcons.linktree, url),
+      // LinkedIn has no mark in the icon set -- the company had it withdrawn
+      // -- and redrawing somebody's trademark by hand is not the answer. A
+      // neutral link glyph carries it instead.
+      if (contact.linkedin case final url?) ('LinkedIn', Icons.link, url),
+      if (contact.github case final url?) ('GitHub', SimpleIcons.github, url),
+      if (contact.gitlab case final url?) ('GitLab', SimpleIcons.gitlab, url),
+      if (contact.medium case final url?) ('Medium', SimpleIcons.medium, url),
+      if (contact.tiktok case final url?) ('TikTok', SimpleIcons.tiktok, url),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        for (final (name, url) in destinations)
-          _ContactLink(name: name, url: url),
+        _Row(destinations: direct),
+        if (social.isNotEmpty) ...[
+          SizedBox(height: tokens.space24),
+          _Label(text: context.l10n.contactSocial),
+          SizedBox(height: tokens.space12),
+          _Row(destinations: social),
+        ],
       ],
     );
   }
@@ -68,10 +91,59 @@ class ContactLinks extends StatelessWidget {
   }
 }
 
+/// One row of cards, wrapped.
+class _Row extends StatelessWidget {
+  const _Row({required this.destinations});
+
+  final List<(String, IconData, Uri)> destinations;
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+    spacing: context.tokens.space12,
+    runSpacing: context.tokens.space12,
+    children: [
+      for (final (name, icon, url) in destinations)
+        _ContactLink(name: name, icon: icon, url: url),
+    ],
+  );
+}
+
+/// The quiet heading over a group of them.
+class _Label extends StatelessWidget {
+  const _Label({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: tokens.space16,
+          height: tokens.hairlineWidth * 2,
+          child: ColoredBox(color: tokens.instrumentDim),
+        ),
+        SizedBox(width: tokens.space8),
+        Text(
+          text,
+          style: context.type.telemetryS.copyWith(color: tokens.textMuted),
+        ),
+      ],
+    );
+  }
+}
+
 class _ContactLink extends StatefulWidget {
-  const _ContactLink({required this.name, required this.url});
+  const _ContactLink({
+    required this.name,
+    required this.icon,
+    required this.url,
+  });
 
   final String name;
+  final IconData icon;
   final Uri url;
 
   @override
@@ -143,15 +215,23 @@ class _ContactLinkState extends State<_ContactLink> {
                         ]
                       : null,
                 ),
-                child: Center(
-                  widthFactor: 1,
-                  child: ExcludeSemantics(
-                    child: Text(
-                      widget.name,
-                      style: context.type.body.copyWith(
+                child: ExcludeSemantics(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        widget.icon,
+                        size: Tokens.contactIconSize,
                         color: isHovered ? tokens.beaconGlow : tokens.beacon,
                       ),
-                    ),
+                      SizedBox(width: tokens.space12),
+                      Text(
+                        widget.name,
+                        style: context.type.body.copyWith(
+                          color: isHovered ? tokens.beaconGlow : tokens.beacon,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

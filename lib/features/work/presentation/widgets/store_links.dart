@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
+import 'package:simple_icons/simple_icons.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
@@ -157,6 +159,24 @@ class _StoreLinkState extends State<_StoreLink> {
 /// plain geometric stand-ins in the site's own palette: an apple, a play
 /// triangle, a package. They say which store without pretending to be the
 /// badge.
+/// Which mark a platform gets, shared by both places that print one.
+///
+/// pub.dev has no mark of its own in the set, so a package published there
+/// carries the Dart mark: it is the same organisation's, and it says the true
+/// thing about what the listing is.
+IconData storeIconFor(AppPlatform platform) => switch (platform) {
+  AppPlatform.ios => SimpleIcons.appstore,
+  AppPlatform.android => SimpleIcons.googleplay,
+  AppPlatform.pub => SimpleIcons.dart,
+};
+
+/// The store's own mark.
+///
+/// These used to be drawn by hand -- an apple with a bite taken out of it, a
+/// play triangle, a box for a package. Redrawing a company's trademark from
+/// memory is both worse-looking and the wrong thing to do, so they come from
+/// the Simple Icons set now, which is assembled from the vendors' own brand
+/// pages.
 class _StoreMark extends StatelessWidget {
   const _StoreMark({
     required this.platform,
@@ -169,73 +189,6 @@ class _StoreMark extends StatelessWidget {
   final double size;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: size,
-    height: size,
-    child: CustomPaint(
-      painter: _StoreMarkPainter(platform: platform, colour: colour),
-    ),
-  );
-}
-
-class _StoreMarkPainter extends CustomPainter {
-  const _StoreMarkPainter({required this.platform, required this.colour});
-
-  final AppPlatform platform;
-  final Color colour;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = colour;
-    final w = size.width;
-    final h = size.height;
-
-    switch (platform) {
-      case AppPlatform.ios:
-        // A rounded body with a bite out of the right and a leaf on top.
-        final body = Path()
-          ..addOval(Rect.fromLTWH(0, h * 0.24, w * 0.82, h * 0.72));
-        final bite = Path()
-          ..addOval(Rect.fromLTWH(w * 0.52, h * 0.30, w * 0.6, h * 0.6));
-        canvas
-          ..drawPath(Path.combine(PathOperation.difference, body, bite), paint)
-          ..drawPath(
-            Path()
-              ..moveTo(w * 0.40, h * 0.26)
-              ..quadraticBezierTo(w * 0.46, h * 0.02, w * 0.68, h * 0.04)
-              ..quadraticBezierTo(w * 0.60, h * 0.26, w * 0.40, h * 0.26)
-              ..close(),
-            paint,
-          );
-      case AppPlatform.android:
-        // The play triangle.
-        canvas.drawPath(
-          Path()
-            ..moveTo(w * 0.18, 0)
-            ..lineTo(w * 0.92, h * 0.5)
-            ..lineTo(w * 0.18, h)
-            ..close(),
-          paint,
-        );
-      case AppPlatform.pub:
-        // A package: a box with a lid seam, for a published library.
-        canvas
-          ..drawRect(
-            Rect.fromLTWH(w * 0.08, h * 0.28, w * 0.84, h * 0.64),
-            paint..style = PaintingStyle.fill,
-          )
-          ..drawLine(
-            Offset(w * 0.5, h * 0.28),
-            Offset(w * 0.5, h * 0.92),
-            Paint()
-              ..color = const Color(0x00000000)
-              ..blendMode = BlendMode.clear
-              ..strokeWidth = w * 0.10,
-          );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_StoreMarkPainter oldDelegate) =>
-      oldDelegate.platform != platform || oldDelegate.colour != colour;
+  Widget build(BuildContext context) =>
+      Icon(storeIconFor(platform), size: size, color: colour);
 }

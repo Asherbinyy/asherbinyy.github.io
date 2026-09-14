@@ -7,6 +7,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/app/l10n/app_locale.dart';
+import 'package:nocturne/content/country_names.dart';
 import 'package:nocturne/core/painting/wall_painter.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
@@ -150,7 +152,13 @@ void main() {
       expect(label!.location, isNotEmpty, reason: id);
       if (id == 'freelance') continue;
       expect(label.location, contains(stop['city']), reason: id);
-      expect(label.location, contains(stop['country']), reason: id);
+      // The country is named, not coded: "Doha, Qatar", never "Doha, QA".
+      expect(
+        label.location,
+        contains(CountryNames.of(stop['country'] as String, AppLocale.english)),
+        reason: id,
+      );
+      expect(label.location, isNot(endsWith(stop['country'] as String)));
     }
   });
 

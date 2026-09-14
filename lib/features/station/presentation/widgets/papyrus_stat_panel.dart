@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:audioplayers/audioplayers.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/app_locale.dart';
@@ -77,13 +76,8 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
   );
   final WidgetStatesController _states = WidgetStatesController();
 
-  /// Built on the first roll rather than in initState: a visitor who never
-  /// touches the sheet should not pay for a decoder.
-  AudioPlayer? _player;
-
   @override
   void dispose() {
-    unawaited(_player?.dispose());
     _roll.dispose();
     _states.dispose();
     super.dispose();
@@ -91,24 +85,21 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
 
   bool get _closed => _roll.value > 0.5;
 
-  /// The sheet moving: fibre, not a click.
+  /// Rolls the sheet up. Hovering does this now, not clicking.
   ///
-  /// Synthesised by `tool/audio/make_sounds.py` like the climb's sounds, so
-  /// there is no licence to carry for it. A browser that will not play it is
-  /// not an error -- the roll is the point and the sound is the trimming.
-  void _rustle() {
-    if (ReducedMotion.of(context)) return;
-    final player = _player ??= AudioPlayer();
-    unawaited(
-      player
-          .stop()
-          .then((_) => player.play(AssetSource('audio/paper.wav')))
-          .catchError((_) {}),
-    );
+  /// The owner asked for the roll to happen under the pointer and to come
+  /// back when it leaves: a sheet on a table lifts as a hand passes over it.
+  /// Tapping still works, because a phone has no hover.
+  void _close() {
+    if (_closed) return;
+    if (ReducedMotion.of(context)) {
+      _roll.value = 1;
+      return;
+    }
+    unawaited(_roll.animateTo(1, curve: Curves.easeInOut));
   }
 
   void _toggle() {
-    _rustle();
     if (ReducedMotion.of(context)) {
       _roll.value = _closed ? 0 : 1;
       return;
@@ -124,7 +115,6 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
 
   void _open() {
     if (!_closed) return;
-    _rustle();
     if (ReducedMotion.of(context)) {
       _roll.value = 0;
       return;
@@ -144,8 +134,10 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
       onTap: _toggle,
       child: ExcludeSemantics(
         child: MouseRegion(
-          // The way back out. A card rolled shut hides its own control, so
-          // leaving it is enough to bring it back.
+          // The whole interaction on a pointer: the sheet winds up as the hand
+          // arrives and unwinds as it leaves. There is nothing to click and
+          // nothing to click back.
+          onEnter: (_) => _close(),
           onExit: (_) => _open(),
           cursor: context.platform.isPointer
               ? SystemMouseCursors.click

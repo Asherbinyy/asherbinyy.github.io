@@ -358,6 +358,7 @@ void main() {
           AppRoute.work,
           AppRoute.about,
           AppRoute.writing,
+          AppRoute.services,
           AppRoute.courtyard,
         ])
           route.path,

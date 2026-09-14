@@ -13,6 +13,7 @@ import 'package:nocturne/features/courtyard/presentation/courtyard_screen.dart';
 import 'package:nocturne/features/signal/presentation/signal_screen.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/features/work/presentation/case_study_screen.dart';
+import 'package:nocturne/features/services/presentation/services_screen.dart';
 import 'package:nocturne/features/work/presentation/work_screen.dart';
 import 'package:nocturne/features/writing/presentation/writing_screen.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
@@ -31,6 +32,7 @@ void main() {
       AppRoute.work: WorkScreen,
       AppRoute.caseStudy: CaseStudyScreen,
       AppRoute.writing: WritingScreen,
+      AppRoute.services: ServicesScreen,
       AppRoute.about: AboutScreen,
       AppRoute.courtyard: CourtyardScreen,
       AppRoute.console: ConsoleScreen,

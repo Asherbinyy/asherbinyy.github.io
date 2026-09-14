@@ -175,8 +175,11 @@ class _GameControlState extends State<GameControl> {
                   constraints: BoxConstraints(minHeight: target),
                   child: Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: tokens.space16,
-                      vertical: tokens.space8,
+                      // Wider than tall. At an even 16 either side the label
+                      // sat hard against the border and the button read as
+                      // cramped, which the owner said of "Climb again".
+                      horizontal: tokens.space32,
+                      vertical: tokens.space12,
                     ),
                     child: surface,
                   ),
