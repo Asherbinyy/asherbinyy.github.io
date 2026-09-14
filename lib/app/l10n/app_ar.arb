@@ -1,6 +1,10 @@
 {
   "educationShowDetails": "Show coursework & highlights",
   "educationHideDetails": "Hide details",
+  "educationModules": "Modules",
+  "educationProjects": "Projects",
+  "educationSampleHint": "Modules with a coursework sample can be opened.",
+  "educationNoSample": "No sample supplied",
   "artworkCredits": "Artwork credits",
   "footballGoal": "G O A L",
   "@@locale": "ar",

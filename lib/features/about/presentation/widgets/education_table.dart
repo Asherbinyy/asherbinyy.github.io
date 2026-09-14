@@ -41,6 +41,12 @@ class EducationTable extends StatelessWidget {
   /// best four.
   static const double publishableMark = 80;
 
+  /// How wide a transcript row is allowed to get.
+  ///
+  /// A mark belongs beside the module it grades. Left to fill the page, the
+  /// two ends of the row stop being read as one line.
+  static const double transcriptWidth = 720;
+
   /// Identifies the transcript list, as distinct from the evidence row.
   static const Key modulesKey = ValueKey('education-modules');
 
@@ -87,12 +93,6 @@ class _EntryState extends State<_Entry> {
             .where((module) => module.mark >= EducationTable.publishableMark)
             .toList()
           ..sort((a, b) => b.mark.compareTo(a.mark));
-
-    // Only the published modules can contribute an artefact: showing evidence
-    // for a mark the page is not printing would raise the obvious question.
-    final artefacts = modules
-        .where((module) => module.evidence != null)
-        .toList();
 
     return Padding(
       padding: EdgeInsets.only(bottom: tokens.space24),
@@ -212,37 +212,43 @@ class _EntryState extends State<_Entry> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (modules.isNotEmpty) ...[
-                            SizedBox(height: tokens.space16),
-                            // finder searching the whole table for "94".
-                            Column(
-                              key: EducationTable.modulesKey,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                for (final module in modules)
-                                  _Module(module: module),
-                              ],
-                            ),
-                          ],
-                          if (artefacts.isNotEmpty) ...[
                             SizedBox(height: tokens.space24),
-                            Wrap(
-                              spacing: tokens.space16,
-                              runSpacing: tokens.space16,
-                              children: [
-                                for (final module in artefacts)
-                                  _EvidenceCard(
-                                    evidence: module.evidence!,
-                                    module: module.name.resolve(
-                                      context.channel,
-                                    ),
-                                    mark: module.mark,
-                                  ),
-                              ],
+                            _SectionLabel(text: context.l10n.educationModules),
+                            SizedBox(height: tokens.space4),
+                            Text(
+                              context.l10n.educationSampleHint,
+                              style: context.type.meta.copyWith(
+                                color: tokens.textMuted,
+                              ),
+                            ),
+                            SizedBox(height: tokens.space16),
+                            // Every module once. The coursework sits in the
+                            // row it belongs to rather than in a second list
+                            // underneath repeating the same names and marks.
+                            //
+                            // Held to a readable measure: across a 1440px
+                            // page the mark ended up half a metre from the
+                            // module it belonged to, which is a table you have
+                            // to track with a finger.
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: EducationTable.transcriptWidth,
+                              ),
+                              child: Column(
+                                key: EducationTable.modulesKey,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  for (final module in modules)
+                                    _Module(module: module),
+                                ],
+                              ),
                             ),
                           ],
                           if (entry.highlights.isNotEmpty) ...[
-                            SizedBox(height: tokens.space24),
+                            SizedBox(height: tokens.space32),
+                            _SectionLabel(text: context.l10n.educationProjects),
+                            SizedBox(height: tokens.space16),
                             Wrap(
                               spacing: tokens.space16,
                               runSpacing: tokens.space16,
@@ -282,43 +288,142 @@ class _DetailsReveal extends StatelessWidget {
 }
 
 /// One module and its mark, on a hairline row with the mark right-aligned.
+/// The heading above a run of modules or projects.
+///
+/// The section had neither, so a reader met a column of numbers and a pair of
+/// unlabelled cards and had to work out what either was. The owner asked for
+/// the two to be named.
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: tokens.space16,
+          height: tokens.hairlineWidth * 2,
+          child: ColoredBox(color: tokens.beacon),
+        ),
+        SizedBox(width: tokens.space8),
+        Text(
+          text,
+          style: context.type.telemetryS.copyWith(color: tokens.textMuted),
+        ),
+      ],
+    );
+  }
+}
+
+/// One module: its coursework, its name, its mark.
+///
+/// The artefacts used to be gathered into a second row below the transcript,
+/// which listed every one of them a second time — the same name, the same
+/// mark, in a different shape. The owner's note was that he did not need to be
+/// told twice. So the sample lives in the row it belongs to, and a module
+/// without one keeps its place in the column rather than being quietly
+/// promoted or dropped.
 class _Module extends StatelessWidget {
   const _Module({required this.module});
 
   final EducationModule module;
 
+  /// Small enough to read as a mark in a transcript rather than a gallery.
+  static const double thumbnail = 56;
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final type = context.type;
+    final evidence = module.evidence;
+    final name = module.name.resolve(context.channel);
 
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: tokens.space4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      padding: EdgeInsets.symmetric(vertical: tokens.space8),
+      child: Row(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Expanded(
-                child: Text(
-                  module.name.resolve(context.channel),
-                  style: type.bodyS.copyWith(color: tokens.textSecondary),
+          SizedBox(
+            width: _Module.thumbnail,
+            height: _Module.thumbnail,
+            child: evidence == null
+                ? _NoSample(module: name)
+                : _SampleThumbnail(
+                    evidence: evidence,
+                    module: name,
+                    mark: module.mark,
+                  ),
+          ),
+          SizedBox(width: tokens.space16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  style: type.body.copyWith(color: tokens.textPrimary),
                 ),
-              ),
-              SizedBox(width: tokens.space16),
-              Text(
-                // Marks are whole numbers in the supplied content; the type
-                // scale puts tabular figures on numeric styles so the column
-                // aligns.
-                module.mark.toStringAsFixed(0),
-                style: type.telemetry.copyWith(color: tokens.instrument),
-              ),
-            ],
+                if (evidence != null) ...[
+                  SizedBox(height: tokens.space4),
+                  Text(
+                    evidence.caption.resolve(context.channel),
+                    style: type.meta.copyWith(color: tokens.textMuted),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          SizedBox(width: tokens.space16),
+          Text(
+            // Marks are whole numbers in the supplied content; the type
+            // scale puts tabular figures on numeric styles so the column
+            // aligns.
+            module.mark.toStringAsFixed(0),
+            style: type.telemetry.copyWith(color: tokens.instrument),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The place a coursework sample would sit, for a module that has none.
+///
+/// A drawn panel rather than a stand-in photograph. Filling the gap with a
+/// picture of something else would be claiming an artefact that does not
+/// exist, and the owner said he may supply these later.
+class _NoSample extends StatelessWidget {
+  const _NoSample({required this.module});
+
+  final String module;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Semantics(
+      label: '$module. ${context.l10n.educationNoSample}',
+      child: ExcludeSemantics(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: tokens.surface,
+            border: Border.all(
+              color: tokens.hairline,
+              width: tokens.hairlineWidth,
+            ),
+            borderRadius: BorderRadius.circular(Tokens.controlRadius),
+          ),
+          child: Center(
+            child: Icon(
+              Icons.description_outlined,
+              size: Tokens.space16,
+              color: tokens.instrumentDim,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -334,8 +439,18 @@ class _Module extends StatelessWidget {
 /// It carries its module and mark, because gathered into a row away from the
 /// transcript it would otherwise be a picture with no stated relationship to
 /// anything above it.
-class _EvidenceCard extends StatefulWidget {
-  const _EvidenceCard({
+/// The coursework behind a mark, at transcript size.
+///
+/// A mark is a number a reader has to take on trust; the coursework behind it
+/// is what turns it into evidence. That is `14-PROVENANCE.md`'s argument
+/// applied to a transcript, and it is why only the two modules with a supplied
+/// artefact show one — the rest were not filtered, they were never given.
+///
+/// This used to be a 260px card in a row of its own below the marks, which
+/// meant printing every module's name and mark for a second time. At this size
+/// it sits in the module's own row and still opens full width.
+class _SampleThumbnail extends StatefulWidget {
+  const _SampleThumbnail({
     required this.evidence,
     required this.module,
     required this.mark,
@@ -345,18 +460,11 @@ class _EvidenceCard extends StatefulWidget {
   final String module;
   final double mark;
 
-  /// Declared, never inferred. Two fit a desktop row beside each other.
-  static const double width = 260;
-
-  /// A 16:10 plate. Tall enough to tell a dashboard from a poster, small
-  /// enough that a transcript does not become a gallery.
-  static const double height = 162;
-
   @override
-  State<_EvidenceCard> createState() => _EvidenceCardState();
+  State<_SampleThumbnail> createState() => _SampleThumbnailState();
 }
 
-class _EvidenceCardState extends State<_EvidenceCard> {
+class _SampleThumbnailState extends State<_SampleThumbnail> {
   final WidgetStatesController _states = WidgetStatesController();
 
   @override
@@ -398,76 +506,26 @@ class _EvidenceCardState extends State<_EvidenceCard> {
                 ? SystemMouseCursors.click
                 : MouseCursor.defer,
             child: ExcludeSemantics(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: _states.value.contains(WidgetState.hovered)
-                            ? tokens.beacon
-                            : tokens.hairline,
-                        width: tokens.hairlineWidth,
-                      ),
-                    ),
-                    child: Image.asset(
-                      widget.evidence.src,
-                      width: _EvidenceCard.width,
-                      height: _EvidenceCard.height,
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
-                      // A missing artefact leaves the mark standing alone
-                      // rather than a broken-image glyph beside it.
-                      errorBuilder: (context, error, stack) =>
-                          const SizedBox.shrink(),
-                    ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: _states.value.contains(WidgetState.hovered)
+                        ? tokens.beacon
+                        : tokens.hairline,
+                    width: tokens.hairlineWidth,
                   ),
-                  SizedBox(height: tokens.space8),
-                  SizedBox(
-                    width: _EvidenceCard.width,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // The module and its mark, so a card gathered away
-                        // from the transcript still says what it is evidence
-                        // for. The mark leads in gold: it is the claim, and
-                        // the picture beneath it is the proof.
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              widget.mark.toStringAsFixed(0),
-                              style: context.type.telemetry.copyWith(
-                                color: tokens.beacon,
-                              ),
-                            ),
-                            SizedBox(width: tokens.space8),
-                            Expanded(
-                              child: Text(
-                                widget.module,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: context.type.bodyS.copyWith(
-                                  color: tokens.textPrimary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: tokens.space4),
-                        Text(
-                          caption,
-                          style: context.type.telemetryS.copyWith(
-                            color: tokens.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
+                  borderRadius: BorderRadius.circular(Tokens.controlRadius),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(Tokens.controlRadius),
+                  child: Image.asset(
+                    widget.evidence.src,
+                    fit: BoxFit.cover,
+                    // A missing file is a missing artefact, not a broken page.
+                    errorBuilder: (context, _, _) =>
+                        _NoSample(module: widget.module),
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -477,7 +535,6 @@ class _EvidenceCardState extends State<_EvidenceCard> {
   }
 }
 
-/// The artefact at full size, over a dimmed page.
 class _EvidenceDialog extends StatelessWidget {
   const _EvidenceDialog({required this.src, required this.caption});
 

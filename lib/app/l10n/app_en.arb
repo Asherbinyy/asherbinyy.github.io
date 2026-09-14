@@ -1,6 +1,22 @@
 {
   "educationShowDetails": "Show coursework & highlights",
   "educationHideDetails": "Hide details",
+  "educationModules": "Modules",
+  "@educationModules": {
+    "description": "Heading above the transcript list inside an education entry."
+  },
+  "educationProjects": "Projects",
+  "@educationProjects": {
+    "description": "Heading above the dissertation and project cards inside an education entry."
+  },
+  "educationSampleHint": "Modules with a coursework sample can be opened.",
+  "@educationSampleHint": {
+    "description": "Explains that some module rows show a piece of the owner's own coursework."
+  },
+  "educationNoSample": "No sample supplied",
+  "@educationNoSample": {
+    "description": "Accessible label for a module whose coursework has not been supplied."
+  },
   "artworkCredits": "Artwork credits",
   "footballGoal": "G O A L",
   "@@locale": "en",
