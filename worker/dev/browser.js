@@ -238,6 +238,48 @@ export async function launch({width = 1440, height = 900} = {}) {
       await page.settle();
     },
 
+    /// A real wheel event, dispatched by the browser rather than synthesised
+    /// in the page.
+    ///
+    /// Flutter draws to a canvas and listens for input on its own host
+    /// element, so a `new WheelEvent(...)` created by script does not move
+    /// anything. This goes through the input pipeline instead.
+    async scroll(deltaY, {x = 700, y = 450} = {}) {
+      await send('Input.dispatchMouseEvent', {
+        type: 'mouseWheel',
+        x,
+        y,
+        deltaX: 0,
+        deltaY,
+        pointerType: 'mouse',
+      });
+      await page.settle(700);
+    },
+
+    /// Moves the pointer, so hover states and cursor-following effects run.
+    async move(x, y) {
+      await send('Input.dispatchMouseEvent', {
+        type: 'mouseMoved',
+        x,
+        y,
+        pointerType: 'mouse',
+      });
+      await page.settle(300);
+    },
+
+    async click(x, y) {
+      for (const type of ['mousePressed', 'mouseReleased']) {
+        await send('Input.dispatchMouseEvent', {
+          type,
+          x,
+          y,
+          button: 'left',
+          clickCount: 1,
+        });
+      }
+      await page.settle(500);
+    },
+
     async key(key, code, keyCode) {
       for (const type of ['keyDown', 'keyUp']) {
         await send('Input.dispatchKeyEvent', {
