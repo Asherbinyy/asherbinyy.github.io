@@ -5,6 +5,7 @@ import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/content/period.dart';
 import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/content/country_names.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/features/station/presentation/widgets/stop_mark.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
@@ -87,6 +88,10 @@ class _CareerEntry extends StatelessWidget {
     );
   }
 
+  /// Where it was, with the country named rather than coded. The content
+  /// stores "EG" because the atlas keys on it; a reader is owed "Egypt".
+  String get _place => '${role.city}, ${CountryNames.of(role.country, locale)}';
+
   /// Only what the content actually carries. Five of the six roles have no
   /// company or summary, and inventing either would be a claim about the
   /// owner's career that nobody made.
@@ -117,17 +122,14 @@ class _CareerEntry extends StatelessWidget {
         if (company != null)
           Text(company, style: type.heading)
         else
-          Text('${role.city}, ${role.country}', style: type.heading),
+          Text(_place, style: type.heading),
         if (title != null && role.id != 'freelance')
           Text(
             title.resolve(locale),
             style: type.body.copyWith(color: tokens.textSecondary),
           ),
         if (company != null)
-          Text(
-            role.id == 'freelance' ? 'Remote' : '${role.city}, ${role.country}',
-            style: type.meta,
-          ),
+          Text(role.id == 'freelance' ? 'Remote' : _place, style: type.meta),
         if (summary != null && role.id != 'freelance') ...[
           SizedBox(height: tokens.space12),
           ConstrainedBox(

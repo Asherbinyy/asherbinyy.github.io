@@ -77,6 +77,16 @@ class AppHeader extends ConsumerWidget {
                     ? l10n.recruiterModeOn
                     : l10n.recruiterModeOff,
                 isActive: isRecruiterMode,
+                // A single sheet, which is what the brief is: the whole
+                // career on one printable page. The word "Brief" sat in the
+                // header as a piece of jargon nobody had to read.
+                face: (context, colour) => Icon(
+                  isRecruiterMode
+                      ? Icons.article_rounded
+                      : Icons.article_outlined,
+                  size: Tokens.chromeIconSize,
+                  color: colour,
+                ),
                 onPressed: ref.read(recruiterModeProvider.notifier).toggle,
               ),
               ChromeControl(

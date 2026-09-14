@@ -19,7 +19,14 @@ enum AppRoute {
   caseStudy('/work/:slug'),
 
   /// Articles.
+  ///
+  /// Off the navigation since the writing moved to the foot of `/work`: the
+  /// owner wanted one tab for everything he has made. The route stays so that
+  /// links already in the world keep resolving.
   writing('/writing'),
+
+  /// What he will take on, and how to ask.
+  services('/services'),
 
   /// Background and contact.
   about('/about'),

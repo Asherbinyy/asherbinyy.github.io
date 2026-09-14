@@ -83,7 +83,11 @@
     "GitHub Actions",
     "Project management",
     "Cybersecurity",
-    "Power BI"
+    "Power BI",
+    "Figma",
+    "Adobe XD",
+    "Photoshop",
+    "Adobe Premiere Pro"
   ],
   "learning": [
     "RAG",
@@ -101,5 +105,15 @@
     "Android Studio",
     "VS Code",
     "Charles"
+  ],
+  "services": [
+    "Mobile apps",
+    "Web apps",
+    "Admin dashboards",
+    "UI/UX design",
+    "AI automations",
+    "WhatsApp chatbots",
+    "Telegram chatbots",
+    "Power BI dashboards"
   ]
 }

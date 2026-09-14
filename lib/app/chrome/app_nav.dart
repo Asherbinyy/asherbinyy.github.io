@@ -23,11 +23,11 @@ enum NavDestination {
   /// The career map.
   journey(AppRoute.journey),
 
-  /// Shipped applications.
+  /// Shipped applications, and the writing.
   work(AppRoute.work),
 
-  /// Articles.
-  writing(AppRoute.writing),
+  /// What he will take on.
+  services(AppRoute.services),
 
   /// Background and contact.
   about(AppRoute.about),
@@ -45,7 +45,7 @@ enum NavDestination {
     NavDestination.home => l10n.navHome,
     NavDestination.journey => l10n.navJourney,
     NavDestination.work => l10n.navWork,
-    NavDestination.writing => l10n.navWriting,
+    NavDestination.services => l10n.navServices,
     NavDestination.about => l10n.navAbout,
     NavDestination.courtyard => l10n.navCourtyard,
   };

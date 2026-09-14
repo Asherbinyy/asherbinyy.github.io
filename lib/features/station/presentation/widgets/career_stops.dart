@@ -4,8 +4,10 @@ import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/career.dart';
+import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
+import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
@@ -64,30 +66,36 @@ class CareerStops extends StatelessWidget {
           ],
         ),
         SizedBox(height: tokens.space16),
-        for (final (index, role) in roles.indexed)
-          _Stop(
-            role: role,
-            anchorRegistry: anchorRegistry,
-            isFirst: index == 0,
-            isLast: index == roles.length - 1,
+        // Across, not down. As a column of thin rows it read as a stray
+        // sidebar -- the owner called it a thin random column -- and it left
+        // the width it was supposed to be filling empty. As cards it is a row
+        // of places, which is what it is.
+        //
+        // Capped to the copy's own measure, because the wall owns the trailing
+        // part of this page and nothing else on it runs underneath.
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: context.type.measureFor(context.type.body),
           ),
+          child: Wrap(
+            spacing: tokens.space12,
+            runSpacing: tokens.space12,
+            children: [
+              for (final role in roles)
+                _Stop(role: role, anchorRegistry: anchorRegistry),
+            ],
+          ),
+        ),
       ],
     );
   }
 }
 
 class _Stop extends StatefulWidget {
-  const _Stop({
-    required this.role,
-    required this.anchorRegistry,
-    required this.isFirst,
-    required this.isLast,
-  });
+  const _Stop({required this.role, required this.anchorRegistry});
 
   final CareerRole role;
   final TraceAnchorRegistry anchorRegistry;
-  final bool isFirst;
-  final bool isLast;
 
   @override
   State<_Stop> createState() => _StopState();
@@ -151,51 +159,80 @@ class _StopState extends State<_Stop> {
               onTap: _goThere,
               statesController: _states,
               borderRadius: BorderRadius.circular(tokens.controlRadius),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: tokens.space8),
+              mouseCursor: context.platform.isPointer
+                  ? SystemMouseCursors.click
+                  : MouseCursor.defer,
+              child: AnimatedContainer(
+                duration: ReducedMotion.duration(context, Motion.quick),
+                curve: MotionCurves.emphasized,
+                padding: EdgeInsets.symmetric(
+                  horizontal: tokens.space16,
+                  vertical: tokens.space12,
+                ),
+                decoration: BoxDecoration(
+                  color: isLit ? tokens.surfaceRaised : tokens.surface,
+                  borderRadius: BorderRadius.circular(tokens.controlRadius),
+                  border: Border.all(
+                    color: isLit ? tokens.beacon : tokens.hairline,
+                    width: tokens.hairlineWidth,
+                  ),
+                ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // The cartouche, which is how this site marks a stop
+                    // everywhere else it draws one.
                     CustomPaint(
                       size: const Size(
                         Tokens.stopRailWidth,
-                        Tokens.stopRowHeight,
+                        Tokens.stopNodeRadius * 3,
                       ),
                       painter: _StopMarkPainter(
-                        thread: tokens.hairline,
                         rest: tokens.instrumentDim,
                         lit: tokens.beacon,
                         strokeWidth: tokens.hairlineWidth,
                         isLit: isLit,
-                        isFirst: widget.isFirst,
-                        isLast: widget.isLast,
                       ),
                     ),
                     SizedBox(width: tokens.space12),
-                    AnimatedDefaultTextStyle(
-                      duration: ReducedMotion.duration(context, Motion.quick),
-                      style: type.telemetryS.copyWith(
-                        color: isLit ? tokens.beacon : tokens.textMuted,
+                    // Bounded, so a long name shortens instead of pushing the
+                    // card off a phone. "University of Salford" does not fit
+                    // a 312px column and the card must not try to make it.
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: Tokens.stopCardTextWidth,
                       ),
-                      child: Text(_year),
-                    ),
-                    SizedBox(width: tokens.space12),
-                    // Flexible, because a phone's column is 312px and
-                    // "University of Salford" is not. The index may shorten a
-                    // name; it may not push the row off the screen.
-                    Flexible(
-                      child: AnimatedDefaultTextStyle(
-                        duration: ReducedMotion.duration(context, Motion.quick),
-                        style: type.body.copyWith(
-                          color: isLit
-                              ? tokens.textPrimary
-                              : tokens.textSecondary,
-                        ),
-                        child: Text(
-                          _name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedDefaultTextStyle(
+                            duration: ReducedMotion.duration(
+                              context,
+                              Motion.quick,
+                            ),
+                            style: type.telemetryS.copyWith(
+                              color: isLit ? tokens.beacon : tokens.textMuted,
+                            ),
+                            child: Text(_year),
+                          ),
+                          AnimatedDefaultTextStyle(
+                            duration: ReducedMotion.duration(
+                              context,
+                              Motion.quick,
+                            ),
+                            style: type.body.copyWith(
+                              color: isLit
+                                  ? tokens.textPrimary
+                                  : tokens.textSecondary,
+                            ),
+                            child: Text(
+                              _name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -209,46 +246,23 @@ class _StopState extends State<_Stop> {
   }
 }
 
-/// One node on the thread: a cartouche, and the line running through it.
+/// The cartouche on a stop card.
 class _StopMarkPainter extends CustomPainter {
   const _StopMarkPainter({
-    required this.thread,
     required this.rest,
     required this.lit,
     required this.strokeWidth,
     required this.isLit,
-    required this.isFirst,
-    required this.isLast,
   });
 
-  final Color thread;
   final Color rest;
   final Color lit;
   final double strokeWidth;
   final bool isLit;
-  final bool isFirst;
-  final bool isLast;
 
   @override
   void paint(Canvas canvas, Size size) {
     final centre = Offset(size.width / 2, size.height / 2);
-    final line = Paint()
-      ..color = thread
-      ..strokeWidth = strokeWidth;
-
-    // The thread is continuous between stops and stops at the ends, so the
-    // list reads as one route rather than a stack of unrelated marks.
-    const gap = Tokens.stopNodeRadius * Tokens.stationCartoucheRatio + 5;
-    if (!isFirst) {
-      canvas.drawLine(Offset(centre.dx, 0), centre.translate(0, -gap), line);
-    }
-    if (!isLast) {
-      canvas.drawLine(
-        centre.translate(0, gap),
-        Offset(centre.dx, size.height),
-        line,
-      );
-    }
 
     // Enclosed, like the stations on the atlas: filled gold when this is the
     // one the viewer is pointing at, a hairline ring otherwise.
@@ -284,7 +298,6 @@ class _StopMarkPainter extends CustomPainter {
   @override
   bool shouldRepaint(_StopMarkPainter oldDelegate) =>
       oldDelegate.isLit != isLit ||
-      oldDelegate.thread != thread ||
       oldDelegate.rest != rest ||
       oldDelegate.lit != lit;
 }

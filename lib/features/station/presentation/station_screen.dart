@@ -15,6 +15,9 @@ import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/features/station/presentation/widgets/cq_response.dart';
 import 'package:nocturne/features/station/presentation/widgets/cv_button.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
@@ -67,12 +70,47 @@ class StationScreen extends ConsumerWidget {
             // never reflows the page.
             const CqResponse(),
             _Career(locale: locale),
+            // The forward-looking half. Everything above this is what has
+            // already happened; this is the one line on Home that answers
+            // "can you build me one?".
+            const _ServicesDoor(),
             // The way to reach him, at the foot of the page he lands on. A
             // visitor who has read to the bottom of Home should not have to
             // find About to send an email.
             const _Reach(),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The door to the services page.
+class _ServicesDoor extends StatelessWidget {
+  const _ServicesDoor();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Padding(
+      padding: EdgeInsets.only(top: context.tokens.space96),
+      // Wrapped, because on a phone the question and the button do not share
+      // a line and a Row would push one of them off the screen.
+      child: Wrap(
+        spacing: tokens.space16,
+        runSpacing: tokens.space16,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            context.l10n.homeServices,
+            style: context.type.heading.copyWith(color: tokens.textSecondary),
+          ),
+          BeaconButton(
+            label: context.l10n.homeServicesAction,
+            emphasis: ButtonEmphasis.primary,
+            onPressed: () => context.goNamed(AppRoute.services.name),
+          ),
+        ],
       ),
     );
   }

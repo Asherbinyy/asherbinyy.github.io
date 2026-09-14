@@ -831,6 +831,7 @@ String _generateSitemap(Map<String, dynamic> apps) {
         AppRoute.journey ||
         AppRoute.work ||
         AppRoute.writing ||
+        AppRoute.services ||
         AppRoute.about ||
         AppRoute.courtyard => [route.path],
       },

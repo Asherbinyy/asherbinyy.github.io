@@ -119,13 +119,28 @@
     }
     .threshold--ready .threshold__frame { opacity: 1; }
     .threshold--gone .threshold__frame { opacity: 0; transition-delay: 0ms; }
-    .threshold__eyebrow {
-      margin: 0 0 10px;
+    /* The way in. The owner asked for a button here rather than his name --
+       the name is the first thing the site itself says, and saying it twice
+       before the page has even loaded was a title card for nobody. */
+    .threshold__enter {
+      margin-top: 18px;
+      padding: 12px 34px;
       font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 12px;
+      font-size: 13px;
       letter-spacing: 0.16em;
       text-transform: uppercase;
       color: #E3A93F;
+      background: transparent;
+      border: 1px solid rgba(227, 169, 63, 0.45);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
+    }
+    .threshold__enter:hover,
+    .threshold__enter:focus-visible {
+      background: rgba(227, 169, 63, 0.12);
+      border-color: #E3A93F;
+      color: #F4D48A;
     }
     .threshold__title {
       margin: 0 0 6px;
@@ -154,13 +169,38 @@
   -->
   <div id="threshold" class="threshold">
     <!-- Decorative staging. Artwork attribution is linked from About. -->
-    <div class="threshold__frame" aria-hidden="true">
-      <p class="threshold__eyebrow">Ahmed Elsherbini</p>
-      <h1 class="threshold__title">The door is sealed.</h1>
+    <div class="threshold__frame">
+      <h1 class="threshold__title" aria-hidden="true">The door is sealed.</h1>
+      <button type="button" class="threshold__enter" id="threshold-enter">
+        Enter
+      </button>
     </div>
   </div>
 
   <script>
+    // Keep the layout still while the browser magnifies it.
+    //
+    // A pinch changes the *visual* viewport, not the layout one. On an
+    // ordinary page that is a magnifier: the layout is untouched and the
+    // browser scales the pixels. Flutter listens to visualViewport and resizes
+    // its canvas to match, so a pinch made the canvas smaller than the page
+    // and left the black margins the owner photographed -- it was relaying out
+    // the site underneath the magnifying glass.
+    //
+    // Stopping Flutter from subscribing leaves its canvas at the layout
+    // viewport's size, which is exactly what every other site does. The one
+    // thing this gives up is the on-screen-keyboard inset on mobile, and this
+    // site has no text input to be covered by one.
+    (() => {
+      const viewport = window.visualViewport;
+      if (!viewport) return;
+      const add = viewport.addEventListener.bind(viewport);
+      viewport.addEventListener = (type, handler, options) => {
+        if (type === 'resize' || type === 'scroll') return;
+        add(type, handler, options);
+      };
+    })();
+
     // Let the browser zoom.
     //
     // A trackpad pinch on macOS, and ctrl with the wheel anywhere, arrive as a

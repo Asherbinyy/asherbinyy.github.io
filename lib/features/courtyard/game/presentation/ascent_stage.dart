@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -189,6 +191,14 @@ class _AscentStageState extends State<AscentStage>
       return KeyEventResult.handled;
     }
     if (_leapKeys.contains(key)) {
+      // Space is jump while the climb is live and "go again" once it is over.
+      // A player who has just fallen has a thumb on the space bar already, and
+      // making them reach for the mouse to start again is the wrong end of the
+      // keyboard.
+      if (isDown && (_world?.isOver ?? false)) {
+        unawaited(_start());
+        return KeyEventResult.handled;
+      }
       _leap = isDown;
       return KeyEventResult.handled;
     }
