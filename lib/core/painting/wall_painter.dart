@@ -37,7 +37,16 @@ class WallPainter extends CustomPainter {
     required this.stoneColour,
     required this.carveShadow,
     required this.carveLight,
+    this.torch,
   });
+
+  /// Where the viewer is holding the light, in this painter's own pixels.
+  ///
+  /// Null on touch, and whenever the pointer is off the wall. A hand holding a
+  /// torch is the whole conceit of this column: with a pointer, the light is
+  /// the pointer. Without one there is nothing to follow, so the wall lights
+  /// itself instead -- see [_signPaint].
+  final Offset? torch;
 
   /// The masonry behind the inscription.
   ///
@@ -123,6 +132,30 @@ class WallPainter extends CustomPainter {
           ..shader = _torch(size),
       )
       ..restore();
+
+    if (torch != null) _flame(canvas, torch!);
+  }
+
+  /// The torch itself, drawn where the pointer is.
+  ///
+  /// The system cursor is hidden over the wall, so this is what the viewer is
+  /// moving. Three rings rather than a sprite: a small hot centre, a warm
+  /// pool, and a wide falloff that is almost gone by its edge -- which is how
+  /// a flame lights a surface, and cheap enough to redraw every pointer move.
+  void _flame(Canvas canvas, Offset at) {
+    for (final ring in const [
+      (Tokens.wallFlameOuter, 0.10),
+      (Tokens.wallFlameMid, 0.22),
+      (Tokens.wallFlameCore, 0.85),
+    ]) {
+      canvas.drawCircle(
+        at,
+        ring.$1,
+        Paint()
+          ..color = peakColour.withValues(alpha: ring.$2)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, ring.$1 * 0.55),
+      );
+    }
   }
 
   /// One sign to a block, most cut in stone and a few gilded.
@@ -174,7 +207,12 @@ class WallPainter extends CustomPainter {
         _carveSign(
           canvas,
           path,
-          _signPaint(gilded: gilded, row: row, lit: lit),
+          _signPaint(
+            gilded: gilded,
+            row: row,
+            lit: lit,
+            centre: Offset(dx + box / 2, dy + box / 2),
+          ),
           box,
         );
         canvas.restore();
@@ -192,12 +230,22 @@ class WallPainter extends CustomPainter {
     required bool gilded,
     required int row,
     required bool lit,
+    required Offset centre,
   }) {
     if (!gilded) {
       return Paint()..color = lit ? lockedColour : restColour;
     }
-    final travel = phase * 2 * math.pi - row * Tokens.wallShimmerStagger;
-    final shimmer = (math.sin(travel) + 1) / 2;
+    // With a pointer the light is the pointer, so a sign brightens by how
+    // close the torch is rather than on a timer. Without one -- a phone -- the
+    // wall lights itself, because there is no hand to follow.
+    final double shimmer;
+    if (torch case final held?) {
+      final distance = (held - centre).distance;
+      shimmer = (1 - distance / Tokens.wallTorchReach).clamp(0.0, 1.0);
+    } else {
+      final travel = phase * 2 * math.pi - row * Tokens.wallShimmerStagger;
+      shimmer = (math.sin(travel) + 1) / 2;
+    }
     return Paint()
       ..color = Color.lerp(carveLight, peakColour, shimmer)!
       // A soft bloom at the peak of the wave, so it reads as something
@@ -302,5 +350,6 @@ class WallPainter extends CustomPainter {
       oldDelegate.stoneColour != stoneColour ||
       oldDelegate.carveShadow != carveShadow ||
       oldDelegate.carveLight != carveLight ||
+      oldDelegate.torch != torch ||
       !identical(oldDelegate.bursts, bursts);
 }

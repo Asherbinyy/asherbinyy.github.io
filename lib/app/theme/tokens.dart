@@ -404,7 +404,7 @@ abstract final class Tokens {
   ///
   /// Below this it stops reading as a wall and becomes a sliver of rules at
   /// the edge of the page.
-  static const double traceColumnFractionMinimum = 0.30;
+  static const double traceColumnFractionMinimum = 0.22;
 
   /// Fraction of the content column the trace occupies, from the trailing edge.
   ///
@@ -416,7 +416,7 @@ abstract final class Tokens {
   ///
   /// On compact the trace keeps to a narrow strip at the trailing edge. It is
   /// still legible as a waveform and it no longer competes with the words.
-  static const double traceColumnFraction = 0.66,
+  static const double traceColumnFraction = 0.38,
       traceColumnFractionCompact = 0.28;
 
   /// Jitter added to the carrier when coherence is entirely lost.
@@ -499,10 +499,10 @@ abstract final class Tokens {
   ///
   /// Short of the joint on every side, because a sign that touches the edge
   /// of its block reads as tiling rather than as something cut into it.
-  static const double wallSignFill = 0.62;
+  static const double wallSignFill = 0.54;
 
   /// How deep a sign is cut, against its own size.
-  static const double wallSignRelief = 0.022;
+  static const double wallSignRelief = 0.016;
 
   /// One block in this many is gilded.
   ///
@@ -515,6 +515,16 @@ abstract final class Tokens {
   /// Without the lag the whole column brightens at once, which reads as a
   /// bulb rather than as light moving across a surface.
   static const double wallShimmerStagger = 0.7;
+
+  /// How far a held torch reaches, in pixels.
+  ///
+  /// Wide enough that moving across the wall lights a group rather than one
+  /// block at a time, which is what makes it read as a lamp rather than a
+  /// hover state.
+  static const double wallTorchReach = 260;
+
+  /// The flame's three rings, outermost first.
+  static const double wallFlameOuter = 88, wallFlameMid = 40, wallFlameCore = 7;
 
   /// Where in the wave a gilded sign starts to bloom.
   static const double wallShimmerBloomAt = 0.62;

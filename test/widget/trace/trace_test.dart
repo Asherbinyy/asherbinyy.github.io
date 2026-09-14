@@ -76,7 +76,7 @@ void main() {
     expect(find.byType(TraceBurstLabel), findsNothing);
   });
 
-  testWidgets('the trace keeps its wide column and titles on a desktop', (
+  testWidgets('the trace keeps a column of its own, clear of the copy', (
     tester,
   ) async {
     await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
@@ -89,8 +89,12 @@ void main() {
     // allowed to use.
     final frame = math.min(scaffold.width, Tokens.contentMaxWidth);
 
-    // The strip is a phone accommodation, not the design.
-    expect(painted.width, greaterThan(frame / 2));
+    // A column, not half the page. This used to require more than half the
+    // frame, which is what the owner objected to once the wall became opaque
+    // blocks: it crowded the copy and took the screen. It still has to be a
+    // wall rather than a strip, so there is a floor as well as a ceiling.
+    expect(painted.width, greaterThan(frame * 0.2));
+    expect(painted.width, lessThan(frame / 2));
     expect(find.byType(TraceBurstLabel), findsWidgets);
   });
 

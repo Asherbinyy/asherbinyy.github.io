@@ -7,6 +7,7 @@ import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/app_footer.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/app_nav.dart';
+import 'package:nocturne/app/chrome/pointer_beacon.dart';
 import 'package:nocturne/features/recruiter/presentation/recruiter_view.dart';
 import 'package:nocturne/core/painting/ornament_field_painter.dart';
 import 'package:nocturne/core/widgets/cursor_trail.dart';
@@ -275,9 +276,27 @@ class _ContentColumn extends StatelessWidget {
   final Widget child;
   final Widget? background;
 
+  /// The live pointer position, shared with whatever is drawn behind.
+  static final ValueNotifier<Offset?> _pointer = ValueNotifier<Offset?>(null);
+
   @override
   Widget build(BuildContext context) {
     final layer = background;
+    // Captured above the scrolling content, because the wall behind it is the
+    // scroll view's sibling and would never see a hover of its own.
+    return MouseRegion(
+      opaque: false,
+      hitTestBehavior: HitTestBehavior.translucent,
+      onHover: (event) => _pointer.value = event.position,
+      onExit: (_) => _pointer.value = null,
+      child: PointerBeacon(
+        position: _pointer,
+        child: _buildStack(context, layer),
+      ),
+    );
+  }
+
+  Widget _buildStack(BuildContext context, Widget? layer) {
     return LayoutBuilder(
       builder: (context, constraints) => Stack(
         children: [

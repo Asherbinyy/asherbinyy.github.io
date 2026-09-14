@@ -71,57 +71,57 @@ abstract final class SignPaths {
     final path = Path()
       ..fillType = PathFillType.evenOdd
       // The loop, and its hole.
-      ..addOval(const Rect.fromLTRB(0.33, 0.02, 0.67, 0.36))
-      ..addOval(const Rect.fromLTRB(0.40, 0.09, 0.60, 0.29))
+      ..addOval(const Rect.fromLTRB(0.34, 0.02, 0.66, 0.38))
+      ..addOval(const Rect.fromLTRB(0.40, 0.08, 0.60, 0.32))
       // The crossbar.
-      ..addRect(const Rect.fromLTRB(0.12, 0.38, 0.88, 0.48))
+      ..addRect(const Rect.fromLTRB(0.14, 0.40, 0.86, 0.465))
       // The stem.
-      ..addRect(const Rect.fromLTRB(0.43, 0.38, 0.57, 0.98));
+      ..addRect(const Rect.fromLTRB(0.465, 0.40, 0.535, 0.98));
     return path;
   }
 
   /// The beetle: a domed body, a clypeus, and legs out to the sides.
   static Path _scarab() {
     final path = Path()
-      ..addOval(const Rect.fromLTRB(0.26, 0.22, 0.74, 0.92))
+      ..addOval(const Rect.fromLTRB(0.33, 0.24, 0.67, 0.90))
       // Head plate.
-      ..moveTo(0.34, 0.26)
-      ..cubicTo(0.36, 0.10, 0.64, 0.10, 0.66, 0.26)
+      ..moveTo(0.38, 0.28)
+      ..cubicTo(0.40, 0.14, 0.60, 0.14, 0.62, 0.28)
       ..close()
       // Forelegs.
-      ..moveTo(0.28, 0.34)
-      ..lineTo(0.06, 0.20)
-      ..lineTo(0.10, 0.15)
-      ..lineTo(0.32, 0.30)
+      ..moveTo(0.34, 0.34)
+      ..lineTo(0.10, 0.19)
+      ..lineTo(0.12, 0.16)
+      ..lineTo(0.36, 0.31)
       ..close()
-      ..moveTo(0.72, 0.34)
-      ..lineTo(0.94, 0.20)
-      ..lineTo(0.90, 0.15)
-      ..lineTo(0.68, 0.30)
+      ..moveTo(0.66, 0.34)
+      ..lineTo(0.90, 0.19)
+      ..lineTo(0.88, 0.16)
+      ..lineTo(0.64, 0.31)
       ..close()
       // Hind legs.
-      ..moveTo(0.28, 0.70)
-      ..lineTo(0.08, 0.86)
-      ..lineTo(0.12, 0.91)
-      ..lineTo(0.32, 0.76)
+      ..moveTo(0.34, 0.70)
+      ..lineTo(0.11, 0.87)
+      ..lineTo(0.13, 0.90)
+      ..lineTo(0.37, 0.74)
       ..close()
-      ..moveTo(0.72, 0.70)
-      ..lineTo(0.92, 0.86)
-      ..lineTo(0.88, 0.91)
-      ..lineTo(0.68, 0.76)
+      ..moveTo(0.66, 0.70)
+      ..lineTo(0.89, 0.87)
+      ..lineTo(0.87, 0.90)
+      ..lineTo(0.63, 0.74)
       ..close();
     return path;
   }
 
   /// Stability: a shaft under four stacked crossbars.
   static Path _djed() {
-    final path = Path()..addRect(const Rect.fromLTRB(0.40, 0.30, 0.60, 0.96));
+    final path = Path()..addRect(const Rect.fromLTRB(0.455, 0.30, 0.545, 0.96));
     for (var i = 0; i < 4; i++) {
-      final top = 0.06 + i * 0.065;
-      path.addRect(Rect.fromLTRB(0.22, top, 0.78, top + 0.042));
+      final top = 0.07 + i * 0.058;
+      path.addRect(Rect.fromLTRB(0.26, top, 0.74, top + 0.026));
     }
     // The flared base.
-    path.addRect(const Rect.fromLTRB(0.32, 0.88, 0.68, 0.96));
+    path.addRect(const Rect.fromLTRB(0.36, 0.90, 0.64, 0.96));
     return path;
   }
 
@@ -186,17 +186,17 @@ abstract final class SignPaths {
   /// A seated figure, knees drawn up.
   static Path _seated() {
     final path = Path()
-      ..addOval(const Rect.fromLTRB(0.34, 0.06, 0.54, 0.26))
+      ..addOval(const Rect.fromLTRB(0.36, 0.08, 0.52, 0.24))
       // Back and thigh.
-      ..moveTo(0.34, 0.28)
-      ..cubicTo(0.28, 0.44, 0.26, 0.62, 0.26, 0.76)
-      ..lineTo(0.74, 0.76)
-      ..lineTo(0.74, 0.66)
-      ..lineTo(0.46, 0.66)
-      ..cubicTo(0.48, 0.52, 0.52, 0.38, 0.54, 0.28)
+      ..moveTo(0.37, 0.26)
+      ..cubicTo(0.32, 0.42, 0.30, 0.60, 0.30, 0.72)
+      ..lineTo(0.74, 0.72)
+      ..lineTo(0.74, 0.665)
+      ..lineTo(0.44, 0.665)
+      ..cubicTo(0.45, 0.52, 0.48, 0.38, 0.50, 0.26)
       ..close()
       // Shin, folded under.
-      ..addRect(const Rect.fromLTRB(0.26, 0.78, 0.78, 0.86));
+      ..addRect(const Rect.fromLTRB(0.30, 0.79, 0.78, 0.835));
     return path;
   }
 
@@ -204,11 +204,11 @@ abstract final class SignPaths {
   static Path _feather() {
     return Path()
       ..moveTo(0.50, 0.02)
-      ..cubicTo(0.74, 0.20, 0.76, 0.52, 0.60, 0.78)
-      ..lineTo(0.56, 0.98)
-      ..lineTo(0.44, 0.98)
-      ..lineTo(0.40, 0.78)
-      ..cubicTo(0.24, 0.52, 0.26, 0.20, 0.50, 0.02)
+      ..cubicTo(0.68, 0.22, 0.70, 0.52, 0.575, 0.78)
+      ..lineTo(0.545, 0.98)
+      ..lineTo(0.455, 0.98)
+      ..lineTo(0.425, 0.78)
+      ..cubicTo(0.30, 0.52, 0.32, 0.22, 0.50, 0.02)
       ..close();
   }
 
@@ -216,8 +216,8 @@ abstract final class SignPaths {
   static Path _sun() {
     return Path()
       ..fillType = PathFillType.evenOdd
-      ..addOval(const Rect.fromLTRB(0.16, 0.16, 0.84, 0.84))
-      ..addOval(const Rect.fromLTRB(0.30, 0.30, 0.70, 0.70));
+      ..addOval(const Rect.fromLTRB(0.20, 0.20, 0.80, 0.80))
+      ..addOval(const Rect.fromLTRB(0.29, 0.29, 0.71, 0.71));
   }
 
   /// Water: three ripples.
@@ -229,9 +229,9 @@ abstract final class SignPaths {
         ..moveTo(0.08, y)
         ..cubicTo(0.24, y - 0.09, 0.36, y + 0.09, 0.50, y)
         ..cubicTo(0.64, y - 0.09, 0.76, y + 0.09, 0.92, y)
-        ..lineTo(0.92, y + 0.07)
-        ..cubicTo(0.76, y + 0.16, 0.64, y - 0.02, 0.50, y + 0.07)
-        ..cubicTo(0.36, y + 0.16, 0.24, y - 0.02, 0.08, y + 0.07)
+        ..lineTo(0.92, y + 0.042)
+        ..cubicTo(0.76, y + 0.132, 0.64, y - 0.048, 0.50, y + 0.042)
+        ..cubicTo(0.36, y + 0.132, 0.24, y - 0.048, 0.08, y + 0.042)
         ..close();
     }
     return path;
@@ -240,11 +240,11 @@ abstract final class SignPaths {
   /// A loaf on its mat.
   static Path _offering() {
     return Path()
-      ..moveTo(0.22, 0.56)
-      ..cubicTo(0.22, 0.30, 0.78, 0.30, 0.78, 0.56)
+      ..moveTo(0.26, 0.55)
+      ..cubicTo(0.26, 0.33, 0.74, 0.33, 0.74, 0.55)
       ..close()
-      ..addRect(const Rect.fromLTRB(0.10, 0.60, 0.90, 0.70))
-      ..addRect(const Rect.fromLTRB(0.30, 0.70, 0.70, 0.78));
+      ..addRect(const Rect.fromLTRB(0.14, 0.585, 0.86, 0.635))
+      ..addRect(const Rect.fromLTRB(0.34, 0.635, 0.66, 0.68));
   }
 }
 
