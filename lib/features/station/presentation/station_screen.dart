@@ -99,7 +99,15 @@ class _Reach extends ConsumerWidget {
         children: [
           Text(context.l10n.aboutContact, style: context.type.heading),
           SizedBox(height: context.tokens.space24),
-          ContactLinks(contact: contact),
+          // Capped to the same measure the copy uses. Left to run the frame's
+          // full width the row reached under the wall, which is the rule the
+          // rest of this page already keeps.
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: context.type.measureFor(context.type.body),
+            ),
+            child: ContactLinks(contact: contact),
+          ),
         ],
       ),
     );

@@ -349,6 +349,13 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace>
 
                   return Stack(
                     fit: StackFit.expand,
+                    // The moving card is pushed out of this box on purpose:
+                    // it belongs on the clear ground beside the wall, not on
+                    // the stone. A Stack clips to itself by default, which
+                    // threw the card away and left the middle of the page
+                    // empty. A geometry test cannot see this -- a clipped
+                    // child still reports its rect -- so it took a browser.
+                    clipBehavior: Clip.none,
                     children: [
                       RepaintBoundary(
                         child: AnimatedBuilder(
