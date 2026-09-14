@@ -6,7 +6,6 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/chrome/app_footer.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
-import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
@@ -377,7 +376,6 @@ void main() {
     ) async {
       await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
 
-      final rail = tester.getRect(find.byType(AppRail));
       final scaffold = tester.getRect(find.byType(ChromeScaffold));
       final hero = tester.getRect(find.byType(HeroContent));
 
@@ -385,19 +383,19 @@ void main() {
       // centred", and the owner overruled it: on a wide monitor that left the
       // page pinned to one edge with a third of the screen empty beside it.
       //
-      // Content is capped and centred now. The hero still aligns to the frame
-      // rather than being centred within it -- the copy is left-aligned, as it
-      // always was -- but the frame no longer starts at the rail.
-      final available = scaffold.width - rail.width;
+      // Content is capped and centred. The hero aligns to the frame rather
+      // than being centred within it -- the copy is left-aligned, as it always
+      // was. The rail that used to occupy the leading edge is gone, so the
+      // frame is measured from the viewport itself.
+      final available = scaffold.width;
       final frame = math.min(available, Tokens.contentMaxWidth);
-      final expected =
-          rail.right + (available - frame) / 2 + Tokens.largeGutter;
+      final expected = (available - frame) / 2 + Tokens.largeGutter;
 
       expect(hero.left, closeTo(expected, 1));
       expect(
         hero.left,
-        greaterThan(rail.right),
-        reason: 'the frame never reaches under the rail',
+        greaterThan(0),
+        reason: 'the frame starts inside the viewport',
       );
     });
 

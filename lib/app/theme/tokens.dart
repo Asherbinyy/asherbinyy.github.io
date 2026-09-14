@@ -495,6 +495,33 @@ abstract final class Tokens {
   /// Width of one block in that course.
   static const double wallBlockWidth = 96;
 
+  /// How much of a block its sign fills.
+  ///
+  /// Short of the joint on every side, because a sign that touches the edge
+  /// of its block reads as tiling rather than as something cut into it.
+  static const double wallSignFill = 0.62;
+
+  /// How deep a sign is cut, against its own size.
+  static const double wallSignRelief = 0.022;
+
+  /// One block in this many is gilded.
+  ///
+  /// Sparse on purpose. Gold on this site marks the person and anything
+  /// actionable, and a wall of it would spend that meaning on decoration.
+  static const int wallGildedInOne = 5;
+
+  /// How far each course lags the one above it in the shimmer.
+  ///
+  /// Without the lag the whole column brightens at once, which reads as a
+  /// bulb rather than as light moving across a surface.
+  static const double wallShimmerStagger = 0.7;
+
+  /// Where in the wave a gilded sign starts to bloom.
+  static const double wallShimmerBloomAt = 0.62;
+
+  /// How far it blooms at the peak.
+  static const double wallShimmerBloom = 9;
+
   /// Opacity of the ornament field behind every page.
   ///
   /// Superseded by the per-theme `ornamentFieldAlpha`: four percent of a grey

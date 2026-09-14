@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
@@ -173,9 +172,10 @@ void main() {
     );
     final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
+    // The state still exists and still drives the wall; what is gone is the
+    // rail that printed it at the edge of the screen as a fake readout.
     expect(container.read(traceControllerProvider), TraceState.standby);
-    expect(find.byType(AppRail), findsOneWidget);
-    expect(find.text(l10n.traceStandby), findsOneWidget);
+    expect(find.text(l10n.traceStandby), findsNothing);
   });
 
   testWidgets('reduced motion settles the trace with every label visible', (

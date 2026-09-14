@@ -1,27 +1,38 @@
-# Ahmed Elsherbini — Portfolio
+# Ahmed Elsherbini
 
-Flutter web portfolio with a Three.js intro. Built with Flutter 3.47 / Dart 3.13 (pinned via FVM).
+[asherbinyy.github.io](https://asherbinyy.github.io/)
 
-[Website](https://asherbinyy.github.io/) · [CV](https://asherbinyy.github.io/cv/) · [Résumé](https://asherbinyy.github.io/brief/)
+## What I built
+
+### Portfolio
+
+A personal portfolio website.
+
+**Stack:** Flutter · Dart · WebAssembly · GitHub Pages
+
+![Portfolio](screenshots/portfolio.png)
+
+### Intro
+
+A 3D Egyptian temple scene that greets visitors before the portfolio loads.
+
+**Stack:** Three.js · GLSL · JavaScript
+
+![Intro](screenshots/intro.png)
+
+### Admin Panel
+
+A content management dashboard for publishing and editing portfolio data.
+
+**Stack:** Cloudflare Workers · JavaScript · KV Storage
 
 ## Run
 
 ```bash
-fvm install
-fvm flutter pub get
-fvm flutter gen-l10n
-fvm dart run build_runner build --delete-conflicting-outputs
-fvm dart run tool/generate_mark.dart
-fvm dart run tool/generate_static.dart
-fvm flutter run -d chrome --wasm --web-port 8332
+flutter pub get
+flutter gen-l10n
+dart run build_runner build --delete-conflicting-outputs
+dart run tool/generate_mark.dart
+dart run tool/generate_static.dart
+flutter run -d chrome --wasm
 ```
-
-## Verify
-
-```bash
-fvm dart format --set-exit-if-changed .
-fvm flutter analyze
-fvm flutter test
-fvm flutter build web --wasm
-```
-
