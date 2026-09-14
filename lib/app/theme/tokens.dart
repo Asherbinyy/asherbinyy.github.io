@@ -439,6 +439,18 @@ abstract final class Tokens {
   /// the beat is that the page arrives out of the dark.
   static const double openingGlow = 0.28;
 
+  /// The itinerary on Home: one stop's node and the cell it sits in.
+  ///
+  /// Small. It is an index to the career below, not a second telling of it,
+  /// and a node the size of the atlas's would compete with the entries.
+  static const double stopNodeRadius = 5;
+
+  /// The width of the column the thread runs down.
+  static const double stopRailWidth = 22;
+
+  /// The height of one stop's cell, which is what sets the thread's length.
+  static const double stopRowHeight = 30;
+
   /// How much wider than tall a station's cartouche sits on the atlas.
   ///
   /// The shape only, and it encloses nothing: a cartouche ring is what an
@@ -521,10 +533,13 @@ abstract final class Tokens {
   /// Wide enough that moving across the wall lights a group rather than one
   /// block at a time, which is what makes it read as a lamp rather than a
   /// hover state.
-  static const double wallTorchReach = 260;
+  static const double wallTorchReach = 300;
 
-  /// The flame's three rings, outermost first.
-  static const double wallFlameOuter = 88, wallFlameMid = 40, wallFlameCore = 7;
+  /// Seconds for the light to come up, and the same to die down.
+  ///
+  /// Long enough to read as a flame being carried in rather than a hover
+  /// state switching on, short enough that it keeps up with the hand.
+  static const double wallTorchFade = 0.26;
 
   /// Where in the wave a gilded sign starts to bloom.
   static const double wallShimmerBloomAt = 0.62;

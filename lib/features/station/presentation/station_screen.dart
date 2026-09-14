@@ -19,6 +19,7 @@ import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
+import 'package:nocturne/features/station/presentation/widgets/career_stops.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
@@ -86,12 +87,26 @@ class _Career extends ConsumerWidget {
     };
     if (roles.isEmpty) return const SizedBox.shrink();
 
+    final anchorRegistry = ref.watch(traceAnchorRegistryProvider);
+    // Most recent first, computed once and handed to both: the index and the
+    // sequence have to agree about the order or clicking the third stop lands
+    // on the fourth entry.
+    final ordered = [...roles]..sort((a, b) => b.start.compareTo(a.start));
+
     return Padding(
       padding: EdgeInsets.only(top: context.tokens.space96),
-      child: CareerSequence(
-        roles: roles,
-        locale: locale,
-        anchorRegistry: ref.watch(traceAnchorRegistryProvider),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CareerStops(roles: ordered, anchorRegistry: anchorRegistry),
+          SizedBox(height: context.tokens.space48),
+          CareerSequence(
+            roles: ordered,
+            locale: locale,
+            anchorRegistry: anchorRegistry,
+          ),
+        ],
       ),
     );
   }

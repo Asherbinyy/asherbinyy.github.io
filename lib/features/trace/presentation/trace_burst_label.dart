@@ -35,26 +35,42 @@ class TraceBurstLabel extends StatelessWidget {
     if (content == null) return const SizedBox.shrink();
     final tokens = context.tokens;
 
-    return Positioned(
+    // Which way the gap is. The wall is on the trailing edge, so the gap is
+    // on its leading side -- the left of it in English, the right of it in
+    // Arabic. Getting this from the text direction rather than assuming left
+    // keeps the card beside the stone in both.
+    final away = Directionality.of(context) == TextDirection.rtl ? 1.0 : -1.0;
+
+    return PositionedDirectional(
       top: top,
-      left: 0,
-      child: AnimatedOpacity(
-        opacity: isVisible ? 1 : 0,
-        duration: ReducedMotion.duration(context, Motion.standard),
-        curve: MotionCurves.emphasized,
-        child: InstrumentPanel(
-          fill: tokens.surface,
-          padding: EdgeInsets.all(tokens.space12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                content.title,
-                style: context.type.bodyS.copyWith(color: tokens.beacon),
+      start: 0,
+      // Pushed entirely off the wall's leading edge, into the gap between the
+      // copy and the stone. It used to sit at the column's own edge *inside*
+      // it, so the card was drawn on top of the blocks -- which is what the
+      // owner marked as the card overlapping the walls.
+      child: FractionalTranslation(
+        translation: Offset(away, 0),
+        child: Padding(
+          padding: EdgeInsetsDirectional.only(end: tokens.space16),
+          child: AnimatedOpacity(
+            opacity: isVisible ? 1 : 0,
+            duration: ReducedMotion.duration(context, Motion.standard),
+            curve: MotionCurves.emphasized,
+            child: InstrumentPanel(
+              fill: tokens.surface,
+              padding: EdgeInsets.all(tokens.space12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    content.title,
+                    style: context.type.bodyS.copyWith(color: tokens.beacon),
+                  ),
+                  Text(content.meta, style: context.type.telemetryS),
+                ],
               ),
-              Text(content.meta, style: context.type.telemetryS),
-            ],
+            ),
           ),
         ),
       ),

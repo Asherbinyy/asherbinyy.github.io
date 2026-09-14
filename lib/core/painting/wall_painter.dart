@@ -38,6 +38,7 @@ class WallPainter extends CustomPainter {
     required this.carveShadow,
     required this.carveLight,
     this.torch,
+    this.torchStrength = 0,
   });
 
   /// Where the viewer is holding the light, in this painter's own pixels.
@@ -47,6 +48,13 @@ class WallPainter extends CustomPainter {
   /// the pointer. Without one there is nothing to follow, so the wall lights
   /// itself instead -- see [_signPaint].
   final Offset? torch;
+
+  /// How far the light has come up, 0 to 1.
+  ///
+  /// Separate from [torch] so the wall fades rather than snapping. Moving the
+  /// pointer off the column used to cut the gold out in one frame, which read
+  /// as a bug; the flame now dies down and the stone comes back.
+  final double torchStrength;
 
   /// The masonry behind the inscription.
   ///
@@ -109,6 +117,13 @@ class WallPainter extends CustomPainter {
     final to = visibleBottom.clamp(0.0, wallHeight);
     if (to <= from) return;
 
+    // Clipped to the column. A course that begins just above the viewport is
+    // still drawn -- its lower half is visible -- and a canvas does not clip
+    // itself, so on a phone the top of that sign was painted over the
+    // navigation above the content. It is a wall, not a decal: it ends where
+    // its own box does.
+    canvas.clipRect(Offset.zero & size);
+
     // The unlit pass. Everything is on the wall whether or not the torch is
     // near it -- a wall does not stop existing in the dark, and a viewer who
     // has scrolled past should still see the inscription they left behind.
@@ -132,30 +147,6 @@ class WallPainter extends CustomPainter {
           ..shader = _torch(size),
       )
       ..restore();
-
-    if (torch != null) _flame(canvas, torch!);
-  }
-
-  /// The torch itself, drawn where the pointer is.
-  ///
-  /// The system cursor is hidden over the wall, so this is what the viewer is
-  /// moving. Three rings rather than a sprite: a small hot centre, a warm
-  /// pool, and a wide falloff that is almost gone by its edge -- which is how
-  /// a flame lights a surface, and cheap enough to redraw every pointer move.
-  void _flame(Canvas canvas, Offset at) {
-    for (final ring in const [
-      (Tokens.wallFlameOuter, 0.10),
-      (Tokens.wallFlameMid, 0.22),
-      (Tokens.wallFlameCore, 0.85),
-    ]) {
-      canvas.drawCircle(
-        at,
-        ring.$1,
-        Paint()
-          ..color = peakColour.withValues(alpha: ring.$2)
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, ring.$1 * 0.55),
-      );
-    }
   }
 
   /// One sign to a block, most cut in stone and a few gilded.
@@ -195,7 +186,6 @@ class WallPainter extends CustomPainter {
         final seed = StationSeed('sign.$column.$row');
         final sign = signOrder[seed.nextInt(signOrder.length)];
         final gilded = seed.nextInt(Tokens.wallGildedInOne) == 0;
-        if (lit && !gilded) continue;
 
         final path = SignPaths.of(sign, box);
         final dx = column * width + (width - box) / 2;
@@ -232,28 +222,42 @@ class WallPainter extends CustomPainter {
     required bool lit,
     required Offset centre,
   }) {
-    if (!gilded) {
-      return Paint()..color = lit ? lockedColour : restColour;
-    }
-    // With a pointer the light is the pointer, so a sign brightens by how
-    // close the torch is rather than on a timer. Without one -- a phone -- the
-    // wall lights itself, because there is no hand to follow.
-    final double shimmer;
-    if (torch case final held?) {
+    // How much of the torch this block is getting. Zero when the light is
+    // elsewhere or absent, which is every block on a phone.
+    var reached = 0.0;
+    if (torch case final held? when torchStrength > 0) {
       final distance = (held - centre).distance;
-      shimmer = (1 - distance / Tokens.wallTorchReach).clamp(0.0, 1.0);
-    } else {
-      final travel = phase * 2 * math.pi - row * Tokens.wallShimmerStagger;
-      shimmer = (math.sin(travel) + 1) / 2;
+      final falloff = (1 - distance / Tokens.wallTorchReach).clamp(0.0, 1.0);
+      // Eased rather than squared. Squaring kept the pool's whole strength in
+      // the last few pixels, so a block a hand's width from the flame barely
+      // moved and the wall read as tinted instead of lit; this holds the
+      // middle of the range up and still falls to nothing at the edge.
+      reached = falloff * falloff * (3 - 2 * falloff) * torchStrength;
     }
+
+    // The base state. One block in five is gilded and breathes on its own, so
+    // a wall nobody is touching -- a phone, or a pointer somewhere else -- is
+    // still alive. The rest are stone.
+    final Color base;
+    if (gilded) {
+      final travel = phase * 2 * math.pi - row * Tokens.wallShimmerStagger;
+      final breath = (math.sin(travel) + 1) / 2;
+      base = Color.lerp(carveLight, peakColour, breath)!;
+    } else {
+      base = lit ? lockedColour : restColour;
+    }
+
+    if (reached <= 0) return Paint()..color = base;
+
+    // Under the light everything turns to gold, gilded or not: the owner asked
+    // for the wall to change colour where the torch is and come back when it
+    // leaves, which is what a flame does to a gilded relief.
     return Paint()
-      ..color = Color.lerp(carveLight, peakColour, shimmer)!
-      // A soft bloom at the peak of the wave, so it reads as something
-      // catching light rather than as a colour change.
-      ..maskFilter = shimmer > Tokens.wallShimmerBloomAt
+      ..color = Color.lerp(base, peakColour, reached)!
+      ..maskFilter = reached > Tokens.wallShimmerBloomAt
           ? MaskFilter.blur(
               BlurStyle.solid,
-              (shimmer - Tokens.wallShimmerBloomAt) * Tokens.wallShimmerBloom,
+              (reached - Tokens.wallShimmerBloomAt) * Tokens.wallShimmerBloom,
             )
           : null;
   }
@@ -351,5 +355,6 @@ class WallPainter extends CustomPainter {
       oldDelegate.carveShadow != carveShadow ||
       oldDelegate.carveLight != carveLight ||
       oldDelegate.torch != torch ||
+      oldDelegate.torchStrength != torchStrength ||
       !identical(oldDelegate.bursts, bursts);
 }

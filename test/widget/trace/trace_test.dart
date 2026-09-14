@@ -1,3 +1,4 @@
+import 'dart:ui' show PointerDeviceKind;
 import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +8,7 @@ import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/painting/wall_painter.dart';
+import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
 import 'package:nocturne/features/trace/domain/trace_controller.dart';
 import 'package:nocturne/features/trace/domain/trace_state.dart';
@@ -197,6 +199,39 @@ void main() {
     expect(find.byType(TelemetryTrace), findsOneWidget);
   });
 
+  testWidgets('a locked label sits in the gap, not on the wall', (
+    tester,
+  ) async {
+    // Reduced motion shows every label without having to drive a scroll into
+    // a lock, which is what makes this measurable at all.
+    await pumpStation(
+      tester,
+      breakpoint: ChromeBreakpoint.large,
+      reducedMotion: true,
+    );
+    await pumpFrames(tester);
+
+    final wall = tester.getRect(_tracePaint);
+    // The panel, not the widget: the card is pushed across by a paint-time
+    // translation, which the label's own box does not carry.
+    final labels = find.descendant(
+      of: find.byType(TraceBurstLabel),
+      matching: find.byType(InstrumentPanel),
+    );
+    expect(labels, findsWidgets);
+
+    for (var i = 0; i < tester.widgetList(labels).length; i++) {
+      final card = tester.getRect(labels.at(i));
+      if (card.width == 0) continue;
+      expect(
+        card.right,
+        lessThanOrEqualTo(wall.left),
+        reason: 'the card is drawn over the blocks',
+      );
+      expect(card.left, greaterThanOrEqualTo(0), reason: 'and off the page');
+    }
+  });
+
   testWidgets('a career that will not load leaves the trace out', (
     tester,
   ) async {
@@ -252,6 +287,52 @@ void main() {
         );
       });
     }
+  });
+
+  testWidgets('the torch lights the wall on hover and dies down on leave', (
+    tester,
+  ) async {
+    await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
+    await pumpFrames(tester);
+
+    WallPainter wall() {
+      final painter = tester.widget<CustomPaint>(_tracePaint).painter;
+      if (painter is! WallPainter) fail('Expected the wall painter');
+      return painter;
+    }
+
+    expect(wall().torchStrength, 0, reason: 'nothing is holding a light yet');
+
+    // Onto the middle of the wall. The pointer is the torch, so this is the
+    // whole interaction: there is nothing to tap and no control to find.
+    final strip = tester.getRect(_tracePaint);
+    final hand = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await hand.addPointer(location: Offset.zero);
+    addTearDown(hand.removePointer);
+    await hand.moveTo(strip.center);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 40));
+
+    final rising = wall().torchStrength;
+    expect(rising, greaterThan(0), reason: 'the flame comes up');
+    expect(rising, lessThan(1), reason: 'and is not there in one frame');
+    expect(wall().torch, isNotNull);
+
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(wall().torchStrength, 1, reason: 'held on the wall, fully lit');
+
+    // Off the wall entirely, onto the copy.
+    await hand.moveTo(Offset(strip.left - 200, strip.center.dy));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 40));
+    expect(
+      wall().torchStrength,
+      lessThan(1),
+      reason: 'the light dies down rather than cutting out',
+    );
+
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(wall().torchStrength, 0, reason: 'and the stone comes back');
   });
 }
 
