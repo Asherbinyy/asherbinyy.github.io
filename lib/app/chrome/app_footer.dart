@@ -1,4 +1,12 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
+
+import 'package:url_launcher/url_launcher.dart';
+
+import 'package:nocturne/app/l10n/localizations_context.dart';
+import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/core/platform/platform_scope.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
 
@@ -30,7 +38,50 @@ class AppFooter extends StatelessWidget {
           top: BorderSide(color: tokens.hairline, width: tokens.hairlineWidth),
         ),
       ),
-      child: SizedBox(height: tokens.footerHeight, width: double.infinity),
+      child: SizedBox(
+        height: tokens.footerHeight,
+        width: double.infinity,
+        // The colophon. One quiet line, because the guardian in the intro is
+        // a Creative Commons work whose licence requires attribution -- it is
+        // a condition of using the model, not a flourish that can be dropped.
+        child: Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: Padding(
+            padding: EdgeInsetsDirectional.only(end: context.platform.gutter),
+            child: const _Colophon(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The one line the artwork licence requires, and nothing more.
+class _Colophon extends StatelessWidget {
+  const _Colophon();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Semantics(
+      link: true,
+      label: context.l10n.artworkCredits,
+      child: InkWell(
+        onTap: () =>
+            unawaited(launchUrl(Uri.base.resolve('intro/models/LICENSE.md'))),
+        mouseCursor: context.platform.isPointer
+            ? SystemMouseCursors.click
+            : MouseCursor.defer,
+        child: Padding(
+          padding: EdgeInsets.all(tokens.space8),
+          child: ExcludeSemantics(
+            child: Text(
+              context.l10n.artworkCredits,
+              style: context.type.meta.copyWith(color: tokens.textMuted),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

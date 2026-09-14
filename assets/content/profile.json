@@ -80,7 +80,10 @@
     "Swift",
     "SwiftUI",
     "CI/CD",
-    "GitHub Actions"
+    "GitHub Actions",
+    "Project management",
+    "Cybersecurity",
+    "Power BI"
   ],
   "learning": [
     "RAG",
@@ -90,7 +93,13 @@
     "AI agents"
   ],
   "tools": [
+    "Claude",
+    "Codex",
+    "Gemini",
+    "DeepSeek",
     "Antigravity",
-    "Codex"
+    "Android Studio",
+    "VS Code",
+    "Charles"
   ]
 }

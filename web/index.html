@@ -10,7 +10,10 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Zoomable, like every other page on the machine. No maximum-scale and no
+       user-scalable=no: a portfolio nobody can enlarge is a portfolio some
+       people cannot read. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <meta name="theme-color" content="#121826">
   <meta name="description" content="I build mobile products end to end, from the first idea to the release notes. Manchester, United Kingdom.">
   <meta name="author" content="Ahmed Elsherbini">
@@ -156,6 +159,28 @@
       <h1 class="threshold__title">The door is sealed.</h1>
     </div>
   </div>
+
+  <script>
+    // Let the browser zoom.
+    //
+    // A trackpad pinch on macOS, and ctrl with the wheel anywhere, arrive as a
+    // wheel event carrying ctrlKey. Flutter's own listener calls
+    // preventDefault on wheel events so it can own scrolling, and that also
+    // cancels the browser's page zoom -- which is why this site was the one
+    // page that would not pinch when every other one did.
+    //
+    // Caught on the way down and stopped before it reaches the view, so the
+    // browser does what it does everywhere else. Ordinary scrolling carries no
+    // ctrlKey and is not touched, so nothing about the page's own scrolling
+    // changes.
+    window.addEventListener(
+      'wheel',
+      (event) => {
+        if (event.ctrlKey) event.stopPropagation();
+      },
+      { capture: true, passive: true },
+    );
+  </script>
 
   <script src="flutter_bootstrap.js" async></script>
   <script type="module" src="intro/threshold.js"></script>

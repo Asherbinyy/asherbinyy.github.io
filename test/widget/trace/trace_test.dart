@@ -139,21 +139,18 @@ void main() {
     final trace = tester.widget<TelemetryTrace>(find.byType(TelemetryTrace));
     final labels = trace.labels;
 
-    // Every burst names what the content names it: the company where there is
-    // one, the city where there is not. Asserted against the journey rather
-    // than against a hand-picked pair, so a stop added to content without a
-    // label fails here.
+    // The card carries where the stop was, and nothing else -- the owner asked
+    // for the location alone. Asserted against the journey rather than against
+    // a hand-picked pair, so a stop added to content without a label fails
+    // here.
     for (final stop in bundledStops()) {
       final id = stop['id'] as String;
       final label = labels[id];
       expect(label, isNotNull, reason: id);
-      expect(
-        label!.title,
-        stop['company'] ?? stop['city'],
-        reason: '$id should name its company, or its city where it has none',
-      );
-      expect(label.meta, contains(stop['country']), reason: id);
-      expect(label.title, isNotEmpty, reason: id);
+      expect(label!.location, isNotEmpty, reason: id);
+      if (id == 'freelance') continue;
+      expect(label.location, contains(stop['city']), reason: id);
+      expect(label.location, contains(stop['country']), reason: id);
     }
   });
 
@@ -229,6 +226,17 @@ void main() {
         reason: 'the card is drawn over the blocks',
       );
       expect(card.left, greaterThanOrEqualTo(0), reason: 'and off the page');
+
+      // And centred on the clear ground rather than pressed against the
+      // stone: the owner asked for it in the middle of the empty middle.
+      final label = tester.widget<TraceBurstLabel>(
+        find.ancestor(of: labels.at(i), matching: find.byType(TraceBurstLabel)),
+      );
+      expect(
+        card.center.dx,
+        closeTo(wall.left - label.gap / 2, 1),
+        reason: 'the card should sit in the middle of the gap',
+      );
     }
   });
 

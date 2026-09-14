@@ -439,6 +439,42 @@ abstract final class Tokens {
   /// the beat is that the page arrives out of the dark.
   static const double openingGlow = 0.28;
 
+  /// Every this many metres, the shaft acknowledges the climb.
+  ///
+  /// A round hundred because that is what the owner asked for and because it
+  /// is a number a player can hold in their head while climbing.
+  static const int ascentRewardStep = 100;
+
+  /// How long the mark stays up afterwards, in seconds.
+  static const double ascentRewardHold = 1.6;
+
+  /// How heavy the kicking figure's limbs are, against the scene's own ink.
+  ///
+  /// It was 1.7, which drew a figure with the build of a snowman -- the owner
+  /// called the stickman too fat and he was right. Just above the scene's own
+  /// line weight reads as a drawn figure rather than a padded one.
+  static const double footballLimbWeight = 1.05;
+
+  /// The head, as a fraction of the scene's height. Smaller than the limbs
+  /// suggest, because a stick figure's head is a mark and not a ball.
+  static const double footballHeadRadius = 0.038;
+
+  /// One contact card's smallest width, so a row of them is a grid and not a
+  /// ragged line of differently sized words.
+  static const double contactCardWidth = 132;
+
+  /// How the gold glow behind a hovered contact card is thrown.
+  static const double contactGlowAlpha = 0.35, contactGlowBlur = 18;
+
+  /// The sign beside a career entry.
+  ///
+  /// Big enough to read as a figure rather than a bullet, small enough that
+  /// the entry's own heading is still the first thing the eye lands on.
+  static const double stopMarkSize = 44;
+
+  /// How strongly its cut edges show.
+  static const double stopMarkReliefAlpha = 0.5;
+
   /// The itinerary on Home: one stop's node and the cell it sits in.
   ///
   /// Small. It is an index to the career below, not a second telling of it,

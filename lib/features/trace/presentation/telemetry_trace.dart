@@ -296,99 +296,116 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace>
     final isCompact = context.platform.viewport == ViewportClass.compact;
 
     return LayoutBuilder(
-      builder: (context, constraints) => Align(
-        // The wall runs down the trailing part of the page, and must never
-        // reach the content column. A fixed fraction cannot promise that:
-        // at 1024px the trailing 66 per cent began at x=348 while the hero
-        // text ran to x=636, so register rules and signs were drawn straight
-        // through the copy. The owner reported it as overlapping content and
-        // he was right.
-        //
-        // So it is computed instead. The wall takes whatever is left after
-        // the gutter, the body measure and a clear gap, and never less than
-        // a minimum -- below which it would be a sliver rather than a wall,
-        // and on a phone it keeps its own narrow strip because a phone's
-        // text column has no measure to clear.
-        alignment: AlignmentDirectional.centerEnd,
-        child: SizedBox(
-          key: _traceKey,
-          width: _columnWidth(
-            context,
-            constraints.maxWidth,
-            isCompact: isCompact,
-          ),
-          height: constraints.maxHeight,
-          child: IgnorePointer(
-            child: ValueListenableBuilder<TraceFrame>(
-              valueListenable: _frame,
-              builder: (context, frame, _) {
-                final position = widget.controller.hasClients
-                    ? widget.controller.position
-                    : null;
-                final traceHeight = position == null
-                    ? constraints.maxHeight
-                    : position.maxScrollExtent + position.viewportDimension;
-                _scheduleMeasurement();
-                final bursts = _anchoredBursts();
-                final lockedBurstId = _lockedBurstId(frame.offset);
+      builder: (context, constraints) {
+        final columnWidth = _columnWidth(
+          context,
+          constraints.maxWidth,
+          isCompact: isCompact,
+        );
+        // The clear ground the moving card is centred on: what is left of the
+        // frame once the copy's own column and the wall have taken theirs.
+        // Zero on a phone, where there is no such ground and no card.
+        final gap = isCompact
+            ? 0.0
+            : math.max<double>(
+                0,
+                constraints.maxWidth -
+                    columnWidth -
+                    context.platform.gutter -
+                    context.type.measureFor(context.type.body),
+              );
 
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    RepaintBoundary(
-                      child: AnimatedBuilder(
-                        // Both halves of the light: how far it has come
-                        // up, and where the hand is holding it.
-                        animation: Listenable.merge([_torchFade, _torchAt]),
-                        builder: (context, _) => CustomPaint(
-                          painter: WallPainter(
-                            bursts: bursts,
-                            phase: frame.phase,
-                            coherence: isSettled ? 1 : frame.coherence,
-                            scrollOffset: frame.offset,
-                            viewportHeight: constraints.maxHeight,
-                            wallHeight: traceHeight,
-                            restColour: tokens.instrumentDim,
-                            lockedColour: tokens.instrument,
-                            peakColour: tokens.beacon,
-                            strokeWidth: tokens.hairlineWidth,
-                            stoneColour: tokens.hairline,
-                            carveShadow: tokens.void_,
-                            carveLight: tokens.ornamentField,
-                            torch: _torchAt.value,
-                            torchStrength: _torchFade.value,
+        return Align(
+          // The wall runs down the trailing part of the page, and must never
+          // reach the content column. A fixed fraction cannot promise that:
+          // at 1024px the trailing 66 per cent began at x=348 while the hero
+          // text ran to x=636, so register rules and signs were drawn straight
+          // through the copy. The owner reported it as overlapping content and
+          // he was right.
+          //
+          // So it is computed instead. The wall takes whatever is left after
+          // the gutter, the body measure and a clear gap, and never less than
+          // a minimum -- below which it would be a sliver rather than a wall,
+          // and on a phone it keeps its own narrow strip because a phone's
+          // text column has no measure to clear.
+          alignment: AlignmentDirectional.centerEnd,
+          child: SizedBox(
+            key: _traceKey,
+            width: columnWidth,
+            height: constraints.maxHeight,
+            child: IgnorePointer(
+              child: ValueListenableBuilder<TraceFrame>(
+                valueListenable: _frame,
+                builder: (context, frame, _) {
+                  final position = widget.controller.hasClients
+                      ? widget.controller.position
+                      : null;
+                  final traceHeight = position == null
+                      ? constraints.maxHeight
+                      : position.maxScrollExtent + position.viewportDimension;
+                  _scheduleMeasurement();
+                  final bursts = _anchoredBursts();
+                  final lockedBurstId = _lockedBurstId(frame.offset);
+
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      RepaintBoundary(
+                        child: AnimatedBuilder(
+                          // Both halves of the light: how far it has come
+                          // up, and where the hand is holding it.
+                          animation: Listenable.merge([_torchFade, _torchAt]),
+                          builder: (context, _) => CustomPaint(
+                            painter: WallPainter(
+                              bursts: bursts,
+                              phase: frame.phase,
+                              coherence: isSettled ? 1 : frame.coherence,
+                              scrollOffset: frame.offset,
+                              viewportHeight: constraints.maxHeight,
+                              wallHeight: traceHeight,
+                              restColour: tokens.instrumentDim,
+                              lockedColour: tokens.instrument,
+                              peakColour: tokens.beacon,
+                              strokeWidth: tokens.hairlineWidth,
+                              stoneColour: tokens.hairline,
+                              carveShadow: tokens.void_,
+                              carveLight: tokens.ornamentField,
+                              torch: _torchAt.value,
+                              torchStrength: _torchFade.value,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    // No labels on a phone. They are a readout drawn inside
-                    // the trace column, which only has room for them beside
-                    // a measure-limited text column; on a narrow strip they
-                    // wrap over the copy, which is what the owner reported
-                    // as the trace and its titles overlapping the text.
-                    //
-                    // Nothing is lost by dropping them: each label repeats
-                    // the company, dates and country the career entry it is
-                    // anchored to already prints, in full, close by.
-                    if (!isCompact)
-                      for (final burst in bursts)
-                        TraceBurstLabel(
-                          label: widget.labels[burst.id],
-                          top:
-                              burst.anchor * traceHeight -
-                              frame.offset -
-                              Tokens.space48,
-                          // Under reduced motion every label stays visible,
-                          // because there is no lock state to reveal them.
-                          isVisible: isSettled || lockedBurstId == burst.id,
-                        ),
-                  ],
-                );
-              },
+                      // No labels on a phone. They are a readout drawn inside
+                      // the trace column, which only has room for them beside
+                      // a measure-limited text column; on a narrow strip they
+                      // wrap over the copy, which is what the owner reported
+                      // as the trace and its titles overlapping the text.
+                      //
+                      // Nothing is lost by dropping them: each label repeats
+                      // the company, dates and country the career entry it is
+                      // anchored to already prints, in full, close by.
+                      if (!isCompact)
+                        for (final burst in bursts)
+                          TraceBurstLabel(
+                            label: widget.labels[burst.id],
+                            top:
+                                burst.anchor * traceHeight -
+                                frame.offset -
+                                Tokens.space48,
+                            // Under reduced motion every label stays visible,
+                            // because there is no lock state to reveal them.
+                            isVisible: isSettled || lockedBurstId == burst.id,
+                            gap: gap,
+                          ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

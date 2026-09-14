@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/rendering.dart';
 
+import 'package:nocturne/app/theme/tokens.dart';
+
 /// One readable shot: wind-up, boot contact, flight, then net impact.
 abstract final class FootballScene {
   /// The instant the boot reaches the stationary ball.
@@ -71,13 +73,13 @@ abstract final class FootballScene {
     final body = Paint()
       ..color = ink.color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = ink.strokeWidth * 1.7
+      ..strokeWidth = ink.strokeWidth * Tokens.footballLimbWeight
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
     final ankle = Offset.lerp(p(0.09, 0.64), p(0.32, 0.73), wind)!;
     final leg = Offset.lerp(ankle, p(0.26, 0.72), recover)!;
     canvas
-      ..drawCircle(p(0.23, 0.26), h * 0.047, body)
+      ..drawCircle(p(0.23, 0.26), h * Tokens.footballHeadRadius, body)
       ..drawLine(p(0.23, 0.32), hip, body)
       ..drawPath(
         Path()

@@ -8,7 +8,13 @@ import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
 
 /// What a burst says when the signal locks onto it.
-typedef TraceLabel = ({String id, String title, String meta});
+///
+/// One field, because one field is what the owner asked the card to carry:
+/// where the stop was. The company, the dates and the title are all printed by
+/// the career entry the card is anchored to, a few hundred pixels away, and
+/// repeating them made the card a second copy of the entry rather than a
+/// marker on it.
+typedef TraceLabel = ({String id, String location});
 
 /// One burst's readout, shown while the signal is locked onto it.
 class TraceBurstLabel extends StatelessWidget {
@@ -17,6 +23,7 @@ class TraceBurstLabel extends StatelessWidget {
     required this.label,
     required this.top,
     required this.isVisible,
+    required this.gap,
     super.key,
   });
 
@@ -29,10 +36,17 @@ class TraceBurstLabel extends StatelessWidget {
   /// Whether the signal is locked or reduced motion shows all labels.
   final bool isVisible;
 
+  /// The clear ground between the end of the copy and the first block.
+  ///
+  /// The card is centred in it. Pushing it just off the wall left the middle
+  /// of a wide page empty with a card pressed against the stone; the owner
+  /// asked for it in the middle, and the middle is this.
+  final double gap;
+
   @override
   Widget build(BuildContext context) {
     final content = label;
-    if (content == null) return const SizedBox.shrink();
+    if (content == null || gap <= 0) return const SizedBox.shrink();
     final tokens = context.tokens;
 
     // Which way the gap is. The wall is on the trailing edge, so the gap is
@@ -44,31 +58,49 @@ class TraceBurstLabel extends StatelessWidget {
     return PositionedDirectional(
       top: top,
       start: 0,
-      // Pushed entirely off the wall's leading edge, into the gap between the
-      // copy and the stone. It used to sit at the column's own edge *inside*
-      // it, so the card was drawn on top of the blocks -- which is what the
-      // owner marked as the card overlapping the walls.
+      // The box is exactly the gap, translated off the wall's leading edge, so
+      // the card inside it is centred on the clear ground rather than pressed
+      // against the stone. It used to sit at the column's own edge *inside*
+      // it, drawn over the blocks, which is what the owner marked.
       child: FractionalTranslation(
         translation: Offset(away, 0),
-        child: Padding(
-          padding: EdgeInsetsDirectional.only(end: tokens.space16),
-          child: AnimatedOpacity(
-            opacity: isVisible ? 1 : 0,
-            duration: ReducedMotion.duration(context, Motion.standard),
-            curve: MotionCurves.emphasized,
-            child: InstrumentPanel(
-              fill: tokens.surface,
-              padding: EdgeInsets.all(tokens.space12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    content.title,
-                    style: context.type.bodyS.copyWith(color: tokens.beacon),
-                  ),
-                  Text(content.meta, style: context.type.telemetryS),
-                ],
+        child: SizedBox(
+          width: gap,
+          child: Center(
+            child: AnimatedOpacity(
+              opacity: isVisible ? 1 : 0,
+              duration: ReducedMotion.duration(context, Motion.standard),
+              curve: MotionCurves.emphasized,
+              child: InstrumentPanel(
+                fill: tokens.surface,
+                padding: EdgeInsets.symmetric(
+                  horizontal: tokens.space16,
+                  vertical: tokens.space12,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // A gold tick, because this card is the live one: it marks
+                    // where the reader is on the page rather than describing
+                    // anything.
+                    SizedBox(
+                      width: tokens.space8,
+                      height: tokens.hairlineWidth * 2,
+                      child: ColoredBox(color: tokens.beacon),
+                    ),
+                    SizedBox(width: tokens.space8),
+                    Flexible(
+                      child: Text(
+                        content.location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.type.bodyS.copyWith(
+                          color: tokens.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -18,6 +18,7 @@ import 'package:nocturne/features/station/presentation/widgets/cv_button.dart';
 import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
+import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_stops.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
@@ -66,8 +67,40 @@ class StationScreen extends ConsumerWidget {
             // never reflows the page.
             const CqResponse(),
             _Career(locale: locale),
+            // The way to reach him, at the foot of the page he lands on. A
+            // visitor who has read to the bottom of Home should not have to
+            // find About to send an email.
+            const _Reach(),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Contact, at the end of Home.
+class _Reach extends ConsumerWidget {
+  const _Reach();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final contact = switch (ref.watch(profileProvider).valueOrNull) {
+      ContentReady<Profile>(:final data) => data.contact,
+      ContentFallback<Profile>(:final profile) => profile.contact,
+      _ => null,
+    };
+    if (contact == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: EdgeInsets.only(top: context.tokens.space96),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(context.l10n.aboutContact, style: context.type.heading),
+          SizedBox(height: context.tokens.space24),
+          ContactLinks(contact: contact),
+        ],
       ),
     );
   }

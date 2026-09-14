@@ -6,6 +6,7 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/content/period.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/career.dart';
+import 'package:nocturne/features/station/presentation/widgets/stop_mark.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
 /// The career, top to bottom, as the trace's burst anchors.
@@ -66,55 +67,75 @@ class _CareerEntry extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final type = context.type;
-    // Only what the content actually carries. Five of the six roles have no
-    // company or summary, and inventing either would be a claim about the
-    // owner's career that nobody made.
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: tokens.space32),
+      // The sign runs down the leading edge, beside the entry rather than
+      // above it, so a reader scanning the column can tell study from
+      // employment from freelance without reading a word.
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(top: tokens.space24),
+            child: StopMark(role: role),
+          ),
+          SizedBox(width: tokens.space24),
+          Expanded(child: _entry(context, tokens, type)),
+        ],
+      ),
+    );
+  }
+
+  /// Only what the content actually carries. Five of the six roles have no
+  /// company or summary, and inventing either would be a claim about the
+  /// owner's career that nobody made.
+  Widget _entry(
+    BuildContext context,
+    ThemeTokens tokens,
+    NocturneTypography type,
+  ) {
     final company = role.company;
     final title = role.title;
     final summary = role.summary;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: tokens.space32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            height: tokens.hairlineWidth,
-            width: tokens.heroRuleWidth,
-            child: ColoredBox(color: tokens.hairline),
-          ),
-          SizedBox(height: tokens.space16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: tokens.hairlineWidth,
+          width: tokens.heroRuleWidth,
+          child: ColoredBox(color: tokens.hairline),
+        ),
+        SizedBox(height: tokens.space16),
+        Text(
+          formatPeriod(context.l10n, role.start, role.end),
+          style: type.telemetryS.copyWith(color: tokens.textMuted),
+        ),
+        SizedBox(height: tokens.space8),
+        if (company != null)
+          Text(company, style: type.heading)
+        else
+          Text('${role.city}, ${role.country}', style: type.heading),
+        if (title != null && role.id != 'freelance')
           Text(
-            formatPeriod(context.l10n, role.start, role.end),
-            style: type.telemetryS.copyWith(color: tokens.textMuted),
+            title.resolve(locale),
+            style: type.body.copyWith(color: tokens.textSecondary),
           ),
-          SizedBox(height: tokens.space8),
-          if (company != null)
-            Text(company, style: type.heading)
-          else
-            Text('${role.city}, ${role.country}', style: type.heading),
-          if (title != null && role.id != 'freelance')
-            Text(
-              title.resolve(locale),
-              style: type.body.copyWith(color: tokens.textSecondary),
-            ),
-          if (company != null)
-            Text(
-              role.id == 'freelance'
-                  ? 'Remote'
-                  : '${role.city}, ${role.country}',
-              style: type.meta,
-            ),
-          if (summary != null && role.id != 'freelance') ...[
-            SizedBox(height: tokens.space12),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
-              child: Text(summary.resolve(locale), style: type.body),
-            ),
-          ],
+        if (company != null)
+          Text(
+            role.id == 'freelance' ? 'Remote' : '${role.city}, ${role.country}',
+            style: type.meta,
+          ),
+        if (summary != null && role.id != 'freelance') ...[
+          SizedBox(height: tokens.space12),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
+            child: Text(summary.resolve(locale), style: type.body),
+          ),
         ],
-      ),
+      ],
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/app_locale.dart';
@@ -76,8 +77,13 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
   );
   final WidgetStatesController _states = WidgetStatesController();
 
+  /// Built on the first roll rather than in initState: a visitor who never
+  /// touches the sheet should not pay for a decoder.
+  AudioPlayer? _player;
+
   @override
   void dispose() {
+    unawaited(_player?.dispose());
     _roll.dispose();
     _states.dispose();
     super.dispose();
@@ -85,7 +91,24 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
 
   bool get _closed => _roll.value > 0.5;
 
+  /// The sheet moving: fibre, not a click.
+  ///
+  /// Synthesised by `tool/audio/make_sounds.py` like the climb's sounds, so
+  /// there is no licence to carry for it. A browser that will not play it is
+  /// not an error -- the roll is the point and the sound is the trimming.
+  void _rustle() {
+    if (ReducedMotion.of(context)) return;
+    final player = _player ??= AudioPlayer();
+    unawaited(
+      player
+          .stop()
+          .then((_) => player.play(AssetSource('audio/paper.wav')))
+          .catchError((_) {}),
+    );
+  }
+
   void _toggle() {
+    _rustle();
     if (ReducedMotion.of(context)) {
       _roll.value = _closed ? 0 : 1;
       return;
@@ -101,6 +124,7 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
 
   void _open() {
     if (!_closed) return;
+    _rustle();
     if (ReducedMotion.of(context)) {
       _roll.value = 0;
       return;
