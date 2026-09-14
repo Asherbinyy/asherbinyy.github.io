@@ -5,6 +5,23 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+- September 14: latest visual pass rejected; full app/admin ownership transferred to Claude with a tested isolated password-rotation patch. Fixed missing Material icon-font bundling. No merge/deployment.
+
+### Content
+
+- Updated positioning, experience wording and supplied skills/learning/tools; shared the same content with the static CV/Brief.
+- Home Freelance label reads Remote and omits detail copy.
+- Writing falls back to bundled published article metadata when its relay is unavailable.
+- Rolled back the rejected Flutter redesign. Existing backgrounds, stat cards, navigation, page layouts, game and intro are restored; then selectively restored the improvements below on the owner’s request.
+
+### Restored
+
+- Football now has a grounded player, boot contact, ball flight, net reaction and G O A L; tap/keyboard replay respects reduced motion.
+- Six actual published article covers are bundled for localhost and relay failure.
+- Education cards expand/collapse; About groups supplied skills, learning topics and tools separately.
+- Manual jumps have buffering, coyote time, variable height and smoother steering; an Egyptian humanoid replaces the scarab, with landing squash.
+- Removed the intro’s bottom credit caption; full attribution remains linked from About.
+
 ### Documentation
 
 - Removed the rejected separate frontend, generated entrance studies and migration documentation at the owner’s request. Flutter remains the public UI; the existing Journey and sitemap repairs are retained.

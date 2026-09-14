@@ -1,4 +1,8 @@
 {
+  "educationShowDetails": "Show coursework & highlights",
+  "educationHideDetails": "Hide details",
+  "artworkCredits": "Artwork credits",
+  "footballGoal": "G O A L",
   "@@locale": "ar",
   "loading": "جارٍ التحميل",
   "loadingContent": "جارٍ تحميل المحتوى",
@@ -311,5 +315,8 @@
         "type": "int"
       }
     }
-  }
+  },
+  "profileSkills": "Skills",
+  "profileLearning": "Currently learning",
+  "profileTools": "Tools I use"
 }

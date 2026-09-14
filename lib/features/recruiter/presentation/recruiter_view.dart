@@ -5,6 +5,7 @@ import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
 import 'package:nocturne/features/about/presentation/widgets/education_table.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:nocturne/core/widgets/profile_skills.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -137,6 +138,8 @@ class _Brief extends StatelessWidget {
           ),
         ],
         SizedBox(height: tokens.space32),
+
+        ProfileSkills(profile: profile),
 
         // Most recent first. A recruiter reads a summary from the top and
         // stops when they have decided, so the newest role has to be the one

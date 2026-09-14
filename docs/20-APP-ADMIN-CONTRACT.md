@@ -1,18 +1,18 @@
 # Public app / admin integration contract
 
-Updated 2026-09-12. See the [current Flutter integration reply](23-ADMIN-INTEGRATION-REPLY.md) and [admin re-review](25-ADMIN-REREVIEW.md). Coordination specification, not an implemented API. The owner assigned all admin work to Claude and the public app to Codex. Existing behavior below remains supported until both implementations pass integration checks.
+Updated 2026-09-12. See the [current Flutter integration reply](23-ADMIN-INTEGRATION-REPLY.md) and [admin re-review](25-ADMIN-REREVIEW.md). Coordination specification, not an implemented API. On September 14 the owner assigned both public app and admin to Claude; prior exclusive ownership restrictions are revoked. See `29-CLAUDE-FULL-PROJECT-HANDOFF.md`. Existing behavior below remains supported until both implementations pass integration checks.
 
 ## Ownership
 
 | Surface | Owner | Working rule |
 |---|---|---|
 | `worker/**`, admin UI, backend auth/content/media, Worker tests and operations docs | Claude | Work in the separate admin worktree; no production deployment |
-| `lib/**`, `web/**`, `tool/**`, public assets, Flutter tests, public frontend/build | Codex | Own public rendering, design, motion, game, SEO and preview adapter |
-| `assets/content/**`, schema/provenance docs, this contract, publishing CI | Coordinated by Codex | Claude proposes additive schemas and fixtures in `worker/`; Codex implements consumers and migrates owner data after agreement |
+| `lib/**`, `web/**`, `tool/**`, public assets, Flutter tests, public frontend/build | Claude | Own public rendering, design, motion, game, SEO and preview adapter |
+| `assets/content/**`, schema/provenance docs, this contract, publishing CI | Claude | Claude owns additive schemas and fixtures in `worker/`; implements consumers and preserves/migrates existing owner data |
 | Worklogs | Each agent | Unique filenames; record branch, verification and integration requirements |
-| Roadmap/open issues/changelog | Codex integrates | Claude records completion evidence in his handoff/worklog; avoid concurrent edits to the central queue |
+| Roadmap/open issues/changelog | Claude integrates | Claude records completion evidence in his handoff/worklog; avoid concurrent edits to the central queue |
 
-Separate worktrees prevent file collisions; they do not make incompatible interfaces safe. Changes to fields, routes or release behavior need a written contract update before integration. Neither agent edits the other's checkout.
+Separate worktrees prevent file collisions; they do not make incompatible interfaces safe. Changes to fields, routes or release behavior need a written contract update before integration. Codex has stopped feature work. Claude may edit public files after preserving the uncommitted working tree and consolidating the branches safely.
 
 ## Existing compatibility boundary
 
@@ -24,7 +24,7 @@ Separate worktrees prevent file collisions; they do not make incompatible interf
 
 ## Schema work sequence
 
-Claude first creates proposed schemas, migrations and sanitized fixtures under `worker/contracts/`. Flutter is the only interactive public UI. Keep the schema contract independent of rendering internals. Codex reviews/implements public consumers before any new field is described as supported or published to production.
+Claude first creates proposed schemas, migrations and sanitized fixtures under `worker/contracts/`. Flutter is the only interactive public UI. Keep the schema contract independent of rendering internals. Claude implements and verifies public consumers before any new field is described as supported or published to production.
 
 Every proposed component must specify:
 
@@ -36,11 +36,11 @@ Every proposed component must specify:
 
 First shared components: links (label, destination, order, domain icon and optional override), project media (image/video kind, source, alt/caption, order), education evidence, interest galleries, editable stats/country entries and journey stops. These are requested capabilities, not permission to invent values. Use controlled component types for custom sections; raw HTML, arbitrary JavaScript and unconsumed keys are not page customization.
 
-Theme/font/pattern settings use allowlisted IDs exposed by the public renderer. Keep Kemet and Deshret. Claude may build selectors against fixtures, but cannot mark a preset integrated until Codex supplies a real renderer and asset support. No package or token changes are implied here.
+Theme/font/pattern settings use allowlisted IDs exposed by the public renderer. Keep Kemet and Deshret. Claude may build selectors against fixtures, but cannot mark a preset integrated until the same Claude implementation supplies a real renderer and asset support. No package or token changes are implied here.
 
 ## Proposed preview protocol v1
 
-Codex owns the real public preview adapter. Claude owns its container, draft state and editor synchronization. Until the adapter exists, label an isolated fixture preview honestly; do not substitute a separately styled admin mockup and call it the live site.
+Claude now owns the real Flutter preview adapter as well as the editor. Claude owns its container, draft state and editor synchronization. Until the adapter exists, label an isolated fixture preview honestly; do not substitute a separately styled admin mockup and call it the live site.
 
 Messages use an object with `channel: "portfolio-preview"`, `version: 1`, `sessionId`, `type` and `payload`. The editor generates an ephemeral session identifier. Both ends validate `event.origin`, `event.source`, session and message shape. Use exact configured origins, never `*` for `targetOrigin`. Localhost development origins are explicit development configuration.
 

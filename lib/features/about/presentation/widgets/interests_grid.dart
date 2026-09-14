@@ -1,3 +1,4 @@
+import 'package:nocturne/core/painting/football_scene.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -87,9 +88,19 @@ class _Tile extends StatefulWidget {
 class _TileState extends State<_Tile> with SingleTickerProviderStateMixin {
   late final AnimationController _play = AnimationController(
     vsync: this,
-    duration: Motion.considered,
+    duration: _isFootball ? Tokens.footballAction : Motion.considered,
   );
   bool _isActive = false;
+  bool get _isFootball =>
+      InterestScene.of(widget.interest.id) == InterestScene.football;
+
+  void _replay() {
+    if (ReducedMotion.of(context)) {
+      _play.value = 1;
+    } else {
+      _play.forward(from: 0);
+    }
+  }
 
   @override
   void dispose() {
@@ -103,6 +114,10 @@ class _TileState extends State<_Tile> with SingleTickerProviderStateMixin {
     if (!mounted) return;
     // Under reduced motion the scene jumps to its played state rather than
     // animating: the information is the position, not the travel.
+    if (_isFootball) {
+      if (active) _replay();
+      return;
+    }
     if (ReducedMotion.of(context)) {
       _play.value = active ? 1 : 0;
       return;
@@ -126,26 +141,23 @@ class _TileState extends State<_Tile> with SingleTickerProviderStateMixin {
       // One node for the pair. Read apart, "Television" and "Better Call Saul"
       // are two unrelated announcements.
       container: true,
+      button: true,
       label: note == null ? label : '$label. $note',
       child: FocusableActionDetector(
         onShowHoverHighlight: (value) => _setActive(active: value),
         onShowFocusHighlight: (value) => _setActive(active: value),
-        mouseCursor: SystemMouseCursors.basic,
+        mouseCursor: SystemMouseCursors.click,
         actions: {
           ActivateIntent: CallbackAction<ActivateIntent>(
             onInvoke: (_) {
-              _play
-                ..reset()
-                ..forward();
+              _replay();
               return null;
             },
           ),
         },
         child: GestureDetector(
           // Touch has no hover, so a tap plays the scene once.
-          onTap: () => _play
-            ..reset()
-            ..forward(),
+          onTap: _replay,
           child: ExcludeSemantics(
             child: SizedBox(
               width: _Tile.width,
@@ -218,13 +230,38 @@ class _Plate extends StatelessWidget {
                 builder: (context, _) => CustomPaint(
                   painter: InterestPainter(
                     scene: InterestScene.of(interest.id),
-                    progress: MotionCurves.emphasized.transform(play.value),
+                    progress:
+                        InterestScene.of(interest.id) == InterestScene.football
+                        ? play.value
+                        : MotionCurves.emphasized.transform(play.value),
                     ink: tokens.instrumentMid,
                     gold: tokens.beacon,
                     strokeWidth: tokens.hairlineWidth * 1.6,
                   ),
                 ),
               ),
+              if (InterestScene.of(interest.id) == InterestScene.football)
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: tokens.space4),
+                    child: AnimatedBuilder(
+                      animation: play,
+                      builder: (context, _) => Opacity(
+                        opacity:
+                            ((play.value - FootballScene.impact) /
+                                    (1 - FootballScene.impact))
+                                .clamp(0.0, 1.0),
+                        child: Text(
+                          context.l10n.footballGoal,
+                          style: context.type.telemetry.copyWith(
+                            color: tokens.beacon,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               // The real mark for a named specific, where the owner has
               // supplied one. A crest is a trademark and drawing an
               // approximation of it would be worse than not having it, so the

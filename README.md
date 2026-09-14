@@ -32,7 +32,7 @@ node --test worker/test/*.test.js
 
 Bundled JSON lives in `assets/content/`; the current app reads published Worker overrides with a bundled fallback. Static CV/Brief and metadata are not yet coordinated with admin publication. Visitor analytics is disabled in the public release.
 
-Flutter remains the public UI. [Enhancement plan](docs/19-FLUTTER-ENHANCEMENT-PLAN.md) · [Open issues](docs/11-OPEN-ISSUES.md) · [Audit](docs/18-PROJECT-AUDIT.md) · [Worklogs](docs/worklog/).
+Claude now owns the app and admin. The latest visual pass is rejected; start with the [handoff](docs/29-CLAUDE-FULL-PROJECT-HANDOFF.md). [Continue here](docs/27-CONTINUE-HERE.md) · [Enhancement plan](docs/19-FLUTTER-ENHANCEMENT-PLAN.md) · [Open issues](docs/11-OPEN-ISSUES.md) · [Audit](docs/18-PROJECT-AUDIT.md) · [Worklogs](docs/worklog/).
 
 Claude owns the admin/Worker in a separate checkout. Its updated editor is not merged: [review blockers and next prompt](docs/25-ADMIN-REREVIEW.md). Codex owns Flutter and the [real preview/release integration](docs/23-ADMIN-INTEGRATION-REPLY.md). Pages and Worker deployments are separate. [Worker setup and password operations](worker/README.md).
 

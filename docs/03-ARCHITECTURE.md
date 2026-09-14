@@ -321,3 +321,10 @@ Rules:
 - Content load failure falls back to a bundled minimal JSON so the site always renders name, positioning and contact.
 - Medium RSS failure hides the writing section silently rather than showing an error. It is not core content.
 - All uncaught errors reported through the analytics client **only when consent is granted**. Without consent, errors are logged to console and dropped.
+
+
+## September 13 content-only additions
+
+- Shared optional `profile.skills`, `profile.learning`, `profile.tools` arrays feed plain Flutter text and the existing static CV/Brief generator. Older documents default to empty arrays. Claude’s admin integration for these additions remains unverified.
+- Writing tries the public relay, bounded to eight seconds, then bundled `assets/content/writing.xml` metadata on failure/empty feed/disabled relay. Live nonempty results win. This supersedes silent blank-only behavior. The fallback contains titles, links, dates and tags, no article bodies or remote covers. It is not a sixth admin-editable JSON document.
+- Public design, navigation and page ownership remain at the pre-experiment baseline. The rejected papyrus grid, fixed wall image and page merges were removed on the owner’s instruction.

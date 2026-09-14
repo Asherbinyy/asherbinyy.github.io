@@ -84,14 +84,19 @@ class _CareerEntry extends StatelessWidget {
             Text(company, style: type.heading)
           else
             Text('${role.city}, ${role.country}', style: type.heading),
-          if (title != null)
+          if (title != null && role.id != 'freelance')
             Text(
               title.resolve(locale),
               style: type.body.copyWith(color: tokens.textSecondary),
             ),
           if (company != null)
-            Text('${role.city}, ${role.country}', style: type.meta),
-          if (summary != null) ...[
+            Text(
+              role.id == 'freelance'
+                  ? 'Remote'
+                  : '${role.city}, ${role.country}',
+              style: type.meta,
+            ),
+          if (summary != null && role.id != 'freelance') ...[
             SizedBox(height: tokens.space12),
             ConstrainedBox(
               constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),

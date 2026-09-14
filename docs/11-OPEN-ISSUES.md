@@ -1,5 +1,8 @@
 # Open issues
 
+**September 13:** owner rejected the broad visual implementation; it has been rolled back to the existing Flutter design. Current scope is content-only. See [handoff](27-CONTINUE-HERE.md). Existing visual/game issues remain open; no design acceptance is implied by prior local tests.
+
+
 Reviewed 2026-09-11 against source conversations, code and browser captures; updated 2026-09-12 after the owner retained Flutter and admin afc8969 was re-reviewed. [Current admin blockers](25-ADMIN-REREVIEW.md).
 Current plan: [Flutter enhancement plan](19-FLUTTER-ENHANCEMENT-PLAN.md).
 Evidence: [audit](18-PROJECT-AUDIT.md). Historical issue numbers remain searchable in git and the earlier worklogs; the tables here describe current work.
@@ -24,11 +27,11 @@ Evidence: [audit](18-PROJECT-AUDIT.md). Historical issue numbers remain searchab
 |---|---|---|---|
 | UI-1 | Minimal ornament rows and instrumentation frame do not meet requested Egyptian realism | Approved Home/entrance visual slice establishes materials, figures, relief composition and motion | F2 |
 | UI-2 | Local repair bounds the map by visible content height, adds inline Close and restores narrow-pointer details. Full Journey redesign and physical-device review remain | Verify the repaired build in real browser/device layouts, then deliver F4's timeline, materials and supplied birth stop | F4, partial local repair |
-| UI-3 | Phone intro is tightly cropped; figures absent in captured view; CC caption occupies bottom | Responsive camera/composition and revised assets/fallback pass visual review | F2 |
+| UI-3 | Intro bottom CC caption removed locally; attribution linked from About. Phone framing still needs review | Responsive camera/composition and revised assets/fallback pass visual review | F2 |
 | UI-4 | Home/career composition and copy still need refinement; route transitions are absent | No repeated floating content/overlap; distinct readable hierarchy and deliberate motion | F2 |
 | UI-5 | Work has procedural artwork, uneven summaries and no gallery population | Real product presentation and media workflow pass F5 acceptance | F5 |
 | UI-6 | Real store/platform logo registry and club crest incomplete | Correct recognizable assets load with useful labels and owner overrides | F1/F5/F6 |
-| UI-7 | About, education and contact presentation remain weak | Portrait/research/interests/links pass section-specific visual and interaction review | F6 |
+| UI-7 | Local expandable education and grouped skills restored; overall About acceptance and contact refinement remain open | Portrait/research/interests/links pass section-specific visual and interaction review | F6 |
 | UI-8 | Writing remains separate and repeats on About; Work/Writing integration absent | Agreed Work tabs and preserved URLs work without repeated full feeds | F5/F6 |
 | UI-9 | Off duty galleries and full social-link controls absent | Media affordances appear only where media exists, links work, editor supports them | F1/F6 |
 | UI-10 | Résumé interaction needs refinement; empty footer bar and old rail remain | Chrome and résumé composition reviewed with actual content | F2/F6 |
@@ -53,8 +56,8 @@ Evidence: [audit](18-PROJECT-AUDIT.md). Historical issue numbers remain searchab
 | CON-6 | Arabic editorial review and provenance ledger refresh incomplete | Current translations/claims checked against their actual sources; stale review snapshots replaced | F1/F6/F9 |
 | CON-7 | Guardy engagement dates, some project details and store destinations absent | Supply/verify only when required; no fabricated dates/links/case studies | F4/F5 |
 | CON-8 | Snunu/AZ Exams/Mokaf lack public store URLs; Calendly is null | Remain omitted unless correct owner-approved destinations become available; projects still presented | F5/F6 |
-| GAME-1 | Current manual jump/landing feel rejected; momentum/buffering/reward loop incomplete | Owner-approved input and playable prototype pass F3 review | F3 |
-| GAME-2 | Insect-like climber; levels primarily change floor speed | Egyptian humanoid, readable rewards and distinct fair level patterns delivered | F3 |
+| GAME-1 | Local restoration adds momentum, buffering, coyote time, variable height and landing squash; reward loop and owner playtest remain open | Owner-approved input and playable prototype pass F3 review | F3 |
+| GAME-2 | Local Egyptian humanoid replaces the insect; levels still primarily change floor speed | Egyptian humanoid, readable rewards and distinct fair level patterns delivered | F3 |
 
 ## Verification and deferred decisions
 

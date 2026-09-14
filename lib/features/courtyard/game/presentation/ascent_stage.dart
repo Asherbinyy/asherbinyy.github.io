@@ -31,8 +31,8 @@ class AscentStage extends StatefulWidget {
   /// Pushes the stage, and restores the page scroll position on the way back.
   static Future<void> open(BuildContext context) => Navigator.of(context).push(
     PageRouteBuilder<void>(
-      transitionDuration: Tokens.considered,
-      reverseTransitionDuration: Tokens.quick,
+      transitionDuration: ReducedMotion.duration(context, Tokens.considered),
+      reverseTransitionDuration: ReducedMotion.duration(context, Tokens.quick),
       pageBuilder: (context, animation, _) =>
           FadeTransition(opacity: animation, child: const AscentStage()),
     ),
@@ -144,9 +144,11 @@ class _AscentStageState extends State<AscentStage>
       );
     });
     _focus.requestFocus();
-    _entrance
-      ..reset()
-      ..forward();
+    if (ReducedMotion.of(context)) {
+      _entrance.value = 1;
+    } else {
+      _entrance.forward(from: 0);
+    }
     _ticker
       ..stop()
       ..start();

@@ -1,5 +1,8 @@
 # Project brief — Ahmed Elsherbini's portfolio
 
+> **September 14 ownership transfer:** the owner rejected Codex’s latest visual result and assigned **both public Flutter and all admin/backend work to Claude**. Former Codex-only file restrictions are revoked. Read [the complete handoff and prompt](29-CLAUDE-FULL-PROJECT-HANDOFF.md). Keep the Flutter foundation; no production deployment or destructive reset is implied.
+
+
 Updated 2026-09-11 after the original conversation and browser audit.
 
 ## Purpose

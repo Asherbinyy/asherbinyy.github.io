@@ -440,12 +440,14 @@ String _generateCv(
     'Azure DevOps',
     'Power BI',
   ];
-  for (final skill in skills) {
+  for (final skill in {...skills, ..._strings(profile['skills'])}) {
     buf.writeln('<span>${_esc(skill)}</span>');
   }
   buf
     ..writeln('</div>')
-    ..writeln('</section>')
+    ..writeln('</section>');
+  _writeProfileSkills(buf, profile, includeSkills: false);
+  buf
     // Contact section
     ..writeln('<section>')
     ..writeln('<h2>Contact</h2>');
@@ -739,6 +741,8 @@ String _generateBrief(
     ..writeln('</header>')
     ..writeln('<main>');
 
+  _writeProfileSkills(buf, profile);
+
   // Featured apps only
   if (featured.isNotEmpty) {
     buf
@@ -865,4 +869,27 @@ String _generateSitemap(Map<String, dynamic> apps) {
 
   buf.writeln('</urlset>');
   return buf.toString();
+}
+
+List<String> _strings(dynamic value) =>
+    value is List ? value.whereType<String>().toList() : const [];
+
+void _writeProfileSkills(
+  StringBuffer buf,
+  Map<String, dynamic> profile, {
+  bool includeSkills = true,
+}) {
+  for (final (key, heading) in [
+    if (includeSkills) ('skills', 'Skills'),
+    ('learning', 'Currently learning'),
+    ('tools', 'Tools I use'),
+  ]) {
+    final values = _strings(profile[key]);
+    if (values.isEmpty) continue;
+    buf.writeln('<section><h2>$heading</h2><div class="skills-list">');
+    for (final value in values) {
+      buf.writeln('<span>${_esc(value)}</span>');
+    }
+    buf.writeln('</div></section>');
+  }
 }

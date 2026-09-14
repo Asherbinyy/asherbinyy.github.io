@@ -1,4 +1,6 @@
-# Claude handoff — all admin work
+# Claude handoff — historical admin scope
+
+> **September 14 ownership transfer:** the owner rejected Codex’s latest visual result and assigned **both public Flutter and all admin/backend work to Claude**. Former Codex-only file restrictions are revoked. Read [the complete handoff and prompt](29-CLAUDE-FULL-PROJECT-HANDOFF.md). Keep the Flutter foundation; no production deployment or destructive reset is implied.
 
 Updated 2026-09-12. Claude is working in the separate admin checkout; latest reviewed SHA is `afc8969`. First fix the [three re-review blockers](25-ADMIN-REREVIEW.md). Flutter remains the only interactive public app. Codex prepares its integration and enhancement plan in parallel.
 
@@ -13,7 +15,7 @@ Use the dedicated `phase/reinnovation-admin` worktree, not Codex's active checko
 
 The older handover/backlog is historical. The new audit checked actual source conversations and four annotated screenshots. Do not re-ask whether real logos are allowed: the owner already requested them. Subscribers were cancelled. Keep the daily digest dormant. Codex handles game/navigation/rendering questions.
 
-## Your scope
+## Historical scope — superseded September 14
 
 Own `worker/**`: admin design and implementation, content/media/auth endpoints, schemas/fixtures under `worker/contracts/`, Worker tests and operational documentation. Use the app/admin contract for shared changes. Do not edit `lib/**`, public `web/**`, public assets, owner's bundled content or Codex's working files. Send integration needs through a committed `worker/contracts/INTEGRATION.md` and your worklog, with exact proposed fields, endpoints and fixtures. Codex will implement the public consumers/preview adapter and integrate the changes.
 
@@ -51,6 +53,6 @@ Use isolated content and credentials. Exercise add/edit/reorder/delete, EN/AR sw
 
 Run `node --test worker/test/*.test.js` and the repository's four FVM checks before claiming an integrated phase finished. If a separate worktree cannot run a check, record the precise limitation; never copy Codex's passing result as your own. Write a unique `docs/worklog/YYYY-MM-DD-NN-claude-admin-<phase>.md` following the required template. Include files, schema changes, screenshots, test results and unresolved public integration dependencies. Commit coherent phases on the admin branch and leave deployment to the owner.
 
-## Current Claude prompt
+## Earlier Claude prompt — superseded September 14
 
 Use the [re-review prompt](25-ADMIN-REREVIEW.md#prompt-for-claude). It targets the latest SHA, remaining defects and the Flutter-only contract. After re-review passes, resume unfinished A3/A5 integration with Codex; do not restart the already implemented editor.

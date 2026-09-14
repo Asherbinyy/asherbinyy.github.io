@@ -58,7 +58,8 @@ void main() {
     final jumped = grounded.step(dt: 1 / 60, steer: 0, isLeaping: true);
     var kicked = grounded.step(dt: 1 / 60, steer: 0, isLeaping: true);
     for (var i = 0; i < 60 && !kicked.kickedWall; i++) {
-      kicked = kicked.step(dt: 1 / 60, steer: -1);
+      // Hold for the full jump; releasing now deliberately cuts its height.
+      kicked = kicked.step(dt: 1 / 60, steer: -1, isLeaping: true);
     }
 
     expect(kicked.kickedWall, isTrue);

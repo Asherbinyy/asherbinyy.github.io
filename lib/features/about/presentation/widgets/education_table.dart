@@ -1,3 +1,5 @@
+import 'package:nocturne/core/motion/reduced_motion.dart';
+
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -53,10 +55,25 @@ class EducationTable extends StatelessWidget {
   );
 }
 
-class _Entry extends StatelessWidget {
+class _Entry extends StatefulWidget {
   const _Entry({required this.entry});
 
   final EducationEntry entry;
+
+  @override
+  State<_Entry> createState() => _EntryState();
+}
+
+class _EntryState extends State<_Entry> {
+  bool _expanded = true;
+  final _states = WidgetStatesController();
+  EducationEntry get entry => widget.entry;
+
+  @override
+  void dispose() {
+    _states.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,77 +95,190 @@ class _Entry extends StatelessWidget {
         .toList();
 
     return Padding(
-      padding: EdgeInsets.only(bottom: tokens.space32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            entry.award.resolve(context.channel),
-            style: type.body.copyWith(color: tokens.textPrimary),
+      padding: EdgeInsets.only(bottom: tokens.space24),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: tokens.surface,
+          borderRadius: BorderRadius.circular(Tokens.cardRadius),
+          border: Border.all(
+            color: tokens.hairline,
+            width: tokens.hairlineWidth,
           ),
-          SizedBox(height: tokens.space4),
-          Text(
-            '${entry.institution.resolve(context.channel)}   '
-            '${entry.start} — ${entry.end}',
-            style: type.telemetryS.copyWith(color: tokens.textMuted),
-          ),
-          if (entry.status case final status?) ...[
-            SizedBox(height: tokens.space8),
-            Text(
-              status.resolve(context.channel),
-              style: type.telemetryS.copyWith(color: tokens.beacon),
-            ),
-          ],
-          if (modules.isNotEmpty) ...[
-            SizedBox(height: tokens.space16),
-            // Keyed so a test can tell the transcript apart from the evidence
-            // row beneath it. Both print marks -- deliberately, since a card
-            // gathered away from the transcript has to say what it is evidence
-            // for -- and without this the two are indistinguishable to a
-            // finder searching the whole table for "94".
-            Column(
-              key: EducationTable.modulesKey,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [for (final module in modules) _Module(module: module)],
-            ),
-          ],
-          // The artefacts sit together, side by side, rather than one under
-          // whichever module it belongs to. Stacked under their rows they
-          // pushed the marks apart and read as a column of unrelated pictures;
-          // gathered here they read as what they are -- the evidence behind
-          // the transcript above them -- and two of them fit one desktop row.
-          if (artefacts.isNotEmpty) ...[
-            SizedBox(height: tokens.space24),
-            Wrap(
-              spacing: tokens.space16,
-              runSpacing: tokens.space16,
-              children: [
-                for (final module in artefacts)
-                  _EvidenceCard(
-                    evidence: module.evidence!,
-                    module: module.name.resolve(context.channel),
-                    mark: module.mark,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListenableBuilder(
+              listenable: _states,
+              builder: (context, _) => FocusRing(
+                isFocused: _states.value.contains(WidgetState.focused),
+                child: Semantics(
+                  button: true,
+                  expanded: _expanded,
+                  child: InkWell(
+                    statesController: _states,
+                    borderRadius: BorderRadius.circular(Tokens.cardRadius),
+                    onTap: () => setState(() => _expanded = !_expanded),
+                    child: Padding(
+                      padding: EdgeInsets.all(tokens.space24),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.school_outlined,
+                            color: tokens.textSecondary,
+                            size: tokens.space24,
+                          ),
+                          SizedBox(width: tokens.space16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  entry.institution.resolve(context.channel),
+                                  style: type.telemetryS.copyWith(
+                                    color: tokens.textMuted,
+                                  ),
+                                ),
+                                SizedBox(height: tokens.space8),
+                                Text(
+                                  entry.award.resolve(context.channel),
+                                  style: type.heading.copyWith(
+                                    color: tokens.textPrimary,
+                                  ),
+                                ),
+                                SizedBox(height: tokens.space12),
+                                Wrap(
+                                  spacing: tokens.space16,
+                                  runSpacing: tokens.space8,
+                                  children: [
+                                    Text(
+                                      '${entry.start} — ${entry.end}',
+                                      style: type.telemetryS.copyWith(
+                                        color: tokens.textMuted,
+                                      ),
+                                    ),
+                                    if (entry.status case final status?)
+                                      Text(
+                                        status.resolve(context.channel),
+                                        style: type.telemetryS.copyWith(
+                                          color: tokens.textPrimary,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                SizedBox(height: tokens.space12),
+                                Text(
+                                  _expanded
+                                      ? context.l10n.educationHideDetails
+                                      : context.l10n.educationShowDetails,
+                                  style: type.telemetryS.copyWith(
+                                    color: tokens.beacon,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: tokens.space8),
+                          AnimatedRotation(
+                            turns: _expanded ? 0.5 : 0,
+                            duration: ReducedMotion.duration(
+                              context,
+                              Tokens.quick,
+                            ),
+                            child: Icon(
+                              Icons.expand_more,
+                              color: tokens.beacon,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-              ],
+                ),
+              ),
+            ),
+            _DetailsReveal(
+              child: _expanded
+                  ? Padding(
+                      padding: EdgeInsetsDirectional.only(
+                        start: tokens.space24,
+                        end: tokens.space24,
+                        bottom: tokens.space24,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (modules.isNotEmpty) ...[
+                            SizedBox(height: tokens.space16),
+                            // finder searching the whole table for "94".
+                            Column(
+                              key: EducationTable.modulesKey,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                for (final module in modules)
+                                  _Module(module: module),
+                              ],
+                            ),
+                          ],
+                          if (artefacts.isNotEmpty) ...[
+                            SizedBox(height: tokens.space24),
+                            Wrap(
+                              spacing: tokens.space16,
+                              runSpacing: tokens.space16,
+                              children: [
+                                for (final module in artefacts)
+                                  _EvidenceCard(
+                                    evidence: module.evidence!,
+                                    module: module.name.resolve(
+                                      context.channel,
+                                    ),
+                                    mark: module.mark,
+                                  ),
+                              ],
+                            ),
+                          ],
+                          if (entry.highlights.isNotEmpty) ...[
+                            SizedBox(height: tokens.space24),
+                            Wrap(
+                              spacing: tokens.space16,
+                              runSpacing: tokens.space16,
+                              children: [
+                                for (final highlight in entry.highlights)
+                                  _HighlightCard(
+                                    text: highlight.resolve(context.channel),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ],
-          if (entry.highlights.isNotEmpty) ...[
-            SizedBox(height: tokens.space24),
-            Wrap(
-              spacing: tokens.space16,
-              runSpacing: tokens.space16,
-              children: [
-                for (final highlight in entry.highlights)
-                  _HighlightCard(text: highlight.resolve(context.channel)),
-              ],
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
+}
+
+class _DetailsReveal extends StatelessWidget {
+  const _DetailsReveal({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => ReducedMotion.of(context)
+      ? child
+      : AnimatedSize(
+          duration: Tokens.considered,
+          alignment: AlignmentDirectional.topStart,
+          curve: Curves.easeOutCubic,
+          child: child,
+        );
 }
 
 /// One module and its mark, on a hairline row with the mark right-aligned.

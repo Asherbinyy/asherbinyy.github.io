@@ -6,6 +6,7 @@ import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/features/about/presentation/widgets/education_table.dart';
 import 'package:nocturne/features/about/presentation/widgets/portrait_frame.dart';
+import 'package:nocturne/features/writing/data/writing_providers.dart';
 
 import '../../support/chrome_harness.dart';
 import '../../support/content_readers.dart';
@@ -148,6 +149,8 @@ void main() {
         tester,
         breakpoint: ChromeBreakpoint.large,
         initialRoute: AppRoute.about,
+        // This exercises evidence controls, not asynchronous feed loading.
+        overrides: [articlesProvider.overrideWith((ref) async => [])],
       );
 
       // Only the modules the owner supplied an artefact for carry one, and

@@ -23,7 +23,7 @@ Prototype this with simple art first. Tune acceleration, apex, landing tolerance
 
 ## Character and world
 
-The owner requests an Egyptian stick-like humanoid with a gold headpiece. It needs a readable silhouette and distinct jump, fall, turn and landing poses. The current insect-like climber is not that character.
+The owner requests an Egyptian stick-like humanoid with a gold headpiece. It needs a readable silhouette and distinct jump, fall, turn and landing poses. The September 13 local restoration replaces it with the requested humanoid and a gold nemes.
 
 Use a layered shaft with architectural scale, legible platforms and level-specific visual changes. Start with generous placement, introduce moving/crumbling platforms clearly, then combine them with the rising hazard. Generated platform paths must be reachable with the actual movement model.
 
@@ -45,3 +45,9 @@ The exact reward balance and level count belong to the prototype, not invented c
 ## Completion
 
 Review a playable movement prototype, then full runs through early/middle/late difficulty with final art. Verify keyboard, touch, focus, lifecycle and fair platform generation. Measure performance in a browser; physical phone acceptance belongs to F9. Passing collision or painter tests alone cannot establish that the game is enjoyable.
+
+## September 13 implemented restoration
+
+Manual input retained. Horizontal acceleration/braking, 140ms buffered/coyote timing, variable jump height, one launch per held press, and damped landing squash are implemented locally. Holding a key no longer repeats jumps automatically. Wall kicks retain their bonus; short taps deliberately reach less height than a held jump. Reduced motion suppresses the squash and entrance sweep while preserving essential gameplay movement.
+
+The current score is still altitude and the best is memory-only for the open stage. Cloud ranking, nickname, rewards/combos and richer level patterns remain unimplemented; see `26-GAME-LEADERBOARD-CONTRACT.md`. Do not treat restoring the controls/character as completion of F3.

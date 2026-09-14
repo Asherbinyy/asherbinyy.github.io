@@ -192,6 +192,17 @@ class _Art extends ConsumerWidget {
     );
 
     final proxied = ref.watch(coverProxyProvider)(article.cover);
+    final bundled = ref
+        .watch(bundledWritingCoversProvider)
+        .valueOrNull?[articleCoverKey(article.url)];
+    if (bundled != null) {
+      return ThreeStageImage(
+        image: AssetImage(bundled),
+        width: ArticleCard.width,
+        height: ArticleCard.artHeight,
+        fallback: mark,
+      );
+    }
     if (proxied == null) return mark;
 
     return ThreeStageImage(

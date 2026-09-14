@@ -8,6 +8,12 @@ part 'token_values.dart';
 
 /// Exact design-system values. Section 11 is tokenized only, not implemented.
 abstract final class Tokens {
+  /// A complete kick, flight and net reaction at a readable pace.
+  static const Duration footballAction = Duration(milliseconds: 1400);
+
+  /// A stalled Writing request yields to bundled published metadata.
+  static const Duration writingTimeout = Duration(seconds: 8);
+
   /// Bundled type weights, including the semibold body face.
   static const FontWeight weightRegular = FontWeight.w400,
       weightMedium = FontWeight.w500,

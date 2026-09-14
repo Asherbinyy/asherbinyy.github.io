@@ -1,5 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'dart:async';
+
+import 'package:url_launcher/url_launcher.dart';
+import 'package:nocturne/features/about/presentation/widgets/skills_panel.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:go_router/go_router.dart';
@@ -130,6 +135,12 @@ class _About extends StatelessWidget {
         // Three, not the archive: the spec puts writing at the foot of About
         // as evidence it exists, and `/writing` is where the list lives.
         const WritingList(limit: 3),
+        SizedBox(height: tokens.space24),
+        TextButton(
+          onPressed: () =>
+              unawaited(launchUrl(Uri.base.resolve('intro/models/LICENSE.md'))),
+          child: Text(l10n.artworkCredits),
+        ),
       ],
     );
   }
@@ -174,6 +185,8 @@ class _Identity extends StatelessWidget {
             style: type.telemetryS.copyWith(color: tokens.textMuted),
           ),
         ],
+        SizedBox(height: tokens.space24),
+        SkillsPanel(profile: profile),
       ],
     );
   }

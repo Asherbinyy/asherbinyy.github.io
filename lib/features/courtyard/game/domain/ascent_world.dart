@@ -110,6 +110,14 @@ class AscentWorld {
     this.wasWalled = false,
     this.floorY = -_fallMargin,
     this.kickedWall = false,
+    this.horizontalVelocity = 0,
+    this.coyoteFor = 0,
+    this.jumpQueuedFor = 0,
+    this.jumpHeld = false,
+    this.jumpConsumed = false,
+    this.landingAge = 1,
+    this.landed = false,
+    this.lastKickSide = 0,
   });
 
   /// A fresh run.
@@ -196,6 +204,35 @@ class AscentWorld {
   /// Whether this step kicked off a wall, for the sound and the flourish.
   final bool kickedWall;
 
+  /// Horizontal momentum; released controls brake instead of snapping.
+  final double horizontalVelocity;
+
+  /// Remaining seconds of grace after leaving a ledge.
+  final double coyoteFor;
+
+  /// Remaining seconds of an early jump request.
+  final double jumpQueuedFor;
+
+  /// Previous frame's input, for one jump per press.
+  final bool jumpHeld;
+
+  /// A held input cannot automatically jump again after landing.
+  final bool jumpConsumed;
+
+  /// Time since landing, used only for the character's spring pose.
+  final double landingAge;
+
+  /// A fresh landing event, independent of holding a control.
+  final bool landed;
+
+  /// The same wall cannot grant repeated boosts before a landing.
+  final int lastKickSide;
+
+  static const double _inputGrace = 0.14;
+  static const double _acceleration = 7;
+  static const double _braking = 9;
+  static const double _shortJumpSpeed = 9.5;
+
   /// Metres between ledges.
   static const double ledgeGap = 2.6;
 
@@ -265,7 +302,17 @@ class AscentWorld {
     // climber back with more height than a standing jump, which is the trick
     // the tower games are built on and the reason to steer wide rather than
     // straight up.
-    var x = climberX + steer * _steerRate * dt;
+    final target = steer.clamp(-1.0, 1.0) * _steerRate;
+    final change = (steer == 0 ? _braking : _acceleration) * dt;
+    var horizontal =
+        horizontalVelocity +
+        (target - horizontalVelocity).clamp(-change, change);
+    var x = climberX + horizontal * dt;
+    var grace = isGrounded ? _inputGrace : math.max<double>(0, coyoteFor - dt);
+    var queued = isLeaping && !jumpHeld
+        ? _inputGrace
+        : math.max<double>(0, jumpQueuedFor - dt);
+    var consumed = isLeaping && jumpConsumed;
     var walled = false;
     if (x <= 0) {
       x = 0;
@@ -277,30 +324,42 @@ class AscentWorld {
     }
 
     var speed = velocity - _gravity * dt;
+    if (!isLeaping && jumpHeld && jumpConsumed && speed > _shortJumpSpeed) {
+      speed = _shortJumpSpeed;
+    }
     var y = climberY + speed * dt;
     var grounded = false;
     var kicked = false;
+    var kickSide = isGrounded ? 0 : lastKickSide;
 
     // A wall kick only counts on the way up, and only once per contact: a
     // climber grinding along an edge would otherwise ride it to the top.
-    if (walled && speed > 0 && !wasWalled) {
+    if (walled && speed > 0 && !wasWalled && kickSide != (x == 0 ? -1 : 1)) {
+      kickSide = x == 0 ? -1 : 1;
       speed = _bounce * _wallBoost;
       kicked = true;
+      horizontal = x == 0 ? _steerRate : -_steerRate;
     }
 
     final live = [for (final ledge in ledges) ledge.advance(dt)];
     var broke = false;
 
-    // Space, from a standing start or in the air on the first press.
-    // Space, from a standing start only. A kick has already set its own,
-    // taller speed, and letting the jump overwrite it meant holding space
-    // through a kick threw the bonus away.
-    if (isLeaping && isGrounded) speed = _bounce;
+    // Buffered input survives a slightly early press; coyote time survives
+    // a slightly late one. A held key is consumed after one launch.
+    final requested = queued > 0 || (isLeaping && !consumed);
+    if (requested && grace > 0 && !consumed && !kicked) {
+      speed = _bounce;
+      y = climberY + speed * dt;
+      grace = 0;
+      queued = 0;
+      consumed = true;
+    }
+    var touchedDown = false;
 
     // Only ever falling, and only from above: a climber rising through a ledge
     // passes it, which is what makes the ascent readable rather than a trap.
     if (speed < 0) {
-      for (var i = 0; i < live.length; i++) {
+      for (var i = live.length - 1; i >= 0; i--) {
         final ledge = live[i];
         if (ledge.isBroken) continue;
         final crossed = climberY >= ledge.y && y <= ledge.y;
@@ -314,6 +373,15 @@ class AscentWorld {
         // ground.
         speed = 0;
         grounded = true;
+        touchedDown = !isGrounded;
+        grace = _inputGrace;
+        if (queued > 0 && !consumed) {
+          speed = _bounce;
+          grounded = false;
+          grace = 0;
+          queued = 0;
+          consumed = true;
+        }
         if (ledge.kind == LedgeKind.cracked) {
           live[i] = ledge.broken;
           broke = true;
@@ -382,6 +450,14 @@ class AscentWorld {
       wasWalled: walled,
       floorY: risenFloor,
       kickedWall: kicked,
+      horizontalVelocity: horizontal,
+      coyoteFor: grace,
+      jumpQueuedFor: queued,
+      jumpHeld: isLeaping,
+      jumpConsumed: consumed,
+      landingAge: touchedDown ? 0 : landingAge + dt,
+      landed: touchedDown,
+      lastKickSide: touchedDown ? 0 : kickSide,
     );
   }
 
@@ -428,6 +504,14 @@ class AscentWorld {
     bool? wasWalled,
     double? floorY,
     bool kickedWall = false,
+    double? horizontalVelocity,
+    double? coyoteFor,
+    double? jumpQueuedFor,
+    bool? jumpHeld,
+    bool? jumpConsumed,
+    double? landingAge,
+    bool landed = false,
+    int? lastKickSide,
   }) => AscentWorld(
     ledges: ledges ?? this.ledges,
     climberX: climberX ?? this.climberX,
@@ -444,5 +528,13 @@ class AscentWorld {
     floorY: floorY ?? this.floorY,
     kickedWall: kickedWall,
     brokeLedge: brokeLedge,
+    horizontalVelocity: horizontalVelocity ?? this.horizontalVelocity,
+    coyoteFor: coyoteFor ?? this.coyoteFor,
+    jumpQueuedFor: jumpQueuedFor ?? this.jumpQueuedFor,
+    jumpHeld: jumpHeld ?? this.jumpHeld,
+    jumpConsumed: jumpConsumed ?? this.jumpConsumed,
+    landingAge: landingAge ?? this.landingAge,
+    landed: landed,
+    lastKickSide: lastKickSide ?? this.lastKickSide,
   );
 }

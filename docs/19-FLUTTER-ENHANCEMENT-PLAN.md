@@ -1,8 +1,11 @@
 # Flutter enhancement plan
 
+> **September 14 ownership transfer:** the owner rejected Codex’s latest visual result and assigned **both public Flutter and all admin/backend work to Claude**. Former Codex-only file restrictions are revoked. Read [the complete handoff and prompt](29-CLAUDE-FULL-PROJECT-HANDOFF.md). Keep the Flutter foundation; no production deployment or destructive reset is implied.
+
+
 2026-09-12. **Planning checkpoint, not an implemented redesign.** The owner rejected the separate frontend and generated entrance studies. Those files are removed. Flutter remains the only interactive UI. Existing Flutter styling, assets and the measured Journey repair are the starting point.
 
-Codex owns Flutter, the existing web intro, SEO, motion and game. Claude owns all Worker/admin implementation in his separate checkout. Fix and re-review the [remaining admin defects](25-ADMIN-REREVIEW.md) before integration. Nothing in this plan deploys or merges to `main`.
+Claude now owns Flutter, web intro, SEO, motion, game and all Worker/admin implementation. Fix and re-review the [remaining admin defects](25-ADMIN-REREVIEW.md) before integration. Nothing in this plan deploys or merges to `main`.
 
 ## Decisions
 
@@ -18,11 +21,11 @@ Codex owns Flutter, the existing web intro, SEO, motion and game. Claude owns al
 
 | Phase | Concrete result | Owner | State |
 |---|---|---|---|
-| F0 | Recovered request inventory and browser baseline | Codex | Audit recorded; rejected frontend removed |
-| F1 | Reliable admin and real Flutter draft preview | Claude backend; Codex adapter | Three remaining review defects; adapter absent |
-| F2 | Existing Home, intro and shared motion polished | Codex | Planned; current intro retained |
-| F3 | Springy game prototype, then rewards and levels | Codex | Planned; current game retained |
-| F4 | Journey selection/timeline continuity | Codex | Viewport repair verified locally; visual/content work open |
+| F0 | Recovered request inventory and browser baseline | Claude | Audit recorded; rejected frontend removed |
+| F1 | Reliable admin and real Flutter draft preview | Claude, both sides | Three remaining review defects; adapter absent |
+| F2 | Existing Home, intro and shared motion polished | Claude | Planned; current intro retained |
+| F3 | Springy game prototype, then rewards and levels | Claude | Planned; current game retained |
+| F4 | Journey selection/timeline continuity | Claude | Viewport repair verified locally; visual/content work open |
 | F5 | Work, real media and Writing integration | Codex; Claude editor | Planned |
 | F6 | About, education, Off duty and résumé | Codex; Claude editor | Planned |
 | F7 | Connected appearance controls and honest dashboard | Claude controls; Codex renderers | Allowlist/public consumers open |
