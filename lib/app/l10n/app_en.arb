@@ -1,4 +1,8 @@
 {
+  "heroStatRollHint": "Roll the sheet up, or open it again",
+  "@heroStatRollHint": {
+    "description": "Accessible hint for the two home figures drawn on papyrus, which roll closed when activated."
+  },
   "educationShowDetails": "Show coursework & highlights",
   "educationHideDetails": "Hide details",
   "educationModules": "Modules",

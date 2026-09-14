@@ -13,6 +13,7 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
+import 'package:nocturne/features/station/presentation/widgets/papyrus_stat_panel.dart';
 import 'package:nocturne/features/station/presentation/widgets/stat_panel.dart';
 
 /// The settled hero.
@@ -30,6 +31,12 @@ class HeroContent extends StatelessWidget {
     this.acquisitionReveal,
     super.key,
   });
+
+  /// How many of the figures are drawn on papyrus.
+  ///
+  /// Two: the years and the degree. Named rather than written as a bare 2 at
+  /// the call site so the reason survives the next person to read it.
+  static const int rollingStats = 2;
 
   /// Identity and positioning.
   final Profile profile;
@@ -88,8 +95,15 @@ class HeroContent extends StatelessWidget {
             spacing: tokens.space16,
             runSpacing: tokens.space16,
             children: [
-              for (final stat in profile.stats)
-                StatPanel(stat: stat, locale: locale),
+              // The first two figures are drawn on papyrus and roll up when
+              // they are clicked, by the owner's instruction. Anything he adds
+              // after them is an ordinary panel: the treatment is for these
+              // two, not for every number on the site.
+              for (final (index, stat) in profile.stats.indexed)
+                if (index < HeroContent.rollingStats)
+                  PapyrusStatPanel(stat: stat, locale: locale)
+                else
+                  StatPanel(stat: stat, locale: locale),
             ],
           ),
         ],

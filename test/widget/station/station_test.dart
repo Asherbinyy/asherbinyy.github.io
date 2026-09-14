@@ -16,6 +16,7 @@ import 'package:nocturne/features/station/domain/acquisition_controller.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/features/station/presentation/widgets/acquisition_sequence.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
+import 'package:nocturne/features/station/presentation/widgets/papyrus_stat_panel.dart';
 import 'package:nocturne/features/station/presentation/widgets/stat_panel.dart';
 
 import '../../support/chrome_harness.dart';
@@ -110,6 +111,7 @@ void main() {
       );
 
       expect(find.byType(StatPanel), findsNothing);
+      expect(find.byType(PapyrusStatPanel), findsNothing);
     });
 
     testWidgets('renders the panels the shipped profile declares', (
@@ -128,7 +130,18 @@ void main() {
       // about.
       final stats =
           bundledJson('assets/content/profile.json')['stats'] as List<dynamic>;
-      expect(find.byType(StatPanel), findsNWidgets(stats.length));
+      // The first two are drawn on papyrus and roll up; anything after them
+      // is an ordinary panel. Counted together, because the assertion is that
+      // every supplied figure appears, not which treatment it got.
+      expect(
+        find.byType(PapyrusStatPanel).evaluate().length +
+            find.byType(StatPanel).evaluate().length,
+        stats.length,
+      );
+      expect(
+        find.byType(PapyrusStatPanel),
+        findsNWidgets(math.min(stats.length, HeroContent.rollingStats)),
+      );
       for (final stat in stats.cast<Map<String, dynamic>>()) {
         expect(
           find.text(stat['value'] as String),
@@ -167,7 +180,7 @@ void main() {
         ),
       );
 
-      expect(find.byType(StatPanel), findsNWidgets(2));
+      expect(find.byType(PapyrusStatPanel), findsNWidgets(2));
       expect(find.text('25+'), findsOneWidget);
       expect(find.text('shipped'), findsOneWidget);
     });
