@@ -1032,18 +1032,13 @@ async function changePassword(request, env, now, headers) {
   // Re-authenticated at the moment of the change, even though the request is
   // already authorised. A session left open on a borrowed machine should not
   // be enough to take the site away from its owner.
-  const {record} = await backend.password('get');
-  let allowed = false;
-  if (record) {
+  const {record, epoch: verifiedEpoch} = await backend.password('get');
+  const recovery = typeof env.ADMIN_TOKEN === 'string' &&
+    env.ADMIN_TOKEN.length >= 32 && sameSecret(current, env.ADMIN_TOKEN);
+  let allowed = recovery;
+  if (!allowed && record) {
     const derived = await derive(current, record.salt, record.iterations);
     allowed = sameSecret(derived, record.hash);
-  }
-  if (
-    !allowed &&
-    typeof env.ADMIN_TOKEN === 'string' &&
-    env.ADMIN_TOKEN.length >= 32
-  ) {
-    allowed = sameSecret(current, env.ADMIN_TOKEN);
   }
   if (!allowed) {
     return response({error: 'The current password was not right'}, 403, headers);
@@ -1055,14 +1050,22 @@ async function changePassword(request, env, now, headers) {
   // transaction. A password change that leaves the old sessions alive has not
   // changed anything for whoever the owner was changing it because of; one
   // that half-applies is worse than either outcome.
-  const {epoch} = await backend.password('rotate', {
+  // Only verification of the recovery credential itself bypasses the epoch.
+  // A recovery bearer with an old current password still verified old state.
+  const rotated = await backend.password('rotate', {
     salt,
     hash,
     iterations: passwordIterations,
     at: now.toISOString(),
-  });
+  }, recovery ? null : verifiedEpoch);
+  if (rotated.stale) {
+    return response({
+      error: 'The password changed while this was in progress. Sign in again.',
+      reason: 'password-rotated',
+    }, 401, headers);
+  }
 
-  return issueSession(env, now, headers, epoch);
+  return issueSession(env, now, headers, rotated.epoch);
 }
 
 /// Image types the upload endpoint will take.

@@ -276,16 +276,22 @@ export class ContentStore {
   /// would leave a moment where each of them disagreed with the others -- and
   /// an interrupted rotation would leave the site with a new password and old
   /// sessions, or the reverse.
-  async password({action, record}) {
+  async password({action, record, requireEpoch}) {
     if (action === 'rotate') {
-      const epoch = ((await this.storage.get(epochName)) ?? 0) + 1;
-      await this.storage.transaction(async (txn) => {
+      return this.storage.transaction(async (txn) => {
+        const currentEpoch = (await txn.get(epochName)) ?? 0;
+        // Compare the state actually verified before any credential or session
+        // mutation. Null means the recovery credential itself was verified.
+        if (requireEpoch !== null && requireEpoch !== currentEpoch) {
+          return {stale: true, epoch: currentEpoch};
+        }
+        const epoch = currentEpoch + 1;
         await txn.put(passwordRecordName, record);
         await txn.put(epochName, epoch);
-        const held = await this.storage.list({prefix: 'session:'});
+        const held = await txn.list({prefix: 'session:'});
         for (const key of held.keys()) await txn.delete(key);
+        return {epoch};
       });
-      return {epoch};
     }
     return {
       record: (await this.storage.get(passwordRecordName)) ?? null,
@@ -332,7 +338,8 @@ function durableBackend(env) {
     attempts: (scope, action, now, limit) =>
       call({op: 'attempts', scope, action, now, limit}),
     session: (asked) => call({op: 'session', ...asked}),
-    password: (action, record) => call({op: 'password', action, record}),
+    password: (action, record, requireEpoch) =>
+      call({op: 'password', action, record, requireEpoch}),
   };
 }
 
@@ -469,9 +476,14 @@ function kvBackend(env) {
       // it does. The panel already reports that this deployment is unprotected.
       return held;
     },
-    async password(action, record) {
+    async password(action, record, requireEpoch) {
       if (action === 'rotate') {
-        const epoch = ((await store.get('auth:epoch', 'json')) ?? 0) + 1;
+        const currentEpoch = (await store.get('auth:epoch', 'json')) ?? 0;
+        // Best effort only: KV cannot make this comparison and write atomic.
+        if (requireEpoch !== null && requireEpoch !== currentEpoch) {
+          return {stale: true, epoch: currentEpoch};
+        }
+        const epoch = currentEpoch + 1;
         await store.put('auth:password', JSON.stringify(record));
         await store.put('auth:epoch', JSON.stringify(epoch));
         const listing = await store.list({prefix: 'session:'});

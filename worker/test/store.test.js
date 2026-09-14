@@ -882,7 +882,7 @@ test('two rotations racing leave one password and one generation', async () => {
     handleRequest(
       admin('/v1/admin/password', {
         method: 'POST',
-        body: {current: fixturePassword, next: laterPassword},
+        body: {current: adminToken, next: laterPassword},
         token: adminToken,
       }),
       env,
@@ -890,13 +890,13 @@ test('two rotations racing leave one password and one generation', async () => {
     handleRequest(
       admin('/v1/admin/password', {
         method: 'POST',
-        body: {current: fixturePassword, next: 'a-third-long-enough-password'},
+        body: {current: adminToken, next: 'a-third-long-enough-password'},
         token: adminToken,
       }),
       env,
     ),
   ]);
-  // Both were authorised by the deployment secret, so both rotations apply and
+  // Both current credentials were the deployment secret, so both rotations apply and
   // the generation advances twice. What must not happen is two live passwords,
   // a generation that goes backwards, or a session issued under the one that
   // lost.
@@ -909,8 +909,10 @@ test('two rotations racing leave one password and one generation', async () => {
   const codes = (await Promise.all(survivors)).map((r) => r.status).sort();
   assert.deepEqual(codes, [200, 401], 'exactly one password opens the panel');
 
-  // Whoever was superseded is told so rather than handed a session that would
-  // not work. Whoever won gets one that does.
+  // Issuance overtaken by a rotation is refused. A session issued before the
+  // later rotation may have returned 200 already, but is revoked by that
+  // rotation. Only the final generation's session must still authenticate.
+  let liveSessions = 0;
   for (const answered of [one, two]) {
     assert.ok([200, 401].includes(answered.status), String(answered.status));
     const body = await answered.json();
@@ -922,8 +924,10 @@ test('two rotations racing leave one password and one generation', async () => {
       admin('/v1/admin/content', {token: body.token}),
       env,
     );
-    assert.equal(used.status, 200);
+    assert.ok([200, 401].includes(used.status), String(used.status));
+    if (used.status === 200) liveSessions += 1;
   }
+  assert.equal(liveSessions, 1);
 });
 
 test('an interrupted rotation changes nothing', async () => {
@@ -980,3 +984,66 @@ test('the deployment secret is unaffected by a rotation in flight', async () => 
     assert.equal(storage.get(name).epoch, storage.get('auth:epoch'));
   }
 });
+
+// A password rotation is also a credential-dependent write. Checking only the
+// epoch at subsequent session creation is too late: the password was replaced.
+for (const useRecoveryBearer of [false, true]) {
+  test(`a stale rotation cannot replace a recovered password (${useRecoveryBearer ? 'recovery' : 'session'} bearer)`, async () => {
+    const env = transactional();
+    const oldSession = await withPassword(env);
+    const staleNext = 'a-stale-actors-replacement-password';
+    const held = holdDerivation();
+    let delayed;
+    try {
+      delayed = handleRequest(
+        admin('/v1/admin/password', {
+          method: 'POST',
+          token: useRecoveryBearer ? adminToken : oldSession,
+          body: {current: fixturePassword, next: staleNext},
+        }),
+        env,
+      );
+      await held.started;
+      const recovered = await handleRequest(
+        admin('/v1/admin/password', {
+          method: 'POST',
+          token: adminToken,
+          body: {current: adminToken, next: laterPassword},
+        }),
+        env,
+      );
+      assert.equal(recovered.status, 200);
+      const {token: recoveredSession} = await recovered.json();
+      const storage = env.CONTENT_STORE.state.storage.map;
+      const epochAfterRecovery = storage.get('auth:epoch');
+      const verifierAfterRecovery = structuredClone(storage.get('auth:password'));
+      const sessionsAfterRecovery = [...storage.keys()]
+        .filter((key) => key.startsWith('session:')).sort();
+
+      held.release();
+      const stale = await delayed;
+      assert.equal(stale.status, 401, 'old verification cannot authorize a new rotation');
+      assert.equal((await stale.json()).reason, 'password-rotated');
+      assert.equal(storage.get('auth:epoch'), epochAfterRecovery);
+      assert.deepEqual(storage.get('auth:password'), verifierAfterRecovery);
+      assert.deepEqual(
+        [...storage.keys()].filter((key) => key.startsWith('session:')).sort(),
+        sessionsAfterRecovery,
+        'stale rotation neither deletes nor issues sessions',
+      );
+      assert.equal((await signInWith(env, laterPassword)).status, 200);
+      assert.equal((await signInWith(env, staleNext)).status, 401);
+      assert.equal((await signInWith(env, fixturePassword)).status, 401);
+      assert.equal((await handleRequest(
+        admin('/v1/admin/content', {token: recoveredSession}), env,
+      )).status, 200);
+      assert.equal((await handleRequest(
+        admin('/v1/admin/content', {token: oldSession}), env,
+      )).status, 401);
+    } finally {
+      held.release();
+      if (delayed) await delayed.catch(() => undefined);
+      held.restore();
+    }
+  });
+}
