@@ -1,6 +1,8 @@
 # Architecture — NOCTURNE
 
-> Architecture audit, 2026-09-11: Flutter remains pinned and unchanged. The content source now includes Worker overrides and an admin; the app is not local-JSON-only. A 404 app shell does not make a valid indexable public route, and runtime admin updates can drift from generated HTML. [R1](19-REINNOVATION-ROADMAP.md#r1--search-visibility-and-publishing-foundation) proposes semantic HTML public pages and a consistent publication revision; the frontend decision is pending. The old assertions that no other 3D embedding/renderer approach is possible, and blanket asset/engine exclusions, are not grounds to reject a reviewed solution. Package versions must be verified when selected.
+> **Decision, 2026-09-12:** Flutter remains the only interactive public UI. The owner cancelled the separate frontend; its directory and migration documentation have been removed. Preserve the pinned SDK, current Three.js intro and Worker contracts. See the [Flutter plan](19-FLUTTER-ENHANCEMENT-PLAN.md).
+
+> The app reads Worker overrides as well as bundled JSON. Deep-link status and search-readable HTML remain open. Extend `tool/generate_static.dart` using the same validated release as Flutter; no separate public UI framework is selected. Admin release acknowledgement and the real Flutter preview adapter are not implemented.
 
 **Flutter 3.47.2 / Dart 3.13.2** (August 2026 stable), pinned with **FVM**. **Web target only.** Feature-first clean architecture.
 
@@ -319,3 +321,10 @@ Rules:
 - Content load failure falls back to a bundled minimal JSON so the site always renders name, positioning and contact.
 - Medium RSS failure hides the writing section silently rather than showing an error. It is not core content.
 - All uncaught errors reported through the analytics client **only when consent is granted**. Without consent, errors are logged to console and dropped.
+
+
+## September 13 content-only additions
+
+- Shared optional `profile.skills`, `profile.learning`, `profile.tools` arrays feed plain Flutter text and the existing static CV/Brief generator. Older documents default to empty arrays. Claude’s admin integration for these additions remains unverified.
+- Writing tries the public relay, bounded to eight seconds, then bundled `assets/content/writing.xml` metadata on failure/empty feed/disabled relay. Live nonempty results win. This supersedes silent blank-only behavior. The fallback contains titles, links, dates and tags, no article bodies or remote covers. It is not a sixth admin-editable JSON document.
+- Public design, navigation and page ownership remain at the pre-experiment baseline. The rejected papyrus grid, fixed wall image and page merges were removed on the owner’s instruction.

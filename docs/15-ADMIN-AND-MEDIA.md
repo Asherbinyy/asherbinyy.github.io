@@ -7,7 +7,7 @@ blocked on the renderer allowlist. Audit baseline was `1cfd039`.
 Target workflow and acceptance: [R3](19-REINNOVATION-ROADMAP.md#r3--admin-as-an-editing-workspace). Customization and analytics: [R8](19-REINNOVATION-ROADMAP.md#r8--customization-and-analytics).
 Phases and ownership: [handoff](21-CLAUDE-ADMIN-HANDOFF.md). Requests to the public app: [`worker/contracts/INTEGRATION.md`](../worker/contracts/INTEGRATION.md).
 
-## What exists
+## Existing root/deployed baseline
 
 The Worker serves `/admin`, assembled by `worker/src/admin.js` from the modules
 in `worker/src/admin/`. The HTML is public and marked noindex; write endpoints
@@ -172,7 +172,7 @@ Two things are open on this side rather than the other:
 
 ## Media behavior
 
-The existing endpoint accepts PNG, JPEG and WebP with size/type/dimension checks and rejects SVG. Media IDs are hashes of their contents. Current upload limit and dimensions are defined in `worker/src/index.js`; R3 must preserve validation while adding explicit media controls.
+The existing endpoint accepts PNG, JPEG and WebP with size/type/dimension checks and rejects SVG. Media IDs are hashes of their contents. Current upload limit and dimensions are defined in `worker/src/index.js`; F1 must preserve validation while adding explicit media controls.
 
 A1 changed which fields get an uploader, not what the endpoint accepts. The
 schema marks a field as holding an image, so `portrait.src` and an evidence
@@ -191,7 +191,7 @@ Real app screenshots are absent from the bundled app entries. `assets/media/apps
 
 ## Publishing contract to establish
 
-R1 must choose the public HTML and content-revision strategy before R3 promises a live publish. At present the app reads Worker overrides while CV/Brief are generated from local files and the main shell metadata is written separately.
+F8 will extend the existing Dart static generator and coordinate one content revision with Flutter before publication is labelled complete. At present the app reads Worker overrides while CV/Brief are generated from local files and the main shell metadata is written separately.
 
 A draft preview must not publish. A publication must validate schema, references and claim provenance, protect against stale edits, and expose failure. The public document, metadata and interactive view must all refer to the same published revision, with the last successful revision available on failure.
 

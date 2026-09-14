@@ -29,6 +29,9 @@ WallPainter _painter({
   lockedColour: nocturneTokens.instrument,
   peakColour: nocturneTokens.beacon,
   strokeWidth: Tokens.hairlineWidth,
+  stoneColour: const Color(0xFF2E3A50),
+  carveShadow: const Color(0xFF121826),
+  carveLight: const Color(0xFFE3A93F),
 );
 
 /// Runs a paint pass and reports how many canvas operations it issued.

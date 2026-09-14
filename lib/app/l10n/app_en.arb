@@ -1,4 +1,28 @@
 {
+  "heroStatRollHint": "Roll the sheet up, or open it again",
+  "@heroStatRollHint": {
+    "description": "Accessible hint for the two home figures drawn on papyrus, which roll closed when activated."
+  },
+  "educationShowDetails": "Show coursework & highlights",
+  "educationHideDetails": "Hide details",
+  "educationModules": "Modules",
+  "@educationModules": {
+    "description": "Heading above the transcript list inside an education entry."
+  },
+  "educationProjects": "Projects",
+  "@educationProjects": {
+    "description": "Heading above the dissertation and project cards inside an education entry."
+  },
+  "educationSampleHint": "Modules with a coursework sample can be opened.",
+  "@educationSampleHint": {
+    "description": "Explains that some module rows show a piece of the owner's own coursework."
+  },
+  "educationNoSample": "No sample supplied",
+  "@educationNoSample": {
+    "description": "Accessible label for a module whose coursework has not been supplied."
+  },
+  "artworkCredits": "Artwork credits",
+  "footballGoal": "G O A L",
   "@@locale": "en",
   "loading": "Loading",
   "@loading": {
@@ -610,7 +634,7 @@
   "@writingReadOn": {
     "description": "Affordance on an article card saying where it opens."
   },
-  "heroReach": "Built for teams in",
+  "heroReach": "Worked with clients and companies in",
   "@heroReach": {
     "description": "Introduces the row of country flags in the hero."
   },
@@ -626,5 +650,17 @@
         "type": "int"
       }
     }
+  },
+  "profileSkills": "Skills",
+  "profileLearning": "Currently learning",
+  "profileTools": "Tools I use",
+  "@profileSkills": {
+    "description": "Owner-requested content label; Arabic copy review pending."
+  },
+  "@profileLearning": {
+    "description": "Owner-requested content label; Arabic copy review pending."
+  },
+  "@profileTools": {
+    "description": "Owner-requested content label; Arabic copy review pending."
   }
 }

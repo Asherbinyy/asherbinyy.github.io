@@ -1,0 +1,5 @@
+{
+  passwordChangeStatus: 200,
+  oldPasswordLoginStatus: 200,
+  oldPasswordSessionStatus: 200
+}

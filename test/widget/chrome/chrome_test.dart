@@ -6,7 +6,6 @@ import 'package:nocturne/app/chrome/app_footer.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/app_mark.dart';
 import 'package:nocturne/app/chrome/app_nav.dart';
-import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/app/chrome/chrome_control.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/app_theme.dart';
@@ -84,22 +83,18 @@ void main() {
         expect(tester.takeException(), isNull);
       });
 
-      testWidgets('the rail is present only above 1024px at '
-          '${breakpoint.name}', (tester) async {
+      testWidgets('no vertical rail is drawn at ${breakpoint.name}', (
+        tester,
+      ) async {
+        // There used to be a 56px frame down the leading edge carrying the
+        // section name set vertically and a "standby" indicator. It imitated
+        // a machine readout without reporting anything, and the owner asked
+        // for that kind of affectation to come out of the site.
         await pumpChrome(tester, breakpoint: breakpoint);
 
-        expect(
-          find.byType(AppRail),
-          breakpoint.hasRail ? findsOneWidget : findsNothing,
-        );
+        expect(find.text('standby'), findsNothing);
       });
     }
-
-    testWidgets('the rail keeps its specified width', (tester) async {
-      await pumpChrome(tester, breakpoint: ChromeBreakpoint.large);
-
-      expect(tester.getSize(find.byType(AppRail)).width, Tokens.railWidth);
-    });
 
     testWidgets('no route link is lost on a phone-width browser', (
       tester,
@@ -163,19 +158,17 @@ void main() {
       expect(Directionality.of(active), TextDirection.rtl);
     });
 
-    testWidgets('Recruiter Mode removes the rail', (tester) async {
+    testWidgets('Recruiter Mode is entered from the chrome', (tester) async {
       final container = await pumpChrome(
         tester,
         breakpoint: ChromeBreakpoint.large,
       );
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
-      expect(find.byType(AppRail), findsOneWidget);
 
       await tester.tap(find.bySemanticsLabel(l10n.recruiterModeOff));
       await pumpFrames(tester);
 
       expect(container.read(recruiterModeProvider), isTrue);
-      expect(find.byType(AppRail), findsNothing);
     });
 
     testWidgets('a restored preference is applied on the first frame', (

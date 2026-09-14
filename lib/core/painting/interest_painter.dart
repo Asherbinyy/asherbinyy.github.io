@@ -1,3 +1,5 @@
+import 'package:nocturne/core/painting/football_scene.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/rendering.dart';
@@ -172,103 +174,8 @@ class InterestPainter extends CustomPainter {
   /// The owner asked for a foot, a net that reads as a net, the net moving on
   /// impact, and the word. All four are what makes it a goal rather than a
   /// trajectory.
-  void _football(Canvas canvas, Size size, Paint line, Paint accent) {
-    final w = size.width;
-    final h = size.height;
-
-    // The strike lands a third of the way in; everything after is the net.
-    const contact = 0.34;
-    final struck = (progress - contact) / (1 - contact);
-    final flight = struck.clamp(0.0, 1.0);
-
-    final mouth = Rect.fromLTRB(w * 0.44, h * 0.20, w * 0.94, h * 0.66);
-
-    // The net: posts, bar, and a mesh drawn as two crossing families of lines.
-    // The mesh is what makes it a net rather than a rectangle, and it is the
-    // part that moves.
-    final shake = flight <= 0 || flight >= 1
-        ? 0.0
-        : math.sin(flight * math.pi * 7) * (1 - flight) * w * 0.035;
-
-    canvas
-      ..save()
-      ..clipRect(mouth.inflate(w * 0.02));
-    const mesh = 5;
-    for (var i = 1; i < mesh; i++) {
-      final t = i / mesh;
-      // Only the lines past the ball's entry point are disturbed.
-      final give = shake * math.sin(t * math.pi);
-      canvas
-        ..drawLine(
-          Offset(mouth.left + mouth.width * t, mouth.top),
-          Offset(mouth.left + mouth.width * t + give, mouth.bottom),
-          line,
-        )
-        ..drawLine(
-          Offset(mouth.left, mouth.top + mouth.height * t),
-          Offset(mouth.right + give, mouth.top + mouth.height * t),
-          line,
-        );
-    }
-    canvas
-      ..restore()
-      ..drawRect(mouth, accent);
-
-    // The boot: a shin swinging through, and a foot at the end of it. Thicker
-    // than the rest of the scene, because at this size a foot drawn in the
-    // same weight as the net reads as one more line.
-    final swing = (progress / contact).clamp(0.0, 1.0);
-    final angle = -1.15 + 1.5 * swing;
-    final hip = Offset(w * 0.10, h * 0.30);
-    final ankle = hip + Offset(math.cos(angle), math.sin(angle)) * (h * 0.32);
-    final leg = Paint()
-      ..color = line.color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = line.strokeWidth * 2.2
-      ..strokeCap = StrokeCap.round;
-    // The foot points along the swing, so it follows through rather than
-    // hanging off the shin at a fixed angle.
-    final toe = Offset(math.cos(angle + 0.9), math.sin(angle + 0.9));
-    canvas
-      ..drawLine(hip, ankle, leg)
-      ..drawPath(
-        Path()
-          ..moveTo(ankle.dx, ankle.dy)
-          ..lineTo(ankle.dx + toe.dx * w * 0.16, ankle.dy + toe.dy * h * 0.16)
-          ..lineTo(
-            ankle.dx + toe.dx * w * 0.15 - toe.dy * w * 0.07,
-            ankle.dy + toe.dy * h * 0.15 + toe.dx * h * 0.07,
-          )
-          ..lineTo(ankle.dx - toe.dy * w * 0.07, ankle.dy + toe.dx * h * 0.07)
-          ..close(),
-        Paint()..color = line.color,
-      );
-
-    // The ball, from the boot into the net.
-    final ball = Offset.lerp(
-      ankle + Offset(w * 0.16, h * 0.02),
-      Offset(mouth.left + mouth.width * 0.62, mouth.top + mouth.height * 0.58),
-      // Ease out: fast off the boot, slowing into the net.
-      1 - (1 - flight) * (1 - flight),
-    );
-    if (ball != null) canvas.drawCircle(ball, w * 0.055, accent);
-
-    // The word, once it is in. Drawn as a line of blocks rather than as text:
-    // this painter has no access to a text style, and a shape that reads as a
-    // shout at 24 pixels does the job the word was asked to do.
-    if (flight < 0.72) return;
-    final shout = ((flight - 0.72) / 0.28).clamp(0.0, 1.0);
-    final letters = [0.16, 0.26, 0.36, 0.46];
-    for (final (index, at) in letters.indexed) {
-      final rise = (shout * 4 - index).clamp(0.0, 1.0);
-      if (rise <= 0) continue;
-      final top = h * 0.86 - h * 0.06 * rise;
-      canvas.drawRect(
-        Rect.fromLTWH(w * at, top, w * 0.06, h * 0.05 * rise),
-        accent,
-      );
-    }
-  }
+  void _football(Canvas canvas, Size size, Paint line, Paint accent) =>
+      FootballScene.paint(canvas, size, progress, line, accent);
 
   /// Two players, one serving.
   ///

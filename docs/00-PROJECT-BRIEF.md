@@ -1,5 +1,8 @@
 # Project brief — Ahmed Elsherbini's portfolio
 
+> **September 14 ownership transfer:** the owner rejected Codex’s latest visual result and assigned **both public Flutter and all admin/backend work to Claude**. Former Codex-only file restrictions are revoked. Read [the complete handoff and prompt](29-CLAUDE-FULL-PROJECT-HANDOFF.md). Keep the Flutter foundation; no production deployment or destructive reset is implied.
+
+
 Updated 2026-09-11 after the original conversation and browser audit.
 
 ## Purpose
@@ -19,7 +22,7 @@ The audiences remain recruiters, engineering leads, clients and collaborators. T
 - Kemet and Deshret are the existing base themes; English and Arabic are implemented.
 - The public release has no analytics endpoint. Do not enable collection as a side effect of rebuilding the admin.
 
-The current product is not visually accepted. The [audit](18-REINNOVATION-AUDIT.md) documents the implementation and observed failures. Do not infer completion from old milestone titles.
+The current product is not visually accepted. The [audit](18-PROJECT-AUDIT.md) documents the implementation and observed failures. Do not infer completion from old milestone titles.
 
 ## Direction
 
@@ -35,7 +38,7 @@ The entrance should have convincing framing on phones and desktops and no bottom
 
 The current Flutter canvas and 404 fallback are insufficient as the public content/SEO strategy. Static CV/Brief pages do not cover the whole site, and admin updates can drift from generated HTML.
 
-Recommended next step: semantic HTML public pages with optional interactive scenes, while reusing the existing content and Worker. This is a proposal awaiting the owner's rendering decision, not a migration already underway. R1 in the [new roadmap](19-REINNOVATION-ROADMAP.md) defines the alternative if Flutter is retained and the shared publication contract needed in either case.
+Decision, 2026-09-12: retain Flutter as the only interactive public UI. The owner rejected the separate frontend and its art direction. Extend the existing Dart static generator for search-readable content and metadata from the same release; do not maintain a second designed site. The [Flutter plan](19-FLUTTER-ENHANCEMENT-PLAN.md) starts with admin reliability and integration. This pass plans enhancements; it does not implement a replacement design.
 
 SEO delivery includes valid page responses, readable HTML, route-specific metadata, accurate structured data, crawlable links, a current sitemap and Search Console verification. No ranking or universal appearance on every name search is promised.
 
@@ -47,6 +50,6 @@ Two base themes remain available. Subscribers were cancelled. The separate daily
 
 ## Delivery
 
-Use [Re-innovation milestones R0–R9](19-REINNOVATION-ROADMAP.md), one at a time. Each has concrete behavior, files/areas, review artifacts and acceptance conditions. The old roadmap is history.
+Use [Flutter enhancement plan](19-FLUTTER-ENHANCEMENT-PLAN.md), one at a time. Each has concrete behavior, files/areas, review artifacts and acceptance conditions. The old roadmap is history.
 
 Preserve content provenance, accessible controls, reduced-motion support, EN/AR behavior and the pinned toolchain while it is retained. Changes to design tokens, route ownership, dependencies and collection must be documented and tied to the relevant agreed milestone. Do not publish to `main` during the audit.

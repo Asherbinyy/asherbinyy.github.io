@@ -15,6 +15,27 @@ class PlatformScope extends InheritedWidget {
       service != oldWidget.service;
 }
 
+/// The measured space left by persistent chrome, before page scrolling.
+class ContentViewport extends InheritedWidget {
+  /// Publishes the available [height] without estimating header/nav sizes.
+  const ContentViewport({
+    required this.height,
+    required super.child,
+    super.key,
+  });
+
+  /// Actual visible content height, in logical pixels.
+  final double height;
+
+  /// Null for standalone widgets rendered outside the scrolling chrome.
+  static double? heightOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<ContentViewport>()?.height;
+
+  @override
+  bool updateShouldNotify(ContentViewport oldWidget) =>
+      height != oldWidget.height;
+}
+
 /// Feature widgets ask the central service instead of checking the browser.
 extension PlatformContext on BuildContext {
   /// Subscribes to both viewport and capability changes.

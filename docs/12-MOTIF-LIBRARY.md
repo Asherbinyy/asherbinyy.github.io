@@ -1,6 +1,9 @@
 # Motif Library — KEMET
 
-> Direction update, 2026-09-11: the owner now explicitly requests more realistic reliefs, figures, materials and Egyptian environments. The five-polylines limit, flat-only treatment and exclusions of requested environmental elements below describe the old implementation, not a veto on that request. Expand the sourced asset/motif inventory as part of the concrete [R2 visual proof](19-REINNOVATION-ROADMAP.md#r2--visual-system-home-and-entrance). Do not invent phonetic strings or an Egyptian spelling of the owner's name. Existing code and token values remain unchanged until that proof is reviewed.
+> **September 14 ownership transfer:** the owner rejected Codex’s latest visual result and assigned **both public Flutter and all admin/backend work to Claude**. Former Codex-only file restrictions are revoked. Read [the complete handoff and prompt](29-CLAUDE-FULL-PROJECT-HANDOFF.md). Keep the Flutter foundation; no production deployment or destructive reset is implied.
+
+
+> Direction update, 2026-09-11: the owner now explicitly requests more realistic reliefs, figures, materials and Egyptian environments. The five-polylines limit, flat-only treatment and exclusions of requested environmental elements below describe the old implementation, not a veto on that request. Expand the sourced asset/motif inventory as part of the concrete [F2 visual proof](19-FLUTTER-ENHANCEMENT-PLAN.md#f2--home-intro-and-shared-motion). Do not invent phonetic strings or an Egyptian spelling of the owner's name. Existing code and token values remain unchanged until that proof is reviewed.
 
 **This file is a closed inventory, not a source of inspiration.** If a motif is
 not listed here, it does not go on the site. Adding one means adding a row to
@@ -210,3 +213,7 @@ That is content, not ambience.
 
 - Nothing autoplays, ever. Browsers block it and it deserves to be blocked.
 - The name player is a labelled control with a visible state, and it says nothing when the recording is absent rather than showing a dead button.
+
+## September 13 selective restoration
+
+The game character is the owner-requested small Egyptian humanoid with a gold nemes, replacing the scarab avatar only. The football scene is a literal interest illustration. Education uses existing surface, border, type and radius tokens; it does not introduce papyrus across the education cards. No new background motif or fixed image is included.

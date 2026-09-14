@@ -32,12 +32,22 @@ class CareerSequence extends StatelessWidget {
   /// Supplies the stable keys the fixed trace layer measures.
   final TraceAnchorRegistry anchorRegistry;
 
+  /// The stops, most recent first.
+  ///
+  /// The content is stored oldest-first, which is the order a life happened
+  /// in and the wrong order to introduce it in: a reader meeting this column
+  /// wants to know where he is now, not where he started. Sorted by start
+  /// date rather than reversed, so the display order does not depend on how
+  /// the document happens to be written.
+  List<CareerRole> get _mostRecentFirst =>
+      [...roles]..sort((a, b) => b.start.compareTo(a.start));
+
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [
-      for (final role in roles)
+      for (final role in _mostRecentFirst)
         KeyedSubtree(
           key: anchorRegistry.keyFor(role.id),
           child: _CareerEntry(role: role, locale: locale),
@@ -84,14 +94,19 @@ class _CareerEntry extends StatelessWidget {
             Text(company, style: type.heading)
           else
             Text('${role.city}, ${role.country}', style: type.heading),
-          if (title != null)
+          if (title != null && role.id != 'freelance')
             Text(
               title.resolve(locale),
               style: type.body.copyWith(color: tokens.textSecondary),
             ),
           if (company != null)
-            Text('${role.city}, ${role.country}', style: type.meta),
-          if (summary != null) ...[
+            Text(
+              role.id == 'freelance'
+                  ? 'Remote'
+                  : '${role.city}, ${role.country}',
+              style: type.meta,
+            ),
+          if (summary != null && role.id != 'freelance') ...[
             SizedBox(height: tokens.space12),
             ConstrainedBox(
               constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),

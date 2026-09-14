@@ -1,7 +1,7 @@
-# Game design — Re-innovation R7
+# Game design — Flutter F3
 
 Updated 2026-09-11 from the original owner conversations and current request.
-Detailed execution and acceptance: [R7](19-REINNOVATION-ROADMAP.md#r7--the-game).
+Detailed execution and acceptance: [F3](19-FLUTTER-ENHANCEMENT-PLAN.md#f3--game-feel-character-and-progression).
 
 ## Purpose
 
@@ -13,7 +13,7 @@ The game opens full-screen from `/courtyard`. The implementation lives in `lib/f
 
 It has static, cracked and moving platforms, manual Space/tap jumping from the ground, stronger jumps on upward wall contact, a rising floor, level numbers, score and sound/restart/exit controls. The owner rejects the current feel and art. An implementation existing is not completion.
 
-The old continuous-auto-bounce specification is no longer current. The latest explicit original request replaced it with Space/tap. The owner has now asked for more bouncing/springiness; manual versus automatic jumping was asked again in the audit and remains pending.
+The old continuous-auto-bounce specification is no longer current. The latest explicit original request replaced it with Space/tap. The owner has now asked for more bouncing/springiness; the current plan keeps manual Space/tap and improves spring through physics and feedback, to be reviewed in a playable prototype.
 
 ## Proposed movement
 
@@ -23,7 +23,7 @@ Prototype this with simple art first. Tune acceleration, apex, landing tolerance
 
 ## Character and world
 
-The owner requests an Egyptian stick-like humanoid with a gold headpiece. It needs a readable silhouette and distinct jump, fall, turn and landing poses. The current insect-like climber is not that character.
+The owner requests an Egyptian stick-like humanoid with a gold headpiece. It needs a readable silhouette and distinct jump, fall, turn and landing poses. The September 13 local restoration replaces it with the requested humanoid and a gold nemes.
 
 Use a layered shaft with architectural scale, legible platforms and level-specific visual changes. Start with generous placement, introduce moving/crumbling platforms clearly, then combine them with the rising hazard. Generated platform paths must be reachable with the actual movement model.
 
@@ -44,4 +44,10 @@ The exact reward balance and level count belong to the prototype, not invented c
 
 ## Completion
 
-Review a playable movement prototype, then full runs through early/middle/late difficulty with final art. Verify keyboard, touch, focus, lifecycle and fair platform generation. Measure performance in a browser; physical phone acceptance belongs to R9. Passing collision or painter tests alone cannot establish that the game is enjoyable.
+Review a playable movement prototype, then full runs through early/middle/late difficulty with final art. Verify keyboard, touch, focus, lifecycle and fair platform generation. Measure performance in a browser; physical phone acceptance belongs to F9. Passing collision or painter tests alone cannot establish that the game is enjoyable.
+
+## September 13 implemented restoration
+
+Manual input retained. Horizontal acceleration/braking, 140ms buffered/coyote timing, variable jump height, one launch per held press, and damped landing squash are implemented locally. Holding a key no longer repeats jumps automatically. Wall kicks retain their bonus; short taps deliberately reach less height than a held jump. Reduced motion suppresses the squash and entrance sweep while preserving essential gameplay movement.
+
+The current score is still altitude and the best is memory-only for the open stage. Cloud ranking, nickname, rewards/combos and richer level patterns remain unimplemented; see `26-GAME-LEADERBOARD-CONTRACT.md`. Do not treat restoring the controls/character as completion of F3.

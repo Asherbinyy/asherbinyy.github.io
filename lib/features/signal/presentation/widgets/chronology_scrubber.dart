@@ -4,6 +4,7 @@ import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 
 /// The journey, as a timeline under the map.
@@ -130,27 +131,56 @@ class ChronologyScrubber extends StatelessWidget {
             SizedBox(width: context.platform.minimumTarget),
             Expanded(
               child: ExcludeSemantics(
-                child: Row(
-                  children: [
-                    for (var i = 0; i < marks.length; i++)
-                      Expanded(
-                        child: Text(
-                          marks[i],
-                          textAlign: TextAlign.center,
-                          style: context.type.telemetryS.copyWith(
-                            color: i == current
-                                ? tokens.beacon
-                                : tokens.textMuted,
-                          ),
-                        ),
+                child: context.platform.viewport == ViewportClass.compact
+                    ? _YearRange(marks: marks, selectedIndex: current)
+                    : Row(
+                        children: [
+                          for (var i = 0; i < marks.length; i++)
+                            Expanded(
+                              child: Text(
+                                marks[i],
+                                textAlign: TextAlign.center,
+                                style: context.type.telemetryS.copyWith(
+                                  color: i == current
+                                      ? tokens.beacon
+                                      : tokens.textMuted,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                  ],
-                ),
               ),
             ),
             SizedBox(width: context.platform.minimumTarget),
           ],
         ),
+      ],
+    );
+  }
+}
+
+/// Keeps full years legible when there is not room to label every stop.
+class _YearRange extends StatelessWidget {
+  const _YearRange({required this.marks, required this.selectedIndex});
+
+  final List<String> marks;
+  final int selectedIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = context.type.telemetryS.copyWith(
+      color: context.tokens.textMuted,
+    );
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(marks.first, style: style),
+        if (selectedIndex > 0 && selectedIndex < marks.length - 1)
+          Text(
+            marks[selectedIndex],
+            style: style.copyWith(color: context.tokens.beacon),
+          ),
+        if (marks.length > 1) Text(marks.last, style: style),
       ],
     );
   }

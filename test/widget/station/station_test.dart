@@ -6,7 +6,6 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/chrome/app_footer.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
-import 'package:nocturne/app/chrome/app_rail.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
@@ -16,6 +15,7 @@ import 'package:nocturne/features/station/domain/acquisition_controller.dart';
 import 'package:nocturne/features/station/presentation/station_screen.dart';
 import 'package:nocturne/features/station/presentation/widgets/acquisition_sequence.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
+import 'package:nocturne/features/station/presentation/widgets/papyrus_stat_panel.dart';
 import 'package:nocturne/features/station/presentation/widgets/stat_panel.dart';
 
 import '../../support/chrome_harness.dart';
@@ -110,6 +110,7 @@ void main() {
       );
 
       expect(find.byType(StatPanel), findsNothing);
+      expect(find.byType(PapyrusStatPanel), findsNothing);
     });
 
     testWidgets('renders the panels the shipped profile declares', (
@@ -128,7 +129,18 @@ void main() {
       // about.
       final stats =
           bundledJson('assets/content/profile.json')['stats'] as List<dynamic>;
-      expect(find.byType(StatPanel), findsNWidgets(stats.length));
+      // The first two are drawn on papyrus and roll up; anything after them
+      // is an ordinary panel. Counted together, because the assertion is that
+      // every supplied figure appears, not which treatment it got.
+      expect(
+        find.byType(PapyrusStatPanel).evaluate().length +
+            find.byType(StatPanel).evaluate().length,
+        stats.length,
+      );
+      expect(
+        find.byType(PapyrusStatPanel),
+        findsNWidgets(math.min(stats.length, HeroContent.rollingStats)),
+      );
       for (final stat in stats.cast<Map<String, dynamic>>()) {
         expect(
           find.text(stat['value'] as String),
@@ -167,7 +179,7 @@ void main() {
         ),
       );
 
-      expect(find.byType(StatPanel), findsNWidgets(2));
+      expect(find.byType(PapyrusStatPanel), findsNWidgets(2));
       expect(find.text('25+'), findsOneWidget);
       expect(find.text('shipped'), findsOneWidget);
     });
@@ -364,7 +376,6 @@ void main() {
     ) async {
       await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
 
-      final rail = tester.getRect(find.byType(AppRail));
       final scaffold = tester.getRect(find.byType(ChromeScaffold));
       final hero = tester.getRect(find.byType(HeroContent));
 
@@ -372,19 +383,19 @@ void main() {
       // centred", and the owner overruled it: on a wide monitor that left the
       // page pinned to one edge with a third of the screen empty beside it.
       //
-      // Content is capped and centred now. The hero still aligns to the frame
-      // rather than being centred within it -- the copy is left-aligned, as it
-      // always was -- but the frame no longer starts at the rail.
-      final available = scaffold.width - rail.width;
+      // Content is capped and centred. The hero aligns to the frame rather
+      // than being centred within it -- the copy is left-aligned, as it always
+      // was. The rail that used to occupy the leading edge is gone, so the
+      // frame is measured from the viewport itself.
+      final available = scaffold.width;
       final frame = math.min(available, Tokens.contentMaxWidth);
-      final expected =
-          rail.right + (available - frame) / 2 + Tokens.largeGutter;
+      final expected = (available - frame) / 2 + Tokens.largeGutter;
 
       expect(hero.left, closeTo(expected, 1));
       expect(
         hero.left,
-        greaterThan(rail.right),
-        reason: 'the frame never reaches under the rail',
+        greaterThan(0),
+        reason: 'the frame starts inside the viewport',
       );
     });
 

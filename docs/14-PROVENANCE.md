@@ -1,6 +1,6 @@
 # Provenance — KEMET
 
-> Ledger status, 2026-09-11: preserve the sources below, but the “currently on the site” inventory is a milestone 4 snapshot. [The audit](18-REINNOVATION-AUDIT.md#content) identifies later content/source reconciliation work. The old third-party crest refusal is superseded by the owner's explicit real-logo request; no asset is supplied or relicensed by this notice. New/changed claims still need actual provenance, including admin-authored string metrics. Do not use a stale row or a passing existence test as proof of source accuracy.
+> Ledger status, 2026-09-11: preserve the sources below, but the “currently on the site” inventory is a milestone 4 snapshot. [The audit](18-PROJECT-AUDIT.md#content) identifies later content/source reconciliation work. The old third-party crest refusal is superseded by the owner's explicit real-logo request; no asset is supplied or relicensed by this notice. New/changed claims still need actual provenance, including admin-authored string metrics. Do not use a stale row or a passing existence test as proof of source accuracy.
 
 Every claim this site makes about the owner, and where it came from.
 
@@ -356,3 +356,26 @@ the repository.
 |---|---|---|---|
 | 2026-09-06 | Award hedged as "expected" | Distinction stated | Owner's CV |
 | 2026-09-07 | — | This ledger created | Owner asked why figures appeared invented |
+
+
+## September 13 content corrections
+
+Source **U9**: owner attachment `0c611bd9-edf3-4c16-84d0-e8781da79ccc/pasted-text.txt` in this conversation. The rollback retained this content; the later follow-up authorizes selective restoration recorded in `27-CONTINUE-HERE.md`.
+
+| Retained content | Source / limit |
+|---|---|
+| 5+ years experience | Existing owner-supplied value; U9 removes “commercial” from the label. No recalculation. |
+| Senior Software Engineer; mobile development and IT; exploring AI automation | U9 self-description. AI remains qualified as exploration/learning. |
+| Flutter, Dart, Swift, SwiftUI, CI/CD, GitHub Actions | U9 and existing documented Flutter/Dart work; “dot” in the transcript resolves to the existing Dart skill. |
+| RAG, LangChain, AI automation/workflows/agents | U9 explicitly says learning and experimenting. No delivered AI projects, metrics or expertise inferred. Ambiguous final tool name omitted. |
+| Antigravity, Codex | Tools the owner says they use in U9. |
+| Home Freelance label: Remote, no detail paragraph/title beneath | Explicit U9 correction. Existing geographic map data and other consumers are not reworked by this Home copy correction. |
+| Six article titles, URLs, dates and tags in `assets/content/writing.xml` | Retrieved September 13 from the owner’s configured public RSS through `/v1/writing` with the published-site Origin. Metadata only, no bodies or remote covers. Live feed takes precedence. |
+
+New English wording is used literally in Arabic where an approved translation is absent. Arabic copy review remains open. The rejected scenic/card assets were removed; no claim of authentic inscription meaning ships from that experiment.
+
+## September 13 restored article covers
+
+The owner explicitly asked to bring back article images. Six original cover files were retrieved unchanged from the first image in each article’s published RSS body on September 13. `assets/content/writing-covers.json` records the canonical article URL, original CDN URL and bundled asset path for each. They are existing published artwork, not newly generated images or evidence of independent design authorship. No article body is bundled. The browser loads these files from the portfolio’s own origin.
+
+Education facts, marks, dates, highlight text and source artefacts are unchanged by the expandable-card restoration. New UI labels use literal English in Arabic pending approved translation.

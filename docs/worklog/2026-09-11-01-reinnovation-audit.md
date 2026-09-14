@@ -5,7 +5,7 @@
 **Started from:** 1cfd039
 
 ## Goal
-Audit the implementation against the owner's original requests, inspect the rendered site, and replace the stale queue with Re-innovation milestones. Prepare all admin work for Claude while Codex owns the public app.
+Audit the implementation against the owner's original requests, inspect the rendered site, and replace the stale queue with Flutter enhancement plan. Prepare all admin work for Claude while Codex owns the public app.
 
 ## What changed
 - Recovered original project user messages and four annotated screenshots from local Claude history; reconciled them with source, current content and the old handover.
@@ -22,8 +22,8 @@ Audit the implementation against the owner's original requests, inspect the rend
 - `docs/11-OPEN-ISSUES.md` — modified — reconcile actual unresolved defects and corrected old rows.
 - `docs/13-GAME-DESIGN.md` — modified — separate shipped manual mechanic from requested rebuild.
 - `docs/15-ADMIN-AND-MEDIA.md` — modified — actual editor/backend state and missing integration.
-- `docs/18-REINNOVATION-AUDIT.md` — created — evidence, original-request references and findings.
-- `docs/19-REINNOVATION-ROADMAP.md` — created — milestones, acceptance and owner-assigned concurrent lanes.
+- `docs/18-PROJECT-AUDIT.md` — created — evidence, original-request references and findings.
+- `docs/19-FLUTTER-ENHANCEMENT-PLAN.md` — created — milestones, acceptance and owner-assigned concurrent lanes.
 - `docs/20-APP-ADMIN-CONTRACT.md` — created — ownership and proposed shared interfaces, clearly distinguished from existing APIs.
 - `docs/21-CLAUDE-ADMIN-HANDOFF.md` — created — scope, phases, pitfalls, verification and launch prompt.
 - `docs/audits/2026-09-11/*.png` — created — 11 current browser captures; admin uses isolated fixture data.

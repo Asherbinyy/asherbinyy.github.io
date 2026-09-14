@@ -1,0 +1,4 @@
+Throttle after 9 failures, then 30 concurrent guesses: { derivations: 30, statusCounts: { '401': 30 } }
+Editor read with intervening commit: { revision: 1, label: 'Revision two' }
+Session resurrection: { logoutStatus: 200, oldTokenStatusAfterRenewal: 200 }
+All three afc8969 defects reproduced. Assertions here confirm the defects, not the corrected behavior.
