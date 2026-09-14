@@ -76,7 +76,7 @@ async function renderLibrary() {
   titles.append(node(
     'p',
     null,
-    'Everything you have uploaded. A file is stored under a fingerprint of its own contents, so uploading the same picture twice keeps one copy.',
+    'Upload and manage images and name recordings.',
   ));
   head.append(titles);
   pane.append(head);
@@ -97,7 +97,7 @@ async function renderLibrary() {
   const items = state.media.slice();
   if (items.length === 0) {
     const rows = node('div', 'rows');
-    rows.append(node('div', 'empty', 'Nothing uploaded yet.'));
+    rows.append(node('div', 'empty', 'No uploaded media.'));
     pane.append(rows);
     return;
   }

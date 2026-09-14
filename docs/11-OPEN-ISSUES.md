@@ -1,5 +1,10 @@
 # Open issues
 
+> September 14 admin UI: `phase/codex-admin-ui` contains a local review candidate
+> with page destinations, portfolio styling and charts on existing insights.
+> See `31-CODEX-ADMIN-UI-REVIEW.md`. No acceptance row is closed: appearance,
+> real preview, public consumers and release integration remain open.
+
 Reviewed 2026-09-11 against source conversations, code and browser captures.
 Current plan: [Re-innovation milestones](19-REINNOVATION-ROADMAP.md).
 Evidence: [audit](18-REINNOVATION-AUDIT.md). Historical issue numbers remain searchable in git and the earlier worklogs; the tables here describe current work.

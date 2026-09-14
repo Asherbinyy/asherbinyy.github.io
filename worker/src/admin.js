@@ -29,6 +29,8 @@
 
 import {documents, knownCountries} from '../contracts/content-schema.js';
 import {clientAccount} from './admin/client-account.js';
+import {clientPages} from './admin/client-pages.js';
+import {clientCharts} from './admin/client-charts.js';
 import {clientApp} from './admin/client-app.js';
 import {clientFields} from './admin/client-fields.js';
 import {clientHome} from './admin/client-home.js';
@@ -67,18 +69,6 @@ export function adminPage(env) {
 <meta name="robots" content="noindex, nofollow">
 <title>${brandName}</title>
 <style>${styles}
-dialog { background: var(--surface); color: var(--text); border: 1px solid var(--line);
-  border-radius: 12px; padding: 0; max-width: min(680px, 92vw); width: 100%; }
-dialog::backdrop { background: rgba(8, 11, 18, .72); }
-.sheetHead { display: flex; align-items: center; gap: 12px; padding: 14px 16px;
-  border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); }
-.sheetHead h2 { margin: 0; font-size: 15px; flex: 1; }
-#sheetBody { padding: 16px; max-height: 66vh; overflow-y: auto; }
-#sheetBody .group h3 { font-size: 12px; word-break: break-all; }
-.diff { font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
-  white-space: pre-wrap; word-break: break-word; margin: 2px 0; }
-.diff.added { color: var(--ok); }
-.diff.removed { color: var(--alert); }
 </style>
 </head>
 <body class="locked">
@@ -95,6 +85,8 @@ ${clientMedia}
 ${clientPreview}
 ${clientPublish}
 ${clientAccount}
+${clientCharts}
+${clientPages}
 ${clientHome}
 ${clientApp}
 </script>

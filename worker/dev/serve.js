@@ -284,6 +284,16 @@ const server = createServer(async (incoming, outgoing) => {
     return;
   }
 
+  // The UI uses the same bundled fonts as the public app, including in local review.
+  if (/^\/assets\/assets\/fonts\/[A-Za-z-]+-subset\.ttf$/.test(url.pathname)) {
+    try {
+      const bytes = await readFile(new URL('../../assets/fonts/' + url.pathname.split('/').pop(), import.meta.url));
+      outgoing.writeHead(200, {'content-type': 'font/ttf'});
+      outgoing.end(bytes);
+    } catch { outgoing.writeHead(404).end('Not found'); }
+    return;
+  }
+
   // Stands in for the site's own bundle, which is on GitHub Pages in
   // production. The panel reads it to show what the site would fall back to.
   if (url.pathname.startsWith('/assets/assets/content/')) {

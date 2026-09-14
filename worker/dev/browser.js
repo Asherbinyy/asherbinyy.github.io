@@ -87,6 +87,7 @@ export async function launch({width = 1440, height = 900} = {}) {
       const held = pending.get(frame.id);
       pending.delete(frame.id);
       if (!held) return;
+      clearTimeout(held.timer);
       if (frame.error) held.reject(new Error(JSON.stringify(frame.error)));
       else held.resolve(frame.result);
       return;
@@ -122,7 +123,11 @@ export async function launch({width = 1440, height = 900} = {}) {
   const send = (method, params = {}, useSession = true) =>
     new Promise((resolve, reject) => {
       const id = ++nextId;
-      pending.set(id, {resolve, reject});
+      const timer = setTimeout(() => {
+        pending.delete(id);
+        reject(new Error('Chrome timed out: ' + method));
+      }, 20000);
+      pending.set(id, {resolve, reject, timer});
       const frame = {id, method, params};
       if (useSession && session) frame.sessionId = session;
       socket.send(JSON.stringify(frame));
@@ -149,6 +154,7 @@ export async function launch({width = 1440, height = 900} = {}) {
 
   await send('Page.enable');
   await send('Runtime.enable');
+  await send('Page.bringToFront');
   // A native confirm() or a beforeunload prompt blocks the page, and a
   // blocked page never answers another evaluation -- which looks exactly like
   // a hang. Accepted by default; a scenario that wants a different answer
@@ -246,6 +252,7 @@ export async function launch({width = 1440, height = 900} = {}) {
           code,
           windowsVirtualKeyCode: keyCode,
           nativeVirtualKeyCode: keyCode,
+          text: type === 'keyDown' && key === 'Enter' ? '\r' : undefined,
         });
       }
       await page.settle(80);

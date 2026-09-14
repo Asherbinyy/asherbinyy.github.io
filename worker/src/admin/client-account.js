@@ -28,7 +28,7 @@ async function signInWith(secret) {
   if (response.status === 429) {
     throw new Error('Too many wrong attempts; wait an hour and try again');
   }
-  if (!response.ok) throw new Error(body.error || 'That was not right');
+  if (!response.ok) throw new Error(body.error || 'Password or recovery token was not accepted');
   state.token = body.token;
   state.expires = body.expires;
   try {
@@ -60,7 +60,7 @@ async function finishReauth() {
   try {
     await signInWith(secret);
     el('reauth').close();
-    say('Signed back in; your drafts are as you left them', 'good');
+    say('Signed in. Your drafts are preserved.', 'good');
     await loadHeads();
     render();
   } catch (error) {
@@ -107,12 +107,18 @@ async function renderAccount() {
   const head = node('div', 'panelHead');
   const titles = node('div', 'titles');
   titles.append(node('h2', null, 'Account'));
-  titles.append(node('p', null, 'How you get into this panel, and how you stop.'));
+  titles.append(node('p', null, 'Manage your password and active sessions.'));
   head.append(titles);
   pane.append(head);
 
+  if (state.accountError) {
+    pane.append(node('p', 'issue', state.accountError));
+    const retry = node('button', 'small', 'Retry account details');
+    retry.onclick = () => { state.accountError = ''; state.account = null; render(); };
+    pane.append(retry); return;
+  }
   if (state.account === null) {
-    pane.append(node('p', 'note', 'Reading...'));
+    pane.append(node('p', 'note', 'Loading account details…'));
     await loadAccount();
     if (state.view === 'account') render();
     return;
@@ -124,18 +130,19 @@ async function renderAccount() {
     'p',
     'note',
     state.account.kind === 'recovery'
-      ? 'You are signed in with the deployment secret, which is the way back in when the password is forgotten. It does not expire and cannot be ended from here.'
-      : 'Signed in with a session. It ends by itself after twelve hours unused, and after seven days however often it is used.',
+      ? 'Signed in with a recovery token. Set an admin password below.'
+      : 'Signed in. Sign out to end this session on this device.',
   ));
-  if (state.expires) {
-    standing.append(node('p', 'help', 'This one ends ' + state.expires));
+  if (state.account.expires) {
+    const expires = new Date(state.account.expires).toLocaleString('en-GB', {dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC'});
+    standing.append(node('p', 'help', 'Session expiry: ' + expires + ' UTC. Activity may extend this.'));
   }
   standing.append(node(
     'p',
     'note',
     state.account.passwordSet
       ? 'A password is set.'
-      : 'No password is set yet. Until one is, the deployment secret is the only way in.',
+      : 'No admin password is set. Use your recovery token to set one.',
   ));
   const out = document.createElement('button');
   out.type = 'button';
@@ -148,19 +155,16 @@ async function renderAccount() {
   pane.append(passwordForm());
 
   const safety = node('div', 'group');
-  safety.append(node('h3', null, 'What is not kept here'));
+  safety.append(node('h3', null, 'Password changes'));
   safety.append(node(
     'p',
     'note',
-    'This page never receives a Cloudflare account credential, and it never ' +
-      'will. Changing the password changes a value stored beside your content; ' +
-      'it does not touch the hosting account, and nothing here can.',
+    'This changes your portfolio admin password.',
   ));
   safety.append(node(
     'p',
     'note',
-    'Changing the password signs every other session out, including one left ' +
-      'open on a machine you no longer have.',
+    'Changing the password signs out all other sessions.',
   ));
   pane.append(safety);
 }
@@ -178,8 +182,8 @@ function passwordForm() {
     'label',
     null,
     state.account.passwordSet
-      ? 'Current password, or the deployment secret'
-      : 'The deployment secret',
+      ? 'Current password or recovery token'
+      : 'Recovery token',
   );
   currentLabel.htmlFor = 'currentPassword';
   const current = document.createElement('input');
@@ -200,9 +204,7 @@ function passwordForm() {
   nextField.append(node(
     'p',
     'help',
-    'At least twelve characters. Length is what protects this one: how hard ' +
-      'the password can be stretched before storing is limited by how much ' +
-      'processor time the Worker may spend on a single request.',
+    'Use at least 12 characters.',
   ));
   group.append(nextField);
 
@@ -213,7 +215,7 @@ function passwordForm() {
   const save = document.createElement('button');
   save.type = 'button';
   save.className = 'small primary';
-  save.textContent = state.account.passwordSet ? 'Change it' : 'Set it';
+  save.textContent = state.account.passwordSet ? 'Change password' : 'Set password';
   save.onclick = async () => {
     problem.hidden = true;
     if (next.value.length < 12) {
@@ -258,8 +260,10 @@ async function loadAccount() {
     const body = await response.json();
     if (!response.ok) throw new Error(body.error || 'Could not read the session');
     state.account = body;
+    state.accountError = '';
   } catch (error) {
-    state.account = {kind: 'unknown', passwordSet: false, recovery: false};
+    state.account = null;
+    state.accountError = error.message;
   }
 }
 `;

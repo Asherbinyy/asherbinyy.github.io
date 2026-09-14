@@ -98,7 +98,7 @@ function sendDraft() {
   preview.pending = false;
   if (issues.errors.length > 0) {
     preview.waiting = false;
-    preview.error = 'Fix the problems on this page and the preview will follow.';
+    preview.error = 'Correct validation errors to update the preview.';
     drawPreviewState();
     return;
   }
@@ -227,17 +227,17 @@ function drawPreviewState() {
     line.textContent = preview.error;
     line.classList.add('bad');
   } else if (preview.pending) {
-    line.textContent = 'Checking this draft before showing it...';
+    line.textContent = 'Validating draft…';
   } else if (!preview.ready) {
-    line.textContent = 'Waiting for the preview to answer...';
+    line.textContent = 'Connecting preview…';
   } else if (preview.waiting) {
-    line.textContent = 'Sending the draft...';
+    line.textContent = 'Updating preview…';
   } else if (preview.remoteErrors.length > 0) {
     line.textContent = 'The preview could not render: ' +
       preview.remoteErrors.map((issue) => issue.message || issue).join('; ');
     line.classList.add('bad');
   } else if (preview.acknowledged > 0) {
-    line.textContent = 'Showing your draft, as the site would render it.';
+    line.textContent = 'Draft rendered by the connected preview.';
     line.classList.add('good');
   } else {
     line.textContent = 'Connected.';

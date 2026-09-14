@@ -16,33 +16,31 @@ export function countryList(codes) {
 
 export const markup = `
 <section id="gate">
+  <p class="eyebrow">Portfolio administration</p>
   <h1>${brandName}</h1>
-  <p>Sign in to change what the site says.</p>
+  <p>Manage pages, media and site insights.</p>
   <div class="field">
     <label for="token">Password</label>
     <input id="token" type="password" autocomplete="current-password"
-           placeholder="Your password, or the deployment secret">
+           placeholder="Enter your password">
   </div>
   <button class="primary" id="unlock" style="width:100%">Sign in</button>
-  <p class="note" id="gateStatus">
-    This exchanges what you type for a session that expires and can be ended.
-    The deployment secret works here too, and is the way in if the password is
-    forgotten.
-  </p>
+  <p class="note" id="gateStatus" role="status" aria-live="polite">Use your admin password or recovery token.</p>
 </section>
 
 <div id="frame">
   <div id="brand">
-    <span class="dot" aria-hidden="true"></span>
-    <h1>${brandName}</h1>
+    <h1>${brandName}<span>Administration</span></h1>
+    <button id="menuToggle" type="button" aria-controls="rail" aria-expanded="false">Menu</button>
   </div>
 
   <div id="top">
     <span id="source" class="note"></span>
     <span class="grow"></span>
+    <button id="paletteToggle" type="button" class="small" aria-label="Switch admin to light appearance">Light</button>
     <span id="status" class="status" role="status" aria-live="polite"></span>
     <button id="previewToggle" type="button" class="small" aria-pressed="false">
-      Outline
+      Preview / outline
     </button>
   </div>
 
@@ -62,17 +60,16 @@ export const markup = `
       </button>
     </div>
 
-    <div id="previewWrap">
+    <div id="previewWrap" hidden>
+      <p class="note">The public Flutter preview is not integrated yet. The local test preview does not show the portfolio layout.</p>
       <p class="previewNote" id="previewState">Waiting for the preview...</p>
       <button id="previewRetry" type="button" class="small" hidden>Try again</button>
       <div id="previewFrame"></div>
     </div>
 
-    <div id="outlineWrap" hidden>
+    <div id="outlineWrap">
       <p class="previewNote">
-        Your draft read back to you. It is <strong>not</strong> the website: it
-        does not use the site's own components, and it cannot show you how a
-        page will look.
+        Draft content only. This is <strong>not</strong> the website. Layout and motion require the connected Flutter preview.
       </p>
       <div id="outline" class="outline"></div>
     </div>
@@ -92,12 +89,11 @@ export const markup = `
 
 <dialog id="reauth" aria-labelledby="reauthTitle">
   <div class="sheetHead">
-    <h2 id="reauthTitle">Your session ended</h2>
+    <h2 id="reauthTitle">Session expired</h2>
   </div>
-  <div id="sheetBody">
+  <div class="sheetBody">
     <p class="note">
-      Nothing has been lost. Your unpublished drafts are still here; sign in
-      again to carry on.
+      Your drafts are preserved in this tab. Sign in to continue.
     </p>
     <div class="field">
       <label for="reauthPassword">Password</label>
@@ -117,6 +113,6 @@ export const markup = `
       Close
     </button>
   </div>
-  <div id="sheetBody"></div>
+  <div id="sheetBody" class="sheetBody"></div>
 </dialog>
 `;

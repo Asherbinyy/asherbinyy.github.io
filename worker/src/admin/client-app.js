@@ -16,10 +16,11 @@ export const clientApp = `
 function go(file, path) {
   // Whatever the last thing to happen was, it was about the page being left.
   say('');
+  closeMenu();
   state.view = 'document';
   state.file = file;
   state.path = path || [];
-  const hash = '#' + file + (state.path.length ? '/' + state.path.join('/') : '');
+  const hash = '#' + (state.page ? state.page + '/' : '') + file + (state.path.length ? '/' + state.path.join('/') : '');
   if (location.hash !== hash) history.replaceState(null, '', hash);
   render();
   el('editorPane').scrollTop = 0;
@@ -29,13 +30,22 @@ function go(file, path) {
 /// The sections that are not one of the owner's documents.
 function goTo(view) {
   say('');
+  closeMenu();
+  state.page = null;
   // Coming back to the dashboard reads the counters again. A figure that is
   // as old as the tab is a figure nobody can trust.
   if (view === 'home') {
+    insightsRequest += 1; insightsLoading = false;
+    releaseRequest += 1; releaseLoading = false;
     state.insights = null;
     state.insightsError = '';
     state.release = null;
     state.releaseError = '';
+  }
+  const destination = pageFor(view);
+  if (destination && destination.sections.length === 1 && view !== 'writing') {
+    state.page = view;
+    return go(destination.sections[0][1], destination.sections[0][2]);
   }
   state.view = view;
   if (location.hash !== '#' + view) history.replaceState(null, '', '#' + view);
@@ -44,23 +54,32 @@ function goTo(view) {
 }
 
 const otherViews = [
-  {id: 'media', label: 'Media', head: 'Library'},
-  {id: 'account', label: 'Account', head: 'You'},
+  {id: 'appearance', label: 'Appearance', head: 'Manage'},
+  {id: 'media', label: 'Media', head: 'Manage'},
+  {id: 'account', label: 'Account', head: 'Manage'},
 ];
 
 /// The section the panel opens on.
-const homeView = {id: 'home', label: 'Home'};
+const homeView = {id: 'home', label: 'Overview'};
 
 function readHash() {
-  const raw = decodeURIComponent(location.hash.slice(1));
+  let raw;
+  try { raw = decodeURIComponent(location.hash.slice(1)); } catch { return null; }
   if (!raw) return null;
   if (raw === homeView.id) return {view: 'home'};
+  const destination = pageFor(raw);
+  if (destination) {
+    if (destination.sections.length === 1 && raw !== 'writing') return {view: 'document', page: raw, file: destination.sections[0][1], path: destination.sections[0][2]};
+    return {view: raw};
+  }
   if (otherViews.some((view) => view.id === raw)) return {view: raw};
   const parts = raw.split('/');
+  const page = pageFor(parts[0]);
+  if (page) parts.shift();
   const file = parts[0];
   if (!schemaFor(file)) return null;
   const path = parts.slice(1).map((step) => (/^\\d+$/.test(step) ? Number(step) : step));
-  return {view: 'document', file: file, path: path};
+  return {view: 'document', file: file, path: path, page: page?.id || null};
 }
 
 // --- rendering -------------------------------------------------------------
@@ -83,11 +102,14 @@ function render() {
     start = null;
   }
 
+  document.body.dataset.view = state.view;
   renderRail();
   // The preview follows whatever is being edited, but only once it has
   // answered. Sent before the redraw so a slow frame does not hold it up.
   if (state.rightPane === 'preview') selectInPreview();
   if (state.view === 'home') renderHome();
+  else if (pageFor(state.view)) renderPage();
+  else if (state.view === 'appearance') renderAppearance();
   else if (state.view === 'media') renderLibrary();
   else if (state.view === 'account') renderAccount();
   else renderEditor();
@@ -120,7 +142,21 @@ function renderRail() {
   home.onclick = () => goTo('home');
   rail.append(home);
 
-  rail.append(node('div', 'railHead', 'Content'));
+  rail.append(node('div', 'railHead', 'Website pages'));
+  for (const page of sitePages) {
+    const button = node('button', 'section');
+    button.type = 'button';
+    button.dataset.page = page.id;
+    button.setAttribute('aria-current', state.view === page.id || (state.view === 'document' && state.page === page.id) ? 'page' : 'false');
+    button.append(node('span', 'name', page.label));
+    const hasDraft = page.sections.some((section) => dirty(section[1]));
+    if (hasDraft) { button.append(node('span', 'pip')); button.setAttribute('aria-describedby', 'unsavedHint'); }
+    button.onclick = () => goTo(page.id);
+    rail.append(button);
+  }
+  const all = node('details');
+  all.append(node('summary', null, 'All content'));
+  rail.append(all);
   for (const document_ of SCHEMA.documents) {
     const button = document.createElement('button');
     button.type = 'button';
@@ -133,8 +169,8 @@ function renderRail() {
     pip.title = 'Unsaved changes';
     if (!pip.hidden) button.setAttribute('aria-describedby', 'unsavedHint');
     button.append(pip);
-    button.onclick = () => go(document_.file, []);
-    rail.append(button);
+    button.onclick = () => { state.page = null; go(document_.file, []); };
+    all.append(button);
   }
   let heading = null;
   for (const view of otherViews) {
@@ -198,15 +234,22 @@ function renderEditor() {
   wrapper.setAttribute('aria-label', 'Breadcrumb');
   wrapper.append(crumbs);
   pane.append(wrapper);
+  if (state.page && pageFor(state.page).sections.length > 1) {
+    const back = node('button', 'small', 'Back to ' + pageFor(state.page).label);
+    back.onclick = () => goTo(state.page); pane.prepend(back);
+  }
+  pane.append(node('p', 'note', 'Publishing updates all changes in ' + document_.section + ', including shared fields used on other pages.'));
 
   const head = node('div', 'panelHead');
   const titles = node('div', 'titles');
-  titles.append(node('h2', null, here.label));
+  const pageRoot = state.page && pageFor(state.page).sections.length === 1 && state.path.length <= 1;
+  titles.append(node('h2', null, pageRoot ? pageFor(state.page).label : here.label));
   if (here.root === true && document_.blurb) {
     titles.append(node('p', null, document_.blurb));
   }
   head.append(titles, languageTabs());
   pane.append(head);
+  if (pageRoot && pageFor(state.page).unavailable) pane.append(node('p', 'note', pageFor(state.page).unavailable));
 
   if (here.root === true && document_.warning) {
     pane.append(node('div', 'warn', document_.warning));
@@ -220,6 +263,8 @@ function renderEditor() {
 
   if (node_.kind === 'object') {
     for (const field of node_.fields) {
+      const allowed = state.path.length === 0 && state.file === 'profile.json' ? pageFields[state.page] : null;
+      if (allowed && !allowed.includes(field.key)) continue;
       pane.append(control(field, (value || {})[field.key], state.path.concat([field.key])));
     }
   } else {
@@ -351,7 +396,7 @@ function renderBar() {
   const issues = state.issues.get(state.file);
   const changes = entry ? countChanges(entry) : 0;
   el('changeCount').textContent = changes === 0
-    ? 'No changes on this page'
+    ? 'No changes in this document'
     : changes + (changes === 1 ? ' change' : ' changes') + ' not published';
 
   const problems = issues ? issues.errors.length : 0;
@@ -467,6 +512,7 @@ async function unlock() {
     await loadHeads();
     const wanted = readHash();
     if (wanted && wanted.view === 'document') {
+      state.page = wanted.page || null;
       state.file = wanted.file;
       state.path = wanted.path;
     } else if (wanted) {
@@ -484,6 +530,16 @@ async function unlock() {
   }
 }
 
+el('menuToggle').onclick = () => {
+  const open = document.body.classList.toggle('menuOpen');
+  el('menuToggle').setAttribute('aria-expanded', String(open));
+};
+el('paletteToggle').onclick = () => {
+  const light = document.documentElement.dataset.palette !== 'light';
+  document.documentElement.dataset.palette = light ? 'light' : 'dark';
+  el('paletteToggle').textContent = light ? 'Dark' : 'Light';
+  el('paletteToggle').setAttribute('aria-label', 'Switch admin to ' + (light ? 'dark' : 'light') + ' appearance');
+};
 el('unlock').onclick = unlock;
 el('token').onkeydown = (event) => {
   if (event.key === 'Enter') unlock();
@@ -535,6 +591,7 @@ async function resume() {
     await loadHeads();
     const wanted = readHash();
     if (wanted && wanted.view === 'document') {
+      state.page = wanted.page || null;
       state.file = wanted.file;
       state.path = wanted.path;
     } else if (wanted) {

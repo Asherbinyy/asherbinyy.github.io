@@ -1,312 +1,167 @@
-/**
- * The home dashboard.
- *
- * The hard part of this screen is not drawing it. It is refusing to draw the
- * things it cannot honestly draw.
- *
- * The public build ships without an analytics endpoint, so the site sends
- * nothing and these counters are almost certainly empty. A dashboard that
- * responds to that by showing a tidy grid of zeros, or worse a plausible
- * curve, tells the owner his site has no visitors -- which is a different
- * claim from "nothing is being counted", and the second one is the true one.
- * So the empty state says which it is.
- *
- * And there is no weekly or monthly unique-visitor figure anywhere on it. The
- * daily counts cannot be added together, and the panel says why rather than
- * quietly leaving the number out.
- */
-
+/** Insights are read from the existing endpoint; collection stays disabled. */
 export const clientHome = `
-/// The ranges offered, as whole days back from today.
 const ranges = [
   {id: '7', label: 'Last 7 days', days: 7},
   {id: '28', label: 'Last 28 days', days: 28},
   {id: '90', label: 'Last 90 days', days: 90},
   {id: 'custom', label: 'Choose dates', days: 0},
 ];
+let insightsRequest = 0;
+let insightsLoading = false;
+let releaseLoading = false;
+let releaseRequest = 0;
 
-function dayString(when) {
-  return when.toISOString().slice(0, 10);
-}
-
+function dayString(when) { return when.toISOString().slice(0, 10); }
 function rangeDates() {
-  if (state.range.id === 'custom') {
-    return {from: state.range.from, to: state.range.to};
-  }
+  if (state.range.id === 'custom') return {from: state.range.from, to: state.range.to};
   const chosen = ranges.find((entry) => entry.id === state.range.id) || ranges[1];
   const now = new Date();
-  return {
-    from: dayString(new Date(now.getTime() - (chosen.days - 1) * 86400000)),
-    to: dayString(now),
-  };
+  return {from: dayString(new Date(now.getTime() - (chosen.days - 1) * 86400000)), to: dayString(now)};
 }
 
 async function loadInsights() {
   const dates = rangeDates();
+  const ticket = ++insightsRequest;
+  insightsLoading = true;
   try {
-    const response = await api(
-      '/v1/admin/insights?from=' + dates.from + '&to=' + dates.to,
-    );
+    if (!dates.from || !dates.to || dates.from > dates.to) throw new Error('Choose a start date on or before the end date.');
+    const response = await api('/v1/admin/insights?from=' + dates.from + '&to=' + dates.to);
     const body = await response.json();
-    if (!response.ok) throw new Error(body.error || 'Could not read the counters');
-    state.insights = body;
-    state.insightsError = '';
+    if (ticket !== insightsRequest) return;
+    if (!response.ok) throw new Error(body.error || 'Could not load insights');
+    state.insights = body; state.insightsError = '';
   } catch (error) {
-    state.insights = null;
-    state.insightsError = error.message;
+    if (ticket !== insightsRequest) return;
+    state.insights = null; state.insightsError = error.message;
+  } finally {
+    if (ticket === insightsRequest) { insightsLoading = false; if (state.view === 'home') render(); }
   }
 }
 
-/// One figure, with the words that make it mean something.
-function figure(value, label, footnote) {
+function refreshInsights() {
+  // Invalidate even a response already in flight before drawing the next range.
+  insightsRequest += 1; insightsLoading = false;
+  state.insights = null; state.insightsError = ''; render();
+}
+
+function figure(value, label, note) {
   const block = node('div', 'figure');
-  block.append(node('strong', null, value));
-  block.append(node('span', 'k', label));
-  if (footnote) block.append(node('span', 'note', footnote));
+  block.append(node('strong', null, value), node('span', 'k', label), node('span', 'note', note));
   return block;
 }
 
-/// A breakdown as a list of bars, or nothing at all.
+const eventNames = {route_view: 'Page views', cv_opened: 'CV opens', outbound_click: 'Outbound clicks', section_dwell: 'Time in section', scroll_depth: 'Scroll depth', game_started: 'Game starts', game_finished: 'Game finishes'};
 function breakdown(title, entries, empty) {
-  const group = node('div', 'group');
+  const group = node('section', 'group');
   group.append(node('h3', null, title));
-  if (entries.length === 0) {
-    group.append(node('p', 'note', empty));
-    return group;
-  }
-  const most = Math.max(...entries.map((entry) => entry.count));
+  if (!entries.length) { group.append(node('p', 'note', empty)); return group; }
+  const most = Math.max(1, ...entries.map((entry) => entry.count));
   for (const entry of entries.slice(0, 8)) {
     const line = node('div', 'bar');
-    line.append(node('span', 'barName', entry.value));
-    const track = node('span', 'barTrack');
-    const fill = node('span', 'barFill');
-    fill.style.width = Math.round((entry.count / most) * 100) + '%';
-    track.append(fill);
-    line.append(track);
-    line.append(node('span', 'barCount', String(entry.count)));
-    group.append(line);
+    line.append(node('span', 'barName', eventNames[entry.value] || entry.value));
+    const track = node('span', 'barTrack'); track.setAttribute('aria-hidden', 'true');
+    const fill = node('span', 'barFill'); fill.style.width = entry.count / most * 100 + '%';
+    track.append(fill); line.append(track, node('span', 'barCount', String(entry.count))); group.append(line);
   }
+  if (entries.length > 8) group.append(node('p', 'note', 'Showing the eight largest categories.'));
   return group;
 }
 
-async function renderHome() {
-  const pane = el('editor');
-  pane.replaceChildren();
-
-  const crumbs = node('ol', 'crumbs');
-  const here = document.createElement('li');
-  const label = node('span', 'here', 'Home');
-  label.setAttribute('aria-current', 'true');
-  here.append(label);
-  crumbs.append(here);
-  const wrapper = node('nav');
-  wrapper.setAttribute('aria-label', 'Breadcrumb');
-  wrapper.append(crumbs);
-  pane.append(wrapper);
-
-  const head = node('div', 'panelHead');
-  const titles = node('div', 'titles');
-  titles.append(node('h2', null, 'Home'));
-  titles.append(node('p', null, 'What has been counted, and what has not.'));
-  head.append(titles);
-  pane.append(head);
-
+function renderHome() {
+  const pane = el('editor'); pane.replaceChildren();
+  pane.append(pageHeading('Overview', 'Recorded activity and publication status.'));
   pane.append(rangePicker());
-
-  if (state.insights === null && state.insightsError === '') {
-    pane.append(node('p', 'note', 'Reading the counters...'));
-    await loadInsights();
-    if (state.view === 'home') render();
+  const disabled = node('div', 'rangeNote');
+  disabled.append(node('strong', null, 'Analytics collection is disabled'), node('p', null, 'The published site sends no analytics. Available historical records may appear below; missing records do not mean there were no visitors.'));
+  pane.append(disabled);
+  if (!state.insights && !state.insightsError) {
+    pane.append(node('p', 'note', 'Loading insights…'));
+    if (!insightsLoading) loadInsights();
     return;
   }
   if (state.insightsError) {
-    const failed = node('div', 'warn');
-    failed.append(node('p', null, state.insightsError));
-    const again = document.createElement('button');
-    again.type = 'button';
-    again.className = 'small';
-    again.textContent = 'Try again';
-    again.onclick = () => {
-      state.insights = null;
-      state.insightsError = '';
-      render();
-    };
-    failed.append(again);
-    pane.append(failed);
-    return;
+    const failed = node('div', 'group'); failed.setAttribute('role', 'alert');
+    failed.append(node('p', 'issue', state.insightsError));
+    const retry = node('button', 'small', 'Retry insights'); retry.onclick = refreshInsights;
+    failed.append(retry); pane.append(failed); return;
   }
-
-  pane.append(releaseSection());
-
-  const seen = state.insights;
-  pane.append(collectionState(seen));
-
-  if (seen.collection.rowsInRange === 0) {
-    pane.append(publishedState());
-    return;
-  }
-
+  const seen = state.insights, recorded = seen.collection.rowsInRange > 0;
   const figures = node('div', 'figures');
-  figures.append(figure(String(seen.views), 'page views', 'Every view, not people'));
-  figures.append(figure(
-    String(seen.interactions),
-    'interactions',
-    'Everything that is not a page view',
-  ));
-  figures.append(figure(
-    seen.uniqueVisitors.busiestDay
-      ? String(seen.uniqueVisitors.busiestDay.count)
-      : '—',
-    'busiest day',
-    seen.uniqueVisitors.busiestDay
-      ? 'Deduplicated within ' + seen.uniqueVisitors.busiestDay.date
-      : 'No deduplicated days in range',
-  ));
+  figures.append(figure(recorded ? String(seen.views) : '—', 'Page views', recorded ? 'Recorded views in this range' : 'No records in this range'));
+  figures.append(figure(recorded ? String(seen.interactions) : '—', 'Interactions', 'Recorded events excluding page views'));
+  figures.append(figure(seen.uniqueVisitors.busiestDay ? String(seen.uniqueVisitors.busiestDay.count) : '—', 'Busiest day · unique visitors', seen.uniqueVisitors.busiestDay ? seen.uniqueVisitors.busiestDay.date + ' · one day only' : 'No daily unique counts available'));
   pane.append(figures);
-
-  // Said before anyone can ask why the obvious number is missing.
-  const caveat = node('div', 'group');
-  caveat.append(node('h3', null, 'Why there is no visitor total'));
-  caveat.append(node('p', 'note', seen.uniqueVisitors.whyNoTotal));
-  if (seen.dailyUniques.length > 0) {
-    caveat.append(node(
-      'p',
-      'help',
-      'Deduplicated per day: ' +
-        seen.dailyUniques
-          .map((entry) => entry.date + ' — ' + entry.count)
-          .join(', '),
-    ));
-  }
-  pane.append(caveat);
-
-  pane.append(breakdown('Events', seen.events, 'Nothing recorded.'));
-  pane.append(breakdown('Pages viewed', seen.routes, 'No page views recorded.'));
-  pane.append(breakdown('Countries', seen.countries, 'No countries recorded.'));
-  pane.append(breakdown('Devices', seen.devices, 'No devices recorded.'));
-  pane.append(breakdown(
-    'Where people came from',
-    seen.referrers,
-    'No referrer was recorded for any of these. That is what a direct visit ' +
-      'looks like, and also what a browser that sends no referrer looks like.',
-  ));
-  pane.append(breakdown(
-    'Campaigns',
-    seen.campaigns,
-    'No campaign tag was recorded for any of these.',
-  ));
-
-  if (seen.means.length > 0) {
-    const averages = node('div', 'group');
-    averages.append(node('h3', null, 'Averages'));
-    averages.append(node(
-      'p',
-      'note',
-      'A running total divided by its count. There is no per-visit record, ' +
-        'deliberately, so there is no median to be had.',
-    ));
-    for (const entry of seen.means) {
-      averages.append(node(
-        'p',
-        null,
-        entry.event + ' on ' + entry.route + ': ' + entry.mean + ' ' +
-          entry.unit + ', over ' + entry.samples + ' events',
-      ));
-    }
-    pane.append(averages);
-  }
-
-  const kept = node('div', 'group');
-  kept.append(node('h3', null, 'How long any of this is kept'));
-  kept.append(node(
-    'p',
-    'note',
-    'Counters: ' + seen.retention.counters + '. Visitor hashes: ' +
-      seen.retention.visitorHashes + '. ' + seen.retention.note,
-  ));
-  pane.append(kept);
+  if (!recorded && seen.collection.rowsEver > 0) pane.append(node('p', 'note', 'No records in this range. Available records span ' + seen.collection.firstDate + ' to ' + seen.collection.lastDate + '.'));
+  const charts = node('div', 'chartGrid');
+  charts.append(seriesChart('Recorded activity', seen.byDay, 'All recorded events per UTC day, including views and interactions. Missing days are left blank.', true));
+  charts.append(seriesChart('Daily unique visitors', seen.dailyUniques, 'Deduplicated within each UTC day. Daily counts cannot be added into weekly or monthly people totals.', true));
+  charts.append(breakdown('Pages viewed', seen.routes, 'No page-view records in this range.'));
+  charts.append(breakdown('Interactions by type', seen.events.filter((event) => event.value !== 'route_view'), 'No interaction records in this range.'));
+  charts.append(breakdown('Countries · events', seen.countries, 'No country records in this range.'));
+  charts.append(breakdown('Devices · events', seen.devices, 'No device records in this range.'));
+  charts.append(breakdown('Referrers · events', seen.referrers, 'No referrer records. Direct and unreported visits are not separated.'));
+  charts.append(breakdown('Campaigns · events', seen.campaigns, 'No campaign records in this range.'));
+  pane.append(charts);
+  pane.append(releaseSection());
+  const details = node('details', 'group'); details.append(node('summary', null, 'About these figures'));
+  details.append(node('p', 'note', seen.uniqueVisitors.whyNoTotal));
+  details.append(node('p', 'note', 'The endpoint does not provide page views by day or exact clicked destinations. Activity is all events; audience breakdowns count events, not people.'));
+  for (const entry of seen.means) details.append(node('p', 'note', (eventNames[entry.event] || entry.event) + ' on ' + entry.route + ': mean ' + entry.mean + ' ' + entry.unit + ', from ' + entry.samples + ' events.'));
+  details.append(node('p', 'note', 'Retention: counters ' + seen.retention.counters + '; visitor hashes ' + seen.retention.visitorHashes + '.'));
+  pane.append(details);
 }
 
-/// What a build made from the current content would be, and whether the
-/// public HTML is serving it yet.
-///
-/// These are two different questions and the panel used to be able to answer
-/// only the first. Publishing updates the content endpoint the app reads
-/// immediately; the HTML follows when a release runs. Saying "published" for
-/// both is the claim the contract forbids, so this says which is which.
 function releaseSection() {
-  const group = node('div', 'group');
-  group.append(node('h3', null, 'What the site is serving'));
-
-  if (state.release === null) {
-    group.append(node('p', 'note', 'Working out the revision...'));
-    loadRelease().then(() => {
-      if (state.view === 'home') render();
-    });
-    return group;
-  }
+  const group = node('section', 'group'); group.append(node('h3', null, 'Publication'));
   if (state.releaseError) {
     group.append(node('p', 'issue', state.releaseError));
+    const retry = node('button', 'small', 'Retry publication status');
+    retry.onclick = () => { state.releaseError = ''; state.release = null; render(); }; group.append(retry); return group;
+  }
+  if (!state.release) {
+    group.append(node('p', 'note', 'Loading publication status…'));
+    if (!releaseLoading) loadRelease();
     return group;
   }
-
   const held = state.release;
   if (held.state === 'invalid' || held.revision === null) {
-    group.append(node(
-      'p',
-      'issue',
-      'The current content would not build. ' +
-        held.problems.map((entry) =>
-          entry.file + (entry.path ? ' ' + entry.path : '') + ': ' + entry.message)
-          .join('; '),
-    ));
+    group.append(node('p', 'issue', 'Content needs correction before the site can be built.'));
+    for (const problem of held.problems || []) group.append(node('p', 'note', problem.file + ': ' + problem.message));
     return group;
   }
-
-  const short = held.revision.slice(0, 16);
-  group.append(node(
-    'p',
-    null,
-    'A build from what is published now would be revision ' + short + '.',
-  ));
-
   const release = held.release;
-  const line = node('p', release.state === 'live' ? 'note' : 'issue warn');
-  if (release.state === 'live') {
-    line.textContent = 'The public HTML is serving exactly this. ' + release.because;
-  } else if (release.state === 'behind') {
-    line.textContent = 'The public HTML is serving ' +
-      String(release.live).slice(0, 16) + '. ' + release.because;
-  } else {
-    line.textContent = release.because;
-  }
-  group.append(line);
-
-  group.append(node(
-    'p',
-    'help',
-    'The app reads published content straight away. The HTML pages, the CV and ' +
-      'the page metadata are built from a snapshot, so they change when a ' +
-      'release runs and not before.',
-  ));
-
-  const copy = document.createElement('button');
-  copy.type = 'button';
-  copy.className = 'small';
-  copy.textContent = 'Copy the snapshot';
-  copy.onclick = async () => {
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(held.snapshot, null, 2));
-      say('Snapshot copied. It is what a build takes as PORTFOLIO_SNAPSHOT.', 'good');
-    } catch (error) {
-      say('Could not copy the snapshot', 'bad');
-    }
-  };
-  group.append(copy);
-  return group;
+  const label = {live: 'Public HTML matches published content', behind: 'Public HTML needs a new build', unreleased: 'Public release not verified', unreadable: 'Public release status unavailable'};
+  group.append(node('p', null, label[release.state] || 'Public release not verified'), node('p', 'note', release.because));
+  group.append(node('p', 'note', 'Content revision ' + held.revision.slice(0, 16) + '. CV, brief and metadata update after a public build.'));
+  const copy = node('button', 'small', 'Copy content snapshot');
+  copy.onclick = async () => { try { await navigator.clipboard.writeText(JSON.stringify(held.snapshot, null, 2)); say('Content snapshot copied'); } catch { say('Could not copy the snapshot', 'bad'); } };
+  group.append(copy); return group;
 }
 
+function rangePicker() {
+  const wrap = node('div', 'field');
+  const row = node('div', 'checks'); row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Date range');
+  for (const range of ranges) {
+    const button = node('button', 'small', range.label); button.type = 'button';
+    button.setAttribute('aria-pressed', String(state.range.id === range.id));
+    if (state.range.id === range.id) button.style.borderColor = 'var(--gold)';
+    button.onclick = () => { state.range.id = range.id; refreshInsights(); }; row.append(button);
+  }
+  const refresh = node('button', 'small', 'Refresh'); refresh.onclick = refreshInsights; row.append(refresh); wrap.append(row);
+  if (state.range.id === 'custom') {
+    const pair = node('div', 'pair');
+    for (const [key, text] of [['from', 'From'], ['to', 'To']]) {
+      const cell = node('div'); const label = node('label', null, text); label.htmlFor = 'range-' + key;
+      const input = node('input'); input.type = 'date'; input.id = 'range-' + key; input.value = state.range[key];
+      input.onchange = () => { state.range[key] = input.value; refreshInsights(); }; cell.append(label, input); pair.append(cell);
+    }
+    wrap.append(pair);
+  }
+  const dates = rangeDates(); wrap.append(node('p', 'help', dates.from + ' — ' + dates.to + ' · UTC calendar days')); return wrap;
+}
 async function loadRelease() {
+  const ticket = ++releaseRequest;
+  releaseLoading = true;
   // Every document the panel holds. The Worker uses its own published copy
   // wherever it has one and only falls back to these, so this cannot be used
   // to describe a document the site is already serving.
@@ -325,117 +180,18 @@ async function loadRelease() {
       }),
     });
     const body = await response.json();
+    if (ticket !== releaseRequest) return;
     if (!response.ok) throw new Error(body.error || 'Could not work out the revision');
     state.release = body;
     state.releaseError = '';
   } catch (error) {
+    if (ticket !== releaseRequest) return;
     state.release = null;
     state.releaseError = error.message;
+  } finally {
+    if (ticket === releaseRequest) { releaseLoading = false; if (state.view === 'home') render(); }
   }
 }
 
-/// Whether anything is being counted at all, said plainly.
-function collectionState(seen) {
-  // Only an absence is worth an alert. A range that has data in it is an
-  // ordinary statement of what is being shown, and colouring it like a
-  // problem teaches the owner to ignore the colour.
-  const nothing = seen.collection.rowsInRange === 0;
-  const block = node('div', nothing ? 'warn' : 'rangeNote');
-  if (seen.collection.rowsEver === 0) {
-    block.append(node('p', null, 'Nothing has ever been recorded here.'));
-  } else if (seen.collection.rowsInRange === 0) {
-    block.append(node(
-      'p',
-      null,
-      'Nothing in this range. There is data outside it: ' +
-        seen.collection.firstDate + ' to ' + seen.collection.lastDate + '.',
-    ));
-  } else {
-    block.append(node(
-      'p',
-      null,
-      'Counted between ' + seen.range.from + ' and ' + seen.range.to +
-        ', by UTC calendar day.',
-    ));
-  }
-  return block;
-}
 
-/// The reason the numbers are missing, which is not that nobody visited.
-function publishedState() {
-  const block = node('div', 'group');
-  block.append(node('h3', null, 'This is not a quiet site'));
-  block.append(node(
-    'p',
-    null,
-    state.insights.configuration.note,
-  ));
-  block.append(node(
-    'p',
-    'help',
-    'An empty dashboard here means nothing is being counted. It does not mean ' +
-      'nobody came. Turning collection on is a separate decision with consent ' +
-      'behaviour attached to it, and nothing in this panel does it. See ' +
-      state.insights.configuration.reference + '.',
-  ));
-  return block;
-}
-
-function rangePicker() {
-  const wrap = node('div', 'field');
-  wrap.append(node('span', 'fieldLabel', 'Range'));
-  const row = node('div', 'checks');
-  row.setAttribute('role', 'group');
-  row.setAttribute('aria-label', 'Range');
-  for (const entry of ranges) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'small';
-    button.textContent = entry.label;
-    button.setAttribute('aria-pressed', String(state.range.id === entry.id));
-    if (state.range.id === entry.id) button.classList.add('primary');
-    button.onclick = () => {
-      state.range = state.range.id === entry.id && entry.id === 'custom'
-        ? state.range
-        : {id: entry.id, from: state.range.from, to: state.range.to};
-      state.insights = null;
-      state.insightsError = '';
-      render();
-    };
-    row.append(button);
-  }
-  wrap.append(row);
-
-  if (state.range.id === 'custom') {
-    const pair = node('div', 'pair');
-    for (const edge of [{key: 'from', name: 'From'}, {key: 'to', name: 'To'}]) {
-      const cell = node('div');
-      const id = 'range-' + edge.key;
-      const label = node('label', null, edge.name);
-      label.htmlFor = id;
-      const input = document.createElement('input');
-      input.type = 'date';
-      input.id = id;
-      input.value = state.range[edge.key];
-      input.onchange = () => {
-        state.range = Object.assign({}, state.range, {[edge.key]: input.value});
-        state.insights = null;
-        state.insightsError = '';
-        render();
-      };
-      cell.append(label, input);
-      pair.append(cell);
-    }
-    wrap.append(pair);
-  }
-
-  const dates = rangeDates();
-  wrap.append(node(
-    'p',
-    'help',
-    'Showing ' + dates.from + ' to ' + dates.to + ', in UTC. A day here is a ' +
-      'UTC calendar day, not a day in your own timezone.',
-  ));
-  return wrap;
-}
 `;

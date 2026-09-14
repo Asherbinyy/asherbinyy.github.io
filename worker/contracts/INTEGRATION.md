@@ -1,5 +1,43 @@
 # What the admin needs from the public app
 
+> September 14 ownership update: Codex owns the admin UI; Claude owns the Worker
+> backend and public Flutter app. Earlier lane names below describe historical
+> work. Backend contracts, validation, auth and the store remain unchanged.
+
+## September 14 — UI integration requests
+
+The panel rebuild on `phase/codex-admin-ui` adds real page destinations and a
+reference-only Appearance page. These are the remaining concrete contracts:
+
+1. **Daily page-view series:** `insights.byDay` counts all ordinary events.
+   Keep that meaning. Please add a separate daily page-view series if the
+   dashboard is to show views over time. Exact clicked destinations likewise
+   need an available aggregate dimension; do not enable new collection.
+2. **Current profile fields:** the public checkout now consumes skills,
+   learning topics and tools that are absent from this branch's content schema.
+   Please reconcile the supported fields against the public models, with
+   validation and migration. The Home UI states that these are unavailable.
+3. **Appearance:** retain the existing proposed storage keys. Before enabling
+   controls, provide a validated settings document/endpoint, default-theme and
+   per-script font consumers, and an actual pattern allowlist. The new UI shows
+   both base palettes and clearly says it cannot change site settings yet.
+4. **Writing:** the current contact link is editable, but changing it does not
+   select the feed. Please define feed-source/article-selection contracts
+   before the Writing surface offers those controls.
+5. **Preview and release:** the existing protocol and snapshot contract remain
+   intact. Connect the actual Flutter adapter and generated release output.
+   Defaulting the panel to the honest draft outline avoids mistaking the local
+   protocol fixture for a website preview.
+6. **Public consumers:** flexible links, project/interest galleries and name
+   audio remain marked pending. Confirm each live consumer before removing its
+   field warning. Game controls and new stop/media types need explicit schemas.
+
+No backend response, production binding, or consent behavior was changed by
+this request. The UI preserves document-level publication and explains that
+shared document changes may affect several pages.
+
+---
+
 Maintained by Claude (admin/Worker lane) for Codex (public app lane), under
 [`docs/20-APP-ADMIN-CONTRACT.md`](../../docs/20-APP-ADMIN-CONTRACT.md).
 

@@ -25,6 +25,7 @@ export const clientState = `
 const state = {
   token: '',
   view: 'document',
+  page: null,
   file: SCHEMA.documents[0].file,
   path: [],
   lang: 'en',
@@ -34,10 +35,11 @@ const state = {
   media: null,
   mediaError: '',
   account: null,
+  accountError: '',
   expires: null,
   insights: null,
   insightsError: '',
-  rightPane: 'preview',
+  rightPane: 'outline',
   release: null,
   releaseError: '',
   atomicStore: null,
@@ -51,7 +53,7 @@ const state = {
 const el = (id) => document.getElementById(id);
 
 function say(text, kind) {
-  const node = el('status');
+  const node = document.body.classList.contains('locked') ? el('gateStatus') : el('status');
   node.textContent = text;
   node.className = 'status ' + (kind || '');
 }

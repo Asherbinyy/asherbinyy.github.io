@@ -1,3 +1,4 @@
+import {documents} from '../contracts/content-schema.js';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
@@ -43,13 +44,15 @@ test('nothing has been quietly marked as unblocked', () => {
   assert.ok(blockedOn.every((entry) => entry.satisfied === false));
 });
 
-test('the panel has no appearance section', async () => {
+test('appearance shows its integration limit without adding a publishable document', async () => {
   const page = await handleRequest(
     new Request('https://worker.example/admin'),
     environment(),
   );
   const html = await page.text();
-  assert.ok(!/Appearance/.test(html));
+  assert.match(html, /Site settings are not connected yet/);
+  assert.match(html, /These reference samples cannot change the website/);
+  assert.ok(!documents.some((document) => document.file === 'appearance.json'));
 });
 
 // --- the identifiers have to be the app's real ones ------------------------
