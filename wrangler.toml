@@ -7,7 +7,7 @@ send_metrics = false
 
 [vars]
 SITE_ID = "asherbinyy.github.io"
-SITE_ORIGIN = "https://lsherbini.github.io"
+SITE_ORIGIN = "https://asherbinyy.github.io"
 # The owner's Medium handle comes from profile.json's contact block; "/feed" is
 # Medium's own convention for the RSS of a publication or profile.
 WRITING_FEED_URL = "https://sherbini.medium.com/feed"
