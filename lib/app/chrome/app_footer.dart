@@ -30,6 +30,11 @@ class AppFooter extends StatelessWidget {
           top: BorderSide(color: tokens.hairline, width: tokens.hairlineWidth),
         ),
       ),
+      // Nothing in it. The artwork credit that briefly lived here has moved
+      // to the repository's README, where the licence is honoured in the
+      // place that actually describes the work: the owner asked for a clean
+      // page and CC BY-SA does not require the attribution to be on the page
+      // itself, only that it be given.
       child: SizedBox(height: tokens.footerHeight, width: double.infinity),
     );
   }

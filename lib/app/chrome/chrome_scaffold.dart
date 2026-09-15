@@ -8,6 +8,7 @@ import 'package:nocturne/app/chrome/app_footer.dart';
 import 'package:nocturne/app/chrome/app_header.dart';
 import 'package:nocturne/app/chrome/app_nav.dart';
 import 'package:nocturne/app/chrome/pointer_beacon.dart';
+import 'package:nocturne/features/station/presentation/widgets/back_to_top.dart';
 import 'package:nocturne/features/recruiter/presentation/recruiter_view.dart';
 import 'package:nocturne/core/painting/ornament_field_painter.dart';
 import 'package:nocturne/core/widgets/cursor_trail.dart';
@@ -346,6 +347,9 @@ class _ContentColumn extends StatelessWidget {
               ),
             ),
           ),
+          // Above the scrolling content, not in it: it is a control on the
+          // page rather than a thing at the end of the page.
+          BackToTop(controller: controller),
         ],
       ),
     );

@@ -6,6 +6,7 @@ import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/locale_controller.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
+import 'package:nocturne/content/country_names.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/features/trace/domain/trace_geometry.dart';
 import 'package:nocturne/features/trace/presentation/telemetry_trace.dart';
@@ -56,18 +57,18 @@ class StationTrace extends ConsumerWidget {
     );
   }
 
-  /// A burst's readout, built only from what the content states.
+  /// Where the stop was, which is all the moving card carries.
   ///
-  /// Company, dates and country, all stated by the content. Nothing is
-  /// derived: five of the six roles carry no company, and those fall back to
-  /// the city rather than to an invented employer name.
-  static TraceLabel _labelFor(CareerRole role, AppLocale locale) {
-    final company = role.company;
-    final meta = StringBuffer(role.start)
-      ..write(' to ')
-      ..write(role.end ?? '')
-      ..write(' · ')
-      ..write(role.country);
-    return (id: role.id, title: company ?? role.city, meta: meta.toString());
-  }
+  /// Straight from the content: the city and the country it states. The one
+  /// exception is the freelance period, which has no office to name and is
+  /// printed as remote by the entry it marks -- the card has to agree with it
+  /// or the two disagree about the same stop.
+  static TraceLabel _labelFor(CareerRole role, AppLocale locale) => (
+    id: role.id,
+    // The country spelled out, not its two letters. "Doha, QA" is a database
+    // row; "Doha, Qatar" is a place, and the card has the room for it.
+    location: role.id == 'freelance'
+        ? 'Remote'
+        : '${role.city}, ${CountryNames.of(role.country, locale)}',
+  );
 }

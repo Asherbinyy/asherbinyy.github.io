@@ -18,6 +18,7 @@ import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
 import 'package:nocturne/features/work/presentation/widgets/work_card.dart';
+import 'package:nocturne/features/writing/presentation/widgets/writing_list.dart';
 
 /// Every shipped application, as a grid of visual cards.
 ///
@@ -87,6 +88,15 @@ class _Ledger extends StatelessWidget {
         ),
         SizedBox(height: tokens.space32),
         _Grid(apps: apps, career: career),
+        // The writing, on the same page. It had a tab of its own, which made
+        // the site ask a visitor to decide between "work" and "writing"
+        // before they knew what either held. Both are things he has made, so
+        // both are here; `/writing` still resolves for anything already
+        // linking to it.
+        SizedBox(height: tokens.space96),
+        Text(l10n.aboutWriting, style: context.type.heading),
+        SizedBox(height: tokens.space24),
+        const WritingList(),
       ],
     );
   }

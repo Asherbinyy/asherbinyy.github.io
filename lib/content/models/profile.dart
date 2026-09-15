@@ -69,6 +69,13 @@ class Profile with _$Profile {
     @Default(<ProfileLink>[]) List<ProfileLink> links,
     NameAudio? nameAudio,
     SiteAppearance? appearance,
+
+    /// What the owner will take on as work, in his own words.
+    ///
+    /// Plain strings like [skills] and [tools] rather than localised text:
+    /// these are the names of the things themselves, and a translation would
+    /// have to be invented rather than supplied.
+    @Default(<String>[]) List<String> services,
   }) = _Profile;
 
   const Profile._();
@@ -118,6 +125,22 @@ class Contact with _$Contact {
     Uri? gitlab,
     Uri? medium,
     Uri? calendly,
+
+    /// Present only when the owner supplies it. Nothing here is derived from a
+    /// username or guessed from a pattern -- these were taken from the
+    /// owner's own Linktree, which is the page he keeps current.
+    Uri? tiktok,
+    Uri? instagram,
+    Uri? facebook,
+    Uri? fiverr,
+
+    /// A chat link given outright, where it is not the same number as [phone].
+    ///
+    /// Absent by choice: the owner wants the UK number the content already
+    /// carries, so the link is derived from that and this stays empty. The
+    /// field remains because the two are not necessarily the same, and the
+    /// day they differ the content should be able to say so.
+    Uri? whatsapp,
 
     /// The owner's Linktree, which collects the same destinations in one page.
     Uri? linktree,

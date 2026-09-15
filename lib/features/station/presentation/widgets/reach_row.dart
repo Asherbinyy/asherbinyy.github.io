@@ -1,8 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/content/country_names.dart';
+import 'package:nocturne/core/motion/durations.dart';
 
 /// Where the work has been, as a line of flags.
 ///
@@ -16,10 +19,13 @@ import 'package:nocturne/app/theme/typography.dart';
 /// would be the wrong trade.
 class ReachRow extends StatelessWidget {
   /// Renders [countries] as ISO 3166-1 alpha-2 codes.
-  const ReachRow({required this.countries, super.key});
+  const ReachRow({required this.countries, required this.locale, super.key});
 
   /// The codes to draw, in the order the owner set.
   final List<String> countries;
+
+  /// Which channel names the countries.
+  final AppLocale locale;
 
   /// Turns "EG" into its flag.
   ///
@@ -62,8 +68,63 @@ class ReachRow extends StatelessWidget {
             style: type.telemetryS.copyWith(color: tokens.textMuted),
           ),
           for (final entry in flags)
-            Text(entry.flag, style: type.body.copyWith(height: 1)),
+            _Flag(flag: entry.flag, name: CountryNames.of(entry.code, locale)),
         ],
+      ),
+    );
+  }
+}
+
+/// One flag, cut to a disc and named on hover.
+///
+/// A row of emoji flags is a row of little rectangles with different aspect
+/// ratios and different national colours fighting each other; discs of one
+/// size read as a set. The emoji is scaled to overflow the circle and clipped,
+/// so what shows is the middle of the flag rather than a letterboxed one.
+class _Flag extends StatelessWidget {
+  const _Flag({required this.flag, required this.name});
+
+  final String flag;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Tooltip(
+      message: name,
+      waitDuration: Motion.quick,
+      textStyle: context.type.meta.copyWith(color: tokens.textPrimary),
+      decoration: BoxDecoration(
+        color: tokens.surfaceRaised,
+        borderRadius: BorderRadius.circular(tokens.controlRadius),
+        border: Border.all(color: tokens.hairline, width: tokens.hairlineWidth),
+      ),
+      child: Container(
+        width: Tokens.flagDiameter,
+        height: Tokens.flagDiameter,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: tokens.hairline,
+            width: tokens.hairlineWidth,
+          ),
+        ),
+        child: ClipOval(
+          child: OverflowBox(
+            maxWidth: Tokens.flagDiameter * Tokens.flagOverscan,
+            maxHeight: Tokens.flagDiameter * Tokens.flagOverscan,
+            child: Center(
+              child: Text(
+                flag,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: Tokens.flagDiameter * Tokens.flagOverscan,
+                  height: 1,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

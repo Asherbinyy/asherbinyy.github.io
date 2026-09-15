@@ -1,3 +1,4 @@
+import 'dart:ui' show PointerDeviceKind;
 import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -6,7 +7,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/app/l10n/app_locale.dart';
+import 'package:nocturne/content/country_names.dart';
 import 'package:nocturne/core/painting/wall_painter.dart';
+import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
 import 'package:nocturne/features/trace/domain/trace_controller.dart';
 import 'package:nocturne/features/trace/domain/trace_state.dart';
@@ -137,21 +141,24 @@ void main() {
     final trace = tester.widget<TelemetryTrace>(find.byType(TelemetryTrace));
     final labels = trace.labels;
 
-    // Every burst names what the content names it: the company where there is
-    // one, the city where there is not. Asserted against the journey rather
-    // than against a hand-picked pair, so a stop added to content without a
-    // label fails here.
+    // The card carries where the stop was, and nothing else -- the owner asked
+    // for the location alone. Asserted against the journey rather than against
+    // a hand-picked pair, so a stop added to content without a label fails
+    // here.
     for (final stop in bundledStops()) {
       final id = stop['id'] as String;
       final label = labels[id];
       expect(label, isNotNull, reason: id);
+      expect(label!.location, isNotEmpty, reason: id);
+      if (id == 'freelance') continue;
+      expect(label.location, contains(stop['city']), reason: id);
+      // The country is named, not coded: "Doha, Qatar", never "Doha, QA".
       expect(
-        label!.title,
-        stop['company'] ?? stop['city'],
-        reason: '$id should name its company, or its city where it has none',
+        label.location,
+        contains(CountryNames.of(stop['country'] as String, AppLocale.english)),
+        reason: id,
       );
-      expect(label.meta, contains(stop['country']), reason: id);
-      expect(label.title, isNotEmpty, reason: id);
+      expect(label.location, isNot(endsWith(stop['country'] as String)));
     }
   });
 
@@ -195,6 +202,50 @@ void main() {
     await pumpFrames(tester);
     expect(container.read(traceControllerProvider), TraceState.standby);
     expect(find.byType(TelemetryTrace), findsOneWidget);
+  });
+
+  testWidgets('a locked label sits in the gap, not on the wall', (
+    tester,
+  ) async {
+    // Reduced motion shows every label without having to drive a scroll into
+    // a lock, which is what makes this measurable at all.
+    await pumpStation(
+      tester,
+      breakpoint: ChromeBreakpoint.large,
+      reducedMotion: true,
+    );
+    await pumpFrames(tester);
+
+    final wall = tester.getRect(_tracePaint);
+    // The panel, not the widget: the card is pushed across by a paint-time
+    // translation, which the label's own box does not carry.
+    final labels = find.descendant(
+      of: find.byType(TraceBurstLabel),
+      matching: find.byType(InstrumentPanel),
+    );
+    expect(labels, findsWidgets);
+
+    for (var i = 0; i < tester.widgetList(labels).length; i++) {
+      final card = tester.getRect(labels.at(i));
+      if (card.width == 0) continue;
+      expect(
+        card.right,
+        lessThanOrEqualTo(wall.left),
+        reason: 'the card is drawn over the blocks',
+      );
+      expect(card.left, greaterThanOrEqualTo(0), reason: 'and off the page');
+
+      // And centred on the clear ground rather than pressed against the
+      // stone: the owner asked for it in the middle of the empty middle.
+      final label = tester.widget<TraceBurstLabel>(
+        find.ancestor(of: labels.at(i), matching: find.byType(TraceBurstLabel)),
+      );
+      expect(
+        card.center.dx,
+        closeTo(wall.left - label.gap / 2, 1),
+        reason: 'the card should sit in the middle of the gap',
+      );
+    }
   });
 
   testWidgets('a career that will not load leaves the trace out', (
@@ -252,6 +303,52 @@ void main() {
         );
       });
     }
+  });
+
+  testWidgets('the torch lights the wall on hover and dies down on leave', (
+    tester,
+  ) async {
+    await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
+    await pumpFrames(tester);
+
+    WallPainter wall() {
+      final painter = tester.widget<CustomPaint>(_tracePaint).painter;
+      if (painter is! WallPainter) fail('Expected the wall painter');
+      return painter;
+    }
+
+    expect(wall().torchStrength, 0, reason: 'nothing is holding a light yet');
+
+    // Onto the middle of the wall. The pointer is the torch, so this is the
+    // whole interaction: there is nothing to tap and no control to find.
+    final strip = tester.getRect(_tracePaint);
+    final hand = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await hand.addPointer(location: Offset.zero);
+    addTearDown(hand.removePointer);
+    await hand.moveTo(strip.center);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 40));
+
+    final rising = wall().torchStrength;
+    expect(rising, greaterThan(0), reason: 'the flame comes up');
+    expect(rising, lessThan(1), reason: 'and is not there in one frame');
+    expect(wall().torch, isNotNull);
+
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(wall().torchStrength, 1, reason: 'held on the wall, fully lit');
+
+    // Off the wall entirely, onto the copy.
+    await hand.moveTo(Offset(strip.left - 200, strip.center.dy));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 40));
+    expect(
+      wall().torchStrength,
+      lessThan(1),
+      reason: 'the light dies down rather than cutting out',
+    );
+
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(wall().torchStrength, 0, reason: 'and the stone comes back');
   });
 }
 

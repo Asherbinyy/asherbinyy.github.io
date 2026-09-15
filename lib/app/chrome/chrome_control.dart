@@ -80,37 +80,53 @@ class _ChromeControlState extends State<ChromeControl> {
 
           return FocusRing(
             isFocused: isFocused,
-            child: InkWell(
-              onTap: widget.onPressed,
-              statesController: _states,
-              borderRadius: BorderRadius.circular(tokens.controlRadius),
-              // Hover states belong to pointer browsers only; the service
-              // resolves that once so this never checks a viewport width.
-              hoverColor: context.platform.isPointer
-                  ? tokens.surfaceRaised
-                  : Colors.transparent,
-              mouseCursor: context.platform.isPointer
-                  ? SystemMouseCursors.click
-                  : MouseCursor.defer,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minWidth: target,
-                  minHeight: target,
+            // The same words the screen reader gets, shown to everybody else.
+            // These controls are a glyph, two letters and a brazier; without
+            // this a sighted visitor has to press one to find out what it is.
+            child: Tooltip(
+              message: widget.semanticLabel,
+              waitDuration: Motion.considered,
+              textStyle: context.type.meta.copyWith(color: tokens.textPrimary),
+              decoration: BoxDecoration(
+                color: tokens.surfaceRaised,
+                borderRadius: BorderRadius.circular(tokens.controlRadius),
+                border: Border.all(
+                  color: tokens.hairline,
+                  width: tokens.hairlineWidth,
                 ),
-                child: Center(
-                  child: ExcludeSemantics(
-                    child: widget.face != null
-                        ? widget.face!(context, colour)
-                        : AnimatedDefaultTextStyle(
-                            duration: ReducedMotion.duration(
-                              context,
-                              Motion.quick,
+              ),
+              child: InkWell(
+                onTap: widget.onPressed,
+                statesController: _states,
+                borderRadius: BorderRadius.circular(tokens.controlRadius),
+                // Hover states belong to pointer browsers only; the service
+                // resolves that once so this never checks a viewport width.
+                hoverColor: context.platform.isPointer
+                    ? tokens.surfaceRaised
+                    : Colors.transparent,
+                mouseCursor: context.platform.isPointer
+                    ? SystemMouseCursors.click
+                    : MouseCursor.defer,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: target,
+                    minHeight: target,
+                  ),
+                  child: Center(
+                    child: ExcludeSemantics(
+                      child: widget.face != null
+                          ? widget.face!(context, colour)
+                          : AnimatedDefaultTextStyle(
+                              duration: ReducedMotion.duration(
+                                context,
+                                Motion.quick,
+                              ),
+                              style: context.type.telemetry.copyWith(
+                                color: colour,
+                              ),
+                              child: Text(widget.label),
                             ),
-                            style: context.type.telemetry.copyWith(
-                              color: colour,
-                            ),
-                            child: Text(widget.label),
-                          ),
+                    ),
                   ),
                 ),
               ),

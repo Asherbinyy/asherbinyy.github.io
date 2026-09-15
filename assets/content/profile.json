@@ -34,7 +34,11 @@
     "gitlab": "https://gitlab.com/sherbini",
     "medium": "https://sherbini.medium.com/",
     "linktree": "https://linktr.ee/ahmedElsherbini",
-    "calendly": null
+    "calendly": "https://calendly.com/asherbini/new-meeting",
+    "tiktok": "https://www.tiktok.com/@sherbinovic",
+    "instagram": "https://www.instagram.com/ahmedmelsherbiny/",
+    "facebook": "https://www.facebook.com/profile.php?id=100004409198217",
+    "fiverr": "https://www.fiverr.com/asherbiny"
   },
   "cvFile": "assets/docs/ahmed-elsherbini-cv.pdf",
   "portrait": {
@@ -80,7 +84,14 @@
     "Swift",
     "SwiftUI",
     "CI/CD",
-    "GitHub Actions"
+    "GitHub Actions",
+    "Project management",
+    "Cybersecurity",
+    "Power BI",
+    "Figma",
+    "Adobe XD",
+    "Photoshop",
+    "Adobe Premiere Pro"
   ],
   "learning": [
     "RAG",
@@ -90,7 +101,23 @@
     "AI agents"
   ],
   "tools": [
+    "Claude",
+    "Codex",
+    "Gemini",
+    "DeepSeek",
     "Antigravity",
-    "Codex"
+    "Android Studio",
+    "VS Code",
+    "Charles"
+  ],
+  "services": [
+    "Mobile apps",
+    "Web apps",
+    "Admin dashboards",
+    "UI/UX design",
+    "AI automations",
+    "WhatsApp chatbots",
+    "Telegram chatbots",
+    "Power BI dashboards"
   ]
 }

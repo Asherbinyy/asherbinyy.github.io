@@ -1,4 +1,5 @@
 import 'package:nocturne/content/content_media.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,13 +45,35 @@ class PortraitFrame extends ConsumerWidget {
     // is not shown as him. The empty frame is the honest render.
     if (portrait == null || portrait.isPlaceholder) return const _EmptyFrame();
 
-    return InstrumentPanel(
-      child: ThreeStageImage(
-        image: contentImage(context, portrait.src),
-        width: width,
-        height: height,
-        fallback: const _EmptyFrame(),
-        semanticLabel: context.l10n.aboutPortraitLabel,
+    final tokens = context.tokens;
+    // Lit rather than framed. A hairline box around a photograph is a
+    // placeholder's border; the owner asked for something with light in it, so
+    // the frame throws the site's own gold behind the picture -- the same lamp
+    // that lights the wall on Home and the contact cards.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(tokens.controlRadius),
+        border: Border.all(
+          color: tokens.beacon.withValues(alpha: Tokens.portraitEdgeAlpha),
+          width: tokens.hairlineWidth * 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: tokens.beacon.withValues(alpha: Tokens.portraitGlowAlpha),
+            blurRadius: Tokens.portraitGlowBlur,
+            spreadRadius: Tokens.portraitGlowSpread,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(tokens.controlRadius),
+        child: ThreeStageImage(
+          image: contentImage(context, portrait.src),
+          width: width,
+          height: height,
+          fallback: const _EmptyFrame(),
+          semanticLabel: context.l10n.aboutPortraitLabel,
+        ),
       ),
     );
   }

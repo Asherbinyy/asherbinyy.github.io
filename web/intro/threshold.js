@@ -62,18 +62,26 @@ export async function mountThreshold() {
   };
   scene.onFinished = finish;
 
-  // It opens itself. The owner asked for no Enter and no Skip: the sequence is
-  // the arrival, not a thing to opt into, and a door with a button beside it
-  // reading "skip the door" undercuts the whole moment.
-  //
-  // The beat before it starts is deliberate. Opening on frame one means the
-  // viewer never sees what is being opened.
-  window.setTimeout(() => {
-    if (!finished) {
-      host.classList.add('threshold--opening');
-      scene.open();
-    }
-  }, 1500);
+  // The door opens when it is asked to. The owner wanted the button back:
+  // a sealed door with no handle is a wait, and a visitor who has seen the
+  // scene once wants past it.
+  const openDoor = () => {
+    if (finished) return;
+    host.classList.add('threshold--opening');
+    scene.open();
+  };
+
+  const enter = document.getElementById('threshold-enter');
+  if (enter) {
+    enter.addEventListener('click', openDoor);
+    // Focused as soon as the scene is up, so the keyboard can open the door
+    // without hunting for it.
+    window.setTimeout(() => enter.focus({preventScroll: true}), 600);
+  }
+
+  // It still opens on its own, for somebody who does nothing. Long enough to
+  // read the button, short enough not to be a wait.
+  window.setTimeout(openDoor, 4200);
 
   // Escape still works, deliberately without being advertised. Trapping
   // someone in a non-dismissible overlay is an accessibility failure however

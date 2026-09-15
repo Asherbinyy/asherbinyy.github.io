@@ -85,6 +85,20 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
 
   bool get _closed => _roll.value > 0.5;
 
+  /// Rolls the sheet up. Hovering does this now, not clicking.
+  ///
+  /// The owner asked for the roll to happen under the pointer and to come
+  /// back when it leaves: a sheet on a table lifts as a hand passes over it.
+  /// Tapping still works, because a phone has no hover.
+  void _close() {
+    if (_closed) return;
+    if (ReducedMotion.of(context)) {
+      _roll.value = 1;
+      return;
+    }
+    unawaited(_roll.animateTo(1, curve: Curves.easeInOut));
+  }
+
   void _toggle() {
     if (ReducedMotion.of(context)) {
       _roll.value = _closed ? 0 : 1;
@@ -120,8 +134,10 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
       onTap: _toggle,
       child: ExcludeSemantics(
         child: MouseRegion(
-          // The way back out. A card rolled shut hides its own control, so
-          // leaving it is enough to bring it back.
+          // The whole interaction on a pointer: the sheet winds up as the hand
+          // arrives and unwinds as it leaves. There is nothing to click and
+          // nothing to click back.
+          onEnter: (_) => _close(),
           onExit: (_) => _open(),
           cursor: context.platform.isPointer
               ? SystemMouseCursors.click

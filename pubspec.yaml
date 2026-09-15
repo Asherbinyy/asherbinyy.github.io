@@ -23,8 +23,21 @@ dependencies:
   material_ui: ^1.1.0
   riverpod_annotation: ^2.6.0
   shared_preferences: ^2.3.0   # theme + consent persistence only
+  simple_icons: ^16.23.0        # the platforms' own marks, drawn from their brand sets
   url_launcher: ^6.3.0
   xml: ^6.5.0                  # RSS parse
+
+# Pinned against the SDK, not preference.
+#
+# `pubspec.lock` is deliberately not committed -- the SDK is pinned by `.fvmrc`
+# instead -- so every CI run resolves fresh and takes whatever was published
+# since. objective_c 9.6.1 reaches for a `code_assets` member (`arm64e`) that
+# Flutter 3.47.2 does not have, and its build hook fails before a single test
+# runs. It arrives transitively, so a constraint has to be an override.
+#
+# Remove this the day the pinned SDK moves.
+dependency_overrides:
+  objective_c: 9.5.0
 
 dev_dependencies:
   alchemist: ^0.11.0

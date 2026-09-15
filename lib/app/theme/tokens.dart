@@ -439,6 +439,85 @@ abstract final class Tokens {
   /// the beat is that the page arrives out of the dark.
   static const double openingGlow = 0.28;
 
+  /// Every this many metres, the shaft acknowledges the climb.
+  ///
+  /// A round hundred because that is what the owner asked for and because it
+  /// is a number a player can hold in their head while climbing.
+  static const int ascentRewardStep = 100;
+
+  /// How long the mark stays up afterwards, in seconds.
+  static const double ascentRewardHold = 1.6;
+
+  /// How heavy the kicking figure's limbs are, against the scene's own ink.
+  ///
+  /// It was 1.7, which drew a figure with the build of a snowman -- the owner
+  /// called the stickman too fat and he was right. Just above the scene's own
+  /// line weight reads as a drawn figure rather than a padded one.
+  static const double footballLimbWeight = 1.05;
+
+  /// The head, as a fraction of the scene's height. Smaller than the limbs
+  /// suggest, because a stick figure's head is a mark and not a ball.
+  static const double footballHeadRadius = 0.038;
+
+  /// How strongly the portrait's gold edge reads.
+  static const double portraitEdgeAlpha = 0.55;
+
+  /// How much light the frame throws behind the picture.
+  static const double portraitGlowAlpha = 0.22;
+
+  /// How far that light carries, and how far it is pushed out first.
+  static const double portraitGlowBlur = 34, portraitGlowSpread = 2;
+
+  /// One country disc on the reach row, and how far the flag inside it is
+  /// blown up before being clipped so no letterboxing shows.
+  static const double flagDiameter = 26, flagOverscan = 1.35;
+
+  /// How wide the year and name column on a stop card may grow.
+  static const double stopCardTextWidth = 168;
+
+  /// How far down the page the way back up appears, in viewports.
+  static const double backToTopAfter = 1.4;
+
+  /// The diameter of that control.
+  static const double backToTopSize = 48;
+
+  /// One service card, and the mark on it.
+  static const double serviceCardWidth = 220, serviceIconSize = 26;
+
+  /// An icon standing in for a word in the header.
+  static const double chromeIconSize = 20;
+
+  /// The platform mark on a contact card.
+  static const double contactIconSize = 18;
+
+  /// One contact card's smallest width, so a row of them is a grid and not a
+  /// ragged line of differently sized words.
+  static const double contactCardWidth = 132;
+
+  /// How the gold glow behind a hovered contact card is thrown.
+  static const double contactGlowAlpha = 0.35, contactGlowBlur = 18;
+
+  /// The sign beside a career entry.
+  ///
+  /// Big enough to read as a figure rather than a bullet, small enough that
+  /// the entry's own heading is still the first thing the eye lands on.
+  static const double stopMarkSize = 44;
+
+  /// How strongly its cut edges show.
+  static const double stopMarkReliefAlpha = 0.5;
+
+  /// The itinerary on Home: one stop's node and the cell it sits in.
+  ///
+  /// Small. It is an index to the career below, not a second telling of it,
+  /// and a node the size of the atlas's would compete with the entries.
+  static const double stopNodeRadius = 5;
+
+  /// The width of the column the thread runs down.
+  static const double stopRailWidth = 22;
+
+  /// The height of one stop's cell, which is what sets the thread's length.
+  static const double stopRowHeight = 30;
+
   /// How much wider than tall a station's cartouche sits on the atlas.
   ///
   /// The shape only, and it encloses nothing: a cartouche ring is what an
@@ -521,10 +600,13 @@ abstract final class Tokens {
   /// Wide enough that moving across the wall lights a group rather than one
   /// block at a time, which is what makes it read as a lamp rather than a
   /// hover state.
-  static const double wallTorchReach = 260;
+  static const double wallTorchReach = 300;
 
-  /// The flame's three rings, outermost first.
-  static const double wallFlameOuter = 88, wallFlameMid = 40, wallFlameCore = 7;
+  /// Seconds for the light to come up, and the same to die down.
+  ///
+  /// Long enough to read as a flame being carried in rather than a hover
+  /// state switching on, short enough that it keeps up with the hand.
+  static const double wallTorchFade = 0.26;
 
   /// Where in the wave a gilded sign starts to bloom.
   static const double wallShimmerBloomAt = 0.62;

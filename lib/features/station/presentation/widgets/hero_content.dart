@@ -87,7 +87,7 @@ class HeroContent extends StatelessWidget {
         ),
         if (profile.reach.isNotEmpty) ...[
           SizedBox(height: tokens.space24),
-          ReachRow(countries: profile.reach),
+          ReachRow(countries: profile.reach, locale: locale),
         ],
         if (profile.stats.isNotEmpty) ...[
           SizedBox(height: tokens.space32),

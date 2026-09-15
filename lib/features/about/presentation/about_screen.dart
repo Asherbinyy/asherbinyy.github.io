@@ -1,8 +1,5 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'dart:async';
-
-import 'package:url_launcher/url_launcher.dart';
 import 'package:nocturne/features/about/presentation/widgets/skills_panel.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,7 +17,10 @@ import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/content/models/education.dart';
 import 'package:nocturne/content/models/profile.dart';
+import 'package:nocturne/core/motion/durations.dart';
+import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_panel.dart';
@@ -134,13 +134,12 @@ class _About extends StatelessWidget {
         SizedBox(height: tokens.space16),
         // Three, not the archive: the spec puts writing at the foot of About
         // as evidence it exists, and `/writing` is where the list lives.
+        // The artwork credit used to sit here, under the writing, as a
+        // button. The owner asked for it gone from the page and it is: it
+        // lives in the footer now, which is where a colophon belongs. It
+        // cannot be deleted outright -- the guardian model is CC BY-SA and
+        // attribution is a condition of using it, not a decoration.
         const WritingList(limit: 3),
-        SizedBox(height: tokens.space24),
-        TextButton(
-          onPressed: () =>
-              unawaited(launchUrl(Uri.base.resolve('intro/models/LICENSE.md'))),
-          child: Text(l10n.artworkCredits),
-        ),
       ],
     );
   }
@@ -187,7 +186,126 @@ class _Identity extends StatelessWidget {
         ],
         SizedBox(height: tokens.space24),
         SkillsPanel(profile: profile),
+        SizedBox(height: tokens.space32),
+        // Two ways out of this page, because a page about a person should end
+        // in something to do. The column beside the portrait ran out of
+        // content half way down the frame and the owner said so.
+        Wrap(
+          spacing: tokens.space12,
+          runSpacing: tokens.space12,
+          children: [
+            _RouteButton(
+              label: context.l10n.aboutViewWork,
+              icon: Icons.grid_view_rounded,
+              route: AppRoute.work,
+              isPrimary: false,
+            ),
+            _RouteButton(
+              label: context.l10n.aboutBookService,
+              icon: Icons.handshake_outlined,
+              route: AppRoute.services,
+              isPrimary: true,
+            ),
+          ],
+        ),
       ],
+    );
+  }
+}
+
+/// One of the two ways on from About.
+class _RouteButton extends StatefulWidget {
+  const _RouteButton({
+    required this.label,
+    required this.icon,
+    required this.route,
+    required this.isPrimary,
+  });
+
+  final String label;
+  final IconData icon;
+  final AppRoute route;
+
+  /// The gold one. Only one of the pair is: section 2 spends amber on the
+  /// single thing a page most wants a visitor to do, and here that is asking
+  /// for work rather than reading more of it.
+  final bool isPrimary;
+
+  @override
+  State<_RouteButton> createState() => _RouteButtonState();
+}
+
+class _RouteButtonState extends State<_RouteButton> {
+  final WidgetStatesController _states = WidgetStatesController();
+
+  @override
+  void dispose() {
+    _states.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Semantics(
+      button: true,
+      label: widget.label,
+      child: ListenableBuilder(
+        listenable: _states,
+        builder: (context, _) {
+          final isLit = _states.value.contains(WidgetState.hovered);
+          final fill = widget.isPrimary
+              ? (isLit ? tokens.beaconGlow : tokens.beacon)
+              : Colors.transparent;
+          final ink = widget.isPrimary
+              ? tokens.void_
+              : (isLit ? tokens.beaconGlow : tokens.beacon);
+
+          return FocusRing(
+            isFocused: _states.value.contains(WidgetState.focused),
+            child: InkWell(
+              onTap: () => context.goNamed(widget.route.name),
+              statesController: _states,
+              borderRadius: BorderRadius.circular(tokens.controlRadius),
+              mouseCursor: context.platform.isPointer
+                  ? SystemMouseCursors.click
+                  : MouseCursor.defer,
+              child: AnimatedContainer(
+                duration: ReducedMotion.duration(context, Motion.quick),
+                padding: EdgeInsets.symmetric(
+                  horizontal: tokens.space24,
+                  vertical: tokens.space12,
+                ),
+                decoration: BoxDecoration(
+                  color: fill,
+                  borderRadius: BorderRadius.circular(tokens.controlRadius),
+                  border: Border.all(
+                    color: widget.isPrimary ? fill : tokens.hairlineStrong,
+                    width: tokens.hairlineWidth,
+                  ),
+                ),
+                child: ExcludeSemantics(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        widget.icon,
+                        size: Tokens.contactIconSize,
+                        color: ink,
+                      ),
+                      SizedBox(width: tokens.space12),
+                      Text(
+                        widget.label,
+                        style: context.type.body.copyWith(color: ink),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

@@ -28,4 +28,14 @@ class PointerBeacon extends InheritedNotifier<ValueNotifier<Offset?>> {
       .dependOnInheritedWidgetOfExactType<PointerBeacon>()
       ?.notifier
       ?.value;
+
+  /// The notifier itself, without subscribing to it.
+  ///
+  /// For a listener that has to act the moment the pointer moves rather than
+  /// on the next build. Hover is delivered after a frame is laid out, so a
+  /// layer that reads [of] during its build learns about the pointer one
+  /// frame late -- which is one frame of an animation lost every time the
+  /// hand arrives.
+  static ValueNotifier<Offset?>? notifierOf(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<PointerBeacon>()?.notifier;
 }
