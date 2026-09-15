@@ -5,6 +5,8 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+- Restored hosting, canonical URLs and Worker CORS to `asherbinyy.github.io`, preserving the newer lsherbini repository history, branches and tags.
+
 - September 14: latest visual pass rejected; full app/admin ownership transferred to Claude with a tested isolated password-rotation patch. Fixed missing Material icon-font bundling. No merge/deployment.
 
 ### Content

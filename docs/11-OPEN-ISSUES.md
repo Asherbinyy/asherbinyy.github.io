@@ -1,5 +1,10 @@
 # Open issues
 
+> September 15 account restoration: the owner reversed the move to lsherbini.
+> Active URLs and Worker CORS return to asherbinyy.github.io. The new account’s
+> repository is retained until all history is verified on Asherbinyy and deletion
+> scope/access is resolved. No custom domain has been selected yet.
+
 **September 13:** owner rejected the broad visual implementation; it has been rolled back to the existing Flutter design. Current scope is content-only. See [handoff](27-CONTINUE-HERE.md). Existing visual/game issues remain open; no design acceptance is implied by prior local tests.
 
 
