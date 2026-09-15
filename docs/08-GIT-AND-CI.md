@@ -269,13 +269,13 @@ cp build/web/index.html build/web/404.html   # client-side routing for deep link
 
 Both are explained in `03-ARCHITECTURE.md` §3. Skipping either produces a deploy that succeeds and a site that is broken — the worst failure mode, because nothing reports an error.
 
-**Repository name matters.** Name the repository `asherbinyy.github.io` so Pages serves from the root and `--base-href` stays `/`. A project repo serves from `/<repo-name>/`, which means every asset path carries the repo name and the later move to a custom domain becomes a rebuild instead of a DNS change.
+**Repository name matters.** Name the repository `lsherbini.github.io` so Pages serves from the root and `--base-href` stays `/`. A project repo serves from `/<repo-name>/`, which means every asset path carries the repo name and the later move to a custom domain becomes a rebuild instead of a DNS change.
 
 ### Adding a custom domain later
 
 No rebuild, no code change:
 1. Add a `CNAME` file to `web/` containing the bare domain.
-2. At the registrar, point four `A` records at GitHub's Pages IPs and a `CNAME` on `www` to `asherbinyy.github.io`.
+2. At the registrar, point four `A` records at GitHub's Pages IPs and a `CNAME` on `www` to `lsherbini.github.io`.
 3. In repository settings, set the custom domain and tick "Enforce HTTPS".
 
 Certificate provisioning takes up to an hour. Because `--base-href` was already `/`, nothing else changes.

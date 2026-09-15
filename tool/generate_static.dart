@@ -18,7 +18,7 @@ import 'package:nocturne/app/app_route.dart';
 
 /// Base URL for the published site. Single constant to update when a custom
 /// domain is configured.
-const String baseUrl = 'https://asherbinyy.github.io';
+const String baseUrl = 'https://lsherbini.github.io';
 
 // ---------------------------------------------------------------------------
 // Entry
