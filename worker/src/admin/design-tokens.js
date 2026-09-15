@@ -31,7 +31,7 @@ export const designTokens = `
 :root {
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s6: 24px; --s8: 32px; --s12: 48px; --s16: 64px;
   --control: 6px; --modal: 10px; --hairline: 1px; --focus: 2px;
-  --body: 16px; --small: 14px; --meta: 13px; --heading: 22px; --display: 40px;
+  --body: 16px; --small: 14px; --meta: 13px; --heading: 22px; --display: 40px; --compact-display: 32px;
   --display-font: "Space Grotesk", sans-serif;
   --body-font: "IBM Plex Sans", "IBM Plex Sans Arabic", sans-serif;
   --mono-font: "IBM Plex Mono", monospace;

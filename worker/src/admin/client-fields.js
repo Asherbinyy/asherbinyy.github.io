@@ -512,7 +512,7 @@ function assetControl(field, value, path) {
 function shownSource(value) {
   if (!value) return '';
   if (value.indexOf('/v1/media/') === 0) return value;
-  if (value.indexOf('assets/') === 0) return SITE + '/' + value;
+  if (value.indexOf('assets/') === 0) return new URL('../' + value.slice('assets/'.length), BUNDLE + '/').href;
   return '';
 }
 

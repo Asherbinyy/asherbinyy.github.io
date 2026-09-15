@@ -1,25 +1,7 @@
 /**
- * The editor's half of preview protocol v1.
- *
- * Codex confirmed the protocol in `docs/23-ADMIN-INTEGRATION-REPLY.md` and
- * pinned the parts that had been left open: component identifiers are
- * `"<document filename>:<path>"`, the public components will carry
- * `data-content-file` and `data-content-path`, the production origin stays
- * `https://asherbinyy.github.io`, and the isolated Astro development origin is
- * `http://127.0.0.1:4321`.
- *
- * **The adapter on the other side is not built yet.** That is fine and it is
- * handled: this speaks first, waits for a `ready` that may never come, and
- * says plainly that the preview did not answer rather than showing an empty
- * frame and letting the owner conclude his site is blank. The outline stays
- * available the whole time.
- *
- * What never crosses this channel: the session token, the password, anything
- * from `sessionStorage`. The messages carry a document draft, a locale and a
- * component id, and nothing else. `targetOrigin` is always the exact
- * configured origin -- never `*` -- and every arriving message is checked for
- * its origin, its source window, the channel, the version and the session
- * before a single field of it is read.
+ * Protocol-v1 client for the real Flutter preview in lib/core/preview/.
+ * Sends validated documents, locale and destination; credentials stay here.
+ * Both directions check the exact origin, source window and fresh session.
  */
 
 export const clientPreview = `
@@ -39,6 +21,7 @@ const preview = {
   ready: false,
   waiting: false,
   lastRequest: 0,
+  batch: 0,
   acknowledged: 0,
   error: '',
   pending: false,
@@ -77,7 +60,7 @@ function postToPreview(type, payload) {
 /// The contract says a validated draft. A document with errors in it is not
 /// something the public components have agreed to be handed, and rendering
 /// half of it would show the owner a page the site would never produce.
-function sendDraft() {
+async function sendDraft() {
   if (!preview.ready) return;
   const file = state.file;
   const entry = state.docs.get(file);
@@ -102,6 +85,32 @@ function sendDraft() {
     drawPreviewState();
     return;
   }
+  const batch = ++preview.batch;
+  const session = preview.session;
+  const generation = entry.generation;
+  const documents = {};
+  try {
+    for (const [name, held] of state.docs) {
+      let checked = state.issues.get(name);
+      if (!checked || checked.generation !== held.generation) {
+        // An edited dependency waits for its own normal validation. Untouched
+        // published/bundled documents are checked here so preview starts with
+        // every current document, not a mix of published and old bundle data.
+        if (held.generation !== 0) continue;
+        const snapshot = JSON.parse(JSON.stringify(held.draft));
+        const response = await api('/v1/admin/validate', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({file:name, document:snapshot, references:knownReferences(name)})});
+        if (!response.ok) throw new Error('Could not check the preview content.');
+        const verdict = await response.json();
+        checked = {errors:verdict.errors, warnings:verdict.warnings, generation:0, document:snapshot};
+        if (held.generation === 0) state.issues.set(name, checked);
+      }
+      if (checked.errors.length === 0 && checked.generation === held.generation) documents[name] = checked.document;
+    }
+  } catch (error) {
+    if (batch === preview.batch) { preview.error = error.message; drawPreviewState(); }
+    return;
+  }
+  if (batch !== preview.batch || session !== preview.session || file !== state.file || generation !== entry.generation) return;
   preview.error = '';
   preview.lastRequest += 1;
   preview.waiting = true;
@@ -110,8 +119,9 @@ function sendDraft() {
     file: file,
     schemaVersion: previewVersion,
     locale: state.lang,
-    // The snapshot that was validated, not whatever the draft holds now.
+    route: previewRoute(),
     document: issues.document,
+    documents: documents,
   });
   drawPreviewState();
   // A preview that never answers must not leave the panel saying "rendering"
@@ -127,10 +137,16 @@ function sendDraft() {
 }
 
 /// Asks the preview to scroll to whatever is being edited.
+function previewRoute() {
+  const page = pageFor(state.page);
+  if (page && page.id !== 'resume') return page.route;
+  return {'profile.json': '/', 'career.json': '/journey', 'apps.json': '/work', 'education.json': '/about', 'interests.json': '/courtyard'}[state.file] || '/';
+}
 function selectInPreview() {
   if (!preview.ready || state.view !== 'document') return;
   postToPreview('select', {
     componentId: componentIdFor(state.file, state.path),
+    route: previewRoute(),
   });
 }
 
@@ -204,10 +220,10 @@ function mountPreview() {
       if (!preview.ready) {
         preview.error =
           'The page at ' + PREVIEW_ORIGIN + ' did not answer the preview ' +
-          'handshake. The public preview adapter has not been built yet.';
+          'handshake. Check that the preview build allows this admin origin, then retry.';
         drawPreviewState();
       }
-    }, 3000);
+    }, 30000);
   };
   frame.onerror = () => {
     preview.error = 'The preview could not be loaded.';
@@ -237,7 +253,7 @@ function drawPreviewState() {
       preview.remoteErrors.map((issue) => issue.message || issue).join('; ');
     line.classList.add('bad');
   } else if (preview.acknowledged > 0) {
-    line.textContent = 'Draft rendered by the connected preview.';
+    line.textContent = 'Preview up to date';
     line.classList.add('good');
   } else {
     line.textContent = 'Connected.';

@@ -14,12 +14,16 @@
  */
 
 import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
+import {readFile, stat} from 'node:fs/promises';
+import {resolve, extname, sep} from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 import {handleRequest} from '../src/index.js';
 import {ContentStore} from '../src/store.js';
 import {durableNamespace} from './durable-double.js';
 
+const realSite = process.env.REAL_SITE === '1';
+const publicBuild = resolve(process.env.PUBLIC_BUILD || fileURLToPath(new URL('../../build/web', import.meta.url)));
 const port = Number(process.argv[2] ?? 8788);
 const origin = `http://localhost:${port}`;
 
@@ -83,14 +87,14 @@ const env = {
   CONTENT_STORE: contentStore,
   ADMIN_TOKEN: token,
   CONSOLE_TOKEN: 'local-console-token-' + 'y'.repeat(24),
-  SITE_ORIGIN: origin,
+  SITE_ORIGIN: realSite ? previewOrigin : origin,
   SITE_ID: `localhost:${port}`,
   BUNDLE_BASE: `${origin}/assets/assets/content`,
   PREVIEW_ORIGIN: previewOrigin,
   RELEASE_URL: `${origin}/release.json`,
 };
 
-const fixtures = new URL('../contracts/fixtures/', import.meta.url);
+const fixtures = new URL(realSite ? '../../assets/content/' : '../contracts/fixtures/', import.meta.url);
 
 /// A stand-in for the public preview adapter, speaking protocol v1.
 ///
@@ -258,7 +262,7 @@ const server = createServer(async (incoming, outgoing) => {
   }
 
   // The preview adapter stand-in, on the other origin.
-  if (url.pathname === '/' && incoming.method === 'GET') {
+  if (!realSite && url.pathname === '/' && incoming.method === 'GET') {
     outgoing.writeHead(200, {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
@@ -270,7 +274,7 @@ const server = createServer(async (incoming, outgoing) => {
 
   // What the public build writes. Absent unless RELEASE_REVISION is set, so
   // the "nothing is serving a release yet" state is the default here too.
-  if (url.pathname === '/release.json' && incoming.method === 'GET') {
+  if (!realSite && url.pathname === '/release.json' && incoming.method === 'GET') {
     if (!process.env.RELEASE_REVISION) {
       outgoing.writeHead(404).end('Not found');
       return;
@@ -310,6 +314,23 @@ const server = createServer(async (incoming, outgoing) => {
     return;
   }
 
+  // Optional real Flutter build, with bundled owner content. Keep fixture mode
+  // available for focused backend tests; this mode is the review workspace.
+  if (realSite && incoming.method === 'GET' && !url.pathname.startsWith('/v1/') && url.pathname !== '/admin') {
+    const types = {'.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.wasm': 'application/wasm', '.ttf': 'font/ttf', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.m4a': 'audio/mp4'};
+    let path = resolve(publicBuild, '.' + decodeURIComponent(url.pathname));
+    if (path !== publicBuild && !path.startsWith(publicBuild + sep)) { outgoing.writeHead(403).end(); return; }
+    try {
+      if ((await stat(path)).isDirectory()) path = resolve(path, 'index.html');
+    } catch { if (!extname(path)) path = resolve(publicBuild, 'index.html'); }
+    try {
+      const bytes = await readFile(path);
+      outgoing.writeHead(200, {'content-type': types[extname(path)] || 'application/octet-stream', 'cache-control': 'no-store', 'access-control-allow-origin': '*'});
+      outgoing.end(bytes);
+    } catch { outgoing.writeHead(404).end('Build file not found'); }
+    return;
+  }
+
   // Puts a counter straight into the store, so the dashboard can be exercised
   // against data without turning collection on anywhere.
   //
@@ -317,7 +338,7 @@ const server = createServer(async (incoming, outgoing) => {
   // route in `worker/src/index.js` and there must never be one: an endpoint
   // that writes analytics counters on request is an endpoint that can make the
   // owner's own numbers say anything.
-  if (url.pathname === '/__seed' && incoming.method === 'POST') {
+  if (!realSite && url.pathname === '/__seed' && incoming.method === 'POST') {
     if (incoming.headers.authorization !== 'Bearer ' + token) {
       outgoing.writeHead(401).end('no');
       return;

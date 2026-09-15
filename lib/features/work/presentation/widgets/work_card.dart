@@ -1,3 +1,6 @@
+import 'package:nocturne/core/widgets/content_gallery.dart';
+import 'package:nocturne/content/content_media.dart';
+import 'package:nocturne/core/widgets/loading/three_stage_image.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
@@ -68,16 +71,39 @@ class WorkCard extends StatelessWidget {
         // pushed to a common baseline instead of floating wherever the role
         // text happens to end.
         children: [
-          StationCard(
-            seedId: app.id,
-            name: app.name,
-            width: width,
-            height: artHeight,
-            domainLabel: domainLabel,
-            country: origin?.country,
-            latitude: origin?.latitude,
-            longitude: origin?.longitude,
-          ),
+          if (app.screenshot case final screenshot?)
+            ThreeStageImage(
+              image: contentImage(context, screenshot),
+              width: width,
+              height: artHeight,
+              semanticLabel: app.name,
+              fallback: StationCard(
+                seedId: app.id,
+                name: app.name,
+                width: width,
+                height: artHeight,
+                domainLabel: domainLabel,
+                country: origin?.country,
+                latitude: origin?.latitude,
+                longitude: origin?.longitude,
+              ),
+            )
+          else
+            StationCard(
+              seedId: app.id,
+              name: app.name,
+              width: width,
+              height: artHeight,
+              domainLabel: domainLabel,
+              country: origin?.country,
+              latitude: origin?.latitude,
+              longitude: origin?.longitude,
+            ),
+          if (app.screenshot != null) ...[
+            SizedBox(height: tokens.space12),
+            Text(app.name, style: type.heading),
+          ],
+          ContentGallery(entries: app.media, label: app.name),
           if (role != null) ...[
             SizedBox(height: tokens.space12),
             Text(role, style: type.bodyS.copyWith(color: tokens.textSecondary)),

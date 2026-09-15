@@ -66,6 +66,9 @@ class Profile with _$Profile {
 
     /// Tools the owner states they use.
     @Default(<String>[]) List<String> tools,
+    @Default(<ProfileLink>[]) List<ProfileLink> links,
+    NameAudio? nameAudio,
+    SiteAppearance? appearance,
   }) = _Profile;
 
   const Profile._();
@@ -146,4 +149,46 @@ class Portrait with _$Portrait {
   /// Decodes the documented JSON shape.
   factory Portrait.fromJson(Map<String, dynamic> json) =>
       _$PortraitFromJson(json);
+}
+
+/// An owner-supplied link in display order.
+@freezed
+class ProfileLink with _$ProfileLink {
+  /// Creates a flexible link without inferring a social account.
+  const factory ProfileLink({
+    required String id,
+    required LocalizedText label,
+    required Uri url,
+    String? icon,
+  }) = _ProfileLink;
+
+  /// Decodes the admin contract.
+  factory ProfileLink.fromJson(Map<String, dynamic> json) =>
+      _$ProfileLinkFromJson(json);
+}
+
+/// A recording selected by the owner, played only on request.
+@freezed
+class NameAudio with _$NameAudio {
+  /// Creates a recording reference.
+  const factory NameAudio({required String src, double? seconds}) = _NameAudio;
+
+  /// Decodes the admin contract.
+  factory NameAudio.fromJson(Map<String, dynamic> json) =>
+      _$NameAudioFromJson(json);
+}
+
+/// Only existing bundled themes and fonts are configurable.
+@freezed
+class SiteAppearance with _$SiteAppearance {
+  /// Missing settings preserve the current site appearance.
+  const factory SiteAppearance({
+    String? theme,
+    String? headingFont,
+    String? bodyFont,
+  }) = _SiteAppearance;
+
+  /// Decodes the admin contract.
+  factory SiteAppearance.fromJson(Map<String, dynamic> json) =>
+      _$SiteAppearanceFromJson(json);
 }

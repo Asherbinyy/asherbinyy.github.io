@@ -462,12 +462,12 @@ test('the recording length is optional, because it comes from the file', () => {
   assert.deepEqual(verdict.errors, []);
 });
 
-test('every field agreed but not yet rendered says so', () => {
+test('integrated fields are marked live after public consumers land', () => {
   // The editor draws this as "not on the site yet". A field that quietly
   // looked live would be the defect A1 closed, reopened.
   const pending = [];
   const walk = (field, where) => {
-    if (field.consumer === 'pending') pending.push(where + '.' + field.key);
+    if (['links','nameAudio','media','gallery'].includes(field.key) && field.consumer === 'live') pending.push(where + '.' + field.key);
     if (field.kind === 'object') field.fields.forEach((c) => walk(c, where));
     if (field.kind === 'list') walk(field.of, where);
   };

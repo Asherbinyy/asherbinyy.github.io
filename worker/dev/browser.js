@@ -120,7 +120,7 @@ export async function launch({width = 1440, height = 900} = {}) {
   };
 
   let session = null;
-  const send = (method, params = {}, useSession = true) =>
+  const send = (method, params = {}, useSession = true, targetSession = session) =>
     new Promise((resolve, reject) => {
       const id = ++nextId;
       const timer = setTimeout(() => {
@@ -129,7 +129,7 @@ export async function launch({width = 1440, height = 900} = {}) {
       }, 20000);
       pending.set(id, {resolve, reject, timer});
       const frame = {id, method, params};
-      if (useSession && session) frame.sessionId = session;
+      if (useSession && targetSession) frame.sessionId = targetSession;
       socket.send(JSON.stringify(frame));
     });
 
@@ -177,6 +177,25 @@ export async function launch({width = 1440, height = 900} = {}) {
 
   const page = {
     logs,
+    async frameEval(expression) {
+      const {targetInfos} = await send('Target.getTargets', {}, false);
+      const target = targetInfos.find(t => t.type === 'iframe');
+      let frameSession = session;
+      let contextId;
+      if (target) {
+        const attached = await send('Target.attachToTarget', {targetId: target.targetId, flatten:true}, false);
+        frameSession = attached.sessionId;
+        await send('Runtime.enable', {}, true, frameSession);
+      } else {
+        const {frameTree} = await send('Page.getFrameTree');
+        const frame = frameTree.childFrames?.[0]?.frame;
+        if (!frame) throw new Error('No preview frame');
+        contextId = (await send('Page.createIsolatedWorld', {frameId:frame.id, worldName:'preview-verification'})).executionContextId;
+      }
+      const result = await send('Runtime.evaluate', {expression, contextId, returnByValue:true, awaitPromise:true, userGesture:true}, true, frameSession);
+      if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
+      return result.result.value;
+    },
 
     /// Installs a helper script and remembers it, so a navigation does not
     /// quietly leave the next page without it.

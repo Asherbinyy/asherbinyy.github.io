@@ -1,3 +1,5 @@
+import 'package:nocturne/content/content_media.dart';
+
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -20,41 +22,49 @@ import 'package:nocturne/core/widgets/focus_ring.dart';
 /// Only links the content actually supplies are rendered. Nothing here is
 /// inferred from a username or guessed from a pattern.
 class ContactLinks extends StatelessWidget {
-  /// Reads the destinations from [contact].
-  const ContactLinks({required this.contact, super.key});
+  /// Reads flexible links, falling back to the fixed contact destinations.
+  const ContactLinks({required this.contact, this.links = const [], super.key});
 
   /// Supplied contact block.
   final Contact contact;
 
+  /// Flexible links replace fixed destinations when supplied.
+  final List<ProfileLink> links;
+
   @override
   Widget build(BuildContext context) {
-    final destinations = <(String, Uri)>[
-      // Linktree first: it is the one page that collects the rest, so a reader
-      // who wants "everything" needs exactly one click.
-      if (contact.linktree case final url?) ('Linktree', url),
-      if (contact.linkedin case final url?) ('LinkedIn', url),
-      if (contact.github case final url?) ('GitHub', url),
-      if (contact.gitlab case final url?) ('GitLab', url),
-      if (contact.medium case final url?) ('Medium', url),
-      ('Email', Uri(scheme: 'mailto', path: contact.email)),
-    ];
+    final destinations = links.isNotEmpty
+        ? [
+            for (final link in links)
+              (link.label.resolve(context.channel), link.url, link.icon),
+          ]
+        : <(String, Uri, String?)>[
+            // Linktree collects the remaining destinations.
+            if (contact.linktree case final url?) ('Linktree', url, null),
+            if (contact.linkedin case final url?) ('LinkedIn', url, null),
+            if (contact.github case final url?) ('GitHub', url, null),
+            if (contact.gitlab case final url?) ('GitLab', url, null),
+            if (contact.medium case final url?) ('Medium', url, null),
+            ('Email', Uri(scheme: 'mailto', path: contact.email), null),
+          ];
 
     return Wrap(
       spacing: context.tokens.space16,
       runSpacing: context.tokens.space8,
       children: [
-        for (final (name, url) in destinations)
-          _ContactLink(name: name, url: url),
+        for (final (name, url, icon) in destinations)
+          _ContactLink(name: name, url: url, icon: icon),
       ],
     );
   }
 }
 
 class _ContactLink extends StatefulWidget {
-  const _ContactLink({required this.name, required this.url});
+  const _ContactLink({required this.name, required this.url, this.icon});
 
   final String name;
   final Uri url;
+  final String? icon;
 
   @override
   State<_ContactLink> createState() => _ContactLinkState();
@@ -98,11 +108,28 @@ class _ContactLinkState extends State<_ContactLink> {
                 child: Center(
                   widthFactor: 1,
                   child: ExcludeSemantics(
-                    child: Text(
-                      widget.name,
-                      style: context.type.body.copyWith(
-                        color: isHovered ? tokens.beaconGlow : tokens.beacon,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (widget.icon case final icon?) ...[
+                          Image(
+                            image: contentImage(context, icon),
+                            width: tokens.space24,
+                            height: tokens.space24,
+                            errorBuilder: (context, error, stack) =>
+                                const Icon(Icons.link),
+                          ),
+                          SizedBox(width: tokens.space8),
+                        ],
+                        Text(
+                          widget.name,
+                          style: context.type.body.copyWith(
+                            color: isHovered
+                                ? tokens.beaconGlow
+                                : tokens.beacon,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -27,7 +27,7 @@ import 'package:nocturne/features/trace/presentation/station_trace.dart';
 abstract final class AppRouter {
   /// The app state owns and disposes this framework navigation service.
   /// Message hosts live inside route focus scopes so Tab can reach them.
-  static GoRouter create() => GoRouter(
+  static GoRouter create({bool preview = false}) => GoRouter(
     routes: [
       for (final route in AppRoute.values)
         GoRoute(
@@ -61,6 +61,7 @@ abstract final class AppRouter {
                     child: _sequenced(
                       route,
                       slug: state.pathParameters['slug'],
+                      preview: preview,
                     ),
                   ),
                 ),
@@ -71,7 +72,9 @@ abstract final class AppRouter {
     ],
     errorBuilder: (context, state) => RouteTitle(
       route: AppRoute.home,
-      child: AppMessengerHost(child: _sequenced(AppRoute.home)),
+      child: AppMessengerHost(
+        child: _sequenced(AppRoute.home, preview: preview),
+      ),
     ),
   );
 
@@ -80,8 +83,12 @@ abstract final class AppRouter {
   /// Its fourth beat draws the rail, header and footer in from their edges, so
   /// it has to sit above the chrome rather than inside the routed content.
   /// Every other route resolves straight to its settled state.
-  static Widget _sequenced(AppRoute route, {String? slug}) {
-    return route == AppRoute.home
+  static Widget _sequenced(
+    AppRoute route, {
+    String? slug,
+    bool preview = false,
+  }) {
+    return route == AppRoute.home && !preview
         ? AcquisitionSequence(
             builder: (context, contentReveal, chromeReveal) => _framed(
               route,

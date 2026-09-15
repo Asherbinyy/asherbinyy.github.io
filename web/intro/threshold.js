@@ -21,6 +21,10 @@ function tearDown(host, scene) {
 export async function mountThreshold() {
   const host = document.getElementById(HOST_ID);
   if (!host) return;
+  if (new URLSearchParams(location.search).get('preview') === '1') {
+    host.remove();
+    return;
+  }
 
   let Threshold;
   try {

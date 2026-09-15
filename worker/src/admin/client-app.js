@@ -1,14 +1,4 @@
-/**
- * Navigation, the editor panel, the outline and the buttons at the bottom.
- *
- * The layout is the one the owner asked for: sections down the left, the
- * thing being edited in the middle, and a panel on the right. The right-hand
- * panel is **not** the site. It says so, in the panel, because the contract
- * in `20-APP-ADMIN-CONTRACT.md` is explicit that a differently-styled admin
- * mock-up must not be presented as a live preview. It renders the draft as an
- * outline so there is something honest to look at and something for the real
- * preview adapter to replace when Codex lands it.
- */
+/** Page navigation, schema editors, text outline and real Flutter preview controls. */
 
 export const clientApp = `
 // --- navigation ------------------------------------------------------------
@@ -249,6 +239,14 @@ function renderEditor() {
   }
   head.append(titles, languageTabs());
   pane.append(head);
+  if (state.file === 'profile.json' && state.path.length === 1 && state.path[0] === 'appearance') {
+    const reset = node('button', 'small', 'Reset appearance to site defaults');
+    reset.id = 'resetAppearance';
+    reset.type = 'button';
+    reset.disabled = !entry.draft.appearance;
+    reset.onclick = () => { write(['appearance'], undefined); render(); };
+    pane.append(reset, node('p', 'note', 'Reset creates an unpublished change. Review and publish to apply it to the website.'));
+  }
   if (pageRoot && pageFor(state.page).unavailable) pane.append(node('p', 'note', pageFor(state.page).unavailable));
 
   if (here.root === true && document_.warning) {
@@ -428,7 +426,7 @@ function renderBar() {
     ? (entry.source === 'published'
         ? 'Published copy' +
           (typeof entry.revision === 'number' ? ', revision ' + entry.revision : '')
-        : 'Showing the copy shipped with the app')
+        : 'Bundled content')
     : '';
 }
 
@@ -490,18 +488,19 @@ async function withdraw() {
 
 // --- starting up -----------------------------------------------------------
 
+let signingIn = false;
 async function unlock() {
+  if (signingIn) return;
   const secret = el('token').value.trim();
   if (!secret) return;
+  signingIn = true;
+  el('unlock').disabled = true;
   say('Checking...');
   try {
     // What the browser keeps from here on is a session, not the credential
     // that can rewrite the site.
     await signInWith(secret);
     el('token').value = '';
-    document.body.classList.remove('locked');
-    el('gate').hidden = true;
-    el('frame').classList.add('on');
     say('Loading your content...');
     // Every document, not just the one being opened: the drafts have to exist
     // for the rail to show which pages have unsaved work, and a stop pointing
@@ -510,6 +509,9 @@ async function unlock() {
     // Which revision each page is at, so a publish can say what it was built
     // on and be told when that is no longer true.
     await loadHeads();
+    document.body.classList.remove('locked');
+    el('gate').hidden = true;
+    el('frame').classList.add('on');
     const wanted = readHash();
     if (wanted && wanted.view === 'document') {
       state.page = wanted.page || null;
@@ -527,13 +529,30 @@ async function unlock() {
   } catch (error) {
     say(error.message, 'bad');
     el('token').focus();
+  } finally {
+    signingIn = false;
+    el('unlock').disabled = false;
   }
 }
 
-el('menuToggle').onclick = () => {
-  const open = document.body.classList.toggle('menuOpen');
+function syncPanelControls() {
+  const small = matchMedia('(max-width: 760px)').matches;
+  const open = small ? document.body.classList.contains('menuOpen') : !document.body.classList.contains('navClosed');
   el('menuToggle').setAttribute('aria-expanded', String(open));
+  el('menuToggle').setAttribute('aria-label', (open ? 'Minimize' : 'Expand') + ' navigation');
+  el('menuToggle').textContent = open ? '‹' : '☰';
+  el('menuToggle').title = (open ? 'Minimize' : 'Expand') + ' navigation';
+  const narrow = matchMedia('(max-width: 1000px)').matches;
+  const shown = narrow ? document.body.classList.contains('showPreview') : !document.body.classList.contains('previewClosed');
+  el('previewToggle').setAttribute('aria-expanded', String(shown));
+  el('previewToggle').textContent = shown ? 'Hide preview' : 'Show preview';
+}
+el('menuToggle').onclick = () => {
+  document.body.classList.toggle(matchMedia('(max-width: 760px)').matches ? 'menuOpen' : 'navClosed');
+  syncPanelControls();
 };
+window.addEventListener('resize', syncPanelControls);
+syncPanelControls();
 el('paletteToggle').onclick = () => {
   const light = document.documentElement.dataset.palette !== 'light';
   document.documentElement.dataset.palette = light ? 'light' : 'dark';
@@ -550,9 +569,16 @@ el('history').onclick = openHistory;
 el('withdraw').onclick = withdraw;
 el('sheetClose').onclick = () => el('sheet').close();
 el('previewToggle').onclick = () => {
-  const showing = document.body.classList.toggle('showPreview');
-  el('previewToggle').setAttribute('aria-pressed', String(showing));
+  document.body.classList.toggle(matchMedia('(max-width: 1000px)').matches ? 'showPreview' : 'previewClosed');
+  syncPanelControls();
 };
+el('minimizePreview').onclick = () => {
+  document.body.classList.remove('showPreview');
+  document.body.classList.add('previewClosed');
+  syncPanelControls();
+  el('previewToggle').focus();
+};
+el('previewSize').onchange = () => document.body.classList.toggle('previewThird', el('previewSize').value === 'third');
 el('showPreview').onclick = () => setRightPane('preview');
 el('showOutline').onclick = () => setRightPane('outline');
 el('previewRetry').onclick = () => mountPreview();
@@ -583,12 +609,12 @@ async function resume() {
       headers: {authorization: 'Bearer ' + remembered},
     });
     if (!response.ok) throw new Error('gone');
-    document.body.classList.remove('locked');
-    el('gate').hidden = true;
-    el('frame').classList.add('on');
     say('Loading your content...');
     await Promise.all(SCHEMA.documents.map((entry) => ensure(entry.file)));
     await loadHeads();
+    document.body.classList.remove('locked');
+    el('gate').hidden = true;
+    el('frame').classList.add('on');
     const wanted = readHash();
     if (wanted && wanted.view === 'document') {
       state.page = wanted.page || null;

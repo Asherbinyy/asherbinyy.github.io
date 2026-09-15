@@ -39,7 +39,7 @@ const state = {
   expires: null,
   insights: null,
   insightsError: '',
-  rightPane: 'outline',
+  rightPane: 'preview',
   release: null,
   releaseError: '',
   atomicStore: null,
@@ -94,17 +94,17 @@ async function api(path, options) {
 /// carrying somebody else's revision number is a draft with permission to
 /// overwrite work it has never seen.
 async function fetchDocument(name) {
-  const shipped = await fetch(BUNDLE + '/' + name).then((r) => r.json());
-  const response = await api('/v1/admin/content/' + name).catch(() => null);
-  if (response && response.ok) {
-    const body = await response.json();
-    return {
-      shipped: shipped,
-      published: body.published ? body.document : null,
-      revision: body.revision,
-    };
-  }
-  return {shipped: shipped, published: null, revision: 0};
+  const bundle = await fetch(BUNDLE + '/' + name);
+  if (!bundle.ok) throw new Error('Cannot load current content (' + bundle.status + ').');
+  const shipped = await bundle.json();
+  const response = await api('/v1/admin/content/' + name);
+  if (!response.ok) throw new Error('Cannot read the published revision (' + response.status + '). Try again before editing.');
+  const body = await response.json();
+  return {
+    shipped: shipped,
+    published: body.published ? body.document : null,
+    revision: body.revision,
+  };
 }
 
 /// Loads a document once. A second visit gets the draft already in progress.

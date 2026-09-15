@@ -21,7 +21,7 @@
  *
  * Adding a field here does **not** make it appear on the site. It makes it
  * editable and storable. The public consumer is Codex's work, and until it
- * exists the field is marked `consumer: 'pending'` and the editor says so
+ * exists the field is marked `consumer: 'live'` and the editor says so
  * rather than implying the site will show it. See `20-APP-ADMIN-CONTRACT.md`.
  */
 
@@ -65,7 +65,7 @@ const localised = (key, label, options = {}) => {
 /// playback, which is the existing behaviour stated plainly rather than a new
 /// hosting decision: the image store is not a video host.
 ///
-/// `consumer: 'pending'` on the fields that hold it. The contract is agreed,
+/// `consumer: 'live'` on the fields that hold it. The contract is agreed,
 /// the public components are not built, and the editor says so rather than
 /// implying a gallery will appear.
 const galleryEntry = () => ({
@@ -236,8 +236,8 @@ export const documents = [
         kind: 'list',
         label: 'Links',
         addLabel: 'Add a link',
-        consumer: 'pending',
-        help: 'Agreed with the public app but not rendered yet. Replaces the fixed contact fields above once it is; both work in the meantime.',
+        consumer: 'live',
+        help: 'Shown in About in this order. When empty, the existing contact links are used.',
         of: {
           kind: 'object',
           titleFrom: 'label',
@@ -264,7 +264,7 @@ export const documents = [
               kind: 'asset',
               media: 'image',
               label: 'Icon override',
-              help: 'Left empty, the site picks a mark from the address. An address it has no mark for gets a plain link icon, never an invented brand.',
+              help: 'Optional image beside the link. Without one, the link is text only.',
             },
           ],
         },
@@ -273,8 +273,8 @@ export const documents = [
         key: 'nameAudio',
         kind: 'object',
         label: 'How your name sounds',
-        consumer: 'pending',
-        help: 'The site plays a bundled recording today. Once it reads this, changing it here changes it there.',
+        consumer: 'live',
+        help: 'Overrides the bundled name recording. Played only when a visitor presses the button.',
         fields: [
           {
             key: 'src',
@@ -295,6 +295,11 @@ export const documents = [
           },
         ],
       },
+      ...['skills', 'learning', 'tools'].map((key) => ({key, kind: 'list', label: {skills: 'Skills', learning: 'Learning', tools: 'Tools'}[key], addLabel: 'Add item', of: {kind: 'text'}, consumer: 'live'})),
+      {key: 'appearance', kind: 'object', label: 'Site appearance', consumer: 'live', fields: [
+        {key: 'theme', kind: 'choice', label: 'Default theme', options: [{value: 'kemet', label: 'Kemet — dark'}, {value: 'deshret', label: 'Deshret — light'}], help: 'Visitors can still choose their own theme.'},
+        ...['headingFont', 'bodyFont'].map((key) => ({key, kind: 'choice', label: key === 'headingFont' ? 'Heading font' : 'Body font', options: [{value: 'spaceGrotesk', label: 'Space Grotesk'}, {value: 'ibmPlexSans', label: 'IBM Plex Sans'}], help: 'Uses bundled fonts. Arabic keeps IBM Plex Sans Arabic.'})),
+      ]},
       {
         key: 'reach',
         kind: 'list',
@@ -395,8 +400,8 @@ export const documents = [
               kind: 'list',
               label: 'Gallery',
               addLabel: 'Add a picture or video',
-              consumer: 'pending',
-              help: 'Agreed with the public app but not rendered yet. The gallery appears only where there is something in it.',
+              consumer: 'live',
+              help: 'Shown in the project gallery. Video links open only when pressed.',
               of: galleryEntry(),
             },
             {
@@ -626,8 +631,8 @@ export const documents = [
               kind: 'list',
               label: 'Gallery',
               addLabel: 'Add a picture or video',
-              consumer: 'pending',
-              help: 'Agreed with the public app; the Off duty detail view that shows it is R6 work and is not built.',
+              consumer: 'live',
+              help: 'Shown with this interest. Video links open only when pressed.',
               of: galleryEntry(),
             },
           ],

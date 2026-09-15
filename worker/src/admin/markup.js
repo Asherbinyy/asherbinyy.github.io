@@ -31,7 +31,7 @@ export const markup = `
 <div id="frame">
   <div id="brand">
     <h1>${brandName}<span>Administration</span></h1>
-    <button id="menuToggle" type="button" aria-controls="rail" aria-expanded="false">Menu</button>
+    <button id="menuToggle" type="button" aria-controls="rail" aria-expanded="true" aria-label="Minimize navigation">☰</button>
   </div>
 
   <div id="top">
@@ -39,8 +39,8 @@ export const markup = `
     <span class="grow"></span>
     <button id="paletteToggle" type="button" class="small" aria-label="Switch admin to light appearance">Light</button>
     <span id="status" class="status" role="status" aria-live="polite"></span>
-    <button id="previewToggle" type="button" class="small" aria-pressed="false">
-      Preview / outline
+    <button id="previewToggle" type="button" class="small" aria-controls="previewPane" aria-expanded="true">
+      Hide preview
     </button>
   </div>
 
@@ -51,6 +51,11 @@ export const markup = `
   </div>
 
   <aside id="previewPane" aria-label="Preview">
+    <div class="paneTools">
+      <label for="previewSize" class="note">Preview width</label>
+      <select id="previewSize" aria-label="Preview width"><option value="half">Half screen</option><option value="third">Third of screen</option></select>
+      <span class="grow"></span><button id="minimizePreview" type="button" class="small" aria-label="Minimize preview and outline">Minimize</button>
+    </div>
     <div class="paneTabs" role="tablist" aria-label="Right-hand panel">
       <button id="showPreview" type="button" role="tab" aria-selected="true">
         Preview
@@ -61,7 +66,7 @@ export const markup = `
     </div>
 
     <div id="previewWrap" hidden>
-      <p class="note">The public Flutter preview is not integrated yet. The local test preview does not show the portfolio layout.</p>
+
       <p class="previewNote" id="previewState">Waiting for the preview...</p>
       <button id="previewRetry" type="button" class="small" hidden>Try again</button>
       <div id="previewFrame"></div>
@@ -69,7 +74,7 @@ export const markup = `
 
     <div id="outlineWrap">
       <p class="previewNote">
-        Draft content only. This is <strong>not</strong> the website. Layout and motion require the connected Flutter preview.
+        Text outline of the current draft. Switch to Preview to see the website.
       </p>
       <div id="outline" class="outline"></div>
     </div>

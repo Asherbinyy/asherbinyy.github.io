@@ -1,3 +1,4 @@
+import 'package:nocturne/content/content_media.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 
 import 'dart:async';
@@ -524,8 +525,8 @@ class _SampleThumbnailState extends State<_SampleThumbnail> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(Tokens.controlRadius),
-                  child: Image.asset(
-                    widget.evidence.src,
+                  child: Image(
+                    image: contentImage(context, widget.evidence.src),
                     fit: BoxFit.cover,
                     // A missing file is a missing artefact, not a broken page.
                     errorBuilder: (context, _, _) =>
@@ -564,7 +565,10 @@ class _EvidenceDialog extends StatelessWidget {
               // A poster is taller than any viewport, so it scrolls rather
               // than shrinking to illegibility.
               child: SingleChildScrollView(
-                child: Image.asset(src, fit: BoxFit.contain),
+                child: Image(
+                  image: contentImage(context, src),
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             SizedBox(height: tokens.space12),

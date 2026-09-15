@@ -4,25 +4,25 @@ const sitePages = [
   {id: 'site-home', label: 'Home', route: '/', description: 'Introduction, figures and the work shown on the home page.', sections: [
     ['Introduction', 'profile.json', [], 'Name, greeting, positioning, figures and countries.'],
     ['Career', 'career.json', ['roles'], 'Work history shared with Journey.'],
-  ], unavailable: 'Skills, learning topics and tools need the current profile fields added to the admin schema.'},
+  ]},
   {id: 'journey', label: 'Journey', route: '/journey', description: 'Career stops, locations and linked projects.', sections: [
     ['Journey stops', 'career.json', ['roles'], 'Add, reorder and edit stops, dates and project references.'],
   ]},
   {id: 'work', label: 'Work', route: '/work', description: 'Projects and their individual detail pages.', sections: [
     ['Projects', 'apps.json', ['apps'], 'Descriptions, store links, screenshots and galleries.'],
-  ], unavailable: 'New gallery fields can be edited, but the public gallery renderer is still pending.'},
+  ]},
   {id: 'writing', label: 'Writing', route: '/writing', description: 'Articles supplied by the connected Medium feed.', sections: [
     ['Medium profile', 'profile.json', ['contact'], 'Edit the existing Medium contact link.'],
   ], unavailable: 'Article titles, covers and feed selection are managed outside this panel. Changing the contact link does not change the article feed.'},
   {id: 'about', label: 'About', route: '/about', description: 'Biography, portrait, education and contact details.', sections: [
     ['Biography & portrait', 'profile.json', [], 'Biography, portrait, location and contact details.'],
     ['Education & research', 'education.json', ['entries'], 'Qualifications, modules, marks and supplied evidence.'],
-    ['Links', 'profile.json', ['links'], 'New flexible links await the public renderer.'],
-    ['Name recording', 'profile.json', ['nameAudio'], 'Upload or record pronunciation; the public player integration is pending.'],
+    ['Links', 'profile.json', ['links'], 'Public links in your chosen order.'],
+    ['Name recording', 'profile.json', ['nameAudio'], 'Upload or record pronunciation for the public player.'],
   ]},
   {id: 'courtyard', label: 'Courtyard', route: '/courtyard', description: 'Interests, favourite things and the game.', sections: [
     ['Interests', 'interests.json', ['interests'], 'Interest text, links and galleries.'],
-  ], unavailable: 'Game physics, levels and leaderboard controls are not available in the admin. Interest galleries still await the public renderer.'},
+  ], unavailable: 'Game physics, levels and leaderboard controls are not available in the admin.'},
   {id: 'resume', label: 'CV & brief', route: '/cv/', description: 'Shared information used by the generated CV and brief.', sections: [
     ['Identity & CV file', 'profile.json', [], 'Identity, contact details and the bundled PDF path.'],
     ['Experience', 'career.json', ['roles'], 'Career history shared with Home and Journey.'],
@@ -31,13 +31,13 @@ const sitePages = [
 ];
 
 const pageFields = {
-  'site-home': ['name', 'displayName', 'greeting', 'positioning', 'status', 'venture', 'stats', 'reach', 'contact', 'cvFile'],
-  about: ['name', 'displayName', 'biography', 'portrait', 'location', 'status', 'contact'],
+  'site-home': ['name', 'displayName', 'greeting', 'positioning', 'status', 'venture', 'stats', 'reach', 'contact', 'cvFile', 'skills', 'learning', 'tools'],
+  about: ['name', 'displayName', 'biography', 'portrait', 'location', 'status', 'contact', 'skills', 'learning', 'tools'],
 };
 
 function closeMenu() {
   document.body.classList.remove('menuOpen');
-  el('menuToggle').setAttribute('aria-expanded', 'false');
+  syncPanelControls();
 }
 
 function pageFor(id) { return sitePages.find((page) => page.id === id); }
@@ -83,44 +83,8 @@ function pageHeading(title, description, route) {
 }
 
 function renderAppearance() {
-  const pane = el('editor');
-  pane.replaceChildren(pageHeading('Appearance', 'The portfolio’s themes, typography and page backgrounds.'));
-  const notice = node('div', 'warn');
-  notice.append(node('strong', null, 'Site settings are not connected yet'), node('p', null, 'The public app does not read published appearance settings. These reference samples cannot change the website.'));
-  pane.append(notice);
-  const themes = node('div', 'pageGrid');
-  for (const [label, palette] of [['Kemet', 'dark'], ['Deshret', 'light']]) {
-    const sample = node('section', 'paletteSample');
-    sample.dataset.palette = palette;
-    sample.append(node('strong', null, label), node('p', null, 'Permanent base theme'), node('p', 'note', 'Space Grotesk headings · IBM Plex body text'));
-    const swatches = node('div', 'swatches');
-    swatches.setAttribute('aria-hidden', 'true');
-    for (const role of ['surface', 'raised', 'text', 'gold']) {
-      const swatch = node('span');
-      swatch.style.background = 'var(--' + role + ')';
-      swatches.append(swatch);
-    }
-    sample.append(swatches);
-    themes.append(sample);
-  }
-  pane.append(themes);
-  const settings = node('div', 'group');
-  settings.append(node('h3', null, 'Typography & backgrounds'));
-  const table = node('table', 'dataTable');
-  const caption = node('caption', 'note', 'Current design references and unavailable settings');
-  table.append(caption);
-  for (const [name, value] of [
-    ['Headings', 'Space Grotesk'], ['Latin body text', 'IBM Plex Sans'],
-    ['Arabic text', 'IBM Plex Sans Arabic'], ['Numbers', 'IBM Plex Mono'],
-    ['Font selection', 'Unavailable until the app reads published font settings'],
-    ['Page backgrounds', 'Unavailable until the app exposes supported patterns'],
-    ['Extra presets', 'Unavailable; no approved preset definitions'],
-  ]) {
-    const row = node('tr');
-    const heading = node('th', null, name); heading.scope = 'row';
-    row.append(heading, node('td', null, value)); table.append(row);
-  }
-  settings.append(table); pane.append(settings);
+  state.page = null;
+  go('profile.json', ['appearance']);
 }
 
 // Use the existing font files through the already allowed bundle connection.

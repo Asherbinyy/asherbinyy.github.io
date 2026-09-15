@@ -96,12 +96,13 @@ test('the panel has a section list, an editor and a third column', async () => {
   }
 });
 
-test('the third column says it is not the website', async () => {
-  // The integration contract forbids presenting a differently styled admin
-  // rendering as a preview of the live site. Until the real adapter exists,
-  // the panel has to say so where the owner is looking.
+test('the text outline stays distinct from the connected website preview', async () => {
   const html = await page();
-  assert.match(html, /not<\/strong> the\s+website/);
+  assert.match(html, /Text outline of the current draft/);
+  assert.match(html, /Switch to Preview to see the website/);
+  for (const id of ['menuToggle', 'previewToggle', 'minimizePreview', 'previewSize']) {
+    assert.match(html, new RegExp('id="' + id + '"'));
+  }
 });
 
 test('every label in the static markup points at a control that exists', async () => {

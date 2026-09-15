@@ -1,3 +1,9 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nocturne/content/asset_content.dart';
+import 'package:nocturne/content/content_result.dart';
+import 'package:nocturne/content/models/profile.dart';
+import 'package:nocturne/core/net/relay.dart';
+
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -19,15 +25,15 @@ import 'package:nocturne/core/motion/reduced_motion.dart';
 /// It is a button rather than anything that plays on arrival: audio a visitor
 /// did not ask for is the single rudest thing a page can do, and browsers
 /// block it anyway.
-class NamePronunciation extends StatefulWidget {
+class NamePronunciation extends ConsumerStatefulWidget {
   /// Creates the control.
   const NamePronunciation({super.key});
 
   @override
-  State<NamePronunciation> createState() => _NamePronunciationState();
+  ConsumerState<NamePronunciation> createState() => _NamePronunciationState();
 }
 
-class _NamePronunciationState extends State<NamePronunciation>
+class _NamePronunciationState extends ConsumerState<NamePronunciation>
     with SingleTickerProviderStateMixin {
   AudioPlayer? _player;
   StreamSubscription<void>? _finished;
@@ -59,7 +65,19 @@ class _NamePronunciationState extends State<NamePronunciation>
     }
     try {
       await player.stop();
-      await player.play(AssetSource('audio/name.m4a'));
+      final profile = ref.read(profileProvider).valueOrNull;
+      final source = profile is ContentReady<Profile>
+          ? profile.data.nameAudio?.src
+          : null;
+      if (source != null && source.startsWith('/v1/media/')) {
+        final relay = ref.read(relayEndpointProvider);
+        if (relay == null) throw StateError('No media relay');
+        await player.play(UrlSource(relay.resolve(source).toString()));
+      } else {
+        await player.play(
+          AssetSource(source?.replaceFirst('assets/', '') ?? 'audio/name.m4a'),
+        );
+      }
     } catch (_) {
       // A browser that will not decode it is not an error worth showing: the
       // name is written directly above.

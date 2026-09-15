@@ -9,10 +9,14 @@ abstract final class NocturneTheme {
   static ThemeData create({
     required double viewportWidth,
     bool isArabic = false,
+    String headingFamily = Tokens.displayFamily,
+    String bodyFamily = Tokens.bodyFamily,
   }) => ThemeFactory.create(
     tokens: nocturneTokens,
     brightness: Brightness.dark,
     viewportWidth: viewportWidth,
     isArabic: isArabic,
+    headingFamily: headingFamily,
+    bodyFamily: bodyFamily,
   );
 }

@@ -44,14 +44,14 @@ test('nothing has been quietly marked as unblocked', () => {
   assert.ok(blockedOn.every((entry) => entry.satisfied === false));
 });
 
-test('appearance shows its integration limit without adding a publishable document', async () => {
+test('appearance uses the existing profile revision and supported settings', async () => {
   const page = await handleRequest(
     new Request('https://worker.example/admin'),
     environment(),
   );
   const html = await page.text();
-  assert.match(html, /Site settings are not connected yet/);
-  assert.match(html, /These reference samples cannot change the website/);
+  assert.match(html, /go\('profile.json', \['appearance'\]\)/);
+  assert.ok(documents.find(d => d.file === 'profile.json').fields.some(f => f.key === 'appearance'));
   assert.ok(!documents.some((document) => document.file === 'appearance.json'));
 });
 

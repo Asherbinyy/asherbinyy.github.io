@@ -128,7 +128,7 @@ class _About extends StatelessWidget {
         SizedBox(height: tokens.space48),
         Text(l10n.aboutContact, style: context.type.heading),
         SizedBox(height: tokens.space16),
-        ContactLinks(contact: profile.contact),
+        ContactLinks(contact: profile.contact, links: profile.links),
         SizedBox(height: tokens.space48),
         Text(l10n.aboutWriting, style: context.type.heading),
         SizedBox(height: tokens.space16),

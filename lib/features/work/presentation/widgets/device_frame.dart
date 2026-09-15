@@ -1,3 +1,4 @@
+import 'package:nocturne/content/content_media.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 
 import 'package:material_ui/material_ui.dart';
@@ -170,7 +171,7 @@ class _Frame extends StatelessWidget {
       children: [
         InstrumentPanel(
           child: ThreeStageImage(
-            image: AssetImage(screen.src),
+            image: contentImage(context, screen.src),
             width: DeviceFrame.width,
             height: DeviceFrame.height,
             // A missing screenshot resolves to the procedural station card
