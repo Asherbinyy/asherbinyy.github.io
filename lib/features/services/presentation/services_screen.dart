@@ -74,7 +74,11 @@ class ServicesScreen extends ConsumerWidget {
               _Offer(services: profile.services),
             SizedBox(height: tokens.space64),
             if (profile != null)
-              _Invitation(contact: profile.contact, locale: locale),
+              _Invitation(
+                contact: profile.contact,
+                links: profile.links,
+                locale: locale,
+              ),
           ],
         ),
       ),
@@ -191,9 +195,14 @@ class _ServiceCardState extends State<_ServiceCard> {
 
 /// "Wanna chat?" — the ask, and the two ways to make it.
 class _Invitation extends StatelessWidget {
-  const _Invitation({required this.contact, required this.locale});
+  const _Invitation({
+    required this.contact,
+    required this.links,
+    required this.locale,
+  });
 
   final Contact contact;
+  final List<ProfileLink> links;
   final AppLocale locale;
 
   @override
@@ -233,7 +242,11 @@ class _Invitation extends StatelessWidget {
             if (contact.calendly case final url?)
               _BookButton(url: url, label: l10n.servicesBook),
             SizedBox(height: tokens.space24),
-            ContactLinks(contact: contact, includesBooking: false),
+            ContactLinks(
+              contact: contact,
+              links: links,
+              includesBooking: false,
+            ),
           ],
         ),
       ),

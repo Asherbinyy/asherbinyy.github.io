@@ -1,13 +1,19 @@
 # Admin and media
 
-Current state: 2026-09-12, after admin phases **A1-A4 and A6**, plus the
+Current local state: September 15. The real Flutter preview, collapsible panels,
+current-content schema, uploaded-media consumers and base theme/font defaults
+are integrated in `phase/codex-admin-ui`. See [review](31-CODEX-ADMIN-UI-REVIEW.md).
+The production Worker received only the separately requested hosting-origin fix;
+the redesigned admin and preview remain local.
+
+Backend delivery baseline: 2026-09-12, after admin phases **A1-A4 and A6**, plus the
 preview channel, the release contract and the fields Codex accepted in
 [`23-ADMIN-INTEGRATION-REPLY.md`](23-ADMIN-INTEGRATION-REPLY.md). A5 remains
 blocked on the renderer allowlist. Audit baseline was `1cfd039`.
 Target workflow and acceptance: [R3](19-REINNOVATION-ROADMAP.md#r3--admin-as-an-editing-workspace). Customization and analytics: [R8](19-REINNOVATION-ROADMAP.md#r8--customization-and-analytics).
 Phases and ownership: [handoff](21-CLAUDE-ADMIN-HANDOFF.md). Requests to the public app: [`worker/contracts/INTEGRATION.md`](../worker/contracts/INTEGRATION.md).
 
-## Existing root/deployed baseline
+## Reviewed backend baseline (local integration branch)
 
 The Worker serves `/admin`, assembled by `worker/src/admin.js` from the modules
 in `worker/src/admin/`. The HTML is public and marked noindex; write endpoints
@@ -134,23 +140,20 @@ seven scenarios, screenshots under `docs/audits/`.
 
 ## Still missing, and why
 
-Everything left is waiting on the public app. Each is written up with a
-concrete ask in [`INTEGRATION.md`](../worker/contracts/INTEGRATION.md).
+The remaining deployment and publication dependencies are recorded in [`INTEGRATION.md`](../worker/contracts/INTEGRATION.md).
 
 Each of these is built up to a boundary and labelled honestly in the
 interface. None of them is finished work.
 
-- **Live preview is not done.** The protocol is verified against a test double;
-  the real adapter does not exist. Point `PREVIEW_ORIGIN` at it when it does.
-- **HTML publication is not done.** The revision and the comparison are built,
-  but nothing serves a release file, and CI triggering, artifact delivery,
-  failure recovery and release rollback are unwritten integration tasks.
-- **A5 is not started.** No themes, fonts or page backgrounds, and no
-  Appearance section, because a setting the renderer does not read is a control
-  that appears to work. The proposal is in
-  [`worker/contracts/appearance.js`](../worker/contracts/appearance.js) with
-  every blocker listed and a test asserting none has been quietly cleared.
-- **The four accepted fields have no renderer**, and are labelled accordingly.
+- **Local real preview works.** Its production build/configuration and exact
+  field-level scrolling remain open.
+- **HTML publication is not done.** The snapshot contract exists, but the
+  public release manifest, coordinated build delivery and rollback are open.
+- **Appearance is partial.** Existing theme/font defaults preview and publish
+  through `profile.appearance`; extra presets and per-page patterns still
+  need a renderer allowlist. The broader `appearance.js` proposal stays blocked.
+- **Accepted media/link/audio fields now have Flutter consumers.** Empty
+  galleries remain absent and missing overrides retain bundled defaults.
 - **Concurrency protection is not enabled in production.** The transactional
   store is implemented and tested; the binding in `wrangler.toml` is
   deliberately commented out, because switching it on migrates where the
@@ -182,10 +185,10 @@ is untouched.
 A2 added `POST /v1/admin/media/audio`, its own endpoint on purpose: MP3, MPEG-4
 audio, WAV and Ogg, each checked on its own header, 2 MiB, with the length read
 where the container states it and reported as unknown where it does not. An
-MPEG-4 file carrying a video brand is refused. Nothing consumes stored audio
-yet — the name recording is played from a hard-coded bundle path.
+MPEG-4 file carrying a video brand is refused. The public name button now consumes `profile.nameAudio`; absent an override,
+it uses the existing bundled recording.
 
-Video currently uses external URLs and deliberate click-to-load playback. R3 must expose that honestly. Direct video storage is a separate hosting decision if needed, not something already supported by image KV storage.
+Video currently uses external URLs opened deliberately by the visitor. Direct video storage is a separate hosting decision if needed, not something already supported by image KV storage.
 
 Real app screenshots are absent from the bundled app entries. `assets/media/apps/` contains guidance only and is not currently declared as a Flutter asset directory. Adding a file there alone does not finish the gallery or publishing pipeline.
 
@@ -207,8 +210,9 @@ Subscriptions were cancelled. The separate daily digest remains dormant because 
 
 ## Running it without production
 
-`worker/dev/serve.js` runs the Worker on localhost with an in-memory store, the
-sanitized fixtures in `worker/contracts/fixtures/` and a throwaway token printed
+`REAL_SITE=1 node worker/dev/serve.js 8790` serves the actual built Flutter site
+and current owner content with in-memory local storage. The default fixture mode
+of `worker/dev/serve.js` instead uses the sanitized fixtures in `worker/contracts/fixtures/` and a throwaway token printed
 at startup. `worker/dev/verify-a1.js` drives it in Chrome and writes
 screenshots. Neither reaches Cloudflare, and the fixtures are a fictional person
 so an editor screenshot can go in a worklog without publishing the owner's

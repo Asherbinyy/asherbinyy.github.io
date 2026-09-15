@@ -1,11 +1,13 @@
 # Open issues
 
-> September 14 admin UI: `phase/codex-admin-ui` contains a local review candidate
-> with page destinations, portfolio styling and charts on existing insights.
-> See `31-CODEX-ADMIN-UI-REVIEW.md`. No acceptance row is closed: appearance,
-> real preview, public consumers and release integration remain open.
+> September 15 admin integration: real Flutter preview, independent panel
+> controls, current Services/social fields, uploaded-media consumers and base
+> theme/font defaults work locally in `phase/codex-admin-ui`. See
+> `31-CODEX-ADMIN-UI-REVIEW.md`. Production integration and owner visual
+> acceptance are separate from these local checks.
 
-**September 13:** owner rejected the broad visual implementation; it has been rolled back to the existing Flutter design. Current scope is content-only. See [handoff](27-CONTINUE-HERE.md). Existing visual/game issues remain open; no design acceptance is implied by prior local tests.
+
+**Historical September 13 scope:** the owner rejected the broad visual implementation and it was rolled back. Later requests authorized Claude’s public-site work and Codex’s admin integration. See [handoff](27-CONTINUE-HERE.md). Existing visual/game issues remain open; no design acceptance is implied by prior local tests.
 
 
 Reviewed 2026-09-11 against source conversations, code and browser captures; updated 2026-09-12 after the owner retained Flutter and admin afc8969 was re-reviewed. [Current admin blockers](25-ADMIN-REREVIEW.md).
@@ -38,7 +40,7 @@ Evidence: [audit](18-PROJECT-AUDIT.md). Historical issue numbers remain searchab
 | UI-6 | Real store/platform logo registry and club crest incomplete | Correct recognizable assets load with useful labels and owner overrides | F1/F5/F6 |
 | UI-7 | Local expandable education and grouped skills restored; overall About acceptance and contact refinement remain open | Portrait/research/interests/links pass section-specific visual and interaction review | F6 |
 | UI-8 | Writing remains separate and repeats on About; Work/Writing integration absent | Agreed Work tabs and preserved URLs work without repeated full feeds | F5/F6 |
-| UI-9 | Off duty galleries and full social-link controls absent | Media affordances appear only where media exists, links work, editor supports them | F1/F6 |
+| UI-9 | Local Flutter galleries and ordered/social-link controls are implemented; bundled galleries contain no supplied entries | Owner supplies media and the integrated release passes review | F1/F6, local implementation complete |
 | UI-10 | Résumé interaction needs refinement; empty footer bar and old rail remain | Chrome and résumé composition reviewed with actual content | F2/F6 |
 | UI-11 | Current empty/loading primitives retain some retired motifs | Loading/fallback vocabulary matches the selected new design without delaying content | F2 |
 
@@ -46,12 +48,12 @@ Evidence: [audit](18-PROJECT-AUDIT.md). Historical issue numbers remain searchab
 
 | ID | Still true | Closes when | Milestone |
 |---|---|---|---|
-| ADM-1 | Claude's branch adds schema-driven editor, language tabs and preview frame; real public adapter remains absent | Professional workspace demonstrates editing and preview on real components | F1, under review |
-| ADM-2 | Claude afc8969 adds flexible field/media editors and fixes async target capture; Flutter consumers remain absent | Supported fields render correctly through actual Flutter preview and public widgets | F1, integration open |
-| ADM-3 | DO content-write transaction passes local runtime concurrency; document/head and complete release reads remain non-atomic (ARR-3); binding disabled in committed config | Atomic read/write regressions pass and an integrated release uses protected storage | F1, merge blocked |
-| ADM-4 | afc8969 fixes derived references, truncated media validation and exact-draft preview gate; actual Flutter preview remains absent | End-to-end real Flutter preview and coherent release validation pass | F1/F8, integration open |
-| ADM-5 | afc8969 still allows concurrent password admission bypass and stale renewal after logout (ARR-1/2) | Atomic admission and revocation/renewal regressions pass | F1, merge blocked |
-| ADM-6 | Extra themes, fonts and per-page patterns absent | Base themes retained and customization previews/publishes/resets correctly | F7 |
+| ADM-1 | Local admin now previews actual Flutter pages with current content and independent panel controls | Owner reviews the workspace; production preview is configured and deployed | F1, local implementation complete |
+| ADM-2 | Local consumers render uploaded images, ordered links, galleries, name audio, services and appearance defaults | Integrated production release verifies supported fields | F1, local implementation complete |
+| ADM-3 | Reviewed backend `edfd04c` fixes atomic document/head and release reads; production binding remains disabled | Activate the reviewed transactional store through an explicit migration/release | F1, production integration open |
+| ADM-4 | Real Flutter draft preview works locally; generated HTML still lacks a coordinated release manifest | Complete production preview and shared release integration | F1/F8, partial local completion |
+| ADM-5 | Closed locally: reviewed `edfd04c` contains atomic admission and revocation/renewal fixes; regression suite passes | Production must use the reviewed backend and transactional binding | F1, reviewed fixes retained |
+| ADM-6 | Existing theme/font defaults now preview, publish and reset through profile content; extra presets/patterns remain undefined | Define approved patterns/presets and verify their public consumers | F7, partial local completion |
 | ADM-7 | Claude's branch adds an aggregate dashboard; production client collection remains disabled. Public integration not certified | Dashboard reports available data honestly and any new collection follows explicit consent design | F7, under review |
 | CON-1 | App screenshot/gallery assets absent; no screenshot fields in bundled apps | Appropriate real public/supplied media and gallery records are available | F1/F5 |
 | CON-2 | Birth year/photo request not implemented | Owner-supplied 1997/Mansoura stop and cleared photo supported without invented exact dates | F4 |

@@ -136,7 +136,7 @@ async function sendDraft() {
   }, 6000);
 }
 
-/// Asks the preview to scroll to whatever is being edited.
+/// Selects the actual public page for the document being edited.
 function previewRoute() {
   const page = pageFor(state.page);
   if (page && page.id !== 'resume') return page.route;

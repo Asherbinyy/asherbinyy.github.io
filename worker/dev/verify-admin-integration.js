@@ -63,6 +63,14 @@ try {
   await navigate('Work'); await page.settle(650); await ready();
   check('preview follows Work navigation', await page.frameEval("location.pathname==='/work'"));
   await capture('work-preview');
+  await navigate('Services');
+  await page.eval("document.querySelector('.pageCard').click()"); await ready();
+  check('Services opens the current public page', await page.frameEval("location.pathname==='/services'"));
+  const service = await page.eval("document.querySelector('#editor input[id^=f-services]').value");
+  await page.eval("setValue(document.querySelector('#editor input[id^=f-services]').id,'Private service preview')"); await ready();
+  check('service edits reach the real page', (await previewText()).includes('Private service preview'));
+  await page.eval(`setValue(document.querySelector('#editor input[id^=f-services]').id,${JSON.stringify(service)})`); await ready();
+  await capture('services-preview');
   await intro(); await ready();
   check('draft survives switching pages', await page.eval("$('f-greeting-en').value==='Private preview check'"));
   await page.eval("$('lang-ar').click()"); await page.settle(900); await ready();
@@ -82,6 +90,7 @@ try {
   await capture('appearance-light-preview');
   await page.eval("$('resetAppearance').click()"); await page.settle(900); await ready();
   check('reset returns appearance to site defaults without an empty saved object', await page.eval("$('resetAppearance').disabled && $('publish').disabled"));
+  check('restored content clears navigation draft indicators', await page.eval("!document.querySelector('#rail > button .pip')"));
   await intro(); await ready();
   for (const [width,height] of [[1280,900],[1024,768],[390,844],[320,740]]) {
     await page.viewport(width,height,width<500); await pause();
@@ -99,8 +108,50 @@ try {
   }
   await page.viewport(1440,900); await navigate('About');
   await page.eval("document.querySelectorAll('.pageCard')[0].click()"); await pause(); await ready();
+  await page.eval("if($('previewToggle').getAttribute('aria-expanded')==='false') $('previewToggle').click()"); await pause();
+  check('current social destinations are editable', await page.eval("['tiktok','instagram','facebook','fiverr','calendly'].every(key=>$('f-contact-'+key)?.value.startsWith('https://'))"));
   check('bundled portrait source resolves to Flutter asset path', await page.eval("[...document.querySelectorAll('#editor img')].filter(n=>n.src.includes('/media/')).every(n=>n.complete && n.naturalWidth>0)"));
   await capture('about-preview');
+  await navigate('Media');
+  await page.eval("fetch('/assets/assets/media/portrait.jpg').then(r=>r.arrayBuffer()).then(bytes=>attachFile('upload-image',[...new Uint8Array(bytes)],'portrait.jpg','image/jpeg'))",true);
+  await page.settle(1000);
+  const uploaded = await page.eval("document.querySelector('.mediaCard .mono')?.innerText");
+  check('media library accepts the existing portrait through its file input', /^\/v1\/media\/[a-f0-9]{32}$/.test(uploaded || ''));
+  if (uploaded) {
+    await navigate('About'); await page.eval("document.querySelector('.pageCard').click()"); await pause();
+    const portrait = await page.eval("$('f-portrait-src').value");
+    await page.eval(`setValue('f-portrait-src',${JSON.stringify(uploaded)})`); await ready(); await pause();
+    let imageLoaded = false;
+    for (let i=0;i<30;i++) {
+      imageLoaded = await page.frameEval(`performance.getEntriesByType('resource').some(r=>new URL(r.name).pathname===${JSON.stringify(uploaded)} && r.responseStatus===200)`);
+      if (imageLoaded) break;
+      await page.settle(350);
+    }
+    check('Flutter requests the uploaded portrait', imageLoaded);
+    await capture('uploaded-portrait-preview');
+    await page.eval(`setValue('f-portrait-src',${JSON.stringify(portrait)})`); await ready();
+  }
+  await intro(); await ready();
+  await page.eval("setValue('f-greeting-en','Local publication check')"); await ready();
+  await page.eval("$('publish').click()"); await page.settle(700);
+  await page.eval("if($('sourceNote')) setValue('sourceNote','Local integration check only; unchanged owner figures are documented in docs/14-PROVENANCE.md.'); clickText('#sheet button','Publish Profile')");
+  await page.settle(900);
+  check('review publishes the selected document locally', await page.eval("$('status').innerText.includes('Published as revision')"));
+  const site = await launch();
+  try {
+    await site.goto('http://127.0.0.1:8790/');
+    let publishedText = '';
+    for(let i=0;i<30;i++) {
+      await site.settle(500);
+      await site.eval("(() => {const roots=[document];for(let i=0;i<roots.length;i++)for(const n of roots[i].querySelectorAll('*')){if(n.shadowRoot)roots.push(n.shadowRoot);if(n.tagName==='FLT-SEMANTICS-PLACEHOLDER'){n.click();return;}}})()");
+      publishedText=await site.eval('document.body.innerText');
+      if(publishedText.includes('Local publication check')) break;
+    }
+    check('normal public app reads the local publication without admin credentials', publishedText.includes('Local publication check'));
+  } finally {
+    await site.close();
+    check('local test publication is withdrawn after verification', await page.eval("fetch('/v1/admin/content/profile.json',{headers:{authorization:'Bearer '+sessionStorage.getItem('portfolio.admin.session')}}).then(r=>r.json()).then(head=>fetch('/v1/admin/content/profile.json',{method:'DELETE',headers:{authorization:'Bearer '+sessionStorage.getItem('portfolio.admin.session'),'x-base-revision':String(head.revision)}})).then(r=>r.ok)",true));
+  }
   check('no JavaScript exception during the workflow', !page.logs.some(log=>log.level==='exception'));
 } finally {
   await writeFile(output+'/checks.json',JSON.stringify(checks,null,2)+'\n');

@@ -5,6 +5,8 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+- Connected the local admin to the current Flutter portfolio, including a real half-screen preview, collapsible panels, Services/social fields, uploaded media and existing theme/font defaults. Removed the rejected decorative admin accents. Production origin migration remains a separate two-URL Worker deployment.
+
 - September 14: latest visual pass rejected; full app/admin ownership transferred to Claude with a tested isolated password-rotation patch. Fixed missing Material icon-font bundling. No merge/deployment.
 
 ### Content

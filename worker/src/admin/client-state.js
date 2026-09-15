@@ -134,7 +134,7 @@ function current() {
 function dirty(name) {
   const entry = state.docs.get(name);
   if (!entry) return false;
-  return JSON.stringify(entry.live) !== JSON.stringify(entry.draft);
+  return countChanges(entry) > 0;
 }
 
 function anyDirty() {

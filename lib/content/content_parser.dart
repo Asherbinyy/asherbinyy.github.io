@@ -30,6 +30,12 @@ abstract final class ContentParser {
       value.contact.gitlab,
       value.contact.medium,
       value.contact.calendly,
+      value.contact.linktree,
+      value.contact.whatsapp,
+      value.contact.tiktok,
+      value.contact.instagram,
+      value.contact.facebook,
+      value.contact.fiverr,
       value.venture?.url,
     ]) {
       if (link != null) _link(link);

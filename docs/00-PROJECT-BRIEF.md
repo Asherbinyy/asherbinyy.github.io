@@ -14,7 +14,7 @@ The audiences remain recruiters, engineering leads, clients and collaborators. T
 ## Current implementation
 
 - Flutter 3.47.2 / Dart 3.13.2, web only, pinned by `.fvmrc`.
-- GitHub Pages at `https://lsherbini.github.io`.
+- GitHub Pages at `https://asherbinyy.github.io`.
 - Public routes: `/`, `/journey`, `/work`, `/work/:slug`, `/writing`, `/about`, `/courtyard`.
 - Static generated HTML at `/cv/` and `/brief/`; `/console` is reserved for the existing dashboard.
 - Cloudflare Worker for published content overrides, media, Medium RSS/covers and `/admin`.

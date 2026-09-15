@@ -197,7 +197,7 @@ body.previewThird { --preview-width: 34vw; }
   #previewToggle { display: inline-flex; }
   body.showPreview[data-view="document"] #editorPane { display: none; }
   body.showPreview[data-view="document"] #previewPane { display: flex; }
-  #previewSize { display: none; }
+  #previewSize, label[for="previewSize"] { display: none; }
 }
 @media (max-width: 760px) {
   #frame, body[data-view]:not([data-view="document"]) #frame { grid-template-columns: minmax(0, 1fr); grid-template-areas: "brand" "top" "rail" "editor" "bar"; grid-template-rows: auto auto auto minmax(0, 1fr) auto; }

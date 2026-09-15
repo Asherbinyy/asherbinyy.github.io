@@ -93,6 +93,7 @@ class _PreviewHostState extends ConsumerState<PreviewHost> {
     '/journey',
     '/work',
     '/writing',
+    '/services',
     '/about',
     '/courtyard',
   };

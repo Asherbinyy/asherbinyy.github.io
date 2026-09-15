@@ -1,92 +1,100 @@
-# Admin UI review — September 14
+# Admin integration review — September 15
 
-Branch: `phase/codex-admin-ui`, based on reviewed backend commit `edfd04c`.
-This is a local review candidate. It is not deployed or visually accepted.
-The source brief is the public checkout's `docs/30-CODEX-ADMIN-HANDOFF.md`.
+Branch: `phase/codex-admin-ui`. Backend baseline: reviewed `edfd04c`.
+The local preview includes the committed public portfolio through `923c87e`.
+This admin integration is local; the separate production Worker origin fix
+contains only the two requested URL changes.
 
 ## Open it
 
-Run `node worker/dev/serve.js 8790` from this checkout and open
-`http://localhost:8790/admin`. This uses the existing isolated in-memory harness
-and fictional content fixtures. The harness prints its local credential; no
-production credential is needed. The review run does not seed analytics.
+Open `http://localhost:8790/admin`. Start it from this checkout with
+`REAL_SITE=1 node --watch worker/dev/serve.js 8790`. The harness prints its
+throwaway local sign-in credential. It serves the current owner-supplied
+`assets/content/` and real compiled Flutter app; analytics are not seeded.
+Its content, media and sessions are in memory and reset when it restarts.
 
-[Desktop and phone capture gallery](audits/2026-09-14-admin-ui/index.html).
-[Browser check results](audits/2026-09-14-admin-ui/checks.json).
-[Account follow-up checks](audits/2026-09-14-admin-ui/account-checks.json).
+Build the preview first:
 
-## What is implemented
+```sh
+fvm flutter build web --wasm --no-web-resources-cdn \
+  --dart-define=ADMIN_PREVIEW_ORIGIN=http://localhost:8790 \
+  --dart-define=WRITING_RELAY=http://localhost:8790
+```
 
-| Page | Working surface | Remaining integration |
+[Desktop and phone gallery](audits/2026-09-15-admin-integration/index.html).
+[Actual browser checks](audits/2026-09-15-admin-integration/checks.json).
+
+## What changed
+
+- Independent expand/minimize controls for navigation and the right panel.
+  The preview defaults to half the window; its smaller setting remains at
+  least one third. On phones, preview and editor have a full-width switch.
+- Removed the admin grain, inset gold navigation stripe, and decorative
+  accent rules. Existing portfolio pigments, fonts and visible focus states
+  remain. Light/Dark in the header changes only the admin tab.
+- The preview renders the actual Flutter pages and validated drafts. It
+  follows the selected page, retains shared edits across pages, switches
+  English/Arabic, and retains the last valid render when validation fails.
+- Current skills, learning topics, tools, Services and social destinations are
+  editable. Existing owner content was merged from the public branch; no
+  replacement biography, claims, translations or media were invented.
+- Uploaded portraits, evidence images, project screenshots, project/interest
+  galleries, ordered custom contact links and name recordings have public
+  consumers. Videos open their external destination only on request.
+- Appearance saves optional `profile.appearance` defaults using the existing
+  Kemet/Deshret themes and bundled Space Grotesk/IBM Plex Sans families.
+  Reset removes the override. Arabic retains its Arabic font and visitors
+  retain their own theme choice.
+
+| Destination | Working surface | Remaining limit |
 | --- | --- | --- |
-| Overview | Existing insights endpoint; range selection, unavailable metrics, observed-date SVG charts with exact-value tables, event/route/audience breakdowns, publication status, retry | No recorded local analytics; endpoint does not expose daily page views separately or exact clicked targets |
-| Home | Introduction, statistics, countries, contact and career editors | New public skills/learning/tools fields are absent from this backend schema |
-| Journey | Direct stop editor with add/reorder/edit and project references | Additional stop types/media depend on schema and public components |
-| Work | Direct project editor with existing links, screenshots and gallery authoring | New gallery rendering remains pending in the public app |
-| Writing | Page-specific explanation and existing Medium contact-link editor | Feed selection and article authoring have no admin contract; the contact link does not control the feed |
-| About | Biography/portrait, education/research, flexible links and name-audio editors | Flexible link and audio public consumers remain pending |
-| Courtyard | Direct interest editor | Gallery public consumer; game/leaderboard settings are unavailable |
-| CV & brief | Shared identity, experience and education editors | Generated documents and metadata require the public release integration; no PDF upload endpoint |
-| Appearance | Accurate Kemet/Deshret samples and typography/background availability | Public settings persistence and consumers, pattern allowlist, extra preset definitions |
-| Media | Existing upload/library/usage controls in the new layout | Unchanged validated formats and direct-video limits |
-| Account | Existing session/password controls in the new layout | Production transactional binding remains disabled as instructed |
+| Overview | Existing insights, date ranges, charts/tables for recorded data, honest disabled/empty state | No invented traffic; no separate daily page-view or exact-click series is supplied |
+| Home | Introduction, figures, countries, skills/tools and shared career | Owner provenance required for claims |
+| Journey | Stops, chronology and project references | No new stop/media types invented |
+| Work | Projects, store links, screenshots and galleries | Bundle has no supplied project screenshots/gallery entries |
+| Articles | Medium contact link and explanation of the current Work feed | Feed selection/article authoring require a separate contract |
+| Services | Current list and contact/booking destinations | Service copy comes only from supplied content |
+| About | Biography, portrait, education, ordered links, recording | No invented translations or records |
+| Courtyard | Interests and galleries | Game/leaderboard settings remain outside the admin |
+| CV & brief | Shared identity, career and education | Static HTML/metadata still need a coordinated site release; no PDF upload |
+| Appearance | Existing theme/font defaults, live preview and reset | Extra presets and per-page pattern selection remain undefined |
+| Media / Account | Existing validated uploads, library and account controls | Production transactional-store activation remains separate |
 
-Shared data keeps a single draft per document across page navigation. Publish
-still applies to that document, which may supply more than one public page.
-The editor says this explicitly; it does not claim isolated per-route publication.
+Publishing applies to the selected document, including shared fields edited
+from other pages. It does not rebuild the CV, brief or search metadata.
 
-The admin uses the existing pigments and bundled Space Grotesk/IBM Plex fonts,
-square panels, structural rules and subtle monochrome grain. The admin-only
-Light/Dark control changes this tab's appearance in memory and writes no new
-preference storage. It does not change the public site's default theme.
+## Preview boundary
 
-## Behavior checked in the browser
+The embedded app accepts only the configured parent origin, its actual parent
+window, the protocol version and a fresh session nonce. It receives documents,
+never admin credentials. Draft batches are parsed before application. Its
+providers use in-memory preferences, disable analytics and published override
+reads, and resolve uploaded media through the admin's relay.
 
-- Sign-in errors appear at the sign-in field.
-- Every destination and five content editors fit desktop and phone sizes.
-- Drafts survive navigation; English and Arabic switch by keyboard, with RTL inputs.
-- Review opens in its own dialog. Cancel preserves the draft and makes no publish.
-- The empty dashboard states collection is disabled and shows unavailable values.
-- Appearance samples remain distinct when the admin itself changes palette.
-- Invalid date ranges show an error, without an automatic backend date substitution.
-- No analytics data is inserted for the screenshots.
+The preview uses the bundled Flutter runtime and a local copy of its flag
+fallback font. The browser workflow checks that the current preview makes no
+third-party requests and writes no cookies, local storage or session storage.
+The public site's ordinary consent flow is unchanged.
 
-The two dialogs previously shared an ID; they now have unique bodies. The UI
-also ignores stale insights/release responses, and a failed release check offers
-a retry instead of automatically repeating requests forever.
+The adapter navigates to pages, not exact individual fields within a page.
+The CV/brief editor previews the shared Home data; static-document rendering
+still requires the coordinated release work.
 
-## Limits of this review
+## Verification
 
-Screenshots use the harness's pre-existing fictional content fixtures, not the
-owner's live data. Chart geometry and stale responses are checked with unit-test
-inputs; no populated chart is presented as real traffic. The browser captures
-show the honest empty state.
+- `node --test worker/test/*.test.js`: 289 passing, none failing or skipped.
+- All four required FVM checks pass: format, analyze, 710 Flutter tests, Wasm build.
+- All 47 browser checks pass. Results and screenshots are linked above, including private edits,
+  validation failure, panel controls, Arabic, Services, appearance/reset and
+  desktop/phone layouts.
+- The existing Cupertino icon-font warning remains in the successful build.
+- Physical Safari/Android and screen-reader acceptance remain open. Passing
+  checks do not establish the owner's visual acceptance.
 
-The default right pane is the draft outline. It explicitly says it is not the
-website. The existing preview protocol is retained, but the actual Flutter
-adapter remains pending. A local protocol fixture cannot prove visual parity.
+## Deployment
 
-No production deployment, bindings, secret rotation, content source changes,
-public-app edits, analytics activation or new dependencies are included.
-Physical-device and screen-reader acceptance remains open. Passing checks do
-not establish the owner's visual acceptance.
-
-## Next dependency work
-
-See the September 14 request in `worker/contracts/INTEGRATION.md`. Claude owns
-the backend and public consumers; Codex owns this panel. Each missing control
-can become active only when it can persist valid data and the site consumes it.
-
-## Verification recorded
-
-- `node --test worker/test/*.test.js`: 289 passing, no failures or skips.
-- `fvm dart format --set-exit-if-changed .`: 281 files, unchanged.
-- `fvm flutter analyze`: no issues.
-- `fvm flutter test`: 666 passing.
-- `fvm flutter build web --wasm`: successful; existing base-branch icon-font warning remains.
-- Browser: 57 primary checks and 5 focused Account/Media follow-up checks passed.
-
-The FVM runs verify the requested `edfd04c` baseline, which predates the public
-checkout's latest Flutter work. The isolated checkout first needed its ignored
-Riverpod/model and localization outputs generated. Initial checks failed until
-that setup was complete; those runs are not counted as passes.
+The redesigned panel and Flutter adapter have not been deployed. Following the owner’s decision to return to the original account, production
+`nocturne-analytics` was separately restored to allow `https://asherbinyy.github.io`
+and load its content bundle. The abandoned lsherbini site origin is refused. No analytics
+collection, content publication, schema migration, secrets or other deployment
+was included in that production change.

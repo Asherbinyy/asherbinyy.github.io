@@ -171,7 +171,8 @@ function renderRail() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'section';
-    button.setAttribute('aria-current', state.view === view.id ? 'page' : 'false');
+    const appearanceOpen = view.id === 'appearance' && state.view === 'document' && !state.page && state.file === 'profile.json' && state.path[0] === 'appearance';
+    button.setAttribute('aria-current', state.view === view.id || appearanceOpen ? 'page' : 'false');
     button.append(node('span', 'name', view.label));
     button.onclick = () => goTo(view.id);
     rail.append(button);

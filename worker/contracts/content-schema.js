@@ -21,7 +21,7 @@
  *
  * Adding a field here does **not** make it appear on the site. It makes it
  * editable and storable. The public consumer is Codex's work, and until it
- * exists the field is marked `consumer: 'live'` and the editor says so
+ * exists the field is marked `consumer: 'pending'` and the editor says so
  * rather than implying the site will show it. See `20-APP-ADMIN-CONTRACT.md`.
  */
 
@@ -65,9 +65,8 @@ const localised = (key, label, options = {}) => {
 /// playback, which is the existing behaviour stated plainly rather than a new
 /// hosting decision: the image store is not a video host.
 ///
-/// `consumer: 'live'` on the fields that hold it. The contract is agreed,
-/// the public components are not built, and the editor says so rather than
-/// implying a gallery will appear.
+/// The public gallery consumes these entries. Video addresses open only on
+/// request; the page does not embed or fetch a video on arrival.
 const galleryEntry = () => ({
   kind: 'object',
   titleFrom: 'alt',
@@ -176,6 +175,11 @@ export const documents = [
           {key: 'medium', kind: 'url', label: 'Medium', nullable: true},
           {key: 'linktree', kind: 'url', label: 'Linktree', nullable: true},
           {key: 'calendly', kind: 'url', label: 'Calendly', nullable: true},
+          {key: 'whatsapp', kind: 'url', label: 'WhatsApp', nullable: true, help: 'Optional explicit link. When empty, the public site uses the supplied phone number.'},
+          {key: 'tiktok', kind: 'url', label: 'TikTok', nullable: true},
+          {key: 'instagram', kind: 'url', label: 'Instagram', nullable: true},
+          {key: 'facebook', kind: 'url', label: 'Facebook', nullable: true},
+          {key: 'fiverr', kind: 'url', label: 'Fiverr', nullable: true},
         ],
       },
       {
@@ -237,7 +241,7 @@ export const documents = [
         label: 'Links',
         addLabel: 'Add a link',
         consumer: 'live',
-        help: 'Shown in About in this order. When empty, the existing contact links are used.',
+        help: 'Shown in contact sections in this order. When empty, the existing contact cards are used.',
         of: {
           kind: 'object',
           titleFrom: 'label',
@@ -264,7 +268,7 @@ export const documents = [
               kind: 'asset',
               media: 'image',
               label: 'Icon override',
-              help: 'Optional image beside the link. Without one, the link is text only.',
+              help: 'Optional image beside the link. Without one, the card uses a neutral link icon.',
             },
           ],
         },
@@ -295,7 +299,7 @@ export const documents = [
           },
         ],
       },
-      ...['skills', 'learning', 'tools'].map((key) => ({key, kind: 'list', label: {skills: 'Skills', learning: 'Learning', tools: 'Tools'}[key], addLabel: 'Add item', of: {kind: 'text'}, consumer: 'live'})),
+      ...['skills', 'learning', 'tools', 'services'].map((key) => ({key, kind: 'list', label: {skills: 'Skills', learning: 'Learning', tools: 'Tools', services: 'Services'}[key], addLabel: 'Add item', of: {kind: 'text'}, consumer: 'live'})),
       {key: 'appearance', kind: 'object', label: 'Site appearance', consumer: 'live', fields: [
         {key: 'theme', kind: 'choice', label: 'Default theme', options: [{value: 'kemet', label: 'Kemet — dark'}, {value: 'deshret', label: 'Deshret — light'}], help: 'Visitors can still choose their own theme.'},
         ...['headingFont', 'bodyFont'].map((key) => ({key, kind: 'choice', label: key === 'headingFont' ? 'Heading font' : 'Body font', options: [{value: 'spaceGrotesk', label: 'Space Grotesk'}, {value: 'ibmPlexSans', label: 'IBM Plex Sans'}], help: 'Uses bundled fonts. Arabic keeps IBM Plex Sans Arabic.'})),
@@ -393,7 +397,7 @@ export const documents = [
               kind: 'asset',
               media: 'image',
               label: 'Screenshot',
-              help: 'Shown on the Work card in place of the drawn panel. Kept while the gallery below is being built.',
+              help: 'Shown on the Work card in place of the drawn panel.',
             },
             {
               key: 'media',

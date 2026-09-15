@@ -11,9 +11,13 @@ const sitePages = [
   {id: 'work', label: 'Work', route: '/work', description: 'Projects and their individual detail pages.', sections: [
     ['Projects', 'apps.json', ['apps'], 'Descriptions, store links, screenshots and galleries.'],
   ]},
-  {id: 'writing', label: 'Writing', route: '/writing', description: 'Articles supplied by the connected Medium feed.', sections: [
+  {id: 'writing', label: 'Articles', route: '/work', description: 'Articles on Work, supplied by the connected Medium feed.', sections: [
     ['Medium profile', 'profile.json', ['contact'], 'Edit the existing Medium contact link.'],
   ], unavailable: 'Article titles, covers and feed selection are managed outside this panel. Changing the contact link does not change the article feed.'},
+  {id: 'services', label: 'Services', route: '/services', description: 'Your supplied services and ways to get in touch.', sections: [
+    ['Services offered', 'profile.json', ['services'], 'Add, reorder and edit the services shown on the public page.'],
+    ['Contact & booking', 'profile.json', ['contact'], 'Contact cards and the booking destination.'],
+  ]},
   {id: 'about', label: 'About', route: '/about', description: 'Biography, portrait, education and contact details.', sections: [
     ['Biography & portrait', 'profile.json', [], 'Biography, portrait, location and contact details.'],
     ['Education & research', 'education.json', ['entries'], 'Qualifications, modules, marks and supplied evidence.'],

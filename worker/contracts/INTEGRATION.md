@@ -1,40 +1,49 @@
-# What the admin needs from the public app
+# Admin / public integration
 
-> September 14 ownership update: Codex owns the admin UI; Claude owns the Worker
-> backend and public Flutter app. Earlier lane names below describe historical
-> work. Backend contracts, validation, auth and the store remain unchanged.
+## September 15 — current local implementation
 
-## September 14 — UI integration requests
+The owner asked Codex to finish the panel and connect it to the current Flutter
+site. The UI branch now includes the reviewed backend and the committed public
+portfolio through `923c87e`. See [review and browser evidence](../../docs/31-CODEX-ADMIN-UI-REVIEW.md).
 
-The panel rebuild on `phase/codex-admin-ui` adds real page destinations and a
-reference-only Appearance page. These are the remaining concrete contracts:
+| Contract | Current state |
+| --- | --- |
+| Five content documents | Existing endpoints, revisions, validation and transactional store retained |
+| Current profile | Skills, learning, tools, services and current social destinations are represented in the schema/editor |
+| `profile.links[]` | Real contact cards consume ordered links and optional uploaded icons; empty list uses existing fixed contact cards |
+| `app.media[]`, `interest.gallery[]` | Public gallery dialogs consume supplied images/captions; video opens an external link on request |
+| `profile.nameAudio` | Public name button consumes the recording; absent override uses the bundled name audio |
+| Uploaded images | Portrait, evidence, screenshot and gallery widgets resolve strict `/v1/media/<hash>` references through the relay |
+| Preview protocol | Actual Flutter adapter validates all documents, keeps private drafts in memory, follows pages, acknowledges rendering and accepts only its configured parent/source/session |
+| Appearance subset | Optional `profile.appearance` contains `theme`, `headingFont`, `bodyFont`; choices are the existing two themes and two bundled Latin font families; reset removes the override |
 
-1. **Daily page-view series:** `insights.byDay` counts all ordinary events.
-   Keep that meaning. Please add a separate daily page-view series if the
-   dashboard is to show views over time. Exact clicked destinations likewise
-   need an available aggregate dimension; do not enable new collection.
-2. **Current profile fields:** the public checkout now consumes skills,
-   learning topics and tools that are absent from this branch's content schema.
-   Please reconcile the supported fields against the public models, with
-   validation and migration. The Home UI states that these are unavailable.
-3. **Appearance:** retain the existing proposed storage keys. Before enabling
-   controls, provide a validated settings document/endpoint, default-theme and
-   per-script font consumers, and an actual pattern allowlist. The new UI shows
-   both base palettes and clearly says it cannot change site settings yet.
-4. **Writing:** the current contact link is editable, but changing it does not
-   select the feed. Please define feed-source/article-selection contracts
-   before the Writing surface offers those controls.
-5. **Preview and release:** the existing protocol and snapshot contract remain
-   intact. Connect the actual Flutter adapter and generated release output.
-   Defaulting the panel to the honest draft outline avoids mistaking the local
-   protocol fixture for a website preview.
-6. **Public consumers:** flexible links, project/interest galleries and name
-   audio remain marked pending. Confirm each live consumer before removing its
-   field warning. Game controls and new stop/media types need explicit schemas.
+No standalone `appearance.json` endpoint or renderer preset/pattern registry
+has been enabled. The broader proposal in `appearance.js` remains a proposal.
+The profile subset is an additive content field, using existing publication,
+review, history and validation.
 
-No backend response, production binding, or consent behavior was changed by
-this request. The UI preserves document-level publication and explains that
-shared document changes may affect several pages.
+## Remaining integration
+
+- Coordinate Flutter, CV/Brief and metadata against one release snapshot and
+  publish the release manifest. Runtime overrides alone do not update HTML.
+- Deploy the preview build with a configured exact admin parent origin and
+  set the Worker's `PREVIEW_ORIGIN` to that public build. Local preview is
+  running; no redesigned panel or public preview build has been deployed.
+- Plan activation/migration of the reviewed production transactional store.
+  Its committed binding remains disabled.
+- Define feed selection/article authoring, per-page patterns and extra presets
+  before exposing those controls. Game controls require their own contract.
+- Add daily page-view and exact-click dimensions only if required and supplied
+  by the endpoint. Do not change what existing event totals mean or activate
+  collection as a side effect.
+- Fine field-level scrolling/highlighting is not implemented; selection
+  currently navigates to the containing public page.
+
+## Historical request record — September 12
+
+The record below describes the pre-integration state and original requests.
+Statements such as “pending” or “no consumer” below are historical; the table
+above is the current implementation status.
 
 ---
 
