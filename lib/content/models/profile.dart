@@ -131,12 +131,12 @@ class Contact with _$Contact {
     Uri? facebook,
     Uri? fiverr,
 
-    /// The chat link as the owner publishes it.
+    /// A chat link given outright, where it is not the same number as [phone].
     ///
-    /// Given rather than derived from [phone], because they are not the same
-    /// number: the phone here is his UK one and the WhatsApp he hands out is
-    /// Egyptian. Deriving one from the other would have sent people to a
-    /// number he does not answer there.
+    /// Absent by choice: the owner wants the UK number the content already
+    /// carries, so the link is derived from that and this stays empty. The
+    /// field remains because the two are not necessarily the same, and the
+    /// day they differ the content should be able to say so.
     Uri? whatsapp,
 
     /// The owner's Linktree, which collects the same destinations in one page.
