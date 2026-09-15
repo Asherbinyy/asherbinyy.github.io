@@ -82,7 +82,7 @@ Finish the requested panel controls, remove the rejected decorative admin stylin
 - `worker/test/admin-panel.test.js` — modified — assert connected preview and panel controls
 - `worker/test/appearance.test.js` — modified — assert the live profile subset while retaining broader proposal gates
 - `worker/test/content-schema.test.js` — modified — assert new fields have declared live consumers
-- `docs/audits/2026-09-15-admin-integration/` — created — 18 real-app captures, browser results and review gallery.
+- `docs/audits/2026-09-15-admin-integration/` — created — 19 real-app captures, browser results and review gallery.
 - `docs/worklog/2026-09-15-04-codex-live-admin-preview.md` — created — integration and verification record.
 
 ## Decisions made
