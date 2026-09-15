@@ -1,8 +1,5 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'package:go_router/go_router.dart';
-
-import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
@@ -13,18 +10,20 @@ import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 
-/// What he works in, at a glance, with the rest a click away.
+/// What he works in, in a panel that says so.
 ///
-/// This was three lines of "Skills: a, b, c" run together as prose. The owner
-/// called it plain text nobody would look at, and he was right: a
-/// comma-separated list of thirteen things is a paragraph pretending to be
-/// data, and it repeated About word for word a page later.
+/// This was three lines of "Skills: a, b, c" run together as prose — plain
+/// text nobody would look at, and the same inventory About prints a page
+/// later. Then it was a bare row of chips with a link off the page, which
+/// left a row of boxes floating under the buttons with nothing saying what
+/// they were.
 ///
-/// What is here now is the first few as chips and a way through to the rest.
-/// Home says enough to place him and hands the detail to the page whose job
-/// that is, rather than printing the same inventory twice.
-class ProfileSkills extends StatelessWidget {
-  /// Shows a sample of [profile]'s skills and links to the full set.
+/// It is a titled panel now, and the rest of the skills open underneath rather
+/// than sending anybody anywhere: a reader who wants to know what he works in
+/// is asking a small question and should not have to change page to have it
+/// answered.
+class ProfileSkills extends StatefulWidget {
+  /// Shows [profile]'s skills, a few at a time.
   const ProfileSkills({required this.profile, super.key});
 
   /// Shared owner-supplied content.
@@ -34,24 +33,76 @@ class ProfileSkills extends StatelessWidget {
   static const int shown = 6;
 
   @override
-  Widget build(BuildContext context) {
-    if (profile.skills.isEmpty) return const SizedBox.shrink();
-    final tokens = context.tokens;
-    final sample = profile.skills.take(shown).toList();
-    final rest = profile.skills.length - sample.length;
+  State<ProfileSkills> createState() => _ProfileSkillsState();
+}
 
-    return Wrap(
-      spacing: tokens.space8,
-      runSpacing: tokens.space8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        for (final skill in sample) _Chip(label: skill),
-        _More(
-          label: rest > 0
-              ? context.l10n.profileSkillsMore(rest)
-              : context.l10n.profileSkillsAll,
+class _ProfileSkillsState extends State<ProfileSkills> {
+  bool _isOpen = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final skills = widget.profile.skills;
+    if (skills.isEmpty) return const SizedBox.shrink();
+
+    final tokens = context.tokens;
+    final visible = _isOpen ? skills : skills.take(ProfileSkills.shown);
+    final rest = skills.length - ProfileSkills.shown;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: tokens.surface,
+        borderRadius: BorderRadius.circular(tokens.controlRadius),
+        border: Border.all(color: tokens.hairline, width: tokens.hairlineWidth),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(tokens.space24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: tokens.space16,
+                  height: tokens.hairlineWidth * 2,
+                  child: ColoredBox(color: tokens.beacon),
+                ),
+                SizedBox(width: tokens.space8),
+                Text(
+                  context.l10n.profileSkills,
+                  style: context.type.telemetryS.copyWith(
+                    color: tokens.textMuted,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: tokens.space16),
+            // Height animated, so the extra rows arrive rather than appearing.
+            AnimatedSize(
+              duration: ReducedMotion.duration(context, Motion.standard),
+              curve: MotionCurves.emphasized,
+              alignment: AlignmentDirectional.topStart,
+              child: Wrap(
+                spacing: tokens.space8,
+                runSpacing: tokens.space8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  for (final skill in visible) _Chip(label: skill),
+                  if (rest > 0)
+                    _More(
+                      label: _isOpen
+                          ? context.l10n.profileSkillsLess
+                          : context.l10n.profileSkillsMore(rest),
+                      isOpen: _isOpen,
+                      onTap: () => setState(() => _isOpen = !_isOpen),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -84,11 +135,13 @@ class _Chip extends StatelessWidget {
   }
 }
 
-/// The way through to the full set, on About.
+/// The chip that opens the rest, and closes them again.
 class _More extends StatefulWidget {
-  const _More({required this.label});
+  const _More({required this.label, required this.isOpen, required this.onTap});
 
   final String label;
+  final bool isOpen;
+  final VoidCallback onTap;
 
   @override
   State<_More> createState() => _MoreState();
@@ -107,7 +160,8 @@ class _MoreState extends State<_More> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     return Semantics(
-      link: true,
+      button: true,
+      expanded: widget.isOpen,
       label: widget.label,
       child: ListenableBuilder(
         listenable: _states,
@@ -116,25 +170,51 @@ class _MoreState extends State<_More> {
           return FocusRing(
             isFocused: _states.value.contains(WidgetState.focused),
             child: InkWell(
-              onTap: () => context.goNamed(AppRoute.about.name),
+              onTap: widget.onTap,
               statesController: _states,
               borderRadius: BorderRadius.circular(tokens.controlRadius),
               mouseCursor: context.platform.isPointer
                   ? SystemMouseCursors.click
                   : MouseCursor.defer,
-              child: Padding(
+              child: AnimatedContainer(
+                duration: ReducedMotion.duration(context, Motion.quick),
+                curve: MotionCurves.emphasized,
                 padding: EdgeInsets.symmetric(
                   horizontal: tokens.space12,
                   vertical: tokens.space8,
                 ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(tokens.controlRadius),
+                  border: Border.all(
+                    color: isLit ? tokens.beacon : tokens.hairlineStrong,
+                    width: tokens.hairlineWidth,
+                  ),
+                ),
                 child: ExcludeSemantics(
-                  child: AnimatedDefaultTextStyle(
-                    duration: ReducedMotion.duration(context, Motion.quick),
-                    curve: MotionCurves.emphasized,
-                    style: context.type.bodyS.copyWith(
-                      color: isLit ? tokens.beaconGlow : tokens.beacon,
-                    ),
-                    child: Text(widget.label),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.label,
+                        style: context.type.bodyS.copyWith(
+                          color: isLit ? tokens.beaconGlow : tokens.beacon,
+                        ),
+                      ),
+                      SizedBox(width: tokens.space8),
+                      AnimatedRotation(
+                        turns: widget.isOpen ? 0.5 : 0,
+                        duration: ReducedMotion.duration(
+                          context,
+                          Motion.standard,
+                        ),
+                        curve: MotionCurves.emphasized,
+                        child: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: Tokens.contactIconSize,
+                          color: isLit ? tokens.beaconGlow : tokens.beacon,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

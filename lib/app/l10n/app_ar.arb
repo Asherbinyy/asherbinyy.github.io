@@ -280,7 +280,7 @@
   "@servicesChatHeading": {
     "description": "Services page: heading over the invitation to get in touch"
   },
-  "servicesChatBody": "أخبرني بما تبنيه ومتى تحتاجه. وسأخبرك بصراحة إن كنت الشخص المناسب له.",
+  "servicesChatBody": "أخبرني بما تبنيه ومتى تحتاجه. ستحصل على إجابة واضحة، وموعد واقعي، ومنتج يُطلق فعلًا.",
   "@servicesChatBody": {
     "description": "Services page: the invitation itself"
   },
@@ -311,6 +311,10 @@
   "stationBackToTop": "العودة إلى الأعلى",
   "@stationBackToTop": {
     "description": "Home: the control that scrolls back to the top"
+  },
+  "profileSkillsLess": "عرض أقل",
+  "@profileSkillsLess": {
+    "description": "Home: closes the skills opened by the more control"
   },
   "profileSkillsMore": "{count} مهارات أخرى",
   "@profileSkillsMore": {
