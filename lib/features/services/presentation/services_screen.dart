@@ -233,7 +233,7 @@ class _Invitation extends StatelessWidget {
             if (contact.calendly case final url?)
               _BookButton(url: url, label: l10n.servicesBook),
             SizedBox(height: tokens.space24),
-            ContactLinks(contact: contact),
+            ContactLinks(contact: contact, includesBooking: false),
           ],
         ),
       ),

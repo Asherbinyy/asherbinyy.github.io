@@ -182,23 +182,33 @@
     //
     // A pinch changes the *visual* viewport, not the layout one. On an
     // ordinary page that is a magnifier: the layout is untouched and the
-    // browser scales the pixels. Flutter listens to visualViewport and resizes
-    // its canvas to match, so a pinch made the canvas smaller than the page
-    // and left the black margins the owner photographed -- it was relaying out
-    // the site underneath the magnifying glass.
+    // browser scales the pixels it already painted.
     //
-    // Stopping Flutter from subscribing leaves its canvas at the layout
-    // viewport's size, which is exactly what every other site does. The one
-    // thing this gives up is the on-screen-keyboard inset on mobile, and this
-    // site has no text input to be covered by one.
+    // Flutter measures itself from `visualViewport.width/height` whenever it
+    // recomputes -- see FullPageDimensionsProvider.computePhysicalSize -- so a
+    // pinch shrank its canvas to the magnified region and relaid the site out
+    // underneath the magnifying glass, which is the black margin the owner
+    // photographed. Muting the resize *event* did not help, because the read
+    // is direct and happens on any frame.
+    //
+    // The same method falls back to `window.innerWidth/innerHeight` when there
+    // is no visual viewport, and those are the layout viewport: unchanged by a
+    // pinch, and correctly updated by a real browser zoom (cmd +/-), which
+    // should relayout. So the property is hidden from everything that runs
+    // after this, and Flutter takes the fallback.
+    //
+    // What this gives up is the on-screen-keyboard inset on mobile, computed
+    // from the same object. This site has no text input for a keyboard to
+    // cover.
     (() => {
-      const viewport = window.visualViewport;
-      if (!viewport) return;
-      const add = viewport.addEventListener.bind(viewport);
-      viewport.addEventListener = (type, handler, options) => {
-        if (type === 'resize' || type === 'scroll') return;
-        add(type, handler, options);
-      };
+      try {
+        Object.defineProperty(window, 'visualViewport', {
+          configurable: true,
+          get: () => undefined,
+        });
+      } catch (_) {
+        // A browser that will not let it be shadowed keeps the old behaviour.
+      }
     })();
 
     // Let the browser zoom.
