@@ -18,6 +18,7 @@ Reverse the account move at the owner's request, preserve every branch and tag, 
 - Marked the old migration guide as historical. No owner content, claims, schema or public design was changed for the account restoration.
 
 ## Files touched
+- `CHANGELOG.md` — modified — record the hosting restoration.
 - `wrangler.toml` — modified — restore the permitted site origin.
 - `worker/src/admin.js` — modified — restore the bundled-content origin.
 - `tool/generate_static.dart` — modified — restore canonical, sitemap and generated-document URLs.
