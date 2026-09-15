@@ -124,8 +124,20 @@ class Contact with _$Contact {
     Uri? calendly,
 
     /// Present only when the owner supplies it. Nothing here is derived from a
-    /// username or guessed from a pattern.
+    /// username or guessed from a pattern -- these were taken from the
+    /// owner's own Linktree, which is the page he keeps current.
     Uri? tiktok,
+    Uri? instagram,
+    Uri? facebook,
+    Uri? fiverr,
+
+    /// The chat link as the owner publishes it.
+    ///
+    /// Given rather than derived from [phone], because they are not the same
+    /// number: the phone here is his UK one and the WhatsApp he hands out is
+    /// Egyptian. Deriving one from the other would have sent people to a
+    /// number he does not answer there.
+    Uri? whatsapp,
 
     /// The owner's Linktree, which collects the same destinations in one page.
     Uri? linktree,

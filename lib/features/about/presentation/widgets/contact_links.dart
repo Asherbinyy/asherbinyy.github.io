@@ -29,10 +29,21 @@ import 'package:nocturne/core/widgets/focus_ring.dart';
 /// and the owner asked for it by name.
 class ContactLinks extends StatelessWidget {
   /// Reads the destinations from [contact].
-  const ContactLinks({required this.contact, super.key});
+  const ContactLinks({
+    required this.contact,
+    this.includesBooking = true,
+    super.key,
+  });
 
   /// Supplied contact block.
   final Contact contact;
+
+  /// Whether the booking link is one of the cards.
+  ///
+  /// False on the services page, which already carries it as the one loud
+  /// control on the page: offering the same appointment twice, three inches
+  /// apart, makes a visitor wonder whether they are different.
+  final bool includesBooking;
 
   @override
   Widget build(BuildContext context) {
@@ -43,10 +54,11 @@ class ContactLinks extends StatelessWidget {
     // identical cards where the important one was third from the left.
     final direct = <(String, IconData, Uri)>[
       ('Email', SimpleIcons.gmail, Uri(scheme: 'mailto', path: contact.email)),
-      if (_whatsApp(contact.phone) case final url?)
+      if (contact.whatsapp ?? _whatsApp(contact.phone) case final url?)
         ('WhatsApp', SimpleIcons.whatsapp, url),
-      if (contact.calendly case final url?)
-        ('Book a call', SimpleIcons.calendly, url),
+      if (includesBooking)
+        if (contact.calendly case final url?)
+          ('Book a call', SimpleIcons.calendly, url),
     ];
 
     final social = <(String, IconData, Uri)>[
@@ -62,6 +74,13 @@ class ContactLinks extends StatelessWidget {
       if (contact.gitlab case final url?) ('GitLab', SimpleIcons.gitlab, url),
       if (contact.medium case final url?) ('Medium', SimpleIcons.medium, url),
       if (contact.tiktok case final url?) ('TikTok', SimpleIcons.tiktok, url),
+      if (contact.instagram case final url?)
+        ('Instagram', SimpleIcons.instagram, url),
+      if (contact.facebook case final url?)
+        ('Facebook', SimpleIcons.facebook, url),
+      // Fiverr is where somebody can actually hire him, so it sits with the
+      // profiles rather than pretending to be a social account.
+      if (contact.fiverr case final url?) ('Fiverr', SimpleIcons.fiverr, url),
     ];
 
     return Column(
@@ -79,10 +98,13 @@ class ContactLinks extends StatelessWidget {
     );
   }
 
-  /// A chat link for the number the content already publishes.
+  /// A chat link derived from the published phone number.
   ///
-  /// `wa.me` wants the number with no plus and no separators; anything else is
-  /// left alone rather than reformatted into something that might not dial.
+  /// Only a fallback now: the owner publishes a WhatsApp link of his own and
+  /// it is a different number from the phone here, so `contact.whatsapp` wins
+  /// wherever it is set. `wa.me` wants the number with no plus and no
+  /// separators; anything else is left alone rather than reformatted into
+  /// something that might not dial.
   static Uri? _whatsApp(String? phone) {
     if (phone == null) return null;
     final digits = phone.replaceAll(RegExp('[^0-9]'), '');

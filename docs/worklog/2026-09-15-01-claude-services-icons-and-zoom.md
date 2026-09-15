@@ -58,15 +58,34 @@ The name is gone from the door and a button is there instead. The site says who
 he is on its own front page; saying it twice before the page had loaded was a
 title card for nobody. It still opens by itself for somebody who does nothing.
 
-### The page magnifies again
+### The page magnifies again — third attempt, and this one is measured
 
-The previous fix let the browser zoom and the layout came apart, which is what
-the owner photographed. A pinch changes the *visual* viewport, not the layout
-one — on an ordinary page that is a magnifier. Flutter subscribes to
-`visualViewport` and resized its canvas to match, so a pinch was relaying the
-site out underneath the magnifying glass and leaving black margins. It no
-longer gets those events, so the canvas stays at the layout viewport's size and
-the browser scales the pixels, which is what every other site does.
+Two wrong fixes preceded this. Letting the browser zoom was not enough, and
+muting Flutter's `visualViewport` resize *event* was not either, because the
+read is not event-driven:
+`FullPageDimensionsProvider.computePhysicalSize()` reads
+`visualViewport.width/height` **every time it is called**, on any frame. A
+pinch therefore shrank the canvas to the magnified region on the next frame
+and relaid the site out underneath the magnifying glass.
+
+The same method falls back to `window.innerWidth/innerHeight` when there is no
+visual viewport, and those are the *layout* viewport: unchanged by a pinch, and
+correctly updated by a real browser zoom, which should relayout. So the
+property is shadowed to `undefined` before the bootstrap runs and Flutter takes
+the fallback.
+
+Measured this time. `Emulation.setPageScaleFactor` is exactly the state a
+trackpad pinch produces, and the driver now exposes the raw protocol so a test
+can set it:
+
+| | view size at 1x | at 2x |
+|---|---|---|
+| live site, before | 1440x900 | **720x450** |
+| after | 1440x900 | 1440x900 |
+
+720x450 is the black margin in the owner's screenshot, reproduced exactly.
+What this gives up is the on-screen-keyboard inset on mobile, computed from the
+same object; this site has no text input for a keyboard to cover.
 
 ### The rest
 
@@ -88,6 +107,14 @@ the browser scales the pixels, which is what every other site does.
 - **The papyrus**: the sound is deleted — it never sounded like paper — and the
   sheet rolls under the pointer and unrolls when it leaves. There is nothing to
   click and nothing to click back.
+
+### The links, from his own page
+
+The owner said the socials were in his Linktree, so they were read from it
+rather than asked for again: Calendly, TikTok, Instagram, Facebook, Fiverr and
+the WhatsApp link he actually publishes. The Facebook URL was normalised — his
+Linktree carries a `viewas` parameter that only works for him — and nothing was
+guessed from a username.
 
 ## Files touched
 
@@ -127,13 +154,11 @@ and Work.
 
 ## Known issues left open
 
-- **No Calendly and no TikTok in content.** Both are wired and both are hidden
-  until the owner supplies them: the booking button appears the moment
-  `contact.calendly` is set, and TikTok the moment `contact.tiktok` is. Neither
-  was guessed.
-- **The pinch fix is reasoned, not measured.** A headless browser cannot
-  perform a trackpad pinch, so this one needs the owner's hands on his own
-  machine.
+- **The WhatsApp number is not the phone number.** The content's phone is his
+  UK one; the WhatsApp link he publishes is Egyptian. The derived link would
+  have sent people to a number he does not answer there, so `contact.whatsapp`
+  is given explicitly and the derivation is only a fallback now. Worth his
+  confirming which he wants.
 - **The services page shows no samples of each kind of work.** The owner asked
   whether it needed them and I have not added them; the work is one page away.
 - Project default images, the leaderboard, the preview adapter, HTML
