@@ -89,7 +89,7 @@ void main() {
     });
 
     test('has canonical URL', () {
-      expect(cvHtml, contains('href="https://asherbinyy.github.io/cv/"'));
+      expect(cvHtml, contains('href="https://lsherbini.github.io/cv/"'));
     });
 
     test('has Open Graph tags', () {
@@ -295,7 +295,7 @@ void main() {
 
     test('has link to full portfolio', () {
       expect(briefHtml, contains('View full portfolio'));
-      expect(briefHtml, contains('https://asherbinyy.github.io/'));
+      expect(briefHtml, contains('https://lsherbini.github.io/'));
     });
 
     test('has no JavaScript', () {
@@ -329,7 +329,7 @@ void main() {
     test('includes sitemap reference', () {
       expect(
         robotsTxt,
-        contains('Sitemap: https://asherbinyy.github.io/sitemap.xml'),
+        contains('Sitemap: https://lsherbini.github.io/sitemap.xml'),
       );
     });
   });
