@@ -45,7 +45,13 @@ class WorkCard extends StatelessWidget {
   /// Where the work happened, when the content records it.
   final AppOrigin? origin;
 
-  /// Declared, never inferred. Wide enough for the name at display-m.
+  /// The narrowest this card is worth drawing, and what the grid sizes
+  /// columns from.
+  ///
+  /// It used to be the card's *fixed* width, which is why the Treasury sat
+  /// left of centre on a phone: a 280px card in a 295px column leaves fifteen
+  /// pixels, all of them on the right. The card now takes the width it is
+  /// given and this only decides how many fit.
   static const double width = 280;
 
   /// The artwork's height. Above `StationCard`'s derived labelling threshold,
@@ -60,44 +66,44 @@ class WorkCard extends StatelessWidget {
     final metric = app.metric;
     final role = app.role?.resolve(context.channel);
 
-    return SizedBox(
-      width: width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        // Fills the height its row was given, so the store links below can be
-        // pushed to a common baseline instead of floating wherever the role
-        // text happens to end.
-        children: [
-          StationCard(
-            seedId: app.id,
-            name: app.name,
-            width: width,
-            height: artHeight,
-            domainLabel: domainLabel,
-            country: origin?.country,
-            latitude: origin?.latitude,
-            longitude: origin?.longitude,
-          ),
-          if (role != null) ...[
-            SizedBox(height: tokens.space12),
-            Text(role, style: type.bodyS.copyWith(color: tokens.textSecondary)),
-          ],
-          if (metric != null) ...[
-            SizedBox(height: tokens.space8),
-            // The strongest single string a card can carry, so it gets the
-            // instrument treatment rather than being another line of prose.
-            Text(
-              metric,
-              style: type.telemetry.copyWith(color: tokens.instrument),
-            ),
-          ],
-          // Whatever height is left over goes here, above the links, so the
-          // one actionable row on the card is level across the whole grid.
-          const Spacer(),
+    // No LayoutBuilder here on purpose: the grid wraps each row in an
+    // IntrinsicHeight so every card in it shares a baseline, and a
+    // LayoutBuilder cannot answer an intrinsic-height query. The card fills
+    // the width it is handed instead of measuring it.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      // Fills the height its row was given, so the store links below can
+      // be pushed to a common baseline instead of floating wherever the
+      // role text happens to end.
+      children: [
+        StationCard(
+          seedId: app.id,
+          name: app.name,
+          height: artHeight,
+          domainLabel: domainLabel,
+          country: origin?.country,
+          latitude: origin?.latitude,
+          longitude: origin?.longitude,
+        ),
+        if (role != null) ...[
           SizedBox(height: tokens.space12),
-          StoreLinks(app: app),
+          Text(role, style: type.bodyS.copyWith(color: tokens.textSecondary)),
         ],
-      ),
+        if (metric != null) ...[
+          SizedBox(height: tokens.space8),
+          // The strongest single string a card can carry, so it gets the
+          // instrument treatment rather than another line of prose.
+          Text(
+            metric,
+            style: type.telemetry.copyWith(color: tokens.instrument),
+          ),
+        ],
+        // Whatever height is left over goes here, above the links, so the
+        // one actionable row on the card is level across the whole grid.
+        const Spacer(),
+        SizedBox(height: tokens.space12),
+        StoreLinks(app: app),
+      ],
     );
   }
 }

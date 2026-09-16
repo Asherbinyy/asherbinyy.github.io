@@ -106,7 +106,20 @@ class _About extends StatelessWidget {
             children: [
               portrait,
               SizedBox(width: tokens.space32),
-              Expanded(child: identity),
+              // Two thirds to the words, one third held back. The biography ran
+              // the full width of a 1440 monitor, which is a 110-character
+              // measure -- far past the point where an eye loses its place
+              // returning to the next line -- and it left the skills grid
+              // stretched thin to match.
+              //
+              // The reserved third is deliberately empty. The owner is going to
+              // put something there that describes him, and a column that only
+              // appears once that arrives would move the whole page on the day
+              // it does; holding the space now means the layout is already the
+              // shape it will keep.
+              Expanded(flex: 2, child: identity),
+              SizedBox(width: tokens.space32),
+              const Expanded(child: _ReservedColumn()),
             ],
           )
         else ...[
@@ -375,4 +388,30 @@ class _CourtyardDoor extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The column beside the biography, held open and left empty.
+///
+/// The owner asked for the text to stop short of the right edge because he
+/// intends to put something there later — something that describes him, he
+/// said, probably a moving image. Leaving the space unclaimed until then would
+/// mean the page reflows the day it arrives; claiming it now means the only
+/// change will be that something appears inside it.
+///
+/// It draws nothing but the site's corner marks, so a visitor reads it as part
+/// of the composition rather than as a gap where an image failed to load. It
+/// carries no semantics: there is nothing here to announce.
+class _ReservedColumn extends StatelessWidget {
+  const _ReservedColumn();
+
+  @override
+  Widget build(BuildContext context) => const ExcludeSemantics(
+    child: SizedBox(
+      height: PortraitFrame.height,
+      // The site's own corner ticks, which is how it marks a panel. Without
+      // them this reads as a gap where an image failed to load rather than as
+      // a space being kept.
+      child: InstrumentPanel(child: SizedBox.expand()),
+    ),
+  );
 }

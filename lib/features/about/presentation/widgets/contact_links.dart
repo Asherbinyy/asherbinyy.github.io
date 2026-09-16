@@ -10,6 +10,7 @@ import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/profile.dart';
+import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
@@ -113,16 +114,22 @@ class ContactLinks extends StatelessWidget {
   }
 }
 
-/// One row of cards, wrapped.
+/// The cards, in a grid rather than a wrap.
+///
+/// A `Wrap` sized each card to its own word, so "GitLab" and "Instagram" were
+/// different widths and a line that fit eight left one stranded on the next —
+/// which the owner reported as the social links looking unorganised. Equal
+/// tiles, balanced rows.
 class _Row extends StatelessWidget {
   const _Row({required this.destinations});
 
   final List<(String, IconData, Uri)> destinations;
 
   @override
-  Widget build(BuildContext context) => Wrap(
-    spacing: context.tokens.space12,
-    runSpacing: context.tokens.space12,
+  Widget build(BuildContext context) => EvenGrid(
+    // Wide enough for the longest of these words plus its mark, so a column is
+    // dropped before a name is ever squeezed.
+    minTileWidth: Tokens.contactCardWidth,
     children: [
       for (final (name, icon, url) in destinations)
         _ContactLink(name: name, icon: icon, url: url),
@@ -238,6 +245,13 @@ class _ContactLinkState extends State<_ContactLink> {
                       : null,
                 ),
                 child: ExcludeSemantics(
+                  // The name gives way rather than overflowing. A card in a
+                  // grid is handed its width instead of choosing it, so at a
+                  // narrow measure "Book a call" is wider than the tile it is
+                  // in -- and a row that cannot shrink answers that with a
+                  // striped overflow bar. The mark keeps its size; the word
+                  // takes what is left, and the full name is still on the
+                  // card's own semantics label for anyone who cannot see it.
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -247,10 +261,17 @@ class _ContactLinkState extends State<_ContactLink> {
                         color: isHovered ? tokens.beaconGlow : tokens.beacon,
                       ),
                       SizedBox(width: tokens.space12),
-                      Text(
-                        widget.name,
-                        style: context.type.body.copyWith(
-                          color: isHovered ? tokens.beaconGlow : tokens.beacon,
+                      Flexible(
+                        child: Text(
+                          widget.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                          style: context.type.body.copyWith(
+                            color: isHovered
+                                ? tokens.beaconGlow
+                                : tokens.beacon,
+                          ),
                         ),
                       ),
                     ],

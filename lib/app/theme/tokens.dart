@@ -494,6 +494,13 @@ abstract final class Tokens {
   /// ragged line of differently sized words.
   static const double contactCardWidth = 132;
 
+  /// One skill chip's smallest width.
+  ///
+  /// Every chip is given the same box so the block reads as a grid: "Dart" and
+  /// "Adobe Premiere Pro" are a third and three times this, and sizing each to
+  /// its own word is what made the panel look like rubble.
+  static const double skillChipWidth = 132;
+
   /// How the gold glow behind a hovered contact card is thrown.
   static const double contactGlowAlpha = 0.35, contactGlowBlur = 18;
 

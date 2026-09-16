@@ -21,8 +21,8 @@ class StationCard extends StatelessWidget {
   const StationCard({
     required this.seedId,
     required this.name,
-    required this.width,
     required this.height,
+    this.width,
     this.domainLabel,
     this.country,
     this.latitude,
@@ -36,8 +36,13 @@ class StationCard extends StatelessWidget {
   /// Application name, rendered at display-m.
   final String name;
 
-  /// Exact card width.
-  final double width;
+  /// Exact card width, or null to fill whatever the parent grants.
+  ///
+  /// Null is what a card in a grid wants: the grid has already decided the
+  /// column width, and a card that insists on its own number ends up narrower
+  /// than its slot with all the slack on one side -- which is exactly how the
+  /// Treasury came to sit left of centre on a phone.
+  final double? width;
 
   /// Exact card height.
   final double height;
@@ -88,7 +93,7 @@ class StationCard extends StatelessWidget {
     final telemetry = [if (origin != null) origin];
 
     return SizedBox(
-      width: width,
+      width: width ?? double.infinity,
       height: height,
       child: InstrumentPanel(
         fill: tokens.surface,

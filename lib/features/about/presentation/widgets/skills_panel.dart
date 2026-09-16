@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/motion/curves.dart';
@@ -151,9 +152,9 @@ class _GroupState extends State<_Group> {
                                   color: tokens.textMuted,
                                 ),
                               )
-                            : Wrap(
+                            : EvenGrid(
+                                minTileWidth: Tokens.skillChipWidth,
                                 spacing: tokens.space8,
-                                runSpacing: tokens.space8,
                                 children: [
                                   for (final value in widget.values)
                                     _Chip(
