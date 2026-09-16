@@ -1,10 +1,17 @@
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/app_origin.dart';
 import 'package:nocturne/content/models/apps.dart';
+import 'package:nocturne/core/motion/curves.dart';
+import 'package:nocturne/core/motion/durations.dart';
+import 'package:nocturne/core/motion/reduced_motion.dart';
+import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/core/widgets/loading/station_card.dart';
 import 'package:nocturne/features/work/presentation/widgets/store_links.dart';
 
@@ -70,20 +77,27 @@ class WorkCard extends StatelessWidget {
     // IntrinsicHeight so every card in it shares a baseline, and a
     // LayoutBuilder cannot answer an intrinsic-height query. The card fills
     // the width it is handed instead of measuring it.
+    // The artwork is the way in to the application's own page. The whole card
+    // is not the target: the store links at the bottom are their own
+    // destinations, and swallowing them into one big tap would mean a reader
+    // who wanted the App Store got a case study instead.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       // Fills the height its row was given, so the store links below can
       // be pushed to a common baseline instead of floating wherever the
       // role text happens to end.
       children: [
-        StationCard(
-          seedId: app.id,
-          name: app.name,
-          height: artHeight,
-          domainLabel: domainLabel,
-          country: origin?.country,
-          latitude: origin?.latitude,
-          longitude: origin?.longitude,
+        _OpenDetail(
+          app: app,
+          child: StationCard(
+            seedId: app.id,
+            name: app.name,
+            height: artHeight,
+            domainLabel: domainLabel,
+            country: origin?.country,
+            latitude: origin?.latitude,
+            longitude: origin?.longitude,
+          ),
         ),
         if (role != null) ...[
           SizedBox(height: tokens.space12),
@@ -104,6 +118,88 @@ class WorkCard extends StatelessWidget {
         SizedBox(height: tokens.space12),
         StoreLinks(app: app),
       ],
+    );
+  }
+}
+
+/// The artwork, turned into the door to `/work/<id>`.
+///
+/// It lifts a little under the pointer, which is the only motion here: the
+/// owner asked for a transition, and the one worth having is the one that says
+/// "this is a thing you can open" *before* it is clicked. The route change
+/// itself is the app's own, so a shared page transition would fight the router
+/// rather than help it.
+class _OpenDetail extends StatefulWidget {
+  const _OpenDetail({required this.app, required this.child});
+
+  final ShippedApp app;
+  final Widget child;
+
+  @override
+  State<_OpenDetail> createState() => _OpenDetailState();
+}
+
+class _OpenDetailState extends State<_OpenDetail> {
+  final WidgetStatesController _states = WidgetStatesController();
+
+  @override
+  void dispose() {
+    _states.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Semantics(
+      button: true,
+      label: context.l10n.workOpenApp(widget.app.name),
+      child: ListenableBuilder(
+        listenable: _states,
+        builder: (context, child) {
+          final isRaised =
+              _states.value.contains(WidgetState.hovered) ||
+              _states.value.contains(WidgetState.focused);
+          return FocusRing(
+            isFocused: _states.value.contains(WidgetState.focused),
+            child: AnimatedSlide(
+              offset: isRaised ? const Offset(0, -0.012) : Offset.zero,
+              duration: ReducedMotion.duration(context, Motion.quick),
+              curve: MotionCurves.emphasized,
+              child: AnimatedContainer(
+                duration: ReducedMotion.duration(context, Motion.quick),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(Tokens.cardRadius),
+                  boxShadow: isRaised
+                      ? [
+                          BoxShadow(
+                            color: tokens.beacon.withValues(
+                              alpha: Tokens.contactGlowAlpha,
+                            ),
+                            blurRadius: Tokens.contactGlowBlur,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: InkWell(
+                  onTap: () => context.goNamed(
+                    AppRoute.caseStudy.name,
+                    pathParameters: {'slug': widget.app.id},
+                  ),
+                  statesController: _states,
+                  borderRadius: BorderRadius.circular(Tokens.cardRadius),
+                  hoverColor: Colors.transparent,
+                  mouseCursor: context.platform.isPointer
+                      ? SystemMouseCursors.click
+                      : MouseCursor.defer,
+                  child: ExcludeSemantics(child: child),
+                ),
+              ),
+            ),
+          );
+        },
+        child: widget.child,
+      ),
     );
   }
 }

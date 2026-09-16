@@ -533,6 +533,30 @@
     "description": "Keyboard controls, shown on a pointer browser"
   },
   "ascentLeave": "Leave",
+  "workOpenApp": "Open {app}",
+  "@workOpenApp": {
+    "description": "Opens one application's own page",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "workShotOf": "{app} screenshot {index} of {total}",
+  "@workShotOf": {
+    "description": "Screen-reader label for one app screenshot",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      },
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "ascentBoardTitle": "Top climbers",
   "@ascentBoardTitle": {
     "description": "Heading over the public leaderboard"

@@ -32,7 +32,14 @@
       "metric": "50% retention lift",
       "domain": "Services",
       "country": "CA",
-      "featured": true
+      "featured": true,
+      "shots": [
+        "assets/media/apps/minextstep/01.jpg",
+        "assets/media/apps/minextstep/02.jpg",
+        "assets/media/apps/minextstep/03.jpg",
+        "assets/media/apps/minextstep/04.jpg",
+        "assets/media/apps/minextstep/05.jpg"
+      ]
     },
     {
       "id": "mokaf",
