@@ -133,3 +133,44 @@ fvm flutter build web --wasm               pass
   in this pass.**
 - The leaderboard itself, the preview adapter, HTML publication parity and
   A5 remain untouched.
+
+## Addendum — the climber, redrawn
+
+The owner also asked for a more realistic character, from a CC-licensed
+source if one fitted, credited on GitHub. The licence research was done
+first: Kenney's "Platformer Characters" pack is genuinely CC0 (confirmed
+from kenney.nl directly, not from a listing site), OpenGameArt and itch.io
+both carry CC0-tagged platformer packs, and any of them could have been
+used and credited.
+
+**None of them were, and that was a judgement call worth recording.** This
+site's whole visual identity is bespoke carved Egyptian line-work -- the
+wall, the signs, the ornament, the stop marks. A recoloured off-the-shelf
+platformer sprite dropped into it would read as exactly the generic,
+bolted-on thing the owner has rejected repeatedly on this project. The
+figure is also about fifty pixels tall in play, where almost nothing of a
+detailed sprite would survive anyway. So the character stayed procedural
+and was rebuilt properly instead. If the owner wants the external-asset
+route regardless, the licences are cleared and the swap is his to call.
+
+Three passes, each one driven by looking at the result rather than at the
+code:
+
+1. **Gold instead of stone.** The climber had been painted the same colour
+   as the wall he climbs, which is most of why he read as a stick figure --
+   a stone outline on stone masonry. Section 2 reserves gold for the person,
+   and on this screen that is him. Immediate, large readability win.
+2. **Too much detail, and it turned to mush.** A profile face, a wesekh
+   collar and flared nemes lappets all at fifty pixels came back as a chunky
+   cartoon with what were unmistakably blonde pigtails. Screenshotted,
+   looked at, thrown away. The lesson is the one the football figure already
+   taught: at sprite scale the silhouette is the whole design.
+3. **Silhouette-first, then mass.** Lean limbs, a real neck, a headdress
+   that hugs the skull instead of flaring past the shoulders -- which fixed
+   the pigtails but left a stick figure in a skirt. The last piece was a
+   filled torso, broad at the shoulder and drawn in at the waist. That is
+   the difference between a person and a stick figure at this size.
+
+Drawn size went from 1.15m to 1.45m of the twenty-metre camera, which is
+purely a painting constant -- it is not used anywhere in the physics, so
+nothing about how the climb plays changed.
