@@ -317,6 +317,92 @@ void main() {
     });
 
     test(
+      'restarting does not abandon the climb already being checked',
+      () async {
+        // A player who has just fallen presses the button again straight away.
+        // The check of the run they submitted has to finish anyway: it is what
+        // refreshes the board, and cancelling it left the board stale for the
+        // rest of the session and the player never told they had placed.
+        var verdictCalls = 0;
+        var boardCalls = 0;
+        final server = _Server((method, path) {
+          if (path == '/v1/game/runs' && method == 'POST') {
+            return (
+              200,
+              jsonEncode({
+                'runId': 'run-1',
+                'seed': 7,
+                'token': 'signed',
+                'expiresAt': 1758000600000,
+              }),
+            );
+          }
+          if (path == '/v1/game/leaderboard' && method == 'POST') {
+            return (202, '{"status":"pending","ticksChecked":0}');
+          }
+          if (path == '/v1/game/runs/run-1') {
+            verdictCalls++;
+            return verdictCalls < 2
+                ? (200, '{"status":"pending","ticksChecked":512}')
+                : (
+                    200,
+                    '{"status":"checked","metres":120,"rank":2,'
+                        '"outcome":"accepted"}',
+                  );
+          }
+          boardCalls++;
+          return (
+            200,
+            jsonEncode({
+              'entries': [
+                {'rank': 2, 'nickname': 'Ahmed', 'metres': 120},
+              ],
+            }),
+          );
+        });
+        final controller = LeaderboardController(
+          client: _clientFor(server),
+          store: InMemoryPreferenceStore(),
+        );
+        addTearDown(controller.dispose);
+
+        await controller.choose(
+          Joined.fresh(
+            nickname: 'Ahmed',
+            submitsAutomatically: true,
+            remembered: true,
+            random: math.Random(9),
+          ),
+        );
+        final challenge = (await controller.beginRankedRun())!;
+        controller.takeChallenge();
+        await controller.submit(challenge: challenge, tape: 'AAAA');
+        expect(controller.state.verdict, isA<VerdictPending>());
+
+        // Straight into the next climb, before the check has finished.
+        controller.clearVerdict();
+        expect(controller.state.verdict, isNull, reason: 'the screen is stale');
+
+        await Future<void>.delayed(
+          LeaderboardController.pollInterval * 2 +
+              const Duration(milliseconds: 400),
+        );
+
+        expect(
+          controller.state.verdict,
+          isNull,
+          reason: "the previous run's result appeared over a newer run",
+        );
+        expect(
+          boardCalls,
+          greaterThan(0),
+          reason: 'the check was abandoned, so the board was never refreshed',
+        );
+        expect(controller.state.board!.entries.single.metres, 120);
+      },
+    );
+
+    test(
       'forgetting removes the entry first, then the device record',
       () async {
         final store = InMemoryPreferenceStore();

@@ -223,10 +223,23 @@ class LeaderboardController extends StateNotifier<LeaderboardState> {
   /// How long to keep asking before giving up and saying so.
   static const Duration pollLimit = Duration(seconds: 90);
 
+  /// Which run the screen is currently showing a result for.
+  ///
+  /// A player who has just fallen often presses the button again immediately,
+  /// which used to cancel the check of the climb they had just submitted. They
+  /// never saw their place, and — worse — the board stopped being refreshed for
+  /// the rest of the session, because the refresh is what a finished check
+  /// triggers. So starting a new run stops *showing* the old verdict without
+  /// stopping the check: it runs to its end, the board is refreshed either way,
+  /// and the verdict is only put on screen if the screen is still the one that
+  /// asked for it.
+  int _generation = 0;
+
   void _watch(String runId) {
     _poll?.cancel();
     final client = _board;
     if (client == null) return;
+    final generation = _generation;
     final deadline = DateTime.now().add(pollLimit);
     _poll = Timer.periodic(pollInterval, (timer) async {
       if (!mounted) {
@@ -238,7 +251,7 @@ class LeaderboardController extends StateNotifier<LeaderboardState> {
         // Not a rejection. The climb may well be fine; this browser simply
         // stopped waiting, and saying "rejected" would be a claim nobody here
         // is in a position to make.
-        state = state._with(clearRun: true);
+        if (generation == _generation) state = state._with(clearRun: true);
         return;
       }
       final verdict = await client.verdict(runId);
@@ -248,14 +261,19 @@ class LeaderboardController extends StateNotifier<LeaderboardState> {
       }
       if (verdict == null || verdict is VerdictPending) return;
       timer.cancel();
-      state = state._with(verdict: verdict);
+      if (generation == _generation) state = state._with(verdict: verdict);
+      // Refreshed whichever run the player is looking at now. A climb that
+      // took a place while they were busy failing the next one still belongs
+      // on the board in front of them.
       await refresh();
     });
   }
 
-  /// Forgets the last verdict, so a new run starts with a clean screen.
+  /// Stops showing the last verdict, so a new run starts with a clean screen.
+  ///
+  /// The check itself is left running. See [_generation].
   void clearVerdict() {
-    _poll?.cancel();
+    _generation++;
     state = state._with(clearRun: true);
   }
 }
