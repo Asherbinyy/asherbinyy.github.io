@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
@@ -46,9 +47,11 @@ class InterestsGrid extends ConsumerWidget {
       children: [
         Text(context.l10n.aboutOffDuty, style: context.type.heading),
         SizedBox(height: tokens.space16),
-        Wrap(
+        // A grid, so a single column on a phone fills the width instead of
+        // leaving a 168px tile against the left edge of a 350px page.
+        EvenGrid(
+          minTileWidth: _Tile.width,
           spacing: tokens.space16,
-          runSpacing: tokens.space16,
           children: [
             for (final interest in interests) _Tile(interest: interest),
           ],
@@ -160,7 +163,7 @@ class _TileState extends State<_Tile> with SingleTickerProviderStateMixin {
           onTap: _replay,
           child: ExcludeSemantics(
             child: SizedBox(
-              width: _Tile.width,
+              width: double.infinity,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -219,7 +222,7 @@ class _Plate extends StatelessWidget {
         ),
       ),
       child: SizedBox(
-        width: _Tile.width,
+        width: double.infinity,
         height: _Tile.artHeight,
         child: RepaintBoundary(
           child: Stack(

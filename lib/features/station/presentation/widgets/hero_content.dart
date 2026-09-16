@@ -10,6 +10,7 @@ import 'package:nocturne/features/station/presentation/widgets/reach_row.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
@@ -91,9 +92,13 @@ class HeroContent extends StatelessWidget {
         ],
         if (profile.stats.isNotEmpty) ...[
           SizedBox(height: tokens.space32),
-          Wrap(
+          // A grid rather than a wrap: on a phone these two 200px panels sat
+          // in a 350px column with every spare pixel on the right, which is
+          // the "cards are on the left" the owner reported. They share the
+          // width now and a single column fills it.
+          EvenGrid(
+            minTileWidth: PapyrusStatPanel.width,
             spacing: tokens.space16,
-            runSpacing: tokens.space16,
             children: [
               // The first two figures are drawn on papyrus and roll up when
               // they are clicked, by the owner's instruction. Anything he adds

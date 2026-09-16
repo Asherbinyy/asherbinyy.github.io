@@ -97,8 +97,8 @@ class EvenGrid extends StatelessWidget {
         fillsWidth: true,
       );
     }
-    var columns = ((width + spacing) / (minTileWidth + spacing)).floor();
-    columns = columns.clamp(1, count);
+    final fits = ((width + spacing) / (minTileWidth + spacing)).floor();
+    var columns = fits.clamp(1, count);
     if (maxColumns != null) columns = math.min(columns, maxColumns);
 
     // The balancing step, and the reason this widget exists.
@@ -120,7 +120,22 @@ class EvenGrid extends StatelessWidget {
     // size across the whole grid and a shorter row is simply centred.
     final perRow = rowLengths.first;
     final filled = (width - (perRow - 1) * spacing) / perRow;
-    final ceiling = maxTileWidth ?? minTileWidth * 1.75;
+
+    // The ceiling stops two cards stretching across a monitor. It is lifted
+    // entirely below the compact breakpoint, because on a phone a full-width
+    // card *is* the right answer and a capped one sits against an edge with
+    // all the slack on the other -- the exact fault this widget exists to fix.
+    //
+    // Two earlier rules were wrong here and both were caught by the sweep
+    // below rather than by reading: capping unconditionally left a card off
+    // centre at 320px, and lifting the cap only when a single column fits
+    // still left one off centre at 360, where two columns fit but only one
+    // card exists. What matters is the width of the screen, not the number of
+    // tiles that would go on it.
+    final isPhone = width < Tokens.mediumBreakpoint;
+    final ceiling = isPhone
+        ? double.infinity
+        : (maxTileWidth ?? minTileWidth * 1.75);
     final tileWidth = math.min(filled, ceiling);
     return (
       columns: columns,

@@ -1,11 +1,10 @@
-import 'dart:math' as math;
-
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/app_origin.dart';
 import 'package:nocturne/content/asset_content.dart';
@@ -125,48 +124,24 @@ class _Grid extends StatelessWidget {
     final tokens = context.tokens;
     final l10n = context.l10n;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final spacing = tokens.space32;
-        final columns = math.max(
-          1,
-          ((constraints.maxWidth + spacing) / (WorkCard.width + spacing))
-              .floor(),
-        );
-
-        final rows = <List<ShippedApp>>[];
-        for (var start = 0; start < apps.length; start += columns) {
-          rows.add(apps.sublist(start, math.min(start + columns, apps.length)));
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final (index, row) in rows.indexed) ...[
-              if (index > 0) SizedBox(height: tokens.space48),
-              // Every card in a row takes the tallest card's height, which is
-              // what lets each one settle its own links against the bottom.
-              IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final (position, app) in row.indexed) ...[
-                      if (position > 0) SizedBox(width: spacing),
-                      WorkCard(
-                        app: app,
-                        domainLabel: app.domain.label(l10n),
-                        origin: AppOrigins.resolve(app: app, career: career),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ],
-        );
-      },
+    // One grid for the whole site. This used to lay its own rows out with a
+    // fixed-width card and `MainAxisSize.min`, which put every leftover pixel
+    // on the right-hand side -- on a phone that is a 280px card in a 295px
+    // column, and the Treasury visibly sat left of centre. Cards now share the
+    // width they are given, and a short last row is balanced rather than
+    // ragged.
+    return EvenGrid(
+      minTileWidth: WorkCard.width,
+      spacing: tokens.space32,
+      runSpacing: tokens.space48,
+      children: [
+        for (final app in apps)
+          WorkCard(
+            app: app,
+            domainLabel: app.domain.label(l10n),
+            origin: AppOrigins.resolve(app: app, career: career),
+          ),
+      ],
     );
   }
 }

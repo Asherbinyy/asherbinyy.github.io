@@ -155,8 +155,11 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
                 child: child,
               ),
             ),
+            // Width comes from the grid, not from here. Insisting on 200px
+            // inside a 350px phone column is what left these sitting against
+            // the left edge with the slack all on one side.
             child: SizedBox(
-              width: PapyrusStatPanel.width,
+              width: double.infinity,
               height: PapyrusStatPanel.height,
               child: AnimatedBuilder(
                 animation: _roll,
