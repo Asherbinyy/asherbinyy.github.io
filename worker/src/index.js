@@ -179,7 +179,7 @@ export async function handleRequest(request, env, now = new Date()) {
     if (origin !== env.SITE_ORIGIN) {
       return response({error: 'Origin not allowed'}, 403, headers);
     }
-    const handled = await handleGame(request, url, env, now, headers, response);
+    const handled = await handleGame(request, url, env, Number(now), headers, response);
     if (handled) return handled;
   }
 
