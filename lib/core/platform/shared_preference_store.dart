@@ -23,4 +23,7 @@ class SharedPreferenceStore implements PreferenceStore {
   @override
   Future<void> write(String key, String value) =>
       _preferences.setString(key, value);
+
+  @override
+  Future<void> remove(String key) => _preferences.remove(key);
 }

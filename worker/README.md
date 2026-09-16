@@ -82,3 +82,77 @@ A synthetic accepted beacon writes production counters. Do not use one as a
 routine health check without explicit authorization; use local contract tests
 and a consented browser session for positive event verification. Document any
 production test data and its cleanup separately from real visitor metrics.
+
+## The climb's leaderboard
+
+Three endpoints under `/v1/game/`, all same-origin, plus two Durable Objects.
+None of it exists until the bindings below are added: without them the Worker
+answers `503 Leaderboard is not configured` and the client falls back to a best
+score kept on the device, which is what it does today.
+
+### Why it is built the way it is
+
+A score cannot be a number the browser sends, so the server replays the run:
+the client submits the seed it was given and the keys that were pressed, and the
+Worker simulates it with the same physics. `src/game/ascent.js` is that physics,
+proved bit-identical to the Dart client's by
+`contracts/fixtures/ascent-v1-vectors.json`.
+
+Replaying costs CPU — about 50ms for a two-minute climb, measured — and the
+**Workers Free plan allows 10ms of CPU per request**, which is roughly twelve
+seconds of game. So a run is replayed about five hundred ticks at a time, each
+chunk in its own Durable Object alarm with a fresh budget, and a submission
+answers `202 pending` until the last chunk lands. Chunked and single-pass replay
+are required by test to reach the same metre.
+
+On a paid plan this could be one request instead. The chunking is not wasted
+either way: it also means one long submission cannot occupy a request slot.
+
+### The bindings
+
+Already in `wrangler.toml`: two Durable Object bindings, `GAME_BOARD` and
+`GAME_VERIFIER`, and the `v1-ascent-board` migration that creates them. Both
+classes are exported from `worker/src/index.js`, which is the Worker's `main`,
+so nothing else has to be wired up.
+
+`new_sqlite_classes` rather than `new_classes`: the SQLite storage backend is
+the one available on the free plan, and the key-value backend is not. The
+`compatibility_date` already in the file is recent enough; Wrangler fails
+loudly rather than quietly if it or the CLI is too old.
+
+**The migration is the one irreversible step.** It creates a namespace on the
+account, and the free plan refuses a downgrade while a key-value-backed
+namespace exists — this one is SQLite-backed, so that does not apply, but it is
+worth knowing that deleting a namespace later is a separate deliberate act.
+
+What is left is one secret, which signs the run challenges:
+
+```
+npx wrangler secret put GAME_SECRET    # 32+ random characters
+```
+
+It must not be `ADMIN_TOKEN` or `CONSOLE_TOKEN`. A leaked `GAME_SECRET` lets
+somebody mint their own run challenges and choose their own shaft; it does not
+let them write content or read counters, and the separation should stay that
+way.
+
+### What is stored, and what is not
+
+The board holds at most ten entries, each `{playerHash, nickname, metres,
+acceptedAt}`. `playerHash` is the SHA-256 of a random value the visitor's own
+browser generated — never a name, an email, an account or an IP, and never the
+key itself, so the board cannot hand back the thing that proves ownership of an
+entry. It identifies a browser, not a person, and the page says so.
+
+A run being verified holds its tape and nickname for as long as the check takes,
+and its verdict for ten minutes so the client can read it. Then the object
+deletes itself. There is no score history, no rejected-submission log and no
+replay archive; a climb that is real but outside the top ten is discarded in the
+same operation that judged it.
+
+### Checking it after a deployment
+
+`GET /v1/game/leaderboard` with the site Origin should return
+`{"season":"v1","entries":[],...}` on an empty board, and 403 without the
+Origin. `POST /v1/game/runs` with a 32-hex `playerKey` should return a signed
+token. Nothing writes a board entry until a submitted tape has been replayed.

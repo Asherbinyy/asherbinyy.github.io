@@ -2,6 +2,19 @@
 
 Updated 2026-09-13. Owner request: a more engaging game, a one-time player prompt and a visible top 5/top 10 board, retaining only the top 10 scores in the cloud. This explicitly supersedes the earlier no-leaderboard plan. **No leaderboard endpoint, prompt or persistence is implemented yet.** September 14: Claude owns both the Worker and Flutter. Do not deploy during implementation.
 
+## Status — September 16
+
+**The physics is frozen at version 1 and the cross-language replay agreement is proved.** This was the precondition the rest of the document depends on, and it is done:
+
+- `AscentContract.version = 1`, a fixed timestep of exactly 1/128s, and a specified 32-bit PRNG (`AscentRng`) replacing `dart:math`'s.
+- A run is a seed plus a base64url input tape, bounded at 15 minutes and 12,000 input changes. A submitted height is never read.
+- `worker/src/game/ascent.js` is the JavaScript half. `worker/contracts/fixtures/ascent-v1-vectors.json` is generated from Dart and asserted by both suites; neither writes it. 56 runs up to 362m agree on metre, tick and ending.
+- CI runs both halves.
+
+Detail and the bugs it found: `worklog/2026-09-16-03-claude-frozen-physics.md`.
+
+Still to do, in order: the endpoints below, transactional top-ten storage, and the Flutter participant flow. One correction to make plainly on the board when it ships — replay proves a score is *reachable under the physics*, not that a person reached it; a scripted tape replays exactly like a played one.
+
 ## Product decisions
 
 - Show top 5 compactly alongside play where space permits, and all top 10 in the start/results surface. On a narrow phone keep a clearly labelled ranking control visible; do not cover the landing area with ten rows.

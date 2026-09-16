@@ -241,6 +241,31 @@
   "ascentDive": "انقضاض",
   "ascentKeys": "الأسهم أو A و D للتوجيه. المسافة للقفز. ارتد عن الجدار لمزيد من الارتفاع.",
   "ascentLeave": "خروج",
+  "ascentBoardTitle": "أفضل المتسلّقين",
+  "ascentBoardEmpty": "لم يتسلّق أحد بعد.",
+  "ascentBoardAway": "اللوحة لا تستجيب.",
+  "ascentBoardRetry": "حاول مجددًا",
+  "ascentBoardVerified": "كل ارتفاع هنا أُعيد تشغيله على الخادم.",
+  "ascentBoardBrowser": "المركز يخصّ متصفّحًا، لا شخصًا.",
+  "ascentJoinTitle": "هل تتسلّق للتسجيل؟",
+  "ascentJoinBody": "اسمك وأفضل ارتفاع لك يظهران على لوحة عامة. بلا حساب وبلا بريد إلكتروني. يمكنك تغيير الاسم أو الانسحاب متى شئت.",
+  "ascentJoinName": "الاسم على اللوحة",
+  "ascentJoinNameError": "من حرفين إلى ستة عشر حرفًا، وبلا روابط.",
+  "ascentJoinRemember": "تذكّرني في هذا المتصفّح",
+  "ascentJoinGo": "انضم إلى اللوحة",
+  "ascentJoinLocal": "العب فقط",
+  "ascentChecking": "يجري التحقّق من تسلّقك…",
+  "ascentCheckedRanked": "تم التحقّق. المركز {rank} على اللوحة.",
+  "ascentCheckedMissed": "تم التحقّق من {metres} م. خارج العشرة الأوائل.",
+  "ascentCheckedStands": "تم التحقّق من {metres} م. أفضل نتيجة لك ما زالت قائمة.",
+  "ascentUnverified": "تعذّر التحقّق من هذه المحاولة.",
+  "ascentStillChecking": "ما زال التحقّق جاريًا. ستظهر على اللوحة عند انتهائه.",
+  "ascentSendRun": "أرسل إلى اللوحة",
+  "ascentLocalRun": "هذه المحاولة على جهازك فقط.",
+  "ascentPlayingAs": "على اللوحة باسم {name}",
+  "ascentChangeName": "غيّر الاسم",
+  "ascentLeaveBoard": "انسحب من اللوحة",
+  "ascentRankedRun": "تسلّق للتسجيل",
   "ascentRecord": "أفضل نتيجة جديدة",
   "ascentHeading": "الصعود",
   "ascentIntro": "صعود داخل مسلّة. حواف تتهاوى، وبعضها ينزلق، ولا سبيل إلا إلى أعلى.",
@@ -318,16 +343,16 @@
   },
   "profileSkillsMore": "{count} مهارات أخرى",
   "@profileSkillsMore": {
-      "description": "Home: link to the rest of the skills on About",
-      "placeholders": {
-          "count": {
-              "type": "int"
-          }
+    "description": "Home: link to the rest of the skills on About",
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
+    }
   },
   "profileSkillsAll": "كل مهاراتي",
   "@profileSkillsAll": {
-      "description": "Home: link to the skills on About when none are hidden"
+    "description": "Home: link to the skills on About when none are hidden"
   },
   "contactSocial": "روابط التواصل",
   "@contactSocial": {
