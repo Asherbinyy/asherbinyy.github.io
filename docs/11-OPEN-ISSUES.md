@@ -8,9 +8,12 @@
 > September 16: the owner set up the custom domain `sherbini.uk`, verified,
 > with an approved certificate. The site's own canonical/og/sitemap URLs,
 > `web/CNAME` and `wrangler.toml`'s `SITE_ORIGIN` were updated to match.
-> **The deployed Worker's CORS still has not been redeployed with the new
-> `SITE_ORIGIN`** -- that needs Cloudflare access, which only Codex has; the
-> live beacon at `sherbini.uk` returns 403 until that redeploy happens.
+> The Worker was redeployed on September 16 with `SITE_ORIGIN=https://sherbini.uk`.
+> Live leaderboard and beacon preflight requests now pass the origin gate;
+> both GitHub Pages origins are refused. Visitor analytics remain disabled.
+> The game bindings and secret are active, and real replay alarms were verified
+> without adding a public score. A completed ranked climb on the owner's phone
+> remains to be checked. See [the deployment worklog](worklog/2026-09-16-05-codex-game-worker-release.md).
 
 **September 13:** owner rejected the broad visual implementation; it has been rolled back to the existing Flutter design. Current scope is content-only. See [handoff](27-CONTINUE-HERE.md). Existing visual/game issues remain open; no design acceptance is implied by prior local tests.
 
