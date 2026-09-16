@@ -1,4 +1,8 @@
 import {adminPage} from './admin.js';
+import {handleGame} from './game/leaderboard.js';
+
+export {AscentBoard} from './game/board.js';
+export {AscentVerifier} from './game/verifier.js';
 
 const saltKey = 'system|salt';
 const counterPrefix = 'counter|';
@@ -167,6 +171,16 @@ export async function handleRequest(request, env, now = new Date()) {
       }
     }
     return response({error: 'Not found'}, 404, headers);
+  }
+
+  // The climb's leaderboard. Same origin rule as the beacon: it writes public
+  // rows on somebody's behalf, so it is not a cross-origin API.
+  if (url.pathname.startsWith('/v1/game/')) {
+    if (origin !== env.SITE_ORIGIN) {
+      return response({error: 'Origin not allowed'}, 403, headers);
+    }
+    const handled = await handleGame(request, url, env, now, headers, response);
+    if (handled) return handled;
   }
 
   if (url.pathname === '/v1/aggregates' && request.method === 'GET') {

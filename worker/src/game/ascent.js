@@ -379,7 +379,16 @@ export function step(world, dt, steer, isLeaping) {
     kept.push(generateLedge(nextId, highest, Rng.forLedge(world.seed, nextId)));
     nextId++;
   }
-  kept.sort((a, b) => (a.y === b.y ? a.id - b.id : a.y < b.y ? -1 : 1));
+  // Only re-sort when the recycler actually moved something. Ledges never
+  // change height otherwise, so on a tick that recycled nothing `kept` is
+  // already in the order it arrived in, and sorting an ordered array under a
+  // total comparator returns it unchanged. This is not a shortcut around the
+  // physics -- it is the same array either way -- but the sort ran a hundred
+  // and fifteen thousand times on a long run, and it recycles on a few hundred
+  // of those.
+  if (nextId !== world.nextLedgeId) {
+    kept.sort((a, b) => (a.y === b.y ? a.id - b.id : a.y < b.y ? -1 : 1));
+  }
 
   const fallen = y < risenFloor;
 
@@ -406,28 +415,73 @@ export function step(world, dt, steer, isLeaping) {
 }
 
 /**
- * Replays a decoded tape over the shaft `seed` builds.
+ * Where a part-replayed run has got to.
+ *
+ * `run` and `offset` are a position in the tape's run-length pairs; `ticks` is
+ * how many ticks have been simulated. A fresh cursor is `{run: 0, offset: 0,
+ * ticks: 0}`.
+ */
+export function startOf(seed) {
+  return { world: seededWorld(seed), run: 0, offset: 0, ticks: 0, done: false };
+}
+
+/**
+ * Replays at most `budget` ticks and hands back where it stopped.
+ *
+ * The climb is verified in pieces because a Cloudflare Worker is allowed ten
+ * milliseconds of CPU per request on the free plan, and a two-minute run costs
+ * closer to fifty. So the server replays a few hundred ticks, saves its place,
+ * and wakes itself up to carry on — which is slower in wall-clock terms and
+ * exactly as strict, because it is the same arithmetic in the same order.
+ *
+ * `advance(state, Infinity)` and repeated small budgets must agree, and
+ * `leaderboard.test.js` requires it against every vector in the fixture. If
+ * they ever disagree, the chunking has become part of the physics and the
+ * whole contract is void.
+ */
+export function advance(state, tape, budget) {
+  let { world, run, offset, ticks } = state;
+  let spent = 0;
+  while (spent < budget && run < tape.codes.length) {
+    if (world.isOver) {
+      return { world, run, offset, ticks, done: true };
+    }
+    const code = tape.codes[run];
+    const steer = steerOf(code);
+    const isLeaping = (code & 4) !== 0;
+    world = step(world, TICK_SECONDS, steer, isLeaping);
+    ticks++;
+    spent++;
+    offset++;
+    if (offset >= tape.counts[run]) {
+      run++;
+      offset = 0;
+    }
+  }
+  return {
+    world,
+    run,
+    offset,
+    ticks,
+    done: run >= tape.codes.length || world.isOver,
+  };
+}
+
+/** The verdict a finished state carries. */
+export function outcomeOf(state) {
+  return {
+    metres: Math.floor(state.world.altitude),
+    ticks: state.ticks,
+    endedInFall: state.world.isOver,
+  };
+}
+
+/**
+ * Replays a decoded tape over the shaft `seed` builds, in one go.
  *
  * The entire verification: the height is what this function reaches, never what
  * a submission claimed.
  */
 export function replay(seed, tape) {
-  let world = seededWorld(seed);
-  let ticks = 0;
-  for (let run = 0; run < tape.codes.length; run++) {
-    const steer = steerOf(tape.codes[run]);
-    const isLeaping = (tape.codes[run] & 4) !== 0;
-    for (let i = 0; i < tape.counts[run]; i++) {
-      if (world.isOver) {
-        return { metres: Math.floor(world.altitude), ticks, endedInFall: true };
-      }
-      world = step(world, TICK_SECONDS, steer, isLeaping);
-      ticks++;
-    }
-  }
-  return {
-    metres: Math.floor(world.altitude),
-    ticks,
-    endedInFall: world.isOver,
-  };
+  return outcomeOf(advance(startOf(seed), tape, Infinity));
 }
