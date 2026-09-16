@@ -2,15 +2,9 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/features/courtyard/game/domain/ascent_contract.dart';
 import 'package:nocturne/features/courtyard/game/presentation/game_control.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
-
-/// What the player is currently asking for.
-///
-/// Diving is gone. It existed because landing bounced on its own, so the only
-/// way to come down deliberately was to force it; now that a jump is a press,
-/// not jumping is how you stay put.
-typedef AscentInput = ({double steer, bool leap});
 
 /// The on-screen pad, for a thumb rather than a dragged finger.
 ///
@@ -42,10 +36,15 @@ class _AscentControlsState extends State<AscentControls> {
   bool _leap = false;
 
   void _publish() {
-    widget.onChanged((
-      steer: (_right ? 1.0 : 0.0) - (_left ? 1.0 : 0.0),
-      leap: _leap,
-    ));
+    // The pad reports the same three-state value a key does. It used to have a
+    // shape of its own, which meant a thumb and a keyboard described the climb
+    // in two vocabularies and the recorder had to know both.
+    widget.onChanged(
+      AscentInput.of(
+        steer: (_right ? 1.0 : 0.0) - (_left ? 1.0 : 0.0),
+        isLeaping: _leap,
+      ),
+    );
   }
 
   @override

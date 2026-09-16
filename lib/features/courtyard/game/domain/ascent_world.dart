@@ -1,6 +1,13 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
+// `meta` rather than `flutter/foundation` on purpose. The physics is what a
+// score is judged by, and it should be runnable by anything that runs Dart --
+// the vector generator is a plain `dart run` script with no Flutter anywhere
+// near it, and it could not be if this file reached for a UI framework to
+// borrow one annotation.
+import 'package:meta/meta.dart';
+
+import 'package:nocturne/features/courtyard/game/domain/ascent_rng.dart';
 
 /// What a ledge is made of, which decides how it behaves underfoot.
 enum LedgeKind {
@@ -105,6 +112,7 @@ class AscentWorld {
     required this.isOver,
     required this.nextLedgeId,
     required this.registersPassed,
+    this.seed = 0,
     this.brokeLedge = false,
     this.isGrounded = false,
     this.wasWalled = false,
@@ -126,15 +134,15 @@ class AscentWorld {
     required bool isPractice,
     int seed = 0,
   }) {
-    final random = math.Random(seed);
     final ledges = <Ledge>[
       // A floor wide enough that the first bounce cannot be missed.
       const Ledge(id: 0, kind: LedgeKind.stone, x: 0.5, y: 0, width: 0.9),
     ];
     for (var i = 1; i < _ledgeCount; i++) {
-      ledges.add(_generate(i, i * ledgeGap, random));
+      ledges.add(_generate(i, i * ledgeGap, AscentRng.ledge(seed, i)));
     }
     return AscentWorld(
+      seed: seed,
       ledges: ledges,
       climberX: 0.5,
       climberY: 1,
@@ -147,6 +155,13 @@ class AscentWorld {
       registersPassed: 0,
     );
   }
+
+  /// The number the whole shaft is derived from.
+  ///
+  /// Every ledge in the run is a pure function of this and its own id, so two
+  /// machines handed the same seed build the same climb without exchanging
+  /// anything else.
+  final int seed;
 
   /// Ledges currently in play, lowest first.
   final List<Ledge> ledges;
@@ -397,7 +412,6 @@ class AscentWorld {
     // Recycle ledges that have dropped well below, so the list stays a fixed
     // size however far the climb goes.
     final floor = risenFloor - _fallMargin * 2;
-    final random = math.Random(nextLedgeId);
     final kept = <Ledge>[];
     var nextId = nextLedgeId;
     var highest = 0.0;
@@ -410,10 +424,17 @@ class AscentWorld {
         continue;
       }
       highest += ledgeGap;
-      kept.add(_generate(nextId, highest, random));
+      kept.add(_generate(nextId, highest, AscentRng.ledge(seed, nextId)));
       nextId++;
     }
-    kept.sort((a, b) => a.y.compareTo(b.y));
+    // By height, then by id. Two ledges at one height is unlikely and not
+    // impossible, and `sort` is not stable, so leaving the tie to it would put
+    // the order of the list — and therefore which ledge a fall lands on — at
+    // the mercy of an implementation detail on each side of the replay.
+    kept.sort((a, b) {
+      final byHeight = a.y.compareTo(b.y);
+      return byHeight != 0 ? byHeight : a.id.compareTo(b.id);
+    });
 
     final fallen = y < risenFloor;
     if (fallen && isPractice) {
@@ -470,7 +491,7 @@ class AscentWorld {
   /// Whether this run beat the stored best.
   bool get isRecord => metres > best;
 
-  static Ledge _generate(int id, double y, math.Random random) {
+  static Ledge _generate(int id, double y, AscentRng random) {
     final roll = random.nextDouble();
     // Cracked and scarab ledges arrive gradually: the first stretch of the
     // shaft is dressed stone, so the controls are learned before the hazards.
@@ -486,7 +507,9 @@ class AscentWorld {
       x: width / 2 + random.nextDouble() * (1 - width),
       y: y,
       width: width,
-      drift: kind == LedgeKind.scarab ? (random.nextBool() ? 0.16 : -0.16) : 0,
+      drift: kind == LedgeKind.scarab
+          ? (random.nextDouble() < 0.5 ? 0.16 : -0.16)
+          : 0,
     );
   }
 
@@ -513,6 +536,7 @@ class AscentWorld {
     bool landed = false,
     int? lastKickSide,
   }) => AscentWorld(
+    seed: seed,
     ledges: ledges ?? this.ledges,
     climberX: climberX ?? this.climberX,
     climberY: climberY ?? this.climberY,

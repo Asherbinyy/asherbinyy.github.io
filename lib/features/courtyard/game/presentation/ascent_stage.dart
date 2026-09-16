@@ -11,6 +11,8 @@ import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/ascent_painter.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_audio.dart';
 import 'package:nocturne/core/platform/render_scale.dart';
+import 'package:nocturne/features/courtyard/game/domain/ascent_contract.dart';
+import 'package:nocturne/features/courtyard/game/domain/ascent_run.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
 import 'package:nocturne/features/courtyard/game/presentation/ascent_controls.dart';
 import 'package:nocturne/features/courtyard/game/presentation/game_control.dart';
@@ -55,7 +57,8 @@ class _AscentStageState extends State<AscentStage>
   final FocusNode _focus = FocusNode(debugLabel: 'ascent-stage');
   final AscentAudio _audio = AscentAudio();
 
-  AscentWorld? _world;
+  AscentSimulation? _run;
+  AscentWorld? get _world => _run?.world;
   Duration _last = Duration.zero;
   double _steer = 0;
   bool _leap = false;
@@ -111,20 +114,35 @@ class _AscentStageState extends State<AscentStage>
 
   void _onTick(Duration elapsed) {
     _elapsed = elapsed.inMicroseconds / 1000000;
-    final world = _world;
-    if (world == null) return;
+    final run = _run;
+    if (run == null) return;
     final dt = (elapsed - _last).inMicroseconds / 1000000;
     _last = elapsed;
-    final step = dt.clamp(0.0, 1 / 30);
 
-    final before = world;
-    final next = world.step(dt: step, steer: _steer, isLeaping: _leap);
-
-    if (next.velocity > 0 && before.velocity <= 0) {
-      _audio.play(AscentSound.bounce);
+    final before = run.world;
+    // One frame can owe the simulation several ticks. Each is a real moment of
+    // the climb -- a landing on the first of them is not cancelled by the
+    // second -- so the events are gathered across all of them and the sounds
+    // played once, rather than reading only the state the frame ended on.
+    var leapt = false;
+    var broke = false;
+    var kicked = false;
+    var previous = before;
+    for (final state in run.advance(
+      dt.clamp(0.0, 0.25),
+      AscentInput.of(steer: _steer, isLeaping: _leap),
+    )) {
+      leapt |= state.velocity > 0 && previous.velocity <= 0;
+      broke |= state.brokeLedge;
+      kicked |= state.kickedWall;
+      previous = state;
     }
-    if (next.brokeLedge) _audio.play(AscentSound.breaking);
-    if (next.kickedWall) {
+    final next = run.world;
+    if (identical(next, before)) return;
+
+    if (leapt) _audio.play(AscentSound.bounce);
+    if (broke) _audio.play(AscentSound.breaking);
+    if (kicked) {
       _kickedAt = _elapsed;
       _audio.play(AscentSound.collect);
     }
@@ -147,7 +165,7 @@ class _AscentStageState extends State<AscentStage>
       _ticker.stop();
     }
 
-    setState(() => _world = next);
+    setState(() {});
   }
 
   Future<void> _start() async {
@@ -163,10 +181,9 @@ class _AscentStageState extends State<AscentStage>
     _leap = false;
     if (!mounted) return;
     setState(() {
-      _world = AscentWorld.seeded(
+      _run = AscentSimulation(
         best: _best,
-        isPractice: false,
-        seed: DateTime.now().millisecondsSinceEpoch,
+        seed: DateTime.now().millisecondsSinceEpoch & 0xFFFFFFFF,
       );
     });
     _focus.requestFocus();
@@ -295,7 +312,7 @@ class _AscentStageState extends State<AscentStage>
                 child: AscentControls(
                   onChanged: (input) {
                     _steer = input.steer;
-                    _leap = input.leap;
+                    _leap = input.isLeaping;
                   },
                 ),
               ),
