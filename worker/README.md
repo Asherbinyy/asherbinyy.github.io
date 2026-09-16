@@ -108,28 +108,24 @@ are required by test to reach the same metre.
 On a paid plan this could be one request instead. The chunking is not wasted
 either way: it also means one long submission cannot occupy a request slot.
 
-### What to add to `wrangler.toml`
+### The bindings
 
-```toml
-[[durable_objects.bindings]]
-name = "GAME_BOARD"
-class_name = "AscentBoard"
-
-[[durable_objects.bindings]]
-name = "GAME_VERIFIER"
-class_name = "AscentVerifier"
-
-[[migrations]]
-tag = "v1-ascent-board"
-new_sqlite_classes = ["AscentBoard", "AscentVerifier"]
-```
+Already in `wrangler.toml`: two Durable Object bindings, `GAME_BOARD` and
+`GAME_VERIFIER`, and the `v1-ascent-board` migration that creates them. Both
+classes are exported from `worker/src/index.js`, which is the Worker's `main`,
+so nothing else has to be wired up.
 
 `new_sqlite_classes` rather than `new_classes`: the SQLite storage backend is
-the one available on the free plan, and the key-value backend is not. This needs
-a recent `compatibility_date` and a recent Wrangler; both fail loudly rather
-than quietly if they are too old.
+the one available on the free plan, and the key-value backend is not. The
+`compatibility_date` already in the file is recent enough; Wrangler fails
+loudly rather than quietly if it or the CLI is too old.
 
-Then one secret, which signs the run challenges:
+**The migration is the one irreversible step.** It creates a namespace on the
+account, and the free plan refuses a downgrade while a key-value-backed
+namespace exists — this one is SQLite-backed, so that does not apply, but it is
+worth knowing that deleting a namespace later is a separate deliberate act.
+
+What is left is one secret, which signs the run challenges:
 
 ```
 npx wrangler secret put GAME_SECRET    # 32+ random characters
