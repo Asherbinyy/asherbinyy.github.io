@@ -29,6 +29,31 @@ class AscentPainter extends CustomPainter {
     this.kickAge = 1,
   });
 
+  // A fresh AscentPainter is built every frame -- `time`, `world` and
+  // `entrance` all change -- so an instance field would cache nothing. This
+  // shape never depends on any of that: for a given window size, the same
+  // (ornament, box) pair is drawn every single frame, and rebuilding its
+  // Path from scratch sixty times a second was pure waste. Static, so it
+  // survives the instances; a handful of entries for the life of the tab.
+  static final Map<(Ornament, double), Path> _ornamentPathCache = {};
+
+  /// The unit shape for [ornament] at [box], built once and reused.
+  ///
+  /// Origin-relative: the caller translates the canvas rather than baking the
+  /// draw position into the path, which is what makes the cache key just the
+  /// shape and size rather than every position it is ever drawn at.
+  static Path _ornamentPath(Ornament ornament, double box) =>
+      _ornamentPathCache.putIfAbsent((ornament, box), () {
+        final path = Path();
+        for (final stroke in OrnamentPaths.strokes(ornament, box)) {
+          path.moveTo(stroke.first.x, stroke.first.y);
+          for (final point in stroke.skip(1)) {
+            path.lineTo(point.x, point.y);
+          }
+        }
+        return path;
+      });
+
   /// The world to draw.
   final AscentWorld world;
 
@@ -352,15 +377,12 @@ class AscentPainter extends CustomPainter {
       );
       if (box <= 0) continue;
       final ornament = Ornament.values[index.abs() % Ornament.values.length];
-      final path = Path();
       final origin = Offset(shaft.left + shaft.width * 0.06, y + box * 0.6);
-      for (final stroke in OrnamentPaths.strokes(ornament, box)) {
-        path.moveTo(origin.dx + stroke.first.x, origin.dy + stroke.first.y);
-        for (final point in stroke.skip(1)) {
-          path.lineTo(origin.dx + point.x, origin.dy + point.y);
-        }
-      }
-      canvas.drawPath(path, course);
+      canvas
+        ..save()
+        ..translate(origin.dx, origin.dy)
+        ..drawPath(_ornamentPath(ornament, box), course)
+        ..restore();
     }
     canvas.restore();
   }

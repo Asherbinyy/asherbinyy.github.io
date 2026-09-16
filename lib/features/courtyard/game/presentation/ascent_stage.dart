@@ -10,6 +10,7 @@ import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/ascent_painter.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_audio.dart';
+import 'package:nocturne/core/platform/render_scale.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
 import 'package:nocturne/features/courtyard/game/presentation/ascent_controls.dart';
 import 'package:nocturne/features/courtyard/game/presentation/game_control.dart';
@@ -71,6 +72,10 @@ class _AscentStageState extends State<AscentStage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Capped for exactly as long as this stage is open, and given back the
+    // moment it closes -- see RenderScale for why a phone needs this and a
+    // desktop does not.
+    RenderScale.capForGame();
     // Straight into a run. The owner asked for start and restart and a best
     // score, and nothing else: an empty stage with a Play button on it is one
     // press between him and the thing he came for.
@@ -80,6 +85,7 @@ class _AscentStageState extends State<AscentStage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    RenderScale.restore();
     _ticker.dispose();
     _entrance.dispose();
     _focus.dispose();
