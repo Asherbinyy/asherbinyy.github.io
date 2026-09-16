@@ -17,9 +17,8 @@
 
 /// Where the shipped documents live. Flutter nests its asset directory inside
 /// its own asset root, which is why this path says `assets` twice.
-const bundleBase = 'https://asherbinyy.github.io/assets/assets/content';
-
 export function adminPage(siteOrigin) {
+  const bundleBase = `${siteOrigin}/assets/assets/content`;
   return `<!doctype html>
 <html lang="en">
 <head>
