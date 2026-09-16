@@ -178,12 +178,27 @@ class LeaderboardController extends StateNotifier<LeaderboardState> {
     return challenge;
   }
 
+  /// Hands over the challenge in hand, and stops holding it.
+  ///
+  /// The run that is about to start owns it from here. Leaving it in this state
+  /// while a climb was in progress meant the reply to that climb's submission
+  /// could clear a *newer* challenge that had been fetched in the meantime,
+  /// and the next run would quietly stop counting.
+  RunChallenge? takeChallenge() {
+    final challenge = state.challenge;
+    if (challenge == null) return null;
+    state = state._with(clearChallenge: true);
+    return challenge;
+  }
+
   /// Sends a finished climb to be replayed, and follows the check to its end.
-  Future<void> submit({required String tape}) async {
+  Future<void> submit({
+    required RunChallenge challenge,
+    required String tape,
+  }) async {
     final client = _board;
     final participation = state.participation;
-    final challenge = state.challenge;
-    if (client == null || participation is! Joined || challenge == null) return;
+    if (client == null || participation is! Joined) return;
 
     final first = await client.submit(
       token: challenge.token,
@@ -192,15 +207,8 @@ class LeaderboardController extends StateNotifier<LeaderboardState> {
       tape: tape,
     );
     if (!mounted) return;
-    if (first == null) {
-      state = state._with(clearChallenge: true);
-      return;
-    }
-    state = state._with(
-      verdict: first,
-      pendingRunId: challenge.runId,
-      clearChallenge: true,
-    );
+    if (first == null) return;
+    state = state._with(verdict: first, pendingRunId: challenge.runId);
     if (first is VerdictPending) _watch(challenge.runId);
   }
 

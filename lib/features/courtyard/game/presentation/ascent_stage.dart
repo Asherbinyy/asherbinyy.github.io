@@ -178,57 +178,84 @@ class _AscentStageState extends ConsumerState<AscentStage>
       // The tape goes up, not the score. What the server ranks is what it
       // reaches replaying these keypresses; `next.metres` is only ever what
       // this screen prints.
-      if (_isRanked && run.isQualifying) {
-        _isRanked = false;
+      final challenge = _runChallenge;
+      _runChallenge = null;
+      if (challenge != null && run.isQualifying) {
         unawaited(
           ref
               .read(leaderboardControllerProvider.notifier)
-              .submit(tape: run.tape.encode()),
+              .submit(challenge: challenge, tape: run.tape.encode()),
         );
       }
+      unawaited(_afterRun());
     }
 
     setState(() {});
   }
 
-  /// Whether the run in progress is one the board will be asked to judge.
-  bool _isRanked = false;
-
-  /// Asks the one question, at the moment it first matters.
+  /// The challenge the run in progress is climbing under, if it has one.
   ///
-  /// Not on arriving at the site, not on opening the climb: on starting a run,
-  /// which is the first point at which the answer changes anything. A visitor
-  /// who only wants to play reaches the shaft without ever being asked to
-  /// decide about a scoreboard.
-  Future<void> _settleParticipation() async {
+  /// Held here rather than in the controller for the length of a run: this is
+  /// the one that will be submitted, and it must not be replaced by the next
+  /// one being fetched while the climb is still going.
+  RunChallenge? _runChallenge;
+
+  /// Everything the board wants, done between runs rather than before one.
+  ///
+  /// Both halves of this were originally at the top of `_start`, and both were
+  /// wrong there.
+  ///
+  /// The question was asked before the first climb, which is asking somebody
+  /// whether they want to be on a scoreboard for a game they have not played.
+  /// Here it is asked with their first height still on the screen, which is the
+  /// moment it means something — and only when the board actually answered,
+  /// because offering a place on a leaderboard that is not deployed is worse
+  /// than not offering one.
+  ///
+  /// And the challenge was fetched while the player waited to start. A ranked
+  /// run needs a server-chosen shaft before its first tick, so that seeds
+  /// cannot be shopped for, and a network call in front of the Play button is a
+  /// game that is broken whenever the network is slow. Fetching it now means it
+  /// is already in hand when they press Climb again.
+  Future<void> _afterRun() async {
     final leaderboard = ref.read(leaderboardControllerProvider.notifier);
     if (!leaderboard.isAvailable) return;
-    if (ref.read(leaderboardControllerProvider).participation is! Undecided) {
-      return;
+
+    final fetched = ref.read(leaderboardControllerProvider);
+    if (fetched.board == null && !fetched.isLoadingBoard) {
+      await leaderboard.refresh();
+      if (!mounted) return;
     }
-    final chosen = await JoinPrompt.show(context);
-    // Dismissing the sheet is not an answer, and must not be recorded as one.
-    // It means the question comes back next time, which is the only reading of
-    // a dismissal that does not put words in somebody's mouth.
-    if (chosen == null) return;
-    await leaderboard.choose(chosen);
+    // No board, no offer. Until the Worker has the leaderboard deployed this
+    // returns here every time, and the climb is exactly the game it was: no
+    // prompt, no panel, nothing asked of anybody.
+    if (ref.read(leaderboardControllerProvider).board == null) return;
+
+    if (ref.read(leaderboardControllerProvider).participation is Undecided) {
+      final chosen = await JoinPrompt.show(context);
+      if (!mounted) return;
+      // Dismissing the sheet is not an answer and is not recorded as one. It
+      // means the question comes back, which is the only reading of a
+      // dismissal that does not put words in somebody's mouth.
+      if (chosen != null) await leaderboard.choose(chosen);
+      if (!mounted) return;
+    }
+
+    if (ref.read(leaderboardControllerProvider).canPlayRanked) {
+      await leaderboard.beginRankedRun();
+    }
   }
 
   Future<void> _start() async {
-    await _settleParticipation();
-    if (!mounted) return;
-
-    // A ranked run climbs a shaft the server chose, so that a seed cannot be
-    // shopped for. If the server does not answer -- offline, not configured,
-    // slow -- the climb still happens, on a local seed, and simply does not
-    // count. The game never waits on a network to be playable.
-    final leaderboard = ref.read(leaderboardControllerProvider.notifier)
-      ..clearVerdict();
-    final challenge = ref.read(leaderboardControllerProvider).canPlayRanked
-        ? await leaderboard.beginRankedRun()
+    // Whatever challenge is in hand, if any. Never fetched here: the run starts
+    // now, and a climb with no challenge is an ordinary local one.
+    final leaderboard = ref.read(leaderboardControllerProvider.notifier);
+    final challenge = leaderboard.takeChallenge();
+    _runChallenge =
+        challenge != null && challenge.expiresAt.isAfter(DateTime.now())
+        ? challenge
         : null;
-    if (!mounted) return;
-    _isRanked = challenge != null;
+    leaderboard.clearVerdict();
 
     await _audio.prime();
     _audio.play(AscentSound.start);
@@ -245,7 +272,7 @@ class _AscentStageState extends ConsumerState<AscentStage>
       _run = AscentSimulation(
         best: _best,
         seed:
-            challenge?.seed ??
+            _runChallenge?.seed ??
             DateTime.now().millisecondsSinceEpoch & 0xFFFFFFFF,
       );
     });
@@ -534,9 +561,7 @@ class _Over extends ConsumerWidget {
                     isPrimary: true,
                     onPressed: onRestart,
                   ),
-                  if (leaderboard.board != null ||
-                      leaderboard.isLoadingBoard ||
-                      leaderboard.boardFailed) ...[
+                  if (leaderboard.board != null) ...[
                     SizedBox(height: tokens.space24),
                     const LeaderboardPanel(),
                   ],

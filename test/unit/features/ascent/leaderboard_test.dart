@@ -290,7 +290,13 @@ void main() {
       expect(challenge, isNotNull);
       expect(challenge!.seed, 7, reason: 'the seed must come from the server');
 
-      await controller.submit(tape: 'AAAA');
+      // The stage takes the challenge when the run starts, so the controller
+      // is no longer holding it by the time the climb ends -- which is the
+      // whole point: a challenge fetched for the *next* run cannot be clobbered
+      // by the reply to this one.
+      expect(controller.takeChallenge(), same(challenge));
+      expect(controller.state.challenge, isNull);
+      await controller.submit(challenge: challenge, tape: 'AAAA');
       expect(controller.state.verdict, isA<VerdictPending>());
       expect(
         controller.state.board,
@@ -366,7 +372,16 @@ void main() {
         reason: 'absent is not failed',
       );
       expect(await controller.beginRankedRun(), isNull);
-      await controller.submit(tape: 'AAAA');
+      expect(controller.takeChallenge(), isNull);
+      await controller.submit(
+        challenge: RunChallenge(
+          runId: 'run-1',
+          seed: 1,
+          token: 'signed',
+          expiresAt: DateTime.now().add(const Duration(minutes: 10)),
+        ),
+        tape: 'AAAA',
+      );
       expect(controller.state.verdict, isNull);
     });
 
