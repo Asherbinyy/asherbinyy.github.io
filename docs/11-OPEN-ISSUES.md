@@ -1,9 +1,16 @@
 # Open issues
 
 > September 15 account restoration: the owner reversed the move to lsherbini.
-> Active URLs and Worker CORS return to asherbinyy.github.io. The new account’s
+> Active URLs return to asherbinyy.github.io/Asherbinyy. The new account's
 > repository is retained until all history is verified on Asherbinyy and deletion
-> scope/access is resolved. No custom domain has been selected yet.
+> scope/access is resolved.
+>
+> September 16: the owner set up the custom domain `sherbini.uk`, verified,
+> with an approved certificate. The site's own canonical/og/sitemap URLs,
+> `web/CNAME` and `wrangler.toml`'s `SITE_ORIGIN` were updated to match.
+> **The deployed Worker's CORS still has not been redeployed with the new
+> `SITE_ORIGIN`** -- that needs Cloudflare access, which only Codex has; the
+> live beacon at `sherbini.uk` returns 403 until that redeploy happens.
 
 **September 13:** owner rejected the broad visual implementation; it has been rolled back to the existing Flutter design. Current scope is content-only. See [handoff](27-CONTINUE-HERE.md). Existing visual/game issues remain open; no design acceptance is implied by prior local tests.
 
