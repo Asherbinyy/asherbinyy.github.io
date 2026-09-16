@@ -111,7 +111,7 @@ class AscentPainter extends CustomPainter {
   ///
   /// Two fifths of the gap between ledges, which is the proportion that reads
   /// as a creature climbing a tower rather than as a creature wedged in one.
-  static const double _climberMetres = 1.15;
+  static const double _climberMetres = 1.45;
 
   /// Metres between torches down a pier.
   static const double _torchGap = 7.5;
@@ -667,62 +667,120 @@ class AscentPainter extends CustomPainter {
       ..translate(x, y)
       ..scale(1 + spring, 1 - spring);
     Offset p(double dx, double dy) => Offset(dx * height, dy * height);
+
+    // Gold, not stone. The climber used to be painted in the same colour as
+    // the wall he is climbing, which is most of why he read as a stick figure
+    // rather than a person: a stone-coloured outline against stone-coloured
+    // masonry. Section 2 of the design system reserves gold for the person and
+    // for what is live, and on this screen that is him.
+    //
+    // He is about fifty pixels tall in play, which is sprite scale, and the
+    // first pass at this learned the lesson the hard way: a profile face, a
+    // wesekh collar and flared nemes lappets all at once turned to mush, and
+    // what read back was a chunky cartoon with blonde pigtails. At this size
+    // only the silhouette survives, so that is all this draws -- lean limbs,
+    // a real neck, a headdress that hugs the skull rather than flaring off
+    // it, and nothing else competing with them.
     final limb = Paint()
-      ..color = stone
-      ..strokeWidth = math.max(strokeWidth * 1.8, height * 0.055)
+      ..color = gold
+      ..strokeWidth = math.max(strokeWidth * 1.6, height * 0.044)
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
-    final spread = isReducedMotion || world.isGrounded ? 0.12 : 0.18;
-    final armY = world.velocity > 0 ? -0.68 : -0.45;
+    final solid = Paint()..color = gold;
+
+    // Legs stride wider in the air than on a ledge, so a jump reads as a jump
+    // from the silhouette alone.
+    final spread = isReducedMotion || world.isGrounded ? 0.11 : 0.17;
+    // Arms go up as he rises and forward as he falls -- the one cue that says
+    // which half of a jump you are watching.
+    final armY = world.velocity > 0 ? -0.66 : -0.44;
+
     canvas
-      ..drawLine(p(0, -0.69), p(0, -0.31), limb)
+      // Neck, short and real, so the head never floats free of the body.
+      ..drawLine(p(0, -0.775), p(0, -0.70), limb)
+      // The torso, as mass rather than as a line. This is the whole
+      // difference between a person and a stick figure at this size: broad at
+      // the shoulder, drawn in at the waist, and wide enough to carry the
+      // kilt beneath it.
       ..drawPath(
         Path()
-          ..moveTo(0, -height * 0.60)
-          ..lineTo(-height * 0.17, height * armY)
-          ..lineTo(-height * 0.25, height * (armY - 0.08)),
+          ..moveTo(-height * 0.105, -height * 0.680)
+          ..quadraticBezierTo(
+            0,
+            -height * 0.715,
+            height * 0.105,
+            -height * 0.680,
+          )
+          ..lineTo(height * 0.072, -height * 0.395)
+          ..lineTo(-height * 0.072, -height * 0.395)
+          ..close(),
+        solid,
+      )
+      // Arms, shoulder to elbow to hand.
+      ..drawPath(
+        Path()
+          ..moveTo(0, -height * 0.655)
+          ..lineTo(-height * 0.145, height * armY)
+          ..lineTo(-height * 0.225, height * (armY - 0.075)),
         limb,
       )
       ..drawPath(
         Path()
-          ..moveTo(0, -height * 0.60)
-          ..lineTo(height * 0.17, height * armY)
-          ..lineTo(height * 0.25, height * (armY - 0.08)),
+          ..moveTo(0, -height * 0.655)
+          ..lineTo(height * 0.145, height * armY)
+          ..lineTo(height * 0.225, height * (armY - 0.075)),
         limb,
       )
-      ..drawLine(p(-0.07, -0.29), p(-spread, -0.04), limb)
-      ..drawLine(p(0.07, -0.29), p(spread, -0.04), limb)
-      ..drawLine(p(-spread, -0.04), p(-spread - 0.06, -0.04), limb)
-      ..drawLine(p(spread, -0.04), p(spread + 0.06, -0.04), limb)
-      // Linen kilt and two arms/legs keep the silhouette human at phone size.
+      // Legs, hip to ankle, then a short foot forward -- the foot is what
+      // stops the leg reading as a dropped line.
+      ..drawLine(p(-0.05, -0.31), p(-spread, -0.035), limb)
+      ..drawLine(p(0.05, -0.31), p(spread, -0.035), limb)
+      ..drawLine(p(-spread, -0.035), p(-spread - 0.06, -0.035), limb)
+      ..drawLine(p(spread, -0.035), p(spread + 0.06, -0.035), limb)
+      // The shendyt: a filled kilt, wider at the hem. One shape, and it is
+      // the only thing on him that says which century he is from.
       ..drawPath(
         Path()
-          ..moveTo(-height * 0.09, -height * 0.43)
-          ..lineTo(height * 0.09, -height * 0.43)
-          ..lineTo(height * 0.17, -height * 0.25)
-          ..lineTo(-height * 0.17, -height * 0.25)
+          ..moveTo(-height * 0.075, -height * 0.395)
+          ..lineTo(height * 0.075, -height * 0.395)
+          ..lineTo(height * 0.145, -height * 0.235)
+          ..lineTo(-height * 0.145, -height * 0.235)
           ..close(),
-        Paint()..color = stone,
-      );
-    final head = p(0, -0.81);
-    canvas
-      ..drawCircle(head, height * 0.105, Paint()..color = stone)
-      // Gold nemes: flared sides, forehead band and a small central crest.
-      ..drawPath(
-        Path()
-          ..moveTo(-height * 0.12, -height * 0.90)
-          ..quadraticBezierTo(0, -height * 1.02, height * 0.12, -height * 0.90)
-          ..lineTo(height * 0.19, -height * 0.64)
-          ..lineTo(height * 0.10, -height * 0.66)
-          ..lineTo(height * 0.08, -height * 0.86)
-          ..lineTo(-height * 0.08, -height * 0.86)
-          ..lineTo(-height * 0.10, -height * 0.66)
-          ..lineTo(-height * 0.19, -height * 0.64)
-          ..close(),
-        Paint()..color = gold,
+        solid,
       )
-      ..drawCircle(p(0, -0.94), height * 0.035, Paint()..color = glow)
+      // The head: an oval on the neck, not a disc floating above it.
+      ..drawOval(
+        Rect.fromCenter(
+          center: p(0, -0.815),
+          width: height * 0.145,
+          height: height * 0.175,
+        ),
+        solid,
+      )
+      // The nemes, tight to the skull: a brow band and two short lappets that
+      // fall beside the jaw rather than flaring past the shoulders. Wider than
+      // this and it reads as hair.
+      ..drawPath(
+        Path()
+          ..moveTo(-height * 0.082, -height * 0.845)
+          ..quadraticBezierTo(
+            0,
+            -height * 0.960,
+            height * 0.082,
+            -height * 0.845,
+          )
+          ..lineTo(height * 0.098, -height * 0.735)
+          ..lineTo(height * 0.055, -height * 0.745)
+          ..lineTo(height * 0.048, -height * 0.830)
+          ..lineTo(-height * 0.048, -height * 0.830)
+          ..lineTo(-height * 0.055, -height * 0.745)
+          ..lineTo(-height * 0.098, -height * 0.735)
+          ..close(),
+        Paint()..color = glow,
+      )
+      // The uraeus, on the brow band.
+      ..drawCircle(p(0, -0.885), height * 0.022, Paint()..color = gold)
       ..restore();
   }
 
