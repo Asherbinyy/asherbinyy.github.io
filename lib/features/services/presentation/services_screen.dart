@@ -10,6 +10,7 @@ import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/locale_controller.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
@@ -119,9 +120,12 @@ class _Offer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    return Wrap(
+    // Balanced rather than wrapped: eight services in a row that fits five
+    // used to read five-then-three, which looks like the last row ran out
+    // rather than like a set. Four and four is a set.
+    return EvenGrid(
+      minTileWidth: Tokens.serviceCardWidth,
       spacing: tokens.space16,
-      runSpacing: tokens.space16,
       children: [for (final service in services) _ServiceCard(name: service)],
     );
   }
