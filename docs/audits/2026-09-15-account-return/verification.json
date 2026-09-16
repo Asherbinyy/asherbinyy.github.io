@@ -1,0 +1,37 @@
+{
+  "source_branches": 41,
+  "source_tags": 4,
+  "verified_refs": 45,
+  "errors": [],
+  "source_main": "23a9a836cb2038af9fa6a6162d112800e3038f73",
+  "restored_main": "eae42f4fc3ee34d37dc0926e8e20249dc7ec6364",
+  "source_unchanged_during_migration": true,
+  "remaining_local_remote": "origin: git@github.com:Asherbinyy/asherbinyy.github.io.git",
+  "worker_version": "097dca7b-2c4b-4bc3-b598-907e57a5478a",
+  "cors": {
+    "https://asherbinyy.github.io": {
+      "status": 204,
+      "allow_origin": "https://asherbinyy.github.io"
+    },
+    "https://lsherbini.github.io": {
+      "status": 403,
+      "allow_origin": null
+    }
+  },
+  "admin_integration_branch": "phase/codex-admin-ui",
+  "admin_integration_commit": "18b8af45b68ee2873f53472d229f793b0929bdd7",
+  "admin_ci": "https://github.com/Asherbinyy/asherbinyy.github.io/actions/runs/35008636790",
+  "admin_ci_result": "success",
+  "source_deletion": "pending clarification and owner access; not attempted",
+  "local_tests": {
+    "flutter": 704,
+    "worker": 70,
+    "format": "pass",
+    "analyze": "pass",
+    "wasm_build": "pass",
+    "coverage_percent": 86.06
+  },
+  "restoration_pr": "https://github.com/Asherbinyy/asherbinyy.github.io/pull/39",
+  "restoration_pr_checks": "success",
+  "main_deployment_run": "https://github.com/Asherbinyy/asherbinyy.github.io/actions/runs/35009145166"
+}
