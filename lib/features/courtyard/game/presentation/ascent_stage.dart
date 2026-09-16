@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -15,7 +16,11 @@ import 'package:nocturne/features/courtyard/game/domain/ascent_contract.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_run.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
 import 'package:nocturne/features/courtyard/game/presentation/ascent_controls.dart';
+import 'package:nocturne/features/courtyard/game/domain/leaderboard.dart';
 import 'package:nocturne/features/courtyard/game/presentation/game_control.dart';
+import 'package:nocturne/features/courtyard/game/presentation/leaderboard_controller.dart';
+import 'package:nocturne/features/courtyard/game/presentation/widgets/join_prompt.dart';
+import 'package:nocturne/features/courtyard/game/presentation/widgets/leaderboard_panel.dart';
 
 /// The climb, played full screen.
 ///
@@ -29,7 +34,7 @@ import 'package:nocturne/features/courtyard/game/presentation/game_control.dart'
 /// A game needs the screen. Pushing an opaque route means there is no scroller
 /// behind it to steal a key, no measure to respect, and no page chrome to
 /// compete with, and it is also simply what every game does.
-class AscentStage extends StatefulWidget {
+class AscentStage extends ConsumerStatefulWidget {
   /// Opens the stage over the current route.
   const AscentStage({super.key});
 
@@ -44,10 +49,10 @@ class AscentStage extends StatefulWidget {
   );
 
   @override
-  State<AscentStage> createState() => _AscentStageState();
+  ConsumerState<AscentStage> createState() => _AscentStageState();
 }
 
-class _AscentStageState extends State<AscentStage>
+class _AscentStageState extends ConsumerState<AscentStage>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   late final Ticker _ticker = createTicker(_onTick);
   late final AnimationController _entrance = AnimationController(
@@ -82,7 +87,14 @@ class _AscentStageState extends State<AscentStage>
     // Straight into a run. The owner asked for start and restart and a best
     // score, and nothing else: an empty stage with a Play button on it is one
     // press between him and the thing he came for.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _start());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Fetched once, here, because this is where somebody might look at it.
+      // The board is refreshed again after a submission and on a deliberate
+      // retry, and at no other time: a scoreboard that polls a server for as
+      // long as a tab is open is a beacon with a table drawn over it.
+      unawaited(ref.read(leaderboardControllerProvider.notifier).refresh());
+      unawaited(_start());
+    });
   }
 
   @override
@@ -163,12 +175,61 @@ class _AscentStageState extends State<AscentStage>
       _audio.play(next.metres > _best ? AscentSound.record : AscentSound.fall);
       if (next.metres > _best) _best = next.metres;
       _ticker.stop();
+      // The tape goes up, not the score. What the server ranks is what it
+      // reaches replaying these keypresses; `next.metres` is only ever what
+      // this screen prints.
+      if (_isRanked && run.isQualifying) {
+        _isRanked = false;
+        unawaited(
+          ref
+              .read(leaderboardControllerProvider.notifier)
+              .submit(tape: run.tape.encode()),
+        );
+      }
     }
 
     setState(() {});
   }
 
+  /// Whether the run in progress is one the board will be asked to judge.
+  bool _isRanked = false;
+
+  /// Asks the one question, at the moment it first matters.
+  ///
+  /// Not on arriving at the site, not on opening the climb: on starting a run,
+  /// which is the first point at which the answer changes anything. A visitor
+  /// who only wants to play reaches the shaft without ever being asked to
+  /// decide about a scoreboard.
+  Future<void> _settleParticipation() async {
+    final leaderboard = ref.read(leaderboardControllerProvider.notifier);
+    if (!leaderboard.isAvailable) return;
+    if (ref.read(leaderboardControllerProvider).participation is! Undecided) {
+      return;
+    }
+    final chosen = await JoinPrompt.show(context);
+    // Dismissing the sheet is not an answer, and must not be recorded as one.
+    // It means the question comes back next time, which is the only reading of
+    // a dismissal that does not put words in somebody's mouth.
+    if (chosen == null) return;
+    await leaderboard.choose(chosen);
+  }
+
   Future<void> _start() async {
+    await _settleParticipation();
+    if (!mounted) return;
+
+    // A ranked run climbs a shaft the server chose, so that a seed cannot be
+    // shopped for. If the server does not answer -- offline, not configured,
+    // slow -- the climb still happens, on a local seed, and simply does not
+    // count. The game never waits on a network to be playable.
+    final leaderboard = ref.read(leaderboardControllerProvider.notifier)
+      ..clearVerdict();
+    final challenge = ref.read(leaderboardControllerProvider).canPlayRanked
+        ? await leaderboard.beginRankedRun()
+        : null;
+    if (!mounted) return;
+    _isRanked = challenge != null;
+
     await _audio.prime();
     _audio.play(AscentSound.start);
 
@@ -183,7 +244,9 @@ class _AscentStageState extends State<AscentStage>
     setState(() {
       _run = AscentSimulation(
         best: _best,
-        seed: DateTime.now().millisecondsSinceEpoch & 0xFFFFFFFF,
+        seed:
+            challenge?.seed ??
+            DateTime.now().millisecondsSinceEpoch & 0xFFFFFFFF,
       );
     });
     _focus.requestFocus();
@@ -412,8 +475,8 @@ class _Hud extends StatelessWidget {
   }
 }
 
-/// What a run ended at.
-class _Over extends StatelessWidget {
+/// What a run ended at, and what the board made of it.
+class _Over extends ConsumerWidget {
   const _Over({
     required this.metres,
     required this.best,
@@ -425,49 +488,163 @@ class _Over extends StatelessWidget {
   final VoidCallback onRestart;
 
   @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = context.tokens;
+    final type = context.type;
+    final l10n = context.l10n;
+    final leaderboard = ref.watch(leaderboardControllerProvider);
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(tokens.space16),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: tokens.surface.withValues(alpha: 0.94),
+              border: Border.all(
+                color: tokens.hairlineStrong,
+                width: tokens.hairlineWidth,
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(tokens.space32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l10n.ascentAltitude(metres),
+                    style: type.displayL.copyWith(color: tokens.beacon),
+                  ),
+                  if (metres >= best && best > 0)
+                    Text(
+                      l10n.ascentRecord,
+                      style: type.body.copyWith(color: tokens.instrument),
+                    )
+                  else if (best > 0)
+                    Text(
+                      l10n.ascentBest(best),
+                      style: type.telemetryS.copyWith(color: tokens.textMuted),
+                    ),
+                  SizedBox(height: tokens.space12),
+                  _VerdictLine(state: leaderboard),
+                  SizedBox(height: tokens.space24),
+                  GameControl(
+                    label: l10n.ascentAgain,
+                    isPrimary: true,
+                    onPressed: onRestart,
+                  ),
+                  if (leaderboard.board != null ||
+                      leaderboard.isLoadingBoard ||
+                      leaderboard.boardFailed) ...[
+                    SizedBox(height: tokens.space24),
+                    const LeaderboardPanel(),
+                  ],
+                  if (leaderboard.participation case final Joined joined) ...[
+                    SizedBox(height: tokens.space12),
+                    _ParticipantControls(joined: joined),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// What the server said, or that it has not said yet.
+///
+/// The one thing this must never print is the number on the screen above it
+/// dressed up as a ranking. Until the run has been replayed there is no
+/// verified height, and a climb played without joining is simply not a board
+/// entry — both of which are said here in words rather than left to be assumed.
+class _VerdictLine extends StatelessWidget {
+  const _VerdictLine({required this.state});
+
+  final LeaderboardState state;
+
+  @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final type = context.type;
     final l10n = context.l10n;
 
-    return Center(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: tokens.surface.withValues(alpha: 0.94),
-          border: Border.all(
-            color: tokens.hairlineStrong,
-            width: tokens.hairlineWidth,
-          ),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(tokens.space32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.ascentAltitude(metres),
-                style: type.displayL.copyWith(color: tokens.beacon),
-              ),
-              if (metres >= best && best > 0)
-                Text(
-                  l10n.ascentRecord,
-                  style: type.body.copyWith(color: tokens.instrument),
-                )
-              else if (best > 0)
-                Text(
-                  l10n.ascentBest(best),
-                  style: type.telemetryS.copyWith(color: tokens.textMuted),
-                ),
-              SizedBox(height: tokens.space24),
-              GameControl(
-                label: l10n.ascentAgain,
-                isPrimary: true,
-                onPressed: onRestart,
-              ),
-            ],
-          ),
-        ),
+    final (String text, Color colour) = switch (state.verdict) {
+      VerdictPending() => (l10n.ascentChecking, tokens.textMuted),
+      VerdictRejected() => (l10n.ascentUnverified, tokens.textMuted),
+      final VerdictChecked checked when checked.isRanked => (
+        l10n.ascentCheckedRanked(checked.rank!),
+        tokens.beacon,
       ),
+      final VerdictChecked checked
+          when checked.outcome == 'not-an-improvement' =>
+        (l10n.ascentCheckedStands(checked.metres), tokens.textMuted),
+      final VerdictChecked checked => (
+        l10n.ascentCheckedMissed(checked.metres),
+        tokens.textMuted,
+      ),
+      // A run that was submitted and then stopped being waited on, or a run
+      // that was never ranked at all. Both are local results, and saying so is
+      // the difference between honest and flattering.
+      null when state.pendingRunId != null => (
+        l10n.ascentStillChecking,
+        tokens.textMuted,
+      ),
+      null => (l10n.ascentLocalRun, tokens.textMuted),
+    };
+
+    return Text(
+      text,
+      textAlign: TextAlign.center,
+      style: type.telemetryS.copyWith(color: colour),
+    );
+  }
+}
+
+/// Leaving, and changing the name on the way out.
+class _ParticipantControls extends ConsumerWidget {
+  const _ParticipantControls({required this.joined});
+
+  final Joined joined;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = context.tokens;
+    final l10n = context.l10n;
+
+    return Column(
+      children: [
+        Text(
+          l10n.ascentPlayingAs(joined.nickname),
+          style: context.type.telemetryS.copyWith(color: tokens.textMuted),
+        ),
+        SizedBox(height: tokens.space8),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: tokens.space8,
+          runSpacing: tokens.space8,
+          children: [
+            GameControl(
+              label: l10n.ascentChangeName,
+              onPressed: () async {
+                final chosen = await JoinPrompt.show(context);
+                if (chosen is Joined) {
+                  await ref
+                      .read(leaderboardControllerProvider.notifier)
+                      .rename(chosen.nickname);
+                }
+              },
+            ),
+            GameControl(
+              label: l10n.ascentLeaveBoard,
+              onPressed: () =>
+                  ref.read(leaderboardControllerProvider.notifier).forget(),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
