@@ -24,6 +24,22 @@ class Interests with _$Interests {
       _$InterestsFromJson(json);
 }
 
+/// One named thing, and optionally who is behind it.
+@freezed
+class InterestPick with _$InterestPick {
+  /// Creates an immutable pick.
+  const factory InterestPick({
+    required LocalizedText name,
+
+    /// The author, director, maker. Absent where naming one would be a guess.
+    LocalizedText? by,
+  }) = _InterestPick;
+
+  /// Decodes the documented JSON shape.
+  factory InterestPick.fromJson(Map<String, dynamic> json) =>
+      _$InterestPickFromJson(json);
+}
+
 /// One thing the owner does, and optionally the specific he named.
 ///
 /// [note] exists because "television" says nothing and "Better Call Saul" says
@@ -47,6 +63,16 @@ class Interest with _$Interest {
     /// path that resolves to nothing falls back to the drawn scene, so this is
     /// safe to declare before the file exists.
     String? logo,
+
+    /// The specific things this interest is made of, and who made them.
+    ///
+    /// A comma-joined sentence cannot say who wrote what: "The Alchemist,
+    /// Animal Farm, The Writer" reads as three books, and the third one is not
+    /// a book at all -- it is what happened when "write the writer's name next
+    /// to each" was recorded as content. A pick keeps the two apart, so the
+    /// page can set a title and its author differently and a reader can tell
+    /// which is which.
+    @Default(<InterestPick>[]) List<InterestPick> picks,
   }) = _Interest;
 
   /// Decodes the documented JSON shape.

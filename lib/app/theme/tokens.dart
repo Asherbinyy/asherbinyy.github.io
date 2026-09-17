@@ -481,6 +481,9 @@ abstract final class Tokens {
   /// The diameter of that control.
   static const double backToTopSize = 48;
 
+  /// One courtyard panel: the climb, and whatever comes next beside it.
+  static const double courtyardPanelWidth = 340;
+
   /// One service card, and the mark on it.
   static const double serviceCardWidth = 220, serviceIconSize = 26;
 

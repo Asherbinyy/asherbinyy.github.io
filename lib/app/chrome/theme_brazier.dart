@@ -118,10 +118,20 @@ class _BrazierPainter extends CustomPainter {
   final Color core;
   final double strokeWidth;
 
+  /// How far up the drawing sits inside its box, as a share of the height.
+  ///
+  /// The mark is not symmetrical about its own middle: the foot is at 0.9 of
+  /// the height and the flame reaches to about 0.22, so its visual centre
+  /// falls near 0.56 and the whole control read as sitting lower than the
+  /// document glyph and the "EN" beside it. Those two are centred text and
+  /// centred icons; this had to be nudged to agree with them.
+  static const double _opticalLift = 0.06;
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
+    canvas.translate(0, -h * _opticalLift);
     final ink = Paint()
       ..color = bowl
       ..style = PaintingStyle.stroke

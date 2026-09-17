@@ -533,6 +533,51 @@
     "description": "Keyboard controls, shown on a pointer browser"
   },
   "ascentLeave": "Leave",
+  "courtyardScoreboard": "Scoreboard",
+  "@courtyardScoreboard": {
+    "description": "Opens the climb leaderboard from the courtyard"
+  },
+  "courtyardNextHeading": "Something else",
+  "@courtyardNextHeading": {
+    "description": "Heading of the placeholder panel for a future game"
+  },
+  "courtyardNextBody": "A second game is coming. I have not decided what it is yet.",
+  "@courtyardNextBody": {
+    "description": "Says a second game is planned but undecided"
+  },
+  "offDutyBy": "by {name}",
+  "@offDutyBy": {
+    "description": "Attributes a favourite to its author or maker",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "workOpenApp": "Open {app}",
+  "@workOpenApp": {
+    "description": "Opens one application's own page",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "workShotOf": "{app} screenshot {index} of {total}",
+  "@workShotOf": {
+    "description": "Screen-reader label for one app screenshot",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      },
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "ascentBoardTitle": "Top climbers",
   "@ascentBoardTitle": {
     "description": "Heading over the public leaderboard"

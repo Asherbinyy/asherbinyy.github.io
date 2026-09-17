@@ -67,13 +67,18 @@ export async function mountThreshold() {
     scene.open();
   };
 
-  const enter = document.getElementById('threshold-enter');
-  if (enter) {
-    enter.addEventListener('click', openDoor);
-    // Focused as soon as the scene is up, so the keyboard can open the door
-    // without hunting for it.
-    window.setTimeout(() => enter.focus({preventScroll: true}), 600);
-  }
+  // The whole panel is the control. The owner asked for the button to go, and
+  // a door that opens to a click anywhere on it needs no handle drawn on it.
+  host.addEventListener('click', openDoor);
+  host.addEventListener('keydown', (event) => {
+    // Any key, not just the two a button would answer to: there is nothing
+    // else on screen to type at, and a visitor pressing a key here means
+    // "get on with it" whichever key it is.
+    if (event.key !== 'Tab') openDoor();
+  });
+  // Focused as soon as the scene is up, so a keyboard opens the door without
+  // hunting for anything.
+  window.setTimeout(() => host.focus({preventScroll: true}), 600);
 
   // It still opens on its own, for somebody who does nothing. Long enough to
   // read the button, short enough not to be a wait.

@@ -12,6 +12,7 @@ import 'package:nocturne/content/models/apps.dart';
 import 'package:nocturne/content/work_domain_label.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/loading/station_card.dart';
+import 'package:nocturne/features/work/presentation/widgets/app_shots.dart';
 import 'package:nocturne/features/work/presentation/widgets/store_links.dart';
 
 /// What `/work/<id>` shows for an application with no written study.
@@ -51,17 +52,24 @@ class AppDetail extends ConsumerWidget {
           style: type.telemetry.copyWith(color: tokens.beacon),
         ),
         SizedBox(height: tokens.space32),
-        // The mark stands in until the owner uploads real media through the
-        // panel. Unlabelled: the name is directly above it.
-        ClipRRect(
-          borderRadius: BorderRadius.circular(Tokens.cardRadius),
-          child: StationCard(
-            seedId: app.id,
-            name: '',
-            width: double.infinity,
-            height: tokens.space64 * 4,
+        // The procedural mark stands in only while there is nothing real to
+        // show. Once an application has its own screens, printing a generated
+        // pattern above them is a placeholder competing with the thing it was
+        // standing in for -- and it was taking a quarter of the page to do it.
+        if (app.shots.isEmpty)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(Tokens.cardRadius),
+            child: StationCard(
+              seedId: app.id,
+              name: '',
+              width: double.infinity,
+              height: tokens.space64 * 4,
+            ),
           ),
-        ),
+        if (app.shots.isNotEmpty) ...[
+          SizedBox(height: tokens.space32),
+          AppShots(paths: app.shots, appName: app.name),
+        ],
         if (role != null) ...[
           SizedBox(height: tokens.space32),
           ConstrainedBox(

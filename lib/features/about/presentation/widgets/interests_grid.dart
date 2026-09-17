@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/widgets/even_grid.dart';
@@ -10,6 +11,7 @@ import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/content/models/interests.dart';
+import 'package:nocturne/content/models/localized_text.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
@@ -138,6 +140,7 @@ class _TileState extends State<_Tile> with SingleTickerProviderStateMixin {
     final type = context.type;
     final locale = context.channel;
     final note = widget.interest.note?.resolve(locale);
+    final picks = widget.interest.picks;
     final label = widget.interest.label.resolve(locale);
 
     return Semantics(
@@ -145,7 +148,18 @@ class _TileState extends State<_Tile> with SingleTickerProviderStateMixin {
       // are two unrelated announcements.
       container: true,
       button: true,
-      label: note == null ? label : '$label. $note',
+      label: [
+        label,
+        if (note != null) note,
+        // Read aloud as a sentence, so "The Alchemist by Paulo Coelho" rather
+        // than two disconnected stops.
+        for (final pick in picks)
+          if (pick.by case final LocalizedText by)
+            '${pick.name.resolve(locale)} '
+                '${context.l10n.offDutyBy(by.resolve(locale))}'
+          else
+            pick.name.resolve(locale),
+      ].join('. '),
       child: FocusableActionDetector(
         onShowHoverHighlight: (value) => _setActive(active: value),
         onShowFocusHighlight: (value) => _setActive(active: value),
@@ -185,6 +199,10 @@ class _TileState extends State<_Tile> with SingleTickerProviderStateMixin {
                       note,
                       style: type.telemetryS.copyWith(color: tokens.textMuted),
                     ),
+                  if (picks.isNotEmpty) ...[
+                    SizedBox(height: tokens.space8),
+                    _Picks(picks: picks, locale: locale),
+                  ],
                 ],
               ),
             ),
@@ -288,6 +306,81 @@ class _Plate extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The specific things an interest is made of, set as a short list.
+///
+/// A comma-joined line ran them together and read as an afterthought -- the
+/// owner's word for it was random. Each pick gets its own row, the title in the
+/// reading face and the person behind it quieter and beside it, so a glance
+/// separates "Animal Farm" from "George Orwell" without having to parse a
+/// sentence.
+class _Picks extends StatelessWidget {
+  const _Picks({required this.picks, required this.locale});
+
+  final List<InterestPick> picks;
+  final AppLocale locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final type = context.type;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final pick in picks)
+          Padding(
+            padding: EdgeInsets.only(bottom: tokens.space8),
+            // No baseline alignment here. The gold tick is a ColoredBox with
+            // no text baseline, and the grid asks every row for a dry layout
+            // so each card in it can share a height -- which turns "no
+            // baseline" into an assertion rather than a shrug.
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // A small gold tick, so the list reads as things chosen rather
+                // than things listed. Nudged down to meet the title's line.
+                Padding(
+                  padding: EdgeInsetsDirectional.only(
+                    end: tokens.space8,
+                    top: tokens.space8,
+                  ),
+                  child: SizedBox(
+                    width: tokens.space8,
+                    height: tokens.hairlineWidth * 2,
+                    child: ColoredBox(color: tokens.beaconDim),
+                  ),
+                ),
+                // Title above, the person beneath it. Side by side they shared
+                // one narrow tile and both ended in an ellipsis: "The Alche…"
+                // by "George Orwe…" tells a reader less than either alone
+                // would have.
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        pick.name.resolve(locale),
+                        style: type.bodyS.copyWith(color: tokens.textSecondary),
+                      ),
+                      if (pick.by case final LocalizedText by)
+                        Text(
+                          by.resolve(locale),
+                          style: type.telemetryS.copyWith(
+                            color: tokens.textMuted,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
