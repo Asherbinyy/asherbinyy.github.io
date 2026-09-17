@@ -481,6 +481,23 @@ abstract final class Tokens {
   /// The diameter of that control.
   static const double backToTopSize = 48;
 
+  /// The column the career's frieze runs down.
+  static const double careerThreadWidth = 28;
+
+  /// Clear air between the frieze and the stop marks beside it.
+  ///
+  /// Without it the two draw on top of each other, and the one column that is
+  /// meant to be legible at a glance becomes a muddle.
+  static const double careerThreadGap = 12;
+
+  /// How fast the carved field travels against the page.
+  ///
+  /// A quarter of the scroll. Far enough that the two planes separate and the
+  /// wall reads as being behind the text; near enough that the signs do not
+  /// visibly race the words, which stops looking like depth and starts looking
+  /// like a bug.
+  static const double ornamentParallax = 0.25;
+
   /// One courtyard panel: the climb, and whatever comes next beside it.
   static const double courtyardPanelWidth = 340;
 

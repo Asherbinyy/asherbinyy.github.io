@@ -8,9 +8,10 @@ import '../support/loading_harness.dart';
 /// Cards sit square in their column on a phone, and line up on a desktop.
 ///
 /// Two reports, and the second corrected the first. "On the phone, most of the
-/// cards are on the left side not centered" was a card with a fixed width in a
-/// wider column — a 200px stat panel in a 350px column left 150px of slack, all
-/// of it on the right. Below the compact breakpoint a tile now takes the column.
+/// cards are on the left side not centered" was a card with a fixed width in
+/// a wider column — a 200px stat panel in a 350px column left 150px of slack,
+/// all of it on the right. Below the compact breakpoint a tile takes the
+/// column.
 ///
 /// The fix for that went too far: short rows were centred while full rows
 /// filled, and the owner's second report was the right one — "you made some

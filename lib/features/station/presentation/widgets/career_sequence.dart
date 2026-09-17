@@ -2,7 +2,11 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
+import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/motion/reduced_motion.dart';
+import 'package:nocturne/core/painting/career_thread_painter.dart';
+import 'package:nocturne/core/widgets/reveal_on_scroll.dart';
 import 'package:nocturne/content/period.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/country_names.dart';
@@ -45,17 +49,148 @@ class CareerSequence extends StatelessWidget {
       [...roles]..sort((a, b) => b.start.compareTo(a.start));
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      for (final role in _mostRecentFirst)
-        KeyedSubtree(
-          key: anchorRegistry.keyFor(role.id),
-          child: _CareerEntry(role: role, locale: locale),
-        ),
-    ],
+  Widget build(BuildContext context) => _Threaded(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final role in _mostRecentFirst)
+          KeyedSubtree(
+            key: anchorRegistry.keyFor(role.id),
+            // Each stop unrolls as the reader reaches it. The career is a
+            // sequence and the page should read as one, rather than as six
+            // entries that were all already there.
+            child: RevealOnScroll(
+              child: _CareerEntry(role: role, locale: locale),
+            ),
+          ),
+      ],
+    ),
   );
+}
+
+/// The frieze running down the career, drawn as far as the reader has got.
+///
+/// It replaces the plain rule that used to separate the entries. A connecting
+/// line is what every timeline on the web uses and says nothing about this
+/// site; this is the same reed-bundle vocabulary as the wall and the stop
+/// marks, so the career reads as part of the building.
+///
+/// The progress is measured from this widget's own position in the viewport
+/// rather than from the page's scroll fraction: the career is one section of a
+/// long page, and a fraction of the whole page would have the frieze finish
+/// drawing itself long before the reader reached the last stop.
+class _Threaded extends StatefulWidget {
+  const _Threaded({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_Threaded> createState() => _ThreadedState();
+}
+
+class _ThreadedState extends State<_Threaded> {
+  final ValueNotifier<double> _drawn = ValueNotifier(0);
+  ScrollController? _controller;
+  bool _resolved = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The page's controller, not a `ScrollNotification`: this sits inside the
+    // scroll view and notifications travel outward, so a listener here would
+    // never fire. `ChromeScrollScope` documents the trap and the first version
+    // of this fell into it anyway.
+    // `_resolved`, not a null check: on the first pass both sides are null
+    // outside the chrome, and comparing them skips the fallback that draws the
+    // frieze in full when there is no scroll to follow.
+    final next = ChromeScrollScope.maybeOf(context)?.controller;
+    if (_resolved && identical(next, _controller)) return;
+    _resolved = true;
+    _controller?.removeListener(_measure);
+    _controller = next;
+    if (next == null) {
+      // Nothing to scroll: draw the frieze in full rather than not at all.
+      _drawn.value = 1;
+      return;
+    }
+    next.addListener(_measure);
+  }
+
+  @override
+  void dispose() {
+    _controller?.removeListener(_measure);
+    _drawn.dispose();
+    super.dispose();
+  }
+
+  void _measure() {
+    if (!mounted) return;
+    final box = context.findRenderObject() as RenderBox?;
+    final viewport =
+        Scrollable.maybeOf(context)?.context.findRenderObject() as RenderBox?;
+    if (box == null || viewport == null || !box.hasSize || !viewport.hasSize) {
+      return;
+    }
+    final top = box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+    final fold = viewport.size.height;
+    // Drawn to wherever the fold has reached inside this section, so the
+    // frieze arrives at each stop as the stop does. It only ever grows: a
+    // frieze that unpicked itself on the way back up would be a page that
+    // will not settle.
+    final reached = (fold - top) / box.size.height;
+    final next = reached.clamp(0.0, 1.0);
+    if (next > _drawn.value) _drawn.value = next;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final isReduced = ReducedMotion.of(context);
+    return Stack(
+      children: [
+        PositionedDirectional(
+          top: 0,
+          bottom: 0,
+          start: 0,
+          width: Tokens.careerThreadWidth,
+          child: ExcludeSemantics(
+            child: RepaintBoundary(
+              child: ValueListenableBuilder<double>(
+                valueListenable: _drawn,
+                builder: (context, value, _) => CustomPaint(
+                  painter: CareerThreadPainter(
+                    // Drawn in full under reduced motion: the frieze is part
+                    // of the page's furniture, and only its arrival is
+                    // decoration.
+                    progress: isReduced ? 1 : value,
+                    colour: tokens.hairline,
+                    accent: tokens.beaconDim,
+                    strokeWidth: tokens.hairlineWidth,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Indented past the frieze. Both the thread and the stop marks sat at
+        // the start edge and drew on top of each other, which made a muddle of
+        // the one column that is supposed to be legible at a glance.
+        Padding(
+          padding: const EdgeInsetsDirectional.only(
+            start: Tokens.careerThreadWidth + Tokens.careerThreadGap,
+          ),
+          child: widget.child,
+        ),
+      ],
+    );
+  }
 }
 
 class _CareerEntry extends StatelessWidget {

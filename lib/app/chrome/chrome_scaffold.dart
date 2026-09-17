@@ -10,6 +10,7 @@ import 'package:nocturne/app/chrome/app_nav.dart';
 import 'package:nocturne/app/chrome/pointer_beacon.dart';
 import 'package:nocturne/features/station/presentation/widgets/back_to_top.dart';
 import 'package:nocturne/features/recruiter/presentation/recruiter_view.dart';
+import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/ornament_field_painter.dart';
 import 'package:nocturne/core/widgets/cursor_trail.dart';
 import 'package:nocturne/core/painting/grain_painter.dart';
@@ -66,6 +67,14 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
   /// trace and the map every frame.
   final ValueNotifier<double> _progress = ValueNotifier(0);
 
+  /// Raw scroll pixels, for the field behind the page.
+  ///
+  /// Separate from [_progress] because they answer different questions: the
+  /// rail wants "how far through", the parallax wants "how far down". Feeding
+  /// the parallax a fraction would make the field drift at a rate that
+  /// depended on the length of the page it happened to be behind.
+  final ValueNotifier<double> _pixels = ValueNotifier(0);
+
   @override
   void initState() {
     super.initState();
@@ -78,6 +87,7 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
       ..removeListener(_onScroll)
       ..dispose();
     _progress.dispose();
+    _pixels.dispose();
     super.dispose();
   }
 
@@ -85,6 +95,7 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
     if (!_scroll.hasClients) return;
     final extent = _scroll.position.maxScrollExtent;
     _progress.value = extent <= 0 ? 0 : _scroll.position.pixels / extent;
+    _pixels.value = _scroll.position.pixels;
   }
 
   @override
@@ -103,6 +114,7 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
         child: _Grained(
           route: widget.route,
           isRecruiterMode: isRecruiterMode,
+          pixels: _pixels,
           child: FocusTraversalGroup(
             // Reading order is header, then content, then footer, in both
             // directions; the ordering policy follows Directionality rather
@@ -366,6 +378,7 @@ class _Grained extends StatelessWidget {
     required this.child,
     required this.route,
     required this.isRecruiterMode,
+    required this.pixels,
   });
 
   final Widget child;
@@ -376,6 +389,9 @@ class _Grained extends StatelessWidget {
 
   /// Recruiter Mode is a quiet document and carries no field.
   final bool isRecruiterMode;
+
+  /// How far the page has scrolled, for the field's parallax.
+  final ValueListenable<double> pixels;
 
   @override
   Widget build(BuildContext context) {
@@ -388,12 +404,30 @@ class _Grained extends StatelessWidget {
         // one muddy surface. Recruiter Mode has neither.
         if (!isRecruiterMode)
           RepaintBoundary(
-            child: CustomPaint(
-              painter: OrnamentFieldPainter(
-                seed: 'field.${route.name}',
-                colour: tokens.ornamentField,
-                opacity: tokens.ornamentFieldAlpha,
-                hairlineWidth: tokens.hairlineWidth,
+            // The wall moves, slowly. Two planes travelling at different
+            // speeds is the whole of the effect: the field used to scroll in
+            // lockstep with the text, which reads as wallpaper printed on the
+            // same sheet rather than as a surface the page is passing.
+            //
+            // A `ValueListenableBuilder` rather than a rebuild of the page:
+            // this repaints one `CustomPaint` per frame of scroll and nothing
+            // else, which is why the trace and the map are unaffected.
+            //
+            // Under reduced motion the field holds still. Parallax is
+            // vestibular motion that nobody asked for, and the page is
+            // perfectly legible without it.
+            child: ValueListenableBuilder<double>(
+              valueListenable: pixels,
+              builder: (context, value, _) => CustomPaint(
+                painter: OrnamentFieldPainter(
+                  seed: 'field.${route.name}',
+                  colour: tokens.ornamentField,
+                  opacity: tokens.ornamentFieldAlpha,
+                  hairlineWidth: tokens.hairlineWidth,
+                  drift: ReducedMotion.of(context)
+                      ? 0
+                      : value * Tokens.ornamentParallax,
+                ),
               ),
             ),
           ),
