@@ -64,67 +64,79 @@ class AppHeader extends ConsumerWidget {
           padding: EdgeInsetsDirectional.symmetric(
             horizontal: context.platform.gutter,
           ),
-          child: Row(
+          // A stack, not a row, so the tabs sit on the middle of the *page*.
+          //
+          // They used to be the last thing before the three controls, which
+          // put them wherever the mark and the controls happened to leave
+          // room -- right of centre, and moving as the language changed the
+          // width of the words. Centring them inside a row would only have
+          // centred them in the space between the mark and the controls, which
+          // is not the same line.
+          child: Stack(
+            alignment: AlignmentDirectional.center,
             children: [
-              AppMark(semanticLabel: l10n.markLink),
-              const Spacer(),
               if (AppHeader.hasInlineNav(context) && !isRecruiterMode)
                 AppNav(current: current),
-              SizedBox(width: tokens.space16),
-              ChromeControl(
-                label: l10n.recruiterModeGlyph,
-                semanticLabel: isRecruiterMode
-                    ? l10n.recruiterModeOn
-                    : l10n.recruiterModeOff,
-                isActive: isRecruiterMode,
-                // A single sheet, which is what the brief is: the whole
-                // career on one printable page. The word "Brief" sat in the
-                // header as a piece of jargon nobody had to read.
-                face: (context, colour) => Icon(
-                  isRecruiterMode
-                      ? Icons.article_rounded
-                      : Icons.article_outlined,
-                  size: Tokens.chromeIconSize,
-                  color: colour,
-                ),
-                onPressed: ref.read(recruiterModeProvider.notifier).toggle,
-              ),
-              ChromeControl(
-                label: locale.languageCode.toUpperCase(),
-                semanticLabel: locale == AppLocale.english
-                    ? l10n.languageSwitchToArabic
-                    : l10n.languageSwitchToEnglish,
-                isActive: false,
-                onPressed: () {
-                  ref.read(localeControllerProvider.notifier).toggle();
-                  ref.recordInteraction(
-                    AnalyticsEvent.languageChanged,
-                    route: current?.path ?? AppRoute.home.path,
-                    inputMode: context.platform.inputMode,
-                  );
-                },
-              ),
-              ChromeControl(
-                label: l10n.themeGlyph,
-                semanticLabel: theme == AppTheme.nocturne
-                    ? l10n.themeSwitchToDaybreak
-                    : l10n.themeSwitchToNocturne,
-                isActive: theme == AppTheme.daybreak,
-                // A brazier rather than the half-filled circle every site
-                // uses: a temple is lit by fire, so day and night here is a
-                // bowl of it catching or being put out.
-                face: (context, colour) => ThemeBrazier(
-                  isLit: theme == AppTheme.daybreak,
-                  colour: colour,
-                ),
-                onPressed: () {
-                  ref.read(themeControllerProvider.notifier).toggle();
-                  ref.recordInteraction(
-                    AnalyticsEvent.themeChanged,
-                    route: current?.path ?? AppRoute.home.path,
-                    inputMode: context.platform.inputMode,
-                  );
-                },
+              Row(
+                children: [
+                  AppMark(semanticLabel: l10n.markLink),
+                  const Spacer(),
+                  ChromeControl(
+                    label: l10n.recruiterModeGlyph,
+                    semanticLabel: isRecruiterMode
+                        ? l10n.recruiterModeOn
+                        : l10n.recruiterModeOff,
+                    isActive: isRecruiterMode,
+                    // A single sheet, which is what the brief is: the whole
+                    // career on one printable page. The word "Brief" sat in the
+                    // header as a piece of jargon nobody had to read.
+                    face: (context, colour) => Icon(
+                      isRecruiterMode
+                          ? Icons.article_rounded
+                          : Icons.article_outlined,
+                      size: Tokens.chromeIconSize,
+                      color: colour,
+                    ),
+                    onPressed: ref.read(recruiterModeProvider.notifier).toggle,
+                  ),
+                  ChromeControl(
+                    label: locale.languageCode.toUpperCase(),
+                    semanticLabel: locale == AppLocale.english
+                        ? l10n.languageSwitchToArabic
+                        : l10n.languageSwitchToEnglish,
+                    isActive: false,
+                    onPressed: () {
+                      ref.read(localeControllerProvider.notifier).toggle();
+                      ref.recordInteraction(
+                        AnalyticsEvent.languageChanged,
+                        route: current?.path ?? AppRoute.home.path,
+                        inputMode: context.platform.inputMode,
+                      );
+                    },
+                  ),
+                  ChromeControl(
+                    label: l10n.themeGlyph,
+                    semanticLabel: theme == AppTheme.nocturne
+                        ? l10n.themeSwitchToDaybreak
+                        : l10n.themeSwitchToNocturne,
+                    isActive: theme == AppTheme.daybreak,
+                    // A brazier rather than the half-filled circle every site
+                    // uses: a temple is lit by fire, so day and night here is a
+                    // bowl of it catching or being put out.
+                    face: (context, colour) => ThemeBrazier(
+                      isLit: theme == AppTheme.daybreak,
+                      colour: colour,
+                    ),
+                    onPressed: () {
+                      ref.read(themeControllerProvider.notifier).toggle();
+                      ref.recordInteraction(
+                        AnalyticsEvent.themeChanged,
+                        route: current?.path ?? AppRoute.home.path,
+                        inputMode: context.platform.inputMode,
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),

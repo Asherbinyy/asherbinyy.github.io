@@ -441,9 +441,12 @@ abstract final class Tokens {
 
   /// Every this many metres, the shaft acknowledges the climb.
   ///
-  /// A round hundred because that is what the owner asked for and because it
-  /// is a number a player can hold in their head while climbing.
-  static const int ascentRewardStep = 100;
+  /// Fifty, matching the step at which the floor speeds up. It was a hundred,
+  /// which meant the first thing the game ever said to a player arrived after
+  /// they had survived the floor starting to move — the one moment in the climb
+  /// most worth saying something about. Every fifty is also close enough
+  /// together that a long run is punctuated rather than silent.
+  static const int ascentRewardStep = 50;
 
   /// How long the mark stays up afterwards, in seconds.
   static const double ascentRewardHold = 1.6;
@@ -481,6 +484,23 @@ abstract final class Tokens {
   /// The diameter of that control.
   static const double backToTopSize = 48;
 
+  /// The column the career's frieze runs down.
+  static const double careerThreadWidth = 28;
+
+  /// Clear air between the frieze and the stop marks beside it.
+  ///
+  /// Without it the two draw on top of each other, and the one column that is
+  /// meant to be legible at a glance becomes a muddle.
+  static const double careerThreadGap = 12;
+
+  /// How fast the carved field travels against the page.
+  ///
+  /// A quarter of the scroll. Far enough that the two planes separate and the
+  /// wall reads as being behind the text; near enough that the signs do not
+  /// visibly race the words, which stops looking like depth and starts looking
+  /// like a bug.
+  static const double ornamentParallax = 0.25;
+
   /// One courtyard panel: the climb, and whatever comes next beside it.
   static const double courtyardPanelWidth = 340;
 
@@ -493,16 +513,20 @@ abstract final class Tokens {
   /// The platform mark on a contact card.
   static const double contactIconSize = 18;
 
-  /// One contact card's smallest width, so a row of them is a grid and not a
-  /// ragged line of differently sized words.
-  static const double contactCardWidth = 132;
-
-  /// One skill chip's smallest width.
+  /// One contact card's width, and every contact card is this wide.
   ///
-  /// Every chip is given the same box so the block reads as a grid: "Dart" and
-  /// "Adobe Premiere Pro" are a third and three times this, and sizing each to
-  /// its own word is what made the panel look like rubble.
-  static const double skillChipWidth = 132;
+  /// Sized to hold the longest destination -- "Instagram" with its mark -- and
+  /// no more. It was 132, which truncated, and briefly it was whatever a row
+  /// divided into, which gave "GitHub" a box twice the size of its word.
+  static const double contactCardWidth = 152;
+
+  /// One skill chip's width, and every skill chip is this wide.
+  ///
+  /// Sized to hold the longest of them -- "Adobe Premiere Pro" -- so the block
+  /// reads as a grid without any chip being padded out past its word. Sizing
+  /// each to its own text made the panel look like rubble; sizing each to a
+  /// share of the row made "Dart" mostly empty box.
+  static const double skillChipWidth = 168;
 
   /// How the gold glow behind a hovered contact card is thrown.
   static const double contactGlowAlpha = 0.35, contactGlowBlur = 18;
@@ -561,6 +585,13 @@ abstract final class Tokens {
   /// of, and the steering becomes imprecise at that width.
   static const double ascentMaxWidth = 520;
 
+  /// How wide the board sits beside the climb.
+  ///
+  /// Narrow on purpose. It is read in the corner of an eye between two jumps,
+  /// and anything wider starts competing with the shaft for the middle of the
+  /// screen — which is where the thing the player is actually watching is.
+  static const double ascentRailWidth = 190;
+
   /// The cursor wake: how long a mote lives, how many may live at once, and
   /// how large one starts.
   ///
@@ -617,6 +648,21 @@ abstract final class Tokens {
   /// Long enough to read as a flame being carried in rather than a hover
   /// state switching on, short enough that it keeps up with the hand.
   static const double wallTorchFade = 0.26;
+
+  /// The brightest a scroll-carried torch gets where the wall is behind the
+  /// text rather than beside it.
+  ///
+  /// On a wide frame a hand holds the light and can take it off the wall
+  /// entirely. On a phone the light never leaves — it is carried by the scroll,
+  /// so it is on for the whole page — and the wall's strip runs close enough to
+  /// the text that a flame at full strength sits behind the ends of lines.
+  ///
+  /// Just short of full, so the signs light properly and the pool never reaches
+  /// the white of the copy. 0.42 was tried first and is far too little: the
+  /// wall's gilded signs already breathe on their own, so a weak torch is
+  /// indistinguishable from no torch — which is exactly how the first broken
+  /// version of this went unnoticed.
+  static const double wallTorchTouchPeak = 0.85;
 
   /// Where in the wave a gilded sign starts to bloom.
   static const double wallShimmerBloomAt = 0.62;

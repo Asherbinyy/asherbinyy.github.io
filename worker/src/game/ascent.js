@@ -9,7 +9,7 @@
  * honest way to run the same physics in both is to write it twice and then
  * prove the two agree.
  *
- * The proof is `worker/contracts/fixtures/ascent-v1-vectors.json`, generated
+ * The proof is `worker/contracts/fixtures/ascent-vectors.json`, generated
  * from the Dart side by `tool/generate_ascent_vectors.dart` and asserted by
  * `worker/test/ascent.test.js` here and `test/unit/features/ascent/
  * ascent_vectors_test.dart` there. Both sides check the same file, so a change
@@ -24,7 +24,7 @@
 // The contract. Mirrors ascent_contract.dart.
 // ---------------------------------------------------------------------------
 
-export const VERSION = 1;
+export const VERSION = 2;
 export const TICK_RATE = 128;
 /** Exactly 1/128, which is exactly representable in binary64. */
 export const TICK_SECONDS = 0.0078125;
@@ -183,7 +183,17 @@ const BRAKING = 9;
 const SHORT_JUMP_SPEED = 9.5;
 const LEDGE_GAP = 2.6;
 const WALL_BOOST = 1.34;
-const LEVEL_HEIGHT = 60;
+const LEVEL_HEIGHT = 100;
+const DIFFICULTY_STEP = 50;
+const OPENING_WIDTH = 0.42;
+const OPENING_SPREAD = 0.14;
+const BOON_FLOOR = 50;
+const BOON_CHANCE = 0.13;
+const BOON_HEIGHT = 1.3;
+const BOON_REACH_X = 0.09;
+const BOON_REACH_Y = 0.85;
+const BOON_SECONDS = 10;
+const BOON_LIFT = 1.42;
 const REGISTER_GAP = 24;
 const LEDGE_COUNT = 40;
 const BOUNCE = 13;
@@ -205,17 +215,62 @@ function clamp(value, low, high) {
   return value;
 }
 
-function floorSpeed(level) {
-  return level === 0 ? 0 : 0.5 + level * 0.55;
+function floorSpeed(step) {
+  return step === 0 ? 0 : 0.4 + step * 0.34;
 }
 
-function generateLedge(id, y, rng) {
+/**
+ * The ledge at `y`, in the character its level calls for.
+ *
+ * Every hundred metres is a different shaft: I dressed stone and wide, II
+ * weathered, III carried by scarabs, IV and above all three at the narrowest
+ * the ledges get. See `AscentWorld._generate` for why it is shaped that way.
+ *
+ * The draws happen in a fixed order — kind, width, position, drift, boon — and
+ * every one of them happens whether or not its result is used, because the Dart
+ * side draws them in that same order from the same generator and a stream read
+ * out of step is a different shaft.
+ */
+export function generateLedge(id, y, rng) {
+  const level = Math.floor(y / LEVEL_HEIGHT);
   const roll = rng.nextDouble();
-  const kind = y < 40 || roll < 0.62 ? STONE : roll < 0.82 ? CRACKED : SCARAB;
-  const width = 0.16 + rng.nextDouble() * 0.12;
+  let kind;
+  if (level <= 0) kind = STONE;
+  else if (level === 1) kind = roll < 0.6 ? STONE : CRACKED;
+  else if (level === 2) kind = roll < 0.58 ? STONE : SCARAB;
+  else kind = roll < 0.54 ? STONE : roll < 0.8 ? CRACKED : SCARAB;
+
+  let narrowest;
+  let spread;
+  if (level <= 0) {
+    narrowest = OPENING_WIDTH;
+    spread = OPENING_SPREAD;
+  } else if (level === 1) {
+    narrowest = 0.25;
+    spread = 0.14;
+  } else if (level === 2) {
+    narrowest = 0.2;
+    spread = 0.13;
+  } else {
+    narrowest = 0.16;
+    spread = 0.12;
+  }
+
+  const width = narrowest + rng.nextDouble() * spread;
   const x = width / 2 + rng.nextDouble() * (1 - width);
   const drift = kind === SCARAB ? (rng.nextDouble() < 0.5 ? 0.16 : -0.16) : 0;
-  return { id, kind, x, y, width, drift, isBroken: false };
+  const boonRoll = rng.nextDouble();
+  return {
+    id,
+    kind,
+    x,
+    y,
+    width,
+    drift,
+    isBroken: false,
+    hasBoon: y >= BOON_FLOOR && boonRoll < BOON_CHANCE,
+    boonTaken: false,
+  };
 }
 
 function advanceLedge(ledge, dt) {
@@ -236,7 +291,17 @@ function carries(ledge, climberX) {
 /** A fresh run over the shaft `seed` builds. */
 export function seededWorld(seed) {
   const ledges = [
-    { id: 0, kind: STONE, x: 0.5, y: 0, width: 0.9, drift: 0, isBroken: false },
+    {
+      id: 0,
+      kind: STONE,
+      x: 0.5,
+      y: 0,
+      width: 0.9,
+      drift: 0,
+      isBroken: false,
+      hasBoon: false,
+      boonTaken: false,
+    },
   ];
   for (let i = 1; i < LEDGE_COUNT; i++) {
     ledges.push(generateLedge(i, i * LEDGE_GAP, Rng.forLedge(seed, i)));
@@ -260,6 +325,8 @@ export function seededWorld(seed) {
     jumpHeld: false,
     jumpConsumed: false,
     lastKickSide: 0,
+    boonFor: 0,
+    boonsTaken: 0,
   };
 }
 
@@ -280,8 +347,12 @@ export function seededWorld(seed) {
 export function step(world, dt, steer, isLeaping) {
   if (world.isOver) return world;
 
-  const level = Math.floor(world.altitude / LEVEL_HEIGHT);
-  const rise = floorSpeed(level) * dt;
+  const difficulty = Math.floor(world.altitude / DIFFICULTY_STEP);
+  const rise = floorSpeed(difficulty) * dt;
+
+  // Read from the state coming in, so a boon taken on the way up does not
+  // retroactively raise the jump that reached it.
+  const lift = world.boonFor > 0 ? BOON_LIFT : 1;
 
   const target = clamp(steer, -1, 1) * STEER_RATE;
   const change = (steer === 0 ? BRAKING : ACCELERATION) * dt;
@@ -318,7 +389,7 @@ export function step(world, dt, steer, isLeaping) {
 
   if (walled && speed > 0 && !world.wasWalled && kickSide !== (x === 0 ? -1 : 1)) {
     kickSide = x === 0 ? -1 : 1;
-    speed = BOUNCE * WALL_BOOST;
+    speed = BOUNCE * WALL_BOOST * lift;
     kicked = true;
     horizontal = x === 0 ? STEER_RATE : -STEER_RATE;
   }
@@ -327,7 +398,7 @@ export function step(world, dt, steer, isLeaping) {
 
   const requested = queued > 0 || (isLeaping && !consumed);
   if (requested && grace > 0 && !consumed && !kicked) {
-    speed = BOUNCE;
+    speed = BOUNCE * lift;
     y = world.climberY + speed * dt;
     grace = 0;
     queued = 0;
@@ -348,7 +419,7 @@ export function step(world, dt, steer, isLeaping) {
       touchedDown = !world.isGrounded;
       grace = INPUT_GRACE;
       if (queued > 0 && !consumed) {
-        speed = BOUNCE;
+        speed = BOUNCE * lift;
         grounded = false;
         grace = 0;
         queued = 0;
@@ -360,6 +431,20 @@ export function step(world, dt, steer, isLeaping) {
       break;
     }
   }
+
+  // Boons, taken by passing through them. Over `live` rather than the recycled
+  // list, and one per tick, for the reasons `AscentWorld.step` gives.
+  let tookBoon = false;
+  for (let i = 0; i < live.length; i++) {
+    const ledge = live[i];
+    if (!ledge.hasBoon || ledge.boonTaken) continue;
+    if (Math.abs(x - ledge.x) > BOON_REACH_X) continue;
+    if (Math.abs(y - (ledge.y + BOON_HEIGHT)) > BOON_REACH_Y) continue;
+    live[i] = { ...ledge, boonTaken: true };
+    tookBoon = true;
+    break;
+  }
+  const boonLeft = tookBoon ? BOON_SECONDS : Math.max(0, world.boonFor - dt);
 
   const reached = Math.max(world.altitude, y);
   const registers = Math.floor(reached / REGISTER_GAP);
@@ -411,6 +496,8 @@ export function step(world, dt, steer, isLeaping) {
     jumpHeld: isLeaping,
     jumpConsumed: consumed,
     lastKickSide: touchedDown ? 0 : kickSide,
+    boonFor: boonLeft,
+    boonsTaken: world.boonsTaken + (tookBoon ? 1 : 0),
   };
 }
 
@@ -473,6 +560,7 @@ export function outcomeOf(state) {
     metres: Math.floor(state.world.altitude),
     ticks: state.ticks,
     endedInFall: state.world.isOver,
+    boonsTaken: state.world.boonsTaken,
   };
 }
 

@@ -113,6 +113,19 @@ class AscentPainter extends CustomPainter {
   /// as a creature climbing a tower rather than as a creature wedged in one.
   static const double _climberMetres = 1.45;
 
+  /// How much larger the head is drawn than its measured proportion.
+  ///
+  /// Life proportion reads as a pinhead at the size this figure is actually
+  /// painted. Illustration has always solved this the same way, and so does
+  /// every readable game sprite.
+  static const double _headScale = 1.28;
+
+  /// Where the chin sits, as a share of the climber's height above the feet.
+  ///
+  /// The pivot the head is scaled about, so the jaw stays on the neck however
+  /// the scale is tuned.
+  static const double _chinY = -0.7275;
+
   /// Metres between torches down a pier.
   static const double _torchGap = 7.5;
 
@@ -220,9 +233,11 @@ class AscentPainter extends CustomPainter {
       _paintLedge(canvas, shaft, ledge, y);
     }
 
+    _paintBoons(canvas, shaft, size, screenY, metresToPixels);
     _paintFloor(canvas, shaft, screenY(world.floorY), metresToPixels);
     _paintClimber(canvas, shaft, screenY(world.climberY), metresToPixels);
     _paintKick(canvas, shaft, screenY(world.climberY));
+    _paintDanger(canvas, size);
 
     // The opening: light travels up the shaft as a run begins, so the game
     // arrives rather than appearing. Drawn last, over everything, and gone by
@@ -626,6 +641,117 @@ class AscentPainter extends CustomPainter {
       ..restore();
   }
 
+  /// The gilded ankhs, floating above the ledges that carry them.
+  ///
+  /// An ankh because it is the one motif in this alphabet that everybody
+  /// already reads as *life*, which is what it gives: ten seconds of a taller
+  /// jump. It is drawn as three strokes -- loop, bar, stem -- and no more,
+  /// because at twenty pixels a fourth stroke is a smudge.
+  ///
+  /// A taken one leaves nothing behind. The lift itself is the feedback, and a
+  /// hollow outline where an ankh used to be would be a row of things the
+  /// player can no longer have.
+  void _paintBoons(
+    Canvas canvas,
+    Rect shaft,
+    Size size,
+    double Function(double) screenY,
+    double metresToPixels,
+  ) {
+    // Smaller than the climber, always. He is the thing being watched, and a
+    // collectible that outweighs the character is a collectible the eye goes
+    // to instead of to the jump it is in the middle of.
+    final box = math.min(shaft.width * 0.05, metresToPixels * 0.72);
+    if (box < 4) return;
+
+    for (final ledge in world.ledges) {
+      if (!ledge.hasBoon || ledge.boonTaken) continue;
+      final centre = Offset(
+        shaft.left + ledge.x * shaft.width,
+        screenY(ledge.boonY),
+      );
+      if (centre.dy < -box || centre.dy > size.height + box) continue;
+
+      // Bobbing, and lit from behind. Standing still it reads as scenery cut
+      // into the wall; moving, it reads as something to go and get.
+      final bob = isReducedMotion
+          ? 0.0
+          : math.sin(time * 2.1 + ledge.id * 1.7) * box * 0.12;
+      final at = centre.translate(0, bob);
+
+      canvas.drawCircle(
+        at,
+        box * 0.95,
+        Paint()
+          ..color = glow.withValues(alpha: isReducedMotion ? 0.12 : 0.18)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, box * 0.6),
+      );
+
+      final stroke = Paint()
+        ..color = glow
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(strokeWidth * 1.8, box * 0.16)
+        ..strokeCap = StrokeCap.round;
+      canvas
+        ..drawOval(
+          Rect.fromCenter(
+            center: at.translate(0, -box * 0.44),
+            width: box * 0.52,
+            height: box * 0.62,
+          ),
+          stroke,
+        )
+        ..drawLine(
+          at.translate(-box * 0.42, -box * 0.06),
+          at.translate(box * 0.42, -box * 0.06),
+          stroke,
+        )
+        ..drawLine(
+          at.translate(0, -box * 0.06),
+          at.translate(0, box * 0.62),
+          stroke,
+        );
+    }
+  }
+
+  /// The shaft closing in, drawn as the floor's own light rising to meet you.
+  ///
+  /// The floor is drawn faithfully and faithfully is invisible: for most of a
+  /// run it is below the frame, so the thing that is about to end the climb
+  /// gives no warning until it arrives. The owner's note was that there is no
+  /// sense of the clock running out.
+  ///
+  /// It comes **from below**, in the floor's own colour, because that is where
+  /// it is. The first version was a vignette closing in from every edge at
+  /// once, and it was wrong twice over: nothing is approaching from above, and
+  /// a pale tint spread over the whole frame washed the contrast out of the
+  /// shaft rather than adding anything to it. A glow with a direction says
+  /// which way to go; a fog over everything says only that something is wrong.
+  void _paintDanger(Canvas canvas, Size size) {
+    final danger = world.danger;
+    if (danger <= 0 || world.isOver) return;
+
+    // Squared, so the warning is faint for most of its range and unmistakable
+    // at the end. Linear made the whole second half of every run look alarming.
+    final weight = danger * danger;
+    final pulse = isReducedMotion
+        ? 1.0
+        : 0.78 + 0.22 * math.sin(time * (7 + danger * 9));
+    final height = size.height * 0.42;
+    canvas.drawRect(
+      Rect.fromLTRB(0, size.height - height, size.width, size.height),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, size.height),
+          Offset(0, size.height - height),
+          [
+            cracked.withValues(alpha: weight * 0.42 * pulse),
+            cracked.withValues(alpha: 0),
+          ],
+        ),
+    );
+  }
+
   /// The mark a wall kick leaves.
   ///
   /// Rings going out from the point of contact, fading. Short: it has to read
@@ -667,6 +793,21 @@ class AscentPainter extends CustomPainter {
       ..translate(x, y)
       ..scale(1 + spring, 1 - spring);
     Offset p(double dx, double dy) => Offset(dx * height, dy * height);
+
+    // A burning boon shows on the climber, not in a meter. He is already the
+    // thing being watched, and a bar in the corner is a number to check rather
+    // than something to feel. It fades with the last two seconds, so the effect
+    // running out is visible before it has run out.
+    if (world.hasBoon) {
+      final fading = (world.boonFor / 2).clamp(0.0, 1.0);
+      canvas.drawCircle(
+        p(0, -0.45),
+        height * 0.62,
+        Paint()
+          ..color = glow.withValues(alpha: 0.26 * fading)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, height * 0.42),
+      );
+    }
 
     // Gold, not stone. The climber used to be painted in the same colour as
     // the wall he is climbing, which is most of why he read as a stick figure
@@ -748,6 +889,24 @@ class AscentPainter extends CustomPainter {
           ..lineTo(-height * 0.145, -height * 0.235)
           ..close(),
         solid,
+      )
+      // The head, drawn larger than its own coordinates say.
+      //
+      // The owner's note was that it looked too small against the body, and
+      // the figures agree: the skull was 0.145 of the climber's height against
+      // a 0.21 shoulder, which is roughly life proportion and reads as a
+      // pinhead at fifty pixels. A drawn figure this small needs a head nearer
+      // a fifth of it to register as a person at all.
+      //
+      // Scaled about the chin rather than retyped. Every coordinate below was
+      // measured against the neck it sits on, and nudging twelve of them by
+      // hand is how a jaw ends up floating a pixel clear of a throat.
+      ..transform(
+        (Matrix4.identity()
+              ..translateByDouble(0, p(0, _chinY).dy, 0, 1)
+              ..scaleByDouble(_headScale, _headScale, 1, 1)
+              ..translateByDouble(0, -p(0, _chinY).dy, 0, 1))
+            .storage,
       )
       // The head: an oval on the neck, not a disc floating above it.
       ..drawOval(

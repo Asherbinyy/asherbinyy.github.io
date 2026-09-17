@@ -15,7 +15,16 @@ library;
 /// The rules a score is earned under.
 abstract final class AscentContract {
   /// The physics generation. Bump it for any change to simulation behaviour.
-  static const int version = 1;
+  ///
+  /// **2** — the shaft now has levels. The first hundred metres are wide
+  /// dressed stone; cracked ledges arrive at a hundred, drifting ones at two
+  /// hundred, and all three together above three hundred, narrowing as they
+  /// go. The floor stands still for the opening fifty metres and then
+  /// accelerates every fifty rather than every sixty. Gilded ankhs appear above
+  /// fifty metres and lift the jump for ten seconds when taken. A score earned
+  /// under version 1 was earned on a different climb and does not belong on the
+  /// same board.
+  static const int version = 2;
 
   /// How many simulation steps make a second.
   ///

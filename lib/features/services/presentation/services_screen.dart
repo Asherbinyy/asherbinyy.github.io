@@ -126,6 +126,7 @@ class _Offer extends StatelessWidget {
     return EvenGrid(
       minTileWidth: Tokens.serviceCardWidth,
       spacing: tokens.space16,
+      stretch: true,
       children: [for (final service in services) _ServiceCard(name: service)],
     );
   }
@@ -217,28 +218,59 @@ class _Invitation extends StatelessWidget {
       ),
       child: Padding(
         padding: EdgeInsets.all(tokens.space32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              l10n.servicesChatHeading,
-              style: type.heading.copyWith(color: tokens.beacon),
-            ),
-            SizedBox(height: tokens.space12),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
-              child: Text(
-                l10n.servicesChatBody,
-                style: type.body.copyWith(color: tokens.textSecondary),
-              ),
-            ),
-            SizedBox(height: tokens.space24),
-            if (contact.calendly case final url?)
-              _BookButton(url: url, label: l10n.servicesBook),
-            SizedBox(height: tokens.space24),
-            ContactLinks(contact: contact, includesBooking: false),
-          ],
+        // Two columns on a wide screen. Everything used to stack down the
+        // left: the ask, the button, then eight contact cards, with the right
+        // half of a full-width panel empty the whole way down. The owner asked
+        // what should go there, and the answer was already on the page -- the
+        // ways of reaching him were queued underneath the sentence instead of
+        // sitting beside it.
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final ask = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.servicesChatHeading,
+                  style: type.heading.copyWith(color: tokens.beacon),
+                ),
+                SizedBox(height: tokens.space12),
+                Text(
+                  l10n.servicesChatBody,
+                  style: type.body.copyWith(color: tokens.textSecondary),
+                ),
+                SizedBox(height: tokens.space24),
+                if (contact.calendly case final url?)
+                  _BookButton(url: url, label: l10n.servicesBook),
+              ],
+            );
+
+            final ways = ContactLinks(contact: contact, includesBooking: false);
+
+            // Below this the two columns would each be too narrow for a
+            // sentence, so they stack -- which is the original layout, kept
+            // for the width it was right for.
+            if (constraints.maxWidth < Tokens.mediumBreakpoint) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ask,
+                  SizedBox(height: tokens.space32),
+                  ways,
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: ask),
+                SizedBox(width: tokens.space48),
+                Expanded(child: ways),
+              ],
+            );
+          },
         ),
       ),
     );

@@ -33,6 +33,8 @@ class Ledge {
     required this.width,
     this.drift = 0,
     this.isBroken = false,
+    this.hasBoon = false,
+    this.boonTaken = false,
   });
 
   /// Stable identity, so a ledge keeps its state as the world scrolls.
@@ -56,6 +58,20 @@ class Ledge {
   /// Whether a cracked ledge has already given way.
   final bool isBroken;
 
+  /// Whether a gilded ankh floats above this ledge, waiting to be taken.
+  ///
+  /// Carried by the ledge rather than kept in a list of its own, so a boon
+  /// recycles, drifts and sorts with the thing it belongs to. A parallel list
+  /// would be a second collection to keep in step across two languages, and
+  /// the first time it fell out of step would be a score nobody could explain.
+  final bool hasBoon;
+
+  /// Whether this ledge's boon has already been taken.
+  final bool boonTaken;
+
+  /// Where the boon floats, in metres above the shaft floor.
+  double get boonY => y + AscentWorld.boonHeight;
+
   /// This ledge one frame later.
   Ledge advance(double dt) {
     if (kind != LedgeKind.scarab || drift == 0) return this;
@@ -74,6 +90,8 @@ class Ledge {
       width: width,
       drift: heading,
       isBroken: isBroken,
+      hasBoon: hasBoon,
+      boonTaken: boonTaken,
     );
   }
 
@@ -86,6 +104,21 @@ class Ledge {
     width: width,
     drift: drift,
     isBroken: true,
+    hasBoon: hasBoon,
+    boonTaken: boonTaken,
+  );
+
+  /// This ledge, with its boon collected.
+  Ledge get boonClaimed => Ledge(
+    id: id,
+    kind: kind,
+    x: x,
+    y: y,
+    width: width,
+    drift: drift,
+    isBroken: isBroken,
+    hasBoon: hasBoon,
+    boonTaken: true,
   );
 
   /// Whether [climberX] is over this ledge.
@@ -126,6 +159,9 @@ class AscentWorld {
     this.landingAge = 1,
     this.landed = false,
     this.lastKickSide = 0,
+    this.boonFor = 0,
+    this.tookBoon = false,
+    this.boonsTaken = 0,
   });
 
   /// A fresh run.
@@ -243,6 +279,29 @@ class AscentWorld {
   /// The same wall cannot grant repeated boosts before a landing.
   final int lastKickSide;
 
+  /// Seconds of lifted jump remaining from a boon.
+  ///
+  /// Part of the physics, not of the presentation: it changes how high a press
+  /// goes, so it is replayed on the server like everything else a score depends
+  /// on. A timed effect that lived only in the widget would make a verified
+  /// height disagree with the one on the screen.
+  final double boonFor;
+
+  /// Whether a boon was taken on the step that produced this world.
+  final bool tookBoon;
+
+  /// How many boons this run has taken.
+  ///
+  /// Part of the outcome rather than a statistic. If the two implementations
+  /// ever disagree about whether the climber passed near enough to an ankh,
+  /// the height would only differ once the extra lift had changed a landing --
+  /// a hundred metres later, or never on the run that happened to be recorded.
+  /// Counting them makes the disagreement itself the failure.
+  final int boonsTaken;
+
+  /// Whether the jump is currently lifted.
+  bool get hasBoon => boonFor > 0;
+
   static const double _inputGrace = 0.14;
   static const double _acceleration = 7;
   static const double _braking = 9;
@@ -255,15 +314,73 @@ class AscentWorld {
   static const double _wallBoost = 1.34;
 
   /// Metres climbed before the pace steps up.
-  static const double levelHeight = 60;
+  static const double levelHeight = 100;
 
-  /// How fast the floor rises at [level], in metres per second.
+  /// Metres between one step up in difficulty and the next.
   ///
-  /// Zero on the first level: the opening stretch is where the controls are
-  /// learned, and a floor chasing a player who has not worked out the jump yet
-  /// is just a short run. After that it climbs, and the steps are linear
-  /// rather than exponential so the last level is hard rather than impossible.
-  static double _floorSpeed(int level) => level == 0 ? 0 : 0.5 + level * 0.55;
+  /// Separate from [levelHeight] on purpose: the owner asked for the climb to
+  /// get harder every fifty metres and to reach a new level every hundred, so
+  /// a level is two steps of pace rather than one. The floor accelerating and
+  /// the shaft changing character are different events, and tying them to one
+  /// number made the first fifty metres as hard as the second.
+  static const double difficultyStep = 50;
+
+  /// How wide the ledges are on the first level.
+  ///
+  /// Nearly half the shaft, before the spread. The owner's complaint was that
+  /// the climb begins by dropping you off the edge of a narrow platform before
+  /// you have learned anything; down here they overlap enough that a jump lands
+  /// on something whatever you do with the steering.
+  static const double openingWidth = 0.42;
+
+  /// How much the opening ledges vary in width.
+  static const double openingSpread = 0.14;
+
+  /// Below this height no boon is placed.
+  ///
+  /// The first fifty metres are for finding out what the jump does. A power-up
+  /// that changes what the jump does, offered before that, teaches the wrong
+  /// jump.
+  static const double boonFloor = 50;
+
+  /// How often a ledge above [boonFloor] carries a boon.
+  static const double boonChance = 0.13;
+
+  /// How far above its ledge a boon floats, in metres.
+  ///
+  /// Reachable from the ledge below without a running start, and low enough
+  /// that it sits inside the arc of an ordinary jump rather than beside it.
+  static const double boonHeight = 1.3;
+
+  /// How near, across the shaft, the climber must pass to take a boon.
+  static const double boonReachX = 0.09;
+
+  /// How near, in metres, the climber must pass to take a boon.
+  static const double boonReachY = 0.85;
+
+  /// How long a boon lifts the jump, in seconds.
+  ///
+  /// The owner asked for ten, and ten is right for a different reason: the
+  /// climb covers roughly twenty-five metres in that time, which is long enough
+  /// to be worth going out of the way for and short enough that the run does
+  /// not become a different game.
+  static const double boonSeconds = 10;
+
+  /// How much taller a jump is while a boon burns.
+  ///
+  /// A little more than the wall kick. It has to be plainly better than the
+  /// jump it replaces or there is no reason to reach for one, and plainly worse
+  /// than flight or there is no reason to land.
+  static const double boonLift = 1.42;
+
+  /// How fast the floor rises at difficulty [step], in metres per second.
+  ///
+  /// Zero for the first fifty metres: the opening stretch is where the controls
+  /// are learned, and a floor chasing a player who has not worked out the jump
+  /// yet is just a short run. After that it climbs by a step every fifty
+  /// metres, linearly rather than exponentially, so the top of the shaft is
+  /// hard rather than impossible.
+  static double _floorSpeed(int step) => step == 0 ? 0 : 0.4 + step * 0.34;
 
   /// Metres between register bands, each of which unlocks one fact.
   static const double registerGap = 24;
@@ -311,7 +428,12 @@ class AscentWorld {
     // The rising floor. Every level it climbs faster, and falling below it
     // ends the run, so the climb stops being something a patient player can
     // take at their own pace forever.
-    final rise = _floorSpeed(level) * dt;
+    final rise = _floorSpeed(difficulty) * dt;
+
+    // How high a press goes this tick. Read from the state coming in rather
+    // than from the state going out, so a boon taken on the way up does not
+    // retroactively raise the jump that reached it.
+    final lift = boonFor > 0 ? boonLift : 1.0;
 
     // Sideways first. Reaching a wall is worth something now: it kicks the
     // climber back with more height than a standing jump, which is the trick
@@ -351,7 +473,7 @@ class AscentWorld {
     // climber grinding along an edge would otherwise ride it to the top.
     if (walled && speed > 0 && !wasWalled && kickSide != (x == 0 ? -1 : 1)) {
       kickSide = x == 0 ? -1 : 1;
-      speed = _bounce * _wallBoost;
+      speed = _bounce * _wallBoost * lift;
       kicked = true;
       horizontal = x == 0 ? _steerRate : -_steerRate;
     }
@@ -363,7 +485,7 @@ class AscentWorld {
     // a slightly late one. A held key is consumed after one launch.
     final requested = queued > 0 || (isLeaping && !consumed);
     if (requested && grace > 0 && !consumed && !kicked) {
-      speed = _bounce;
+      speed = _bounce * lift;
       y = climberY + speed * dt;
       grace = 0;
       queued = 0;
@@ -391,7 +513,7 @@ class AscentWorld {
         touchedDown = !isGrounded;
         grace = _inputGrace;
         if (queued > 0 && !consumed) {
-          speed = _bounce;
+          speed = _bounce * lift;
           grounded = false;
           grace = 0;
           queued = 0;
@@ -404,6 +526,31 @@ class AscentWorld {
         break;
       }
     }
+
+    // Boons, taken by passing through them.
+    //
+    // Run over `live` rather than over the recycled list on purpose: a ledge is
+    // only recycled once it is twice the fall margin below the floor, which is
+    // twenty-eight metres down, and nothing within a metre of the climber is
+    // ever in that set. Doing it here means one place mutates the ledge list
+    // and the recycler downstream never has to know a boon exists.
+    //
+    // One per tick. Two ankhs close enough to be inside the same reach is
+    // possible and vanishingly rare, and taking both on one tick would spend
+    // the second one for no extra time -- the timer is set, not added to.
+    var tookOne = false;
+    for (var i = 0; i < live.length; i++) {
+      final ledge = live[i];
+      if (!ledge.hasBoon || ledge.boonTaken) continue;
+      if ((x - ledge.x).abs() > boonReachX) continue;
+      if ((y - ledge.boonY).abs() > boonReachY) continue;
+      live[i] = ledge.boonClaimed;
+      tookOne = true;
+      break;
+    }
+    // Set rather than extended. Stacking would make a lucky row of ankhs into
+    // a minute of flight, which is a different game from the one above it.
+    final boonLeft = tookOne ? boonSeconds : math.max<double>(0, boonFor - dt);
 
     final reached = math.max(altitude, y);
     final registers = (reached / registerGap).floor();
@@ -454,6 +601,9 @@ class AscentWorld {
         wasWalled: false,
         floorY: risenFloor,
         brokeLedge: broke,
+        boonFor: boonLeft,
+        tookBoon: tookOne,
+        boonsTaken: boonsTaken + (tookOne ? 1 : 0),
       );
     }
 
@@ -479,6 +629,9 @@ class AscentWorld {
       landingAge: touchedDown ? 0 : landingAge + dt,
       landed: touchedDown,
       lastKickSide: touchedDown ? 0 : kickSide,
+      boonFor: boonLeft,
+      tookBoon: tookOne,
+      boonsTaken: boonsTaken + (tookOne ? 1 : 0),
     );
   }
 
@@ -488,28 +641,103 @@ class AscentWorld {
   /// How far into the climb the pace has stepped up.
   int get level => (altitude / levelHeight).floor();
 
+  /// How many steps of pace the climb has taken, one every fifty metres.
+  int get difficulty => (altitude / difficultyStep).floor();
+
+  /// How near the rising floor is, 0 when it is far off and 1 when it is level.
+  ///
+  /// Presentation reads this to make the shaft feel like it is closing in. The
+  /// owner's note was that there is no sense of the clock running out, and the
+  /// reason is that the floor is drawn faithfully and faithfully is invisible:
+  /// it is below the frame for most of a run, so the thing that is about to end
+  /// it makes no sound and casts no light until it arrives.
+  double get danger {
+    final gap = climberY - floorY;
+    if (gap >= _dangerFrom) return 0;
+    if (gap <= 0) return 1;
+    return 1 - gap / _dangerFrom;
+  }
+
+  /// How far above the floor the climber starts to feel it, in metres.
+  ///
+  /// About half a screen: near enough that the warning means something, far
+  /// enough that a run does not spend its whole length flashing.
+  static const double _dangerFrom = 9;
+
   /// Whether this run beat the stored best.
   bool get isRecord => metres > best;
 
+  /// Builds the ledge at [y], in the character its level calls for.
+  ///
+  /// Each hundred metres is a different shaft, which is the owner's "new level
+  /// with a different mode". They are introductions rather than difficulty
+  /// dials: one new thing per level, in the order that teaches it.
+  ///
+  /// - **I, the dressed shaft.** Stone, and wide enough that a jump lands on
+  ///   something whatever the steering does. Nothing gives way, nothing moves.
+  ///   The only thing that changes is the floor, which starts rising at fifty.
+  /// - **II, the weathered shaft.** Cracked ledges, which hold for one landing.
+  ///   Narrower, now that standing still is no longer an option.
+  /// - **III, the scarab shaft.** Ledges carried across the shaft, so a landing
+  ///   spot has to be aimed at where it will be rather than where it is.
+  /// - **IV and above, the deep shaft.** All three at once, at the narrowest
+  ///   the ledges get. It does not keep narrowing past here: a shaft that
+  ///   tightens forever ends every run at the same wall, and the floor is
+  ///   already the thing that ends runs.
+  ///
+  /// The draws happen in a fixed order — kind, width, position, drift, boon —
+  /// because `worker/src/game/ascent.js` draws them in that same order from the
+  /// same generator, and a stream read out of step is a different shaft.
+  /// The ledge with [id] at [y] in the shaft seeded [seed].
+  ///
+  /// Public because it is contract surface rather than an internal helper: the
+  /// fixture generator samples it across every level so that the mode changes
+  /// are *proven* to agree with `worker/src/game/ascent.js`, instead of being
+  /// inferred from a recorded run that happened to climb high enough to meet
+  /// them. Levels three and four are not reachable by any vector the bot
+  /// produces, so without this they would be two hundred metres of shaft that
+  /// nothing on either side had ever checked.
+  static Ledge generate(int id, double y, int seed) =>
+      _generate(id, y, AscentRng.ledge(seed, id));
+
   static Ledge _generate(int id, double y, AscentRng random) {
+    final level = (y / levelHeight).floor();
     final roll = random.nextDouble();
-    // Cracked and scarab ledges arrive gradually: the first stretch of the
-    // shaft is dressed stone, so the controls are learned before the hazards.
-    final kind = y < 40 || roll < 0.62
-        ? LedgeKind.stone
-        : roll < 0.82
-        ? LedgeKind.cracked
-        : LedgeKind.scarab;
-    final width = 0.16 + random.nextDouble() * 0.12;
+    final kind = switch (level) {
+      <= 0 => LedgeKind.stone,
+      1 => roll < 0.60 ? LedgeKind.stone : LedgeKind.cracked,
+      2 => roll < 0.58 ? LedgeKind.stone : LedgeKind.scarab,
+      _ =>
+        roll < 0.54
+            ? LedgeKind.stone
+            : roll < 0.80
+            ? LedgeKind.cracked
+            : LedgeKind.scarab,
+    };
+    final (double narrowest, double spread) = switch (level) {
+      <= 0 => (openingWidth, openingSpread),
+      1 => (0.25, 0.14),
+      2 => (0.20, 0.13),
+      _ => (0.16, 0.12),
+    };
+    final width = narrowest + random.nextDouble() * spread;
+    final x = width / 2 + random.nextDouble() * (1 - width);
+    final drift = kind == LedgeKind.scarab
+        ? (random.nextDouble() < 0.5 ? 0.16 : -0.16)
+        : 0.0;
+    // Drawn whether or not it can be used. `&&` would short-circuit the draw
+    // below the boon floor and leave the two implementations reading the same
+    // stream from different positions, which is the kind of divergence that
+    // shows up as one unexplainable rejected score a month from now.
+    final boonRoll = random.nextDouble();
     return Ledge(
       id: id,
       kind: kind,
-      x: width / 2 + random.nextDouble() * (1 - width),
+      x: x,
       y: y,
       width: width,
-      drift: kind == LedgeKind.scarab
-          ? (random.nextDouble() < 0.5 ? 0.16 : -0.16)
-          : 0,
+      drift: drift,
+      hasBoon: y >= boonFloor && boonRoll < boonChance,
     );
   }
 
@@ -535,6 +763,9 @@ class AscentWorld {
     double? landingAge,
     bool landed = false,
     int? lastKickSide,
+    double? boonFor,
+    bool tookBoon = false,
+    int? boonsTaken,
   }) => AscentWorld(
     seed: seed,
     ledges: ledges ?? this.ledges,
@@ -560,5 +791,8 @@ class AscentWorld {
     landingAge: landingAge ?? this.landingAge,
     landed: landed,
     lastKickSide: lastKickSide ?? this.lastKickSide,
+    boonFor: boonFor ?? this.boonFor,
+    tookBoon: tookBoon,
+    boonsTaken: boonsTaken ?? this.boonsTaken,
   );
 }

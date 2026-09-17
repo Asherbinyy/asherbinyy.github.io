@@ -18,6 +18,18 @@ This index is the fast path instead.
 
 ---
 
+## Re-innovation — full ownership · 2026-09-15 onward
+
+Partial. The entries between `2026-09-15-03` and `2026-09-16-02` are not indexed
+here — read them in the directory rather than trusting this table to be
+complete.
+
+| File | What it settled |
+|---|---|
+| `2026-09-17-01-claude-ascent-v2.md` | Physics v2: levels every 100m, the floor stepping every 50, collectable ankhs. The board on the left during the climb; the join sheet cut to a name. Section spacing made responsive. The wall lights on a phone — **and two ways of getting that wrong that a screenshot cannot see.** |
+| `2026-09-16-04-claude-leaderboard.md` | The board itself. Chunked server-side replay under the free plan's 10ms CPU limit, transactional top ten, the participant flow. |
+| `2026-09-16-03-claude-frozen-physics.md` | The physics frozen and proved identical across Dart and JavaScript. **Read this before touching either.** |
+
 ## Milestone 4 — Provenance · 2026-09-07 onward
 
 | File | What it settled |
