@@ -10,6 +10,7 @@ import 'package:nocturne/features/writing/data/writing_providers.dart';
 
 import '../../support/chrome_harness.dart';
 import '../../support/content_readers.dart';
+import '../../support/pump.dart';
 import '../../support/station_harness.dart';
 
 void main() {
@@ -58,6 +59,63 @@ void main() {
       expect(marks, isNotEmpty);
       expect(marks, orderedEquals(descending));
       expect(marks.first, 94);
+    });
+
+    testWidgets('a module with a sample opens from anywhere on its row', (
+      tester,
+    ) async {
+      // The thumbnail used to be the only target: a 56px square at the left
+      // edge, with the module's name inert beside it. Tapping the name is what
+      // a reader tries first, and on a phone it is the only part big enough to
+      // hit reliably.
+      await pumpStation(
+        tester,
+        breakpoint: ChromeBreakpoint.large,
+        initialRoute: AppRoute.about,
+      );
+      await openEducation(tester);
+
+      final named = find.descendant(
+        of: find.byKey(EducationTable.modulesKey),
+        matching: find.text('Business Data Insights & Analytics'),
+      );
+      expect(named, findsOneWidget);
+
+      await tester.ensureVisible(named);
+      await tester.pump();
+      await tester.tap(named);
+      await pumpFrames(tester);
+
+      expect(
+        find.byType(Dialog),
+        findsOneWidget,
+        reason: 'tapping the module name did not open its coursework sample',
+      );
+    });
+
+    testWidgets('a module with no sample is not dressed up as a button', (
+      tester,
+    ) async {
+      // Giving every row a hover state and then doing nothing for half of them
+      // teaches the reader that the affordance means nothing.
+      await pumpStation(
+        tester,
+        breakpoint: ChromeBreakpoint.large,
+        initialRoute: AppRoute.about,
+      );
+      await openEducation(tester);
+
+      final plain = find.descendant(
+        of: find.byKey(EducationTable.modulesKey),
+        matching: find.text('Managing Information Systems & Transformation'),
+      );
+      expect(plain, findsOneWidget);
+
+      await tester.ensureVisible(plain);
+      await tester.pump();
+      await tester.tap(plain);
+      await pumpFrames(tester);
+      expect(find.byType(Dialog), findsNothing);
     });
 
     testWidgets('publishes only modules at or above the threshold', (
@@ -199,14 +257,14 @@ void main() {
         l10n.aboutEvidenceOpen('Power BI dashboard built for the module'),
       );
       await tester.ensureVisible(card);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
       await tester.tap(card);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
 
       // The dialog carries the artefact and a way out of it.
       expect(find.text('Close'), findsOneWidget);
       await tester.tap(find.text('Close'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester);
       expect(find.text('Close'), findsNothing);
     });
 
