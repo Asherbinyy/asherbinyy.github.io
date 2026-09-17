@@ -54,6 +54,7 @@ class InterestsGrid extends ConsumerWidget {
         EvenGrid(
           minTileWidth: _Tile.width,
           spacing: tokens.space16,
+          stretch: true,
           children: [
             for (final interest in interests) _Tile(interest: interest),
           ],

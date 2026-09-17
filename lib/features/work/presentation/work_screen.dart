@@ -345,6 +345,7 @@ class _Grid extends StatelessWidget {
     return EvenGrid(
       minTileWidth: WorkCard.width,
       spacing: tokens.space32,
+      stretch: true,
       runSpacing: tokens.space48,
       children: [
         for (final app in apps)

@@ -493,16 +493,20 @@ abstract final class Tokens {
   /// The platform mark on a contact card.
   static const double contactIconSize = 18;
 
-  /// One contact card's smallest width, so a row of them is a grid and not a
-  /// ragged line of differently sized words.
-  static const double contactCardWidth = 132;
-
-  /// One skill chip's smallest width.
+  /// One contact card's width, and every contact card is this wide.
   ///
-  /// Every chip is given the same box so the block reads as a grid: "Dart" and
-  /// "Adobe Premiere Pro" are a third and three times this, and sizing each to
-  /// its own word is what made the panel look like rubble.
-  static const double skillChipWidth = 132;
+  /// Sized to hold the longest destination -- "Instagram" with its mark -- and
+  /// no more. It was 132, which truncated, and briefly it was whatever a row
+  /// divided into, which gave "GitHub" a box twice the size of its word.
+  static const double contactCardWidth = 152;
+
+  /// One skill chip's width, and every skill chip is this wide.
+  ///
+  /// Sized to hold the longest of them -- "Adobe Premiere Pro" -- so the block
+  /// reads as a grid without any chip being padded out past its word. Sizing
+  /// each to its own text made the panel look like rubble; sizing each to a
+  /// share of the row made "Dart" mostly empty box.
+  static const double skillChipWidth = 168;
 
   /// How the gold glow behind a hovered contact card is thrown.
   static const double contactGlowAlpha = 0.35, contactGlowBlur = 18;

@@ -126,6 +126,7 @@ class _Offer extends StatelessWidget {
     return EvenGrid(
       minTileWidth: Tokens.serviceCardWidth,
       spacing: tokens.space16,
+      stretch: true,
       children: [for (final service in services) _ServiceCard(name: service)],
     );
   }

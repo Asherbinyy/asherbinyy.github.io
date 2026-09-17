@@ -533,6 +533,18 @@
     "description": "Keyboard controls, shown on a pointer browser"
   },
   "ascentLeave": "Leave",
+  "contactOr": "or",
+  "@contactOr": {
+    "description": "Separates messaging him from booking a call"
+  },
+  "contactBookTitle": "Book a call",
+  "@contactBookTitle": {
+    "description": "Title of the booking card"
+  },
+  "contactBookBody": "Pick a time that suits you. No form to fill in first.",
+  "@contactBookBody": {
+    "description": "One line under the booking card"
+  },
   "workApps": "Apps",
   "@workApps": {
     "description": "Heading over the applications on the work page"
