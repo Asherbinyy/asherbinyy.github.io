@@ -275,7 +275,7 @@ Both are explained in `03-ARCHITECTURE.md` §3. Skipping either produces a deplo
 
 No rebuild, no code change:
 1. Add a `CNAME` file to `web/` containing the bare domain.
-2. At the registrar, point four `A` records at GitHub's Pages IPs and a `CNAME` on `www` to `asherbinyy.github.io`.
+2. At the registrar, point four `A` records at GitHub's Pages IPs and a `CNAME` on `www` to the account's Pages domain (`asherbinyy.github.io`). The site itself is now reached at the custom domain `sherbini.uk`, set in the repository's Pages settings.
 3. In repository settings, set the custom domain and tick "Enforce HTTPS".
 
 Certificate provisioning takes up to an hour. Because `--base-href` was already `/`, nothing else changes.

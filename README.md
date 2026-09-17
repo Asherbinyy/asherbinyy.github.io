@@ -1,6 +1,6 @@
 # Ahmed Elsherbini
 
-[asherbinyy.github.io](https://asherbinyy.github.io/)
+[sherbini.uk](https://sherbini.uk/)
 
 ## What I built
 

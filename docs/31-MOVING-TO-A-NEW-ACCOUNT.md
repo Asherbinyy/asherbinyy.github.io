@@ -1,5 +1,10 @@
 # Moving the site to the `lsherbini` account
 
+> Historical guide. On September 15 the owner reversed this move and asked to
+> return all code and deployment links to `Asherbinyy/asherbinyy.github.io`.
+> Do not follow the migration steps below for the current setup. A future
+> custom domain can be attached to the original repository.
+
 Written for the owner. Everything here is reversible until the last step.
 
 ## What is actually being moved

@@ -7,6 +7,10 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 - Connected the local admin to the current Flutter portfolio, including a real half-screen preview, collapsible panels, Services/social fields, uploaded media and existing theme/font defaults. Removed the rejected decorative admin accents. Production origin migration remains a separate two-URL Worker deployment.
 
+- Activated the game leaderboard and custom-domain Worker origin at `sherbini.uk`; fixed production challenge timestamps and aligned admin bundle loading with its permitted origin.
+
+- Restored hosting, canonical URLs and Worker CORS to `asherbinyy.github.io`, preserving the newer lsherbini repository history, branches and tags.
+
 - September 14: latest visual pass rejected; full app/admin ownership transferred to Claude with a tested isolated password-rotation patch. Fixed missing Material icon-font bundling. No merge/deployment.
 
 ### Content

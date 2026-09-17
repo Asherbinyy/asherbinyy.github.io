@@ -22,8 +22,8 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="Ahmed Elsherbini, Mobile Application Developer">
   <meta property="og:description" content="I build mobile products end to end, from the first idea to the release notes.">
-  <meta property="og:url" content="https://asherbinyy.github.io/">
-  <meta property="og:image" content="https://asherbinyy.github.io/icons/icon-512.png">
+  <meta property="og:url" content="https://sherbini.uk/">
+  <meta property="og:image" content="https://sherbini.uk/icons/icon-512.png">
   <meta property="og:site_name" content="Ahmed Elsherbini">
   <meta property="og:locale" content="en_GB">
 
@@ -31,7 +31,7 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Ahmed Elsherbini, Mobile Application Developer">
   <meta name="twitter:description" content="I build mobile products end to end, from the first idea to the release notes.">
-  <meta name="twitter:image" content="https://asherbinyy.github.io/icons/icon-512.png">
+  <meta name="twitter:image" content="https://sherbini.uk/icons/icon-512.png">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -43,7 +43,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
 
   <!-- Canonical -->
-  <link rel="canonical" href="https://asherbinyy.github.io/">
+  <link rel="canonical" href="https://sherbini.uk/">
 
   <title>Ahmed Elsherbini, Mobile Application Developer, Manchester</title>
   <link rel="manifest" href="manifest.json">
@@ -55,7 +55,7 @@
     "@type": "Person",
     "name": "Ahmed Elsherbini",
     "jobTitle": "Mobile Application Developer",
-    "url": "https://asherbinyy.github.io",
+    "url": "https://sherbini.uk",
     "email": "ahmed.elsherbini.tech@gmail.com",
     "sameAs": [
       "https://www.linkedin.com/in/ahmedelsherbini/",
@@ -274,6 +274,58 @@
       },
       { capture: true, passive: true },
     );
+
+    // A knob the climb can turn: how many physical pixels the browser
+    // reports itself as having per logical one.
+    //
+    // Flutter Web keeps one canvas for the whole app, sized at
+    // window.devicePixelRatio times its logical size, and the engine reads
+    // that value live every time it recomputes -- see
+    // EngineFlutterDisplay.devicePixelRatio in the SDK. On a 3x-class phone
+    // that canvas is nine times the pixels of a 1x screen the same CSS
+    // size, and the climb draws enough masonry, register bands and dust
+    // every frame that filling all of them is what made it lag specifically
+    // on a phone and not on a desktop with the same page open: a phone's
+    // GPU pays for that fill far more than a desktop's does.
+    //
+    // A per-widget RepaintBoundary/Transform.scale trick was tried first and
+    // measured to do nothing, for the same reason: there is only the one
+    // canvas, and nothing short of what it is actually asked to allocate
+    // changes how many pixels get filled. This is that lever, and it is
+    // scoped to while the climb is open rather than applied to the whole
+    // site, so the rest of the page keeps native sharpness on a high-DPI
+    // phone.
+    (() => {
+      let realDpr = null;
+      window.__ascentCapDpr = (cap) => {
+        if (realDpr !== null) return;
+        const real = window.devicePixelRatio;
+        if (real <= cap) return;
+        realDpr = real;
+        try {
+          Object.defineProperty(window, 'devicePixelRatio', {
+            configurable: true,
+            get: () => cap,
+          });
+        } catch (_) {
+          realDpr = null;
+          return;
+        }
+        // The engine only re-reads devicePixelRatio when it recomputes its
+        // canvas size, which happens on a resize event.
+        window.dispatchEvent(new Event('resize'));
+      };
+      window.__ascentRestoreDpr = () => {
+        if (realDpr === null) return;
+        const restored = realDpr;
+        realDpr = null;
+        Object.defineProperty(window, 'devicePixelRatio', {
+          configurable: true,
+          get: () => restored,
+        });
+        window.dispatchEvent(new Event('resize'));
+      };
+    })();
   </script>
 
   <script src="flutter_bootstrap.js" async></script>

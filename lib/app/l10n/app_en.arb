@@ -533,6 +533,126 @@
     "description": "Keyboard controls, shown on a pointer browser"
   },
   "ascentLeave": "Leave",
+  "ascentBoardTitle": "Top climbers",
+  "@ascentBoardTitle": {
+    "description": "Heading over the public leaderboard"
+  },
+  "ascentBoardEmpty": "Nobody has climbed yet.",
+  "@ascentBoardEmpty": {
+    "description": "Shown when the board has no entries"
+  },
+  "ascentBoardAway": "The board is not answering.",
+  "@ascentBoardAway": {
+    "description": "Shown when the leaderboard cannot be reached"
+  },
+  "ascentBoardRetry": "Try again",
+  "@ascentBoardRetry": {
+    "description": "Refetches the leaderboard"
+  },
+  "ascentBoardVerified": "Every height here was replayed on the server.",
+  "@ascentBoardVerified": {
+    "description": "Explains that scores are verified rather than reported"
+  },
+  "ascentBoardBrowser": "A place belongs to a browser, not a person.",
+  "@ascentBoardBrowser": {
+    "description": "States plainly what an anonymous player key can and cannot prove"
+  },
+  "ascentJoinTitle": "Climb for the record?",
+  "@ascentJoinTitle": {
+    "description": "Title of the one-time leaderboard prompt"
+  },
+  "ascentJoinBody": "Your name and your best height go on a public board. No account and no email. You can change the name or leave whenever you like.",
+  "@ascentJoinBody": {
+    "description": "Explains what joining the leaderboard makes public"
+  },
+  "ascentJoinName": "Name on the board",
+  "@ascentJoinName": {
+    "description": "Label for the nickname field"
+  },
+  "ascentJoinNameError": "Two to sixteen characters, and no links.",
+  "@ascentJoinNameError": {
+    "description": "Shown when a nickname will not be accepted"
+  },
+  "ascentJoinRemember": "Remember me on this browser",
+  "@ascentJoinRemember": {
+    "description": "Whether to persist the leaderboard choice"
+  },
+  "ascentJoinGo": "Join the board",
+  "@ascentJoinGo": {
+    "description": "Confirms joining the leaderboard"
+  },
+  "ascentJoinLocal": "Just play",
+  "@ascentJoinLocal": {
+    "description": "Declines the leaderboard and plays locally"
+  },
+  "ascentChecking": "Checking your climb…",
+  "@ascentChecking": {
+    "description": "Shown while the server replays a submitted run"
+  },
+  "ascentCheckedRanked": "Verified. {rank} on the board.",
+  "@ascentCheckedRanked": {
+    "description": "Shown when a verified run took a place",
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "ascentCheckedMissed": "Verified {metres} m. Not in the top ten.",
+  "@ascentCheckedMissed": {
+    "description": "Shown when a verified run did not place",
+    "placeholders": {
+      "metres": {
+        "type": "int"
+      }
+    }
+  },
+  "ascentCheckedStands": "Verified {metres} m. Your best still stands.",
+  "@ascentCheckedStands": {
+    "description": "Shown when a verified run did not beat the player's own entry",
+    "placeholders": {
+      "metres": {
+        "type": "int"
+      }
+    }
+  },
+  "ascentUnverified": "That run could not be verified.",
+  "@ascentUnverified": {
+    "description": "Shown when the server rejected a submitted run"
+  },
+  "ascentStillChecking": "Still checking. It will appear on the board when it is done.",
+  "@ascentStillChecking": {
+    "description": "Shown when the client stopped waiting for a verdict"
+  },
+  "ascentSendRun": "Send to the board",
+  "@ascentSendRun": {
+    "description": "Submits a finished run for verification"
+  },
+  "ascentLocalRun": "This run is on your device only.",
+  "@ascentLocalRun": {
+    "description": "Shown for a run that was never submitted"
+  },
+  "ascentPlayingAs": "On the board as {name}",
+  "@ascentPlayingAs": {
+    "description": "Shows the nickname the player joined under",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "ascentChangeName": "Change name",
+  "@ascentChangeName": {
+    "description": "Opens the rename control"
+  },
+  "ascentLeaveBoard": "Leave the board",
+  "@ascentLeaveBoard": {
+    "description": "Removes the player's entry and local record"
+  },
+  "ascentRankedRun": "Climbing for the record",
+  "@ascentRankedRun": {
+    "description": "Shown during a run that will be submitted"
+  },
   "@ascentLeave": {
     "description": "Closes the full-screen game"
   },
@@ -648,16 +768,16 @@
   },
   "profileSkillsMore": "{count} more skills",
   "@profileSkillsMore": {
-      "description": "Home: link to the rest of the skills on About",
-      "placeholders": {
-          "count": {
-              "type": "int"
-          }
+    "description": "Home: link to the rest of the skills on About",
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
+    }
   },
   "profileSkillsAll": "All my skills",
   "@profileSkillsAll": {
-      "description": "Home: link to the skills on About when none are hidden"
+    "description": "Home: link to the skills on About when none are hidden"
   },
   "contactSocial": "Social links",
   "@contactSocial": {

@@ -10,6 +10,13 @@ abstract interface class PreferenceStore {
 
   /// Persists [value] under [key].
   Future<void> write(String key, String value);
+
+  /// Forgets [key] entirely.
+  ///
+  /// Not the same as writing an empty value. A viewer who asks to be forgotten
+  /// should leave nothing behind that says they were ever here, including a
+  /// key holding the word "none".
+  Future<void> remove(String key);
 }
 
 /// The default store: nothing survives a reload.
@@ -28,6 +35,9 @@ class InMemoryPreferenceStore implements PreferenceStore {
 
   @override
   Future<void> write(String key, String value) async => _values[key] = value;
+
+  @override
+  Future<void> remove(String key) async => _values.remove(key);
 }
 
 /// Keys owned by this store.
@@ -55,7 +65,23 @@ enum PreferenceKey {
   /// visit would be the dark pattern `06-ANALYTICS-AND-PRIVACY.md` section 5
   /// forbids. No identifier accompanies it, and no session id is ever written
   /// here or anywhere else on the device.
-  consent('nocturne.consent');
+  consent('nocturne.consent'),
+
+  /// Whether the viewer joined the climb's leaderboard, and under what name.
+  ///
+  /// This one holds an identifier, which every other key here deliberately
+  /// does not, so the line it sits on the right side of is worth stating.
+  /// Section 3's prohibition governs **analytics** identifiers: a value written
+  /// so that a visitor can be counted or followed. This is the opposite kind of
+  /// thing. It is a random value the visitor's own browser made at the moment
+  /// they asked to be on a public scoreboard, it exists so their next climb can
+  /// replace their own entry rather than add a second one, and without it the
+  /// feature they asked for cannot work at all -- which is the strictly
+  /// necessary exemption this enum's own note already relies on.
+  ///
+  /// It is written only after an explicit choice, never on merely playing, and
+  /// `forget` removes both it and the entry it points at.
+  gameParticipation('nocturne.game.participation');
 
   const PreferenceKey(this.storageKey);
 

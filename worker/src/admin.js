@@ -46,14 +46,12 @@ import {styles} from './admin/styles.js';
 /// Flutter nests its asset directory inside its own asset root, which is why
 /// this path says `assets` twice. Overridable so the panel can be run against
 /// a local harness without reaching the published site.
-const defaultBundleBase = 'https://asherbinyy.github.io/assets/assets/content';
-
 export function adminPage(env) {
   const siteOrigin = typeof env === 'string' ? env : env.SITE_ORIGIN;
   const bundleBase = (typeof env === 'string' ? null : env.BUNDLE_BASE) ??
-    defaultBundleBase;
+    `${siteOrigin}/assets/assets/content`;
   // Where the preview adapter lives. The production public origin by default;
-  // the isolated Astro development origin is configuration, not a default.
+  // a separate development origin is configuration, not a default.
   const previewOrigin = (typeof env === 'string' ? null : env.PREVIEW_ORIGIN) ??
     siteOrigin;
 

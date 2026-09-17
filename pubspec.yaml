@@ -21,6 +21,7 @@ dependencies:
   intl: any                 # let flutter_localizations pin this
   json_annotation: ^4.9.0
   material_ui: ^1.1.0
+  meta: any                 # so the game's physics needs no Flutter to run
   riverpod_annotation: ^2.6.0
   shared_preferences: ^2.3.0   # theme + consent persistence only
   simple_icons: ^16.23.0        # the platforms' own marks, drawn from their brand sets

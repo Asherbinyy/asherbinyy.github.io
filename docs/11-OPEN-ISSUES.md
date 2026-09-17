@@ -1,5 +1,20 @@
 # Open issues
 
+> September 15 account restoration: the owner reversed the move to lsherbini.
+> Active URLs return to asherbinyy.github.io/Asherbinyy. The new account's
+> repository is retained until all history is verified on Asherbinyy and deletion
+> scope/access is resolved.
+>
+> September 16: the owner set up the custom domain `sherbini.uk`, verified,
+> with an approved certificate. The site's own canonical/og/sitemap URLs,
+> `web/CNAME` and `wrangler.toml`'s `SITE_ORIGIN` were updated to match.
+> The Worker was redeployed on September 16 with `SITE_ORIGIN=https://sherbini.uk`.
+> Live leaderboard and beacon preflight requests now pass the origin gate;
+> both GitHub Pages origins are refused. Visitor analytics remain disabled.
+> The game bindings and secret are active, and real replay alarms were verified
+> without adding a public score. A completed ranked climb on the owner's phone
+> remains to be checked. See [the deployment worklog](worklog/2026-09-16-05-codex-game-worker-release.md).
+
 > September 15 admin integration: real Flutter preview, independent panel
 > controls, current Services/social fields, uploaded-media consumers and base
 > theme/font defaults work locally in `phase/codex-admin-ui`. See
