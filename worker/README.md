@@ -96,7 +96,7 @@ A score cannot be a number the browser sends, so the server replays the run:
 the client submits the seed it was given and the keys that were pressed, and the
 Worker simulates it with the same physics. `src/game/ascent.js` is that physics,
 proved bit-identical to the Dart client's by
-`contracts/fixtures/ascent-v1-vectors.json`.
+`contracts/fixtures/ascent-vectors.json`.
 
 Replaying costs CPU — about 50ms for a two-minute climb, measured — and the
 **Workers Free plan allows 10ms of CPU per request**, which is roughly twelve

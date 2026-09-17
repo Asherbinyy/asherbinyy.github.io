@@ -4,7 +4,7 @@
 ///
 ///     fvm dart run tool/generate_ascent_vectors.dart
 ///
-/// The output is `worker/contracts/fixtures/ascent-v1-vectors.json`. Two test
+/// The output is `worker/contracts/fixtures/ascent-vectors.json`. Two test
 /// suites read it and neither generates it: `test/unit/features/ascent/
 /// ascent_vectors_test.dart` checks that the Dart implementation still produces
 /// these numbers, and `worker/test/ascent.test.js` checks that the JavaScript
@@ -83,34 +83,78 @@ Map<String, Object?> _rngVectors() {
   return {'mix': mixed, 'streams': streams, 'ledge': ledgeSeeded};
 }
 
-List<Map<String, Object?>> _shaftVectors() {
-  const kinds = {
-    LedgeKind.stone: 'stone',
-    LedgeKind.cracked: 'cracked',
-    LedgeKind.scarab: 'scarab',
-  };
-  return [
-    for (final seed in _seeds)
-      {
-        'seed': seed,
-        'ledges': [
-          for (final ledge in AscentWorld.seeded(
-            best: 0,
-            isPractice: false,
-            seed: seed,
-          ).ledges)
-            {
-              'id': ledge.id,
-              'kind': kinds[ledge.kind],
-              'x': bits(ledge.x),
-              'y': bits(ledge.y),
-              'width': bits(ledge.width),
-              'drift': bits(ledge.drift),
-            },
-        ],
-      },
-  ];
-}
+const Map<LedgeKind, String> _kinds = {
+  LedgeKind.stone: 'stone',
+  LedgeKind.cracked: 'cracked',
+  LedgeKind.scarab: 'scarab',
+};
+
+Map<String, Object?> _ledgeVector(Ledge ledge) => {
+  'id': ledge.id,
+  'kind': _kinds[ledge.kind],
+  'x': bits(ledge.x),
+  'y': bits(ledge.y),
+  'width': bits(ledge.width),
+  'drift': bits(ledge.drift),
+  'hasBoon': ledge.hasBoon,
+};
+
+List<Map<String, Object?>> _shaftVectors() => [
+  for (final seed in _seeds)
+    {
+      'seed': seed,
+      'ledges': [
+        for (final ledge in AscentWorld.seeded(
+          best: 0,
+          isPractice: false,
+          seed: seed,
+        ).ledges)
+          _ledgeVector(ledge),
+      ],
+    },
+];
+
+/// Heights that sit either side of every boundary the generator keys on.
+///
+/// The boon floor at fifty, each level change at a hundred, and one sample well
+/// inside every level so the mode itself is checked rather than only the seam.
+const List<double> _levelSamples = [
+  0,
+  2.6,
+  49.9,
+  50,
+  50.1,
+  99.9,
+  100,
+  100.1,
+  150,
+  199.9,
+  200,
+  200.1,
+  260,
+  299.9,
+  300,
+  300.1,
+  420,
+  999,
+];
+
+/// Ledges sampled across the whole shaft, level by level.
+///
+/// The recorded runs only ever reach the part of the shaft a bot can climb, so
+/// levels three and up would otherwise go unchecked on both sides. These are
+/// generated directly at height, which is the only way to hold two
+/// implementations to the same answer about ground nobody has stood on.
+List<Map<String, Object?>> _levelVectors() => [
+  for (final seed in _seeds)
+    {
+      'seed': seed,
+      'ledges': [
+        for (var i = 0; i < _levelSamples.length; i++)
+          _ledgeVector(AscentWorld.generate(900 + i, _levelSamples[i], seed)),
+      ],
+    },
+];
 
 /// Tapes built by hand, to pin the wire format independently of any physics.
 List<Map<String, Object?>> _tapeVectors() {
@@ -291,6 +335,7 @@ List<Map<String, Object?>> _runVectors() {
       'metres': outcome.metres,
       'ticks': outcome.ticks,
       'endedInFall': outcome.endedInFall,
+      'boonsTaken': outcome.boonsTaken,
     });
   }
 
@@ -321,12 +366,13 @@ void main() {
     'maxTapeRuns': AscentContract.maxTapeRuns,
     'rng': _rngVectors(),
     'shafts': _shaftVectors(),
+    'levels': _levelVectors(),
     'tapes': _tapeVectors(),
     'rejectedTapes': _rejectedTapes(),
     'runs': _runVectors(),
   };
 
-  const path = 'worker/contracts/fixtures/ascent-v1-vectors.json';
+  const path = 'worker/contracts/fixtures/ascent-vectors.json';
   File(path).writeAsStringSync(
     '${const JsonEncoder.withIndent('  ').convert(fixture)}\n',
   );
@@ -339,4 +385,13 @@ void main() {
       '${run['ticks']} ticks  ${run['script']}',
     );
   }
+  final boons = runs.fold<int>(
+    0,
+    (sum, run) => sum + (run['boonsTaken']! as int),
+  );
+  final deepest = runs.fold<int>(0, (top, run) {
+    final metres = run['metres']! as int;
+    return metres > top ? metres : top;
+  });
+  print('  highest: ${deepest}m, boons taken across all runs: $boons');
 }

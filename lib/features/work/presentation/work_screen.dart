@@ -143,7 +143,9 @@ class _LedgerState extends State<_Ledger> {
         // both are here; `/writing` still resolves for anything already
         // linking to it.
         if (showsWriting) ...[
-          SizedBox(height: showsApps ? tokens.space96 : tokens.space32),
+          SizedBox(
+            height: showsApps ? context.platform.sectionGap : tokens.space32,
+          ),
           _SectionHeading(text: l10n.aboutWriting),
           SizedBox(height: tokens.space24),
           const WritingList(),

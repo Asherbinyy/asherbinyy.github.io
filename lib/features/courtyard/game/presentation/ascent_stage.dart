@@ -139,6 +139,7 @@ class _AscentStageState extends ConsumerState<AscentStage>
     var leapt = false;
     var broke = false;
     var kicked = false;
+    var tookBoon = false;
     var previous = before;
     for (final state in run.advance(
       dt.clamp(0.0, 0.25),
@@ -147,6 +148,7 @@ class _AscentStageState extends ConsumerState<AscentStage>
       leapt |= state.velocity > 0 && previous.velocity <= 0;
       broke |= state.brokeLedge;
       kicked |= state.kickedWall;
+      tookBoon |= state.tookBoon;
       previous = state;
     }
     final next = run.world;
@@ -158,6 +160,9 @@ class _AscentStageState extends ConsumerState<AscentStage>
       _kickedAt = _elapsed;
       _audio.play(AscentSound.collect);
     }
+    // The struck bar, which is the one sound in the set that already means
+    // "you have picked something up".
+    if (tookBoon) _audio.play(AscentSound.collect);
     if (next.registersPassed > _bands) _audio.play(AscentSound.level);
     _bands = next.registersPassed;
 
@@ -386,6 +391,26 @@ class _AscentStageState extends ConsumerState<AscentStage>
                 onMute: () => setState(_audio.toggleMute),
                 onClose: () => Navigator.of(context).maybePop(),
               ),
+              // The board, kept on the left for the length of the climb.
+              //
+              // The owner asked for it to be always visible and he is right
+              // about why: a leaderboard you only meet after you have fallen is
+              // a scoreboard, and a leaderboard you can see while you climb is
+              // the reason to climb. It reads rather than reacts -- no taps, no
+              // retry, nothing that can steal a thumb from the game.
+              // A phone is the exception, and not a grudging one: at 390 points
+              // the shaft *is* the frame, so a rail would be a panel over the
+              // playfield rather than beside it. There it stays where it was,
+              // on the results, which is the only place a phone has room.
+              if (MediaQuery.sizeOf(context).width >= Tokens.mediumBreakpoint)
+                PositionedDirectional(
+                  start: tokens.space16,
+                  top: tokens.space64 + tokens.space24,
+                  width: Tokens.ascentRailWidth,
+                  child: const IgnorePointer(
+                    child: LeaderboardPanel(isQuiet: true),
+                  ),
+                ),
               if (world != null && !world.isOver)
                 _RewardMark(
                   metres: _rewards * Tokens.ascentRewardStep,
@@ -679,10 +704,16 @@ class _ParticipantControls extends ConsumerWidget {
 /// The page's own buttons looked pasted on here, which is the owner's word for
 /// it: they are sized and weighted for reading, and this is a HUD.
 
-/// The hundred-metre mark, thrown up over the shaft and fading out.
+/// The fifty-metre mark, thrown up over the shaft and fading out.
 ///
 /// Drawn rather than announced: a cartouche, which is how this site marks
-/// something as worth naming, with the distance inside it.
+/// something as worth naming, with the distance inside it and a line under it.
+///
+/// The line is the part that was missing. The owner's note was that a long
+/// climb had nothing to show for itself but a number ticking up, and a number
+/// in a ring is still only a number — so each mark now says what has actually
+/// changed: the floor beginning to move at fifty, a new shaft at every hundred,
+/// and plain acknowledgement in between.
 class _RewardMark extends StatelessWidget {
   const _RewardMark({required this.metres, required this.age});
 
@@ -691,6 +722,18 @@ class _RewardMark extends StatelessWidget {
 
   /// How far through its life the mark is, 0 to 1 and beyond.
   final double age;
+
+  /// What this mark has to say, if anything.
+  String _words(BuildContext context) {
+    final l10n = context.l10n;
+    if (metres == AscentWorld.difficultyStep) return l10n.ascentMarkFloor;
+    if (metres % AscentWorld.levelHeight == 0) {
+      // Levels are counted from one on screen and from zero in the world, the
+      // same way the HUD counts them.
+      return l10n.ascentMarkLevel(metres ~/ AscentWorld.levelHeight + 1);
+    }
+    return l10n.ascentMarkHeight(metres);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -707,24 +750,39 @@ class _RewardMark extends StatelessWidget {
           opacity: fade,
           child: Transform.translate(
             offset: Offset(0, -age * Tokens.space24),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: tokens.beacon,
-                  width: tokens.hairlineWidth,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: tokens.beacon,
+                      width: tokens.hairlineWidth,
+                    ),
+                    borderRadius: BorderRadius.circular(Tokens.space24),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: tokens.space24,
+                      vertical: tokens.space8,
+                    ),
+                    child: Text(
+                      '$metres',
+                      style: context.type.displayM.copyWith(
+                        color: tokens.beacon,
+                      ),
+                    ),
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(Tokens.space24),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: tokens.space24,
-                  vertical: tokens.space8,
+                SizedBox(height: tokens.space8),
+                Text(
+                  _words(context),
+                  textAlign: TextAlign.center,
+                  style: context.type.telemetry.copyWith(
+                    color: tokens.instrument,
+                  ),
                 ),
-                child: Text(
-                  '$metres',
-                  style: context.type.displayM.copyWith(color: tokens.beacon),
-                ),
-              ),
+              ],
             ),
           ),
         ),

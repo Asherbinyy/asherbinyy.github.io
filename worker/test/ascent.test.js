@@ -10,6 +10,7 @@ import {
   TICK_SECONDS,
   VERSION,
   decodeTape,
+  generateLedge,
   isValidCode,
   mix,
   replay,
@@ -33,7 +34,7 @@ import {
 
 const fixture = JSON.parse(
   readFileSync(
-    new URL('../contracts/fixtures/ascent-v1-vectors.json', import.meta.url),
+    new URL('../contracts/fixtures/ascent-vectors.json', import.meta.url),
     'utf8',
   ),
 );
@@ -86,22 +87,63 @@ test('a ledge generator agrees with Dart', () => {
   }
 });
 
+/** The double sixteen hex digits stand for. */
+function unbits(hex) {
+  const view = new DataView(new ArrayBuffer(8));
+  view.setBigUint64(0, BigInt(`0x${hex}`));
+  return view.getFloat64(0);
+}
+
+function assertLedge(got, want, where) {
+  assert.equal(got.id, want.id, where);
+  assert.equal(KINDS[got.kind], want.kind, `${where} kind`);
+  assert.equal(bits(got.x), want.x, `${where} x`);
+  assert.equal(bits(got.y), want.y, `${where} y`);
+  assert.equal(bits(got.width), want.width, `${where} width`);
+  assert.equal(bits(got.drift), want.drift, `${where} drift`);
+  assert.equal(got.hasBoon, want.hasBoon, `${where} boon`);
+}
+
 test('a shaft is built bit for bit the way Dart builds it', () => {
   for (const vector of fixture.shafts) {
     const world = seededWorld(vector.seed);
     assert.equal(world.ledges.length, vector.ledges.length);
     for (let i = 0; i < vector.ledges.length; i++) {
-      const want = vector.ledges[i];
-      const got = world.ledges[i];
-      const where = `seed ${vector.seed}, ledge ${i}`;
-      assert.equal(got.id, want.id, where);
-      assert.equal(KINDS[got.kind], want.kind, `${where} kind`);
-      assert.equal(bits(got.x), want.x, `${where} x`);
-      assert.equal(bits(got.y), want.y, `${where} y`);
-      assert.equal(bits(got.width), want.width, `${where} width`);
-      assert.equal(bits(got.drift), want.drift, `${where} drift`);
+      assertLedge(
+        world.ledges[i],
+        vector.ledges[i],
+        `seed ${vector.seed}, ledge ${i}`,
+      );
     }
   }
+});
+
+test('every level builds the shaft its mode calls for', () => {
+  // Sampled at height rather than climbed to. No recorded run reaches the
+  // third or fourth level, so without these two hundred metres of shaft would
+  // be ground neither implementation had ever been checked on.
+  const levels = new Set();
+  let withBoon = 0;
+  let withoutBoon = 0;
+  for (const vector of fixture.levels) {
+    for (let i = 0; i < vector.ledges.length; i++) {
+      const want = vector.ledges[i];
+      const y = unbits(want.y);
+      assertLedge(
+        generateLedge(want.id, y, Rng.forLedge(vector.seed, want.id)),
+        want,
+        `seed ${vector.seed}, sample ${i}`,
+      );
+      levels.add(Math.floor(y / 100));
+      if (want.hasBoon) withBoon++;
+      else withoutBoon++;
+    }
+  }
+  for (const level of [0, 1, 2, 3]) {
+    assert.ok(levels.has(level), `no sample in level ${level}`);
+  }
+  assert.ok(withBoon > 0, 'no sampled ledge carries a boon');
+  assert.ok(withoutBoon > 0);
 });
 
 test('a tape decodes to the runs Dart encoded', () => {
@@ -140,6 +182,7 @@ test('every recorded run replays to the same metre and the same tick', () => {
         metres: vector.metres,
         ticks: vector.ticks,
         endedInFall: vector.endedInFall,
+        boonsTaken: vector.boonsTaken,
       },
       `${vector.script} on seed ${vector.seed}`,
     );
@@ -160,5 +203,9 @@ test('the vectors reach far enough up the shaft to mean something', () => {
   assert.ok(
     fixture.runs.some((run) => run.endedInFall),
     'no vector ends in a fall',
+  );
+  assert.ok(
+    fixture.runs.reduce((sum, run) => sum + run.boonsTaken, 0) > 0,
+    'no vector ever takes a boon, so the lift is untested',
   );
 });

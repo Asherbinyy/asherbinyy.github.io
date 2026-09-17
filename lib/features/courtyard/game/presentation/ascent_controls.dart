@@ -13,9 +13,16 @@ import 'package:nocturne/core/platform/platform_scope.dart';
 /// second action. This is a pad under the frame, which is where every game on
 /// a phone puts one, and it leaves the playfield to be looked at.
 ///
-/// Three controls, not four: left, right, and a wide jump bar standing in for
-/// the space bar. Up and down went on the owner's instruction once landing
-/// stopped bouncing by itself.
+/// Three controls, not four: left, right, and a jump button standing in for the
+/// space bar. Up and down went on the owner's instruction once landing stopped
+/// bouncing by itself.
+///
+/// Laid out the way a phone game lays one out, which is the owner's reference
+/// to Roblox: steering under the left thumb, the action under the right, both
+/// lifted clear of the bottom edge so neither sits where a system gesture
+/// starts. It was a row across the frame with a long bar on one end of it —
+/// a keyboard drawn on a touchscreen, and reachable by neither thumb without
+/// moving the hand that is holding the phone.
 ///
 /// Pointer devices never see it. A keyboard has all four keys and a mouse has
 /// none of these problems, so drawing a pad for them would be clutter.
@@ -55,8 +62,13 @@ class _AscentControlsState extends State<AscentControls> {
     final l10n = context.l10n;
 
     return Padding(
-      padding: EdgeInsets.only(top: tokens.space16),
+      padding: EdgeInsets.only(
+        top: tokens.space16,
+        left: tokens.space16,
+        right: tokens.space16,
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
@@ -69,7 +81,7 @@ class _AscentControlsState extends State<AscentControls> {
                   _publish();
                 }),
               ),
-              SizedBox(width: tokens.space12),
+              SizedBox(width: tokens.space8),
               GameControl.key(
                 glyph: '›',
                 semanticLabel: l10n.ascentSteerRight,

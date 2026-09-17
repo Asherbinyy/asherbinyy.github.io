@@ -93,7 +93,7 @@ class _ServicesDoor extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     return Padding(
-      padding: EdgeInsets.only(top: context.tokens.space96),
+      padding: EdgeInsets.only(top: context.platform.sectionGap),
       // Wrapped, because on a phone the question and the button do not share
       // a line and a Row would push one of them off the screen.
       child: Wrap(
@@ -130,7 +130,7 @@ class _Reach extends ConsumerWidget {
     if (contact == null) return const SizedBox.shrink();
 
     return Padding(
-      padding: EdgeInsets.only(top: context.tokens.space96),
+      padding: EdgeInsets.only(top: context.platform.sectionGap),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -173,7 +173,7 @@ class _Career extends ConsumerWidget {
     final ordered = [...roles]..sort((a, b) => b.start.compareTo(a.start));
 
     return Padding(
-      padding: EdgeInsets.only(top: context.tokens.space96),
+      padding: EdgeInsets.only(top: context.platform.sectionGap),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

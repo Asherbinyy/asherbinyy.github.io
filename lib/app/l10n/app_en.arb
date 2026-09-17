@@ -922,6 +922,28 @@
       }
     }
   },
+  "ascentMarkFloor": "The floor is rising. Keep moving.",
+  "@ascentMarkFloor": {
+    "description": "Shown across the shaft at fifty metres, where the floor begins to chase the climber."
+  },
+  "ascentMarkLevel": "Level {level}. The shaft changes here.",
+  "@ascentMarkLevel": {
+    "description": "Shown at each hundred metres, where the shaft takes on a new character.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "ascentMarkHeight": "{metres} m and still climbing.",
+  "@ascentMarkHeight": {
+    "description": "Shown at the fifty-metre marks that are not a level change.",
+    "placeholders": {
+      "metres": {
+        "type": "int"
+      }
+    }
+  },
   "profileSkills": "Skills",
   "profileLearning": "Currently learning",
   "profileTools": "Tools I use",

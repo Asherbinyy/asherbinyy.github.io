@@ -13,6 +13,7 @@ import {
 } from '../src/game/leaderboard.js';
 import {
   MAX_TICKS,
+  VERSION,
   advance,
   decodeTape,
   outcomeOf,
@@ -25,7 +26,7 @@ const secret = 'a-test-signing-secret-not-the-real-one';
 
 const fixture = JSON.parse(
   readFileSync(
-    new URL('../contracts/fixtures/ascent-v1-vectors.json', import.meta.url),
+    new URL('../contracts/fixtures/ascent-vectors.json', import.meta.url),
     'utf8',
   ),
 );
@@ -178,7 +179,7 @@ async function play(env, {playerKey, nickname, tape, seed}) {
   const token = await issueToken(secret, {
     r: challenge.runId,
     s: seed,
-    v: 1,
+    v: VERSION,
     e: now + 600000,
     p: await hashPlayer(playerKey),
   });
@@ -316,7 +317,7 @@ test('a run issued to one player cannot be submitted by another', async () => {
 });
 
 test('a forged or expired token is refused', async () => {
-  const claims = { r: 'x', s: 1, v: 1, e: now + 1000, p: 'hash' };
+  const claims = { r: 'x', s: 1, v: VERSION, e: now + 1000, p: 'hash' };
   const token = await issueToken(secret, claims);
   assert.ok(await readToken(secret, token, now));
   assert.equal(await readToken('a different secret', token, now), null);
@@ -348,7 +349,7 @@ test('submitting the same run twice does not rank it twice', async () => {
         token: await issueToken(secret, {
           r: first.runId,
           s: played.seed,
-          v: 1,
+          v: VERSION,
           e: now + 600000,
           p: await hashPlayer(playerKey),
         }),
