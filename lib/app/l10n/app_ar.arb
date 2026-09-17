@@ -59,7 +59,7 @@
   "signalAppsShipped": "{count, plural, =1{تطبيق واحد} other{{count} تطبيقات}}",
   "signalClose": "إغلاق",
   "workHeading": "الخزانة",
-  "workSubheading": "أربعة عشر تطبيقاً، أُطلقت وما زالت تعمل.",
+  "workSubheading": "ما بنيته، وما كتبته.",
   "workOpenStore": "افتح {name} على {store}",
   "workAppStore": "آب ستور",
   "workGooglePlay": "جوجل بلاي",
@@ -241,6 +241,10 @@
   "ascentDive": "انقضاض",
   "ascentKeys": "الأسهم أو A و D للتوجيه. المسافة للقفز. ارتد عن الجدار لمزيد من الارتفاع.",
   "ascentLeave": "خروج",
+  "workApps": "التطبيقات",
+  "workFilterAll": "الكل",
+  "workFilterApps": "التطبيقات",
+  "workFilterWriting": "الكتابة",
   "courtyardScoreboard": "لوحة النتائج",
   "courtyardNextHeading": "شيء آخر",
   "courtyardNextBody": "لعبة ثانية في الطريق. لم أقرّر بعد ما هي.",
@@ -311,7 +315,7 @@
   "@servicesChatHeading": {
     "description": "Services page: heading over the invitation to get in touch"
   },
-  "servicesChatBody": "أخبرني بما تبنيه ومتى تحتاجه. ستحصل على إجابة واضحة، وموعد واقعي، ومنتج يُطلق فعلًا.",
+  "servicesChatBody": "أخبرني بما تبنيه، ومتى تحتاجه، وما الميزانية تقريبًا. ستحصل على إجابة صريحة، وموعد واقعي، ورفض صادق إن لم يكن العمل مناسبًا.",
   "@servicesChatBody": {
     "description": "Services page: the invitation itself"
   },

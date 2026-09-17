@@ -237,7 +237,7 @@
   "@workHeading": {
     "description": "Heading on the work page. A name, not a count: it read \"13 shipped applications\", which is a statistic rather than a title and one every other page already carries."
   },
-  "workSubheading": "Fourteen apps, shipped and running.",
+  "workSubheading": "What I have built, and what I have written.",
   "@workSubheading": {
     "description": "Standfirst under the work ledger heading."
   },
@@ -533,6 +533,22 @@
     "description": "Keyboard controls, shown on a pointer browser"
   },
   "ascentLeave": "Leave",
+  "workApps": "Apps",
+  "@workApps": {
+    "description": "Heading over the applications on the work page"
+  },
+  "workFilterAll": "All",
+  "@workFilterAll": {
+    "description": "Filter: show applications and writing"
+  },
+  "workFilterApps": "Apps",
+  "@workFilterApps": {
+    "description": "Filter: show applications only"
+  },
+  "workFilterWriting": "Writing",
+  "@workFilterWriting": {
+    "description": "Filter: show writing only"
+  },
   "courtyardScoreboard": "Scoreboard",
   "@courtyardScoreboard": {
     "description": "Opens the climb leaderboard from the courtyard"
@@ -775,7 +791,7 @@
   "@servicesChatHeading": {
     "description": "Services page: heading over the invitation to get in touch"
   },
-  "servicesChatBody": "Tell me what you are building and when you need it. You will get a straight answer, a realistic date, and something that ships.",
+  "servicesChatBody": "Tell me what you are building, when you need it, and roughly what the budget is. You will get a straight answer, a realistic date, and an honest no if it is not a fit.",
   "@servicesChatBody": {
     "description": "Services page: the invitation itself"
   },
