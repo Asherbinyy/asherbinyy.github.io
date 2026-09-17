@@ -14,6 +14,7 @@ import 'package:nocturne/content/providers.dart';
 import 'package:nocturne/core/analytics/analytics_providers.dart';
 import 'package:nocturne/core/platform/preference_store.dart';
 import 'package:nocturne/core/preview/preview_host.dart';
+import 'package:nocturne/features/courtyard/game/presentation/leaderboard_controller.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -87,6 +88,7 @@ void main() {
       expect(before.data.greeting!.en, isNot('Private draft only'));
       expect(container.read(publishedContentProvider), isNull);
       expect(container.read(analyticsClientProvider), isNull);
+      expect(container.read(leaderboardClientProvider), isNull);
       expect(
         container.read(preferenceStoreProvider),
         isA<InMemoryPreferenceStore>(),

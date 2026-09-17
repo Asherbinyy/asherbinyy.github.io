@@ -15,11 +15,11 @@
 > without adding a public score. A completed ranked climb on the owner's phone
 > remains to be checked. See [the deployment worklog](worklog/2026-09-16-05-codex-game-worker-release.md).
 
-> September 15 admin integration: real Flutter preview, independent panel
-> controls, current Services/social fields, uploaded-media consumers and base
-> theme/font defaults work locally in `phase/codex-admin-ui`. See
-> `31-CODEX-ADMIN-UI-REVIEW.md`. Production integration and owner visual
-> acceptance are separate from these local checks.
+> September 17 admin integration: real Flutter preview, independent panel
+> controls, all current page destinations, honest charts, current
+> Services/social fields, uploaded-media consumers and base theme/font defaults
+> are included in the release. The reviewed transactional store is enabled
+> after production KV was confirmed empty. See `31-CODEX-ADMIN-UI-REVIEW.md`.
 
 
 **Historical September 13 scope:** the owner rejected the broad visual implementation and it was rolled back. Later requests authorized Claude’s public-site work and Codex’s admin integration. See [handoff](27-CONTINUE-HERE.md). Existing visual/game issues remain open; no design acceptance is implied by prior local tests.
@@ -63,13 +63,7 @@ Evidence: [audit](18-PROJECT-AUDIT.md). Historical issue numbers remain searchab
 
 | ID | Still true | Closes when | Milestone |
 |---|---|---|---|
-| ADM-1 | Local admin now previews actual Flutter pages with current content and independent panel controls | Owner reviews the workspace; production preview is configured and deployed | F1, local implementation complete |
-| ADM-2 | Local consumers render uploaded images, ordered links, galleries, name audio, services and appearance defaults | Integrated production release verifies supported fields | F1, local implementation complete |
-| ADM-3 | Reviewed backend `edfd04c` fixes atomic document/head and release reads; production binding remains disabled | Activate the reviewed transactional store through an explicit migration/release | F1, production integration open |
-| ADM-4 | Real Flutter draft preview works locally; generated HTML still lacks a coordinated release manifest | Complete production preview and shared release integration | F1/F8, partial local completion |
-| ADM-5 | Closed locally: reviewed `edfd04c` contains atomic admission and revocation/renewal fixes; regression suite passes | Production must use the reviewed backend and transactional binding | F1, reviewed fixes retained |
 | ADM-6 | Existing theme/font defaults now preview, publish and reset through profile content; extra presets/patterns remain undefined | Define approved patterns/presets and verify their public consumers | F7, partial local completion |
-| ADM-7 | Claude's branch adds an aggregate dashboard; production client collection remains disabled. Public integration not certified | Dashboard reports available data honestly and any new collection follows explicit consent design | F7, under review |
 | CON-1 | App screenshot/gallery assets absent; no screenshot fields in bundled apps | Appropriate real public/supplied media and gallery records are available | F1/F5 |
 | CON-2 | Birth year/photo request not implemented | Owner-supplied 1997/Mansoura stop and cleared photo supported without invented exact dates | F4 |
 | CON-3 | “The Writer” may be an erroneous third book rather than a request for authors | Original phrase clarified before editing the interests record | F6 |
@@ -100,6 +94,7 @@ Production analytics positive-event and console verification from the older work
 
 | Old issue | Evidence / corrected state |
 |---|---|
+| ADM-1/2/3/4/5/7 admin integration | Real Flutter preview, supported public consumers, reviewed auth/store, every current page destination and honest charts are included; production uses the transactional binding. Static HTML parity remains SEO-5 and broader appearance options remain ADM-6 |
 | 0b.10 writing coupled to analytics | `core/net/relay.dart` separates content relay configuration; live Writing rendered six article cards with covers and titles |
 | 1.2 / 2.4 missing twelfth app / eleven-app count | Bundled inventory now contains 14 apps; no extra project is required merely to match an obsolete target |
 | 1.6 missing Arabic fields / 2.3 English-only stats | Current content has Arabic fields; linguistic review remains CON-6 |

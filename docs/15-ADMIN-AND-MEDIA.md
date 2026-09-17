@@ -1,10 +1,11 @@
 # Admin and media
 
-Current local state: September 15. The real Flutter preview, collapsible panels,
+Release state: September 17. The real Flutter preview, collapsible panels,
 current-content schema, uploaded-media consumers and base theme/font defaults
-are integrated in `phase/codex-admin-ui`. See [review](31-CODEX-ADMIN-UI-REVIEW.md).
-The production Worker received only the separately requested hosting-origin fix;
-the redesigned admin and preview remain local.
+are integrated in `phase/codex-admin-ui` for the production release. See
+[review](31-CODEX-ADMIN-UI-REVIEW.md). The site build and Worker must be
+deployed from the same merged revision so their exact-origin preview contract
+stays compatible.
 
 Backend delivery baseline: 2026-09-12, after admin phases **A1-A4 and A6**, plus the
 preview channel, the release contract and the fields Codex accepted in
@@ -129,11 +130,11 @@ derived, so a burst of guesses gets exactly the attempts that were left. A
 document and the revision it is are read in one operation, as is the whole set
 that goes into a release.
 
-**None of that is active in a deployment today.** The binding is deliberately
-not enabled, so the Worker runs on the unsafe fallback: concurrent publishes
-can still lose a revision, session renewal is switched off entirely rather than
-left racy, and the panel says so in the editing bar. See
-[Worker operations](../worker/README.md).
+The production release enables this binding after confirming that the existing
+CONTENT namespace contains no keys, so there is no published document,
+revision or password record to migrate. The KV fallback remains in code for
+development and rollback, but the deployed admin uses the transactional path.
+See [Worker operations](../worker/README.md).
 
 Verified in Chrome against `worker/dev/serve.js`: 134 browser checks across
 seven scenarios, screenshots under `docs/audits/`.
@@ -145,8 +146,8 @@ The remaining deployment and publication dependencies are recorded in [`INTEGRAT
 Each of these is built up to a boundary and labelled honestly in the
 interface. None of them is finished work.
 
-- **Local real preview works.** Its production build/configuration and exact
-  field-level scrolling remain open.
+- **Real preview works.** The production build accepts only the deployed admin
+  origin. Exact field-level scrolling remains open; selection follows pages.
 - **HTML publication is not done.** The snapshot contract exists, but the
   public release manifest, coordinated build delivery and rollback are open.
 - **Appearance is partial.** Existing theme/font defaults preview and publish
@@ -154,11 +155,8 @@ interface. None of them is finished work.
   need a renderer allowlist. The broader `appearance.js` proposal stays blocked.
 - **Accepted media/link/audio fields now have Flutter consumers.** Empty
   galleries remain absent and missing overrides retain bundled defaults.
-- **Concurrency protection is not enabled in production.** The transactional
-  store is implemented and tested; the binding in `wrangler.toml` is
-  deliberately commented out, because switching it on migrates where the
-  owner's content lives. Until then the panel says, in the editing bar, that
-  concurrent edits are not protected.
+- **Concurrency protection is enabled for this release.** The transactional
+  store serialises revisions, sessions, password admission and release reads.
 - **Video remains an external address with click-to-load**, which is the
   existing behaviour stated plainly. Direct hosting is a separate decision.
 - **No real-device or screen-reader check has ever run.** Headless Chrome at

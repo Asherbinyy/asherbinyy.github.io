@@ -1,10 +1,10 @@
 # Admin / public integration
 
-## September 15 — current local implementation
+## September 17 — integrated release
 
 The owner asked Codex to finish the panel and connect it to the current Flutter
-site. The UI branch now includes the reviewed backend and the committed public
-portfolio through `923c87e`. See [review and browser evidence](../../docs/31-CODEX-ADMIN-UI-REVIEW.md).
+site. The release includes the reviewed backend, the current custom-domain
+portfolio and the game leaderboard. See [review and browser evidence](../../docs/31-CODEX-ADMIN-UI-REVIEW.md).
 
 | Contract | Current state |
 | --- | --- |
@@ -26,11 +26,8 @@ review, history and validation.
 
 - Coordinate Flutter, CV/Brief and metadata against one release snapshot and
   publish the release manifest. Runtime overrides alone do not update HTML.
-- Deploy the preview build with a configured exact admin parent origin and
-  set the Worker's `PREVIEW_ORIGIN` to that public build. Local preview is
-  running; no redesigned panel or public preview build has been deployed.
-- Plan activation/migration of the reviewed production transactional store.
-  Its committed binding remains disabled.
+- Verify the merged Pages build and Worker together after deployment. The
+  preview build accepts the exact deployed admin origin.
 - Define feed selection/article authoring, per-page patterns and extra presets
   before exposing those controls. Game controls require their own contract.
 - Add daily page-view and exact-click dimensions only if required and supplied
@@ -86,7 +83,7 @@ Everything else added is additive and ignorable:
 | Publish refuses a document that fails the schema (422) | Strictly fewer bad documents reach it |
 | `GET /v1/content/{file}` carries an `x-content-revision` header | A header. The body is untouched |
 | `POST /v1/admin/media/audio` validates recordings | Nothing consumes it yet — §3.4 |
-| Mutations may be serialised by a Durable Object | Where the content is stored. The response is identical either way, and the binding is not enabled |
+| Mutations are serialised by a Durable Object | The release enables the reviewed transactional store after confirming production KV contains no content keys |
 
 ## 2. The schema is a description of your models, and it will drift
 
@@ -262,27 +259,24 @@ interface; none of them is finished work.
 
 | Open | State | Waiting on |
 |---|---|---|
-| Live preview | Protocol verified against a test double, not against the site | §3.2 |
+| Live preview | Real Flutter site connected, with exact-origin/session validation and isolated storage/network providers | `lib/core/preview/`, `worker/src/admin/preview.js` |
 | HTML publication | Revision and comparison built; nothing serves a release file, and CI, artifact delivery, failure recovery and release rollback are unwritten | §3.3 |
-| A5 appearance | Nothing built. No controls, by design | §3.1 |
-| The four accepted fields | Editable and validated; nothing renders them | §3.4 |
-| Concurrency and session safety in production | Implemented and tested against a double and, for content writes, against local workerd by Codex. The binding is deliberately not enabled, so a deployment today runs on the unsafe fallback | `wrangler.toml` |
+| A5 appearance | Existing theme and font defaults preview and publish; extra presets and per-page patterns remain undefined | §3.1 |
+| Accepted media, link, audio and gallery fields | Public Flutter consumers are implemented; empty values preserve the bundled fallbacks | §3.4 |
+| Concurrency and session safety in production | Implemented, tested and enabled through the SQLite-backed `CONTENT_STORE` binding | `wrangler.toml` |
 | Real-device and screen-reader checks | Never run | R9 |
 
-**The fallback is not protected, and must not be described as if it were.**
-Without the `CONTENT_STORE` binding: concurrent publishes can still lose a
-revision, session renewal is switched off entirely rather than left racy, and
-`GET /v1/admin/content` reports `atomic: false`. The panel says so in the
-editing bar. A combined release cannot claim concurrency protection while it
-is running that way.
+The KV fallback remains available for local development and emergency rollback,
+and continues to report `atomic: false`. Production is expected to report
+`atomic: true`; this is part of the deployment verification.
 
-## 5. What I will not do without you asking
+## 5. Release boundaries
 
 - Add a field to `content-schema.js` that nothing in `lib/**` reads.
 - Change the response shape of `GET /v1/content/{file}`.
 - Change a route path, or add one the public app is expected to call.
-- Edit `assets/content/**`, `lib/**`, `web/**` or `tool/**`.
-- Deploy, rotate a production secret, or enable analytics collection.
+- Change owner-supplied content under `assets/content/**`.
+- Rotate a production secret or enable analytics collection.
 
 ## 6. How to run the admin without touching production
 

@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {launch} from './browser.js';
 import {helpers} from './harness.js';
 const base = process.env.ADMIN_BASE || 'http://localhost:8790';
-const output = fileURLToPath(new URL('../../docs/audits/2026-09-15-admin-integration/', import.meta.url));
+const output = process.env.ADMIN_AUDIT_DIR || fileURLToPath(new URL('../../docs/audits/2026-09-16-admin-final/', import.meta.url));
 await mkdir(output, {recursive:true});
 const checks = [];
 const check = (name, value) => {checks.push({name, passed:Boolean(value)}); console.log((value ? 'PASS ' : 'FAIL ') + name);};
@@ -131,6 +131,29 @@ try {
     await capture('uploaded-portrait-preview');
     await page.eval(`setValue('f-portrait-src',${JSON.stringify(portrait)})`); await ready();
   }
+  const destinations = ['Overview', 'Home', 'Journey', 'Work', 'Articles', 'Services', 'About', 'Courtyard', 'CV & brief', 'Appearance', 'Media', 'Account'];
+  for (const width of [1440, 390]) {
+    await page.viewport(width, width === 1440 ? 900 : 844, width < 500);
+    for (const label of destinations) {
+      if (width < 500) await page.eval("if(!document.body.classList.contains('menuOpen')) $('menuToggle').click()");
+      await navigate(label);
+      await page.eval("document.querySelector('#editor .pageCard')?.click()");
+      await pause();
+      if (await page.eval("document.body.dataset.view==='document'")) await ready();
+      check(label+' has a usable editor at '+width+'px', await page.eval("$('editor').innerText.trim().length>0 && document.documentElement.scrollWidth<=innerWidth && $('editorPane').scrollWidth<=$('editorPane').clientWidth+1"));
+      await capture('page-'+label.toLowerCase().replace(/[^a-z]+/g,'-')+'-'+width);
+    }
+  }
+  await page.viewport(1440,900);
+  await navigate('Courtyard'); await ready();
+  await page.frameEval(`(() => {const roots=[document];for(let i=0;i<roots.length;i++)for(const n of roots[i].querySelectorAll('*')){if(n.shadowRoot)roots.push(n.shadowRoot);if(n.tagName==='FLT-SEMANTICS-PLACEHOLDER')n.click();}})()`);
+  const played = await page.frameEval(`(() => {const roots=[document];for(let i=0;i<roots.length;i++)for(const n of roots[i].querySelectorAll('*')){if(n.shadowRoot)roots.push(n.shadowRoot);if(n.getAttribute('role')==='button'&&(n.getAttribute('aria-label')||n.textContent)==='Play'){n.click();return true;}}return false;})()`);
+  await page.settle(1200);
+  check('the current game opens in the actual preview', played && await page.frameEval(`(() => {const roots=[document];for(let i=0;i<roots.length;i++)for(const n of roots[i].querySelectorAll('*')){if(n.shadowRoot)roots.push(n.shadowRoot);if((n.getAttribute('aria-label')||'').includes('The climb'))return true;}return false;})()`));
+  check('preview play never contacts the public leaderboard', await page.frameEval("performance.getEntriesByType('resource').every(r=>!new URL(r.name).pathname.startsWith('/v1/game/'))"));
+  check('preview play keeps browser storage empty', await page.frameEval("localStorage.length===0 && sessionStorage.length===0 && document.cookie===''"));
+  await capture('courtyard-game-preview');
+  await page.frameEval(`(() => {const roots=[document];for(let i=0;i<roots.length;i++)for(const n of roots[i].querySelectorAll('*')){if(n.shadowRoot)roots.push(n.shadowRoot);if(n.getAttribute('role')==='button'&&(n.getAttribute('aria-label')||n.textContent).includes('Close')){n.click();return true;}}return false;})()`);
   await intro(); await ready();
   await page.eval("setValue('f-greeting-en','Local publication check')"); await ready();
   await page.eval("$('publish').click()"); await page.settle(700);

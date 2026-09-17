@@ -1,9 +1,7 @@
-# Admin integration review — September 15
+# Admin integration review — September 17
 
 Branch: `phase/codex-admin-ui`. Backend baseline: reviewed `edfd04c`.
-The local preview includes the committed public portfolio through `923c87e`.
-This admin integration is local; the separate production Worker origin fix
-contains only the two requested URL changes.
+The release also includes the custom-domain and leaderboard changes from main.
 
 ## Open it
 
@@ -21,8 +19,8 @@ fvm flutter build web --wasm --no-web-resources-cdn \
   --dart-define=WRITING_RELAY=http://localhost:8790
 ```
 
-[Desktop and phone gallery](audits/2026-09-15-admin-integration/index.html).
-[Actual browser checks](audits/2026-09-15-admin-integration/checks.json).
+[Desktop and phone gallery](audits/2026-09-16-admin-final/index.html).
+[Actual browser checks](audits/2026-09-16-admin-final/checks.json).
 
 ## What changed
 
@@ -58,7 +56,7 @@ fvm flutter build web --wasm --no-web-resources-cdn \
 | Courtyard | Interests and galleries | Game/leaderboard settings remain outside the admin |
 | CV & brief | Shared identity, career and education | Static HTML/metadata still need a coordinated site release; no PDF upload |
 | Appearance | Existing theme/font defaults, live preview and reset | Extra presets and per-page pattern selection remain undefined |
-| Media / Account | Existing validated uploads, library and account controls | Production transactional-store activation remains separate |
+| Media / Account | Existing validated uploads, library and account controls | Transactional production storage is enabled in this release |
 
 Publishing applies to the selected document, including shared fields edited
 from other pages. It does not rebuild the CV, brief or search metadata.
@@ -82,19 +80,19 @@ still requires the coordinated release work.
 
 ## Verification
 
-- `node --test worker/test/*.test.js`: 289 passing, none failing or skipped.
-- All four required FVM checks pass: format, analyze, 710 Flutter tests, Wasm build.
-- All 47 browser checks pass. Results and screenshots are linked above, including private edits,
-  validation failure, panel controls, Arabic, Services, appearance/reset and
-  desktop/phone layouts.
+- `node --test worker/test/*.test.js`: 321 passing, none failing or skipped.
+- All four required FVM checks pass: format, analyze, 756 Flutter tests, Wasm build.
+- All 74 browser checks pass. Results and screenshots are linked above,
+  including every destination at desktop and phone widths, private edits,
+  validation failure, panel controls, Arabic, Services, appearance/reset,
+  media, local publication and the current game in the isolated preview.
 - The existing Cupertino icon-font warning remains in the successful build.
 - Physical Safari/Android and screen-reader acceptance remain open. Passing
   checks do not establish the owner's visual acceptance.
 
 ## Deployment
 
-The redesigned panel and Flutter adapter have not been deployed. Following the owner’s decision to return to the original account, production
-`nocturne-analytics` was separately restored to allow `https://asherbinyy.github.io`
-and load its content bundle. The abandoned lsherbini site origin is refused. No analytics
-collection, content publication, schema migration, secrets or other deployment
-was included in that production change.
+The merge publishes the Flutter adapter with an exact allowlist for the deployed
+admin origin. The matching Worker deployment serves the redesigned panel at
+`/admin`, retains the game bindings and uses `https://sherbini.uk` for content,
+preview and CORS. Analytics collection remains disabled.

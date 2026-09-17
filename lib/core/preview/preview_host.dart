@@ -18,6 +18,7 @@ import 'package:nocturne/core/analytics/analytics_providers.dart';
 import 'package:nocturne/core/net/relay.dart';
 import 'package:nocturne/core/platform/preference_store.dart';
 import 'package:nocturne/core/preview/preview_transport.dart';
+import 'package:nocturne/features/courtyard/game/presentation/leaderboard_controller.dart';
 
 /// Drafts stay inside this ProviderScope; no browser storage or publishing.
 final previewDocumentsProvider = StateProvider<Map<String, String>>(
@@ -29,6 +30,7 @@ List<Override> previewOverrides() => [
   preferenceStoreProvider.overrideWithValue(InMemoryPreferenceStore()),
   defaultThemeProvider.overrideWith(publishedDefaultTheme),
   analyticsEndpointProvider.overrideWithValue(null),
+  leaderboardClientProvider.overrideWithValue(null),
   publishedContentProvider.overrideWithValue(null),
   // Preview media uses the same local/deployed relay as the owner panel.
   relayEndpointProvider.overrideWithValue(

@@ -148,7 +148,7 @@ jobs:
       # consent model, the Worker and its tests all remain in the repository.
       # Restoring collection is one --dart-define on this line.
       - name: Build Web (WASM)
-        run: flutter build web --wasm --release
+        run: flutter build web --wasm --release --dart-define=ADMIN_PREVIEW_ORIGIN=https://nocturne-analytics.asherbinyy.workers.dev
 
       - name: Ensure GitHub Pages routing and Jekyll bypass
         run: |

@@ -179,10 +179,10 @@ that means:
 Do not describe a deployment running this way as having concurrency
 protection.
 
-### Enabling it
+### Production activation
 
-**The binding is deliberately not enabled.** `wrangler.toml` carries it
-commented out. Before switching it on:
+The binding is enabled in `wrangler.toml` as `CONTENT_STORE`, using the
+SQLite-backed `ContentStore` class. Before activation:
 
 1. **Confirm plan availability** for SQLite-backed Durable Objects
    (`new_sqlite_classes`), and **what it costs** — every public content read
@@ -197,11 +197,12 @@ commented out. Before switching it on:
    loses whatever was published after the switch, and nothing before it. Copy
    the object's contents back out if anything was published in between.
 
-Codex has run the content-write path in local Wrangler/workerd with a
-temporary enabled binding: eight concurrent same-base saves produced one 200
-and seven 409s, with one retained revision. That verifies the path locally. It
-does not establish plan availability, cost, migration safety or production
-readiness.
+Before the production activation, the account's existing game objects proved
+SQLite Durable Objects were available and the production CONTENT namespace
+was inspected through Cloudflare: it contained zero keys. There was therefore
+no published document, revision or password record to migrate. The content
+write path was also run in local workerd: eight concurrent same-base saves
+produced one 200 and seven 409s, with one retained revision.
 
 Nothing about the public response shape changes either way.
 
