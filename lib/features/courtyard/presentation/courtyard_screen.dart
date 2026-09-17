@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,9 +9,11 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
+import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/features/about/presentation/widgets/interests_grid.dart';
 import 'package:nocturne/features/courtyard/game/presentation/ascent_stage.dart';
+import 'package:nocturne/features/courtyard/game/presentation/widgets/leaderboard_panel.dart';
 
 /// `/courtyard` — everything that is not work.
 ///
@@ -60,7 +64,18 @@ class _CourtyardScreenState extends ConsumerState<CourtyardScreen> {
           // The climb opens full screen rather than unfolding inside the page.
           // A game embedded in a document competes with it for the keyboard,
           // for the width, and for the reader's attention, and loses all three.
-          _GameInvitation(onPlay: () => AscentStage.open(context)),
+          // Two halves. The climb had the page to itself and used about half
+          // of it, which left a large empty right-hand side the owner asked to
+          // fill; the second panel is honest about being empty rather than
+          // pretending the shelf is full.
+          EvenGrid(
+            minTileWidth: Tokens.courtyardPanelWidth,
+            spacing: tokens.space24,
+            children: [
+              _GameInvitation(onPlay: () => AscentStage.open(context)),
+              const _ComingSoon(),
+            ],
+          ),
           SizedBox(height: tokens.space48),
           const InterestsGrid(),
         ],
@@ -103,11 +118,95 @@ class _GameInvitation extends StatelessWidget {
               style: type.body.copyWith(color: tokens.textSecondary),
             ),
           ),
+          // Pushes the two controls to the bottom of whichever panel is
+          // taller, so they sit on one line across the pair instead of
+          // wherever each panel's prose happens to end.
+          const Spacer(),
           SizedBox(height: tokens.space16),
-          BeaconButton(
-            label: l10n.courtyardPlay,
-            emphasis: ButtonEmphasis.primary,
-            onPressed: onPlay,
+          Wrap(
+            spacing: tokens.space8,
+            runSpacing: tokens.space8,
+            children: [
+              BeaconButton(
+                label: l10n.courtyardPlay,
+                emphasis: ButtonEmphasis.primary,
+                onPressed: onPlay,
+              ),
+              BeaconButton(
+                label: l10n.courtyardScoreboard,
+                onPressed: () => _showBoard(context),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The board, without having to play first.
+  ///
+  /// The owner asked for a way to see where things stand from the courtyard.
+  /// It is the same panel the climb's results screen uses, so there is one
+  /// place that knows how to say "nobody has climbed yet" and one place that
+  /// knows how to say the board is unreachable.
+  void _showBoard(BuildContext context) {
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.all(context.tokens.space24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: DecoratedBox(
+              decoration: BoxDecoration(color: context.tokens.surface),
+              child: Padding(
+                padding: EdgeInsets.all(context.tokens.space16),
+                child: const LeaderboardPanel(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The shelf beside the climb, kept honestly empty.
+///
+/// The owner wants a second game and has not decided what it is. A panel that
+/// says so is better than a gap, and much better than inventing a placeholder
+/// game to fill it: the courtyard is the one page on this site that is allowed
+/// to be unfinished out loud.
+class _ComingSoon extends StatelessWidget {
+  const _ComingSoon();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final type = context.type;
+    final l10n = context.l10n;
+
+    return InstrumentPanel(
+      padding: EdgeInsets.all(tokens.space24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: tokens.space48,
+            height: tokens.hairlineWidth * 2,
+            child: ColoredBox(color: tokens.instrumentDim),
+          ),
+          SizedBox(height: tokens.space12),
+          Text(
+            l10n.courtyardNextHeading,
+            style: type.heading.copyWith(color: tokens.textMuted),
+          ),
+          SizedBox(height: tokens.space8),
+          Text(
+            l10n.courtyardNextBody,
+            style: type.body.copyWith(color: tokens.textMuted),
           ),
         ],
       ),

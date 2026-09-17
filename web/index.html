@@ -119,72 +119,16 @@
     }
     .threshold--ready .threshold__frame { opacity: 1; }
     .threshold--gone .threshold__frame { opacity: 0; transition-delay: 0ms; }
-    /* The way in. The owner asked for a button here rather than his name --
-       the name is the first thing the site itself says, and saying it twice
-       before the page had even loaded was a title card for nobody.
-
-       It is dressed as the door it opens: a gold rule either side, a wide
-       tracked word between them, and a breath of lamplight behind it that
-       comes up as the scene does. A default browser button with a border sat
-       on this scene like a form control, which is what the owner objected
-       to. */
-    .threshold__enter {
-      position: relative;
-      margin-top: 30px;
-      padding: 15px 44px;
-      font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.34em;
-      text-indent: 0.34em;
-      text-transform: uppercase;
-      color: #E8C77A;
-      background: linear-gradient(180deg, rgba(227,169,63,0.10), rgba(227,169,63,0.02));
-      border: 0;
-      border-top: 1px solid rgba(227, 169, 63, 0.55);
-      border-bottom: 1px solid rgba(227, 169, 63, 0.55);
-      cursor: pointer;
-      -webkit-appearance: none;
-      appearance: none;
-      box-shadow: 0 0 34px -12px rgba(227, 169, 63, 0.75);
-      transition: color 260ms ease, letter-spacing 260ms ease,
-                  background 260ms ease, box-shadow 260ms ease;
-    }
-    /* The jambs. Two thin uprights that close the frame around the word, so
-       it reads as a doorway rather than as a pill. */
-    .threshold__enter::before,
-    .threshold__enter::after {
-      content: '';
-      position: absolute;
-      top: 6px;
-      bottom: 6px;
-      width: 1px;
-      background: rgba(227, 169, 63, 0.35);
-      transition: background 260ms ease, top 260ms ease, bottom 260ms ease;
-    }
-    .threshold__enter::before { left: 14px; }
-    .threshold__enter::after { right: 14px; }
-    .threshold__enter:hover,
-    .threshold__enter:focus-visible {
-      color: #1A1208;
-      background: linear-gradient(180deg, #F0C265, #E3A93F);
-      letter-spacing: 0.42em;
-      text-indent: 0.42em;
-      box-shadow: 0 0 52px -8px rgba(227, 169, 63, 0.95);
-      outline: none;
-    }
-    .threshold__enter:hover::before,
-    .threshold__enter:hover::after,
-    .threshold__enter:focus-visible::before,
-    .threshold__enter:focus-visible::after {
-      top: 0;
-      bottom: 0;
-      background: rgba(26, 18, 8, 0.45);
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .threshold__enter { transition: none; }
-      .threshold__enter::before,
-      .threshold__enter::after { transition: none; }
+    /* The panel is the control now, so it shows a pointer and takes focus
+       without a visible outline fighting the scene. The Enter button that used
+       to live here is gone at the owner's request, along with its jambs and
+       hover states -- about sixty lines of CSS for a control that no longer
+       exists. */
+    .threshold { cursor: pointer; }
+    .threshold:focus { outline: none; }
+    .threshold:focus-visible {
+      outline: 1px solid rgba(227, 169, 63, 0.55);
+      outline-offset: -3px;
     }
     .threshold__title {
       margin: 0 0 6px;
@@ -206,18 +150,23 @@
     app mounts, because the shell is the one place on this site where real 3D
     is possible: Flutter draws to a single canvas and cannot host a scene.
 
-    It is markup first and script second on purpose. With JavaScript disabled,
-    or a module import blocked, this is a static panel with a heading and two
-    ordinary buttons, and the script removes it. Nothing here is required to
-    reach the site.
+    The owner asked for the button to go. It was there because a sealed door
+    with no handle is a wait; it is gone because a button is the first thing an
+    eye lands on and the scene is the point. What replaces it is not nothing:
+    the whole panel is the handle now, a click or any key opens the door, and
+    it still opens on its own for somebody who does neither.
+
+    The `noscript` rule matters more than it looks. With JavaScript disabled
+    the script that removes this never runs, and the button never worked
+    either, so the panel used to be a locked door with a handle painted on it.
+    Now it is simply not rendered and the site loads underneath.
   -->
-  <div id="threshold" class="threshold">
+  <noscript><style>.threshold { display: none !important; }</style></noscript>
+  <div id="threshold" class="threshold" role="button" tabindex="0"
+       aria-label="Enter the site">
     <!-- Decorative staging. Artwork attribution is linked from About. -->
     <div class="threshold__frame">
       <h1 class="threshold__title" aria-hidden="true">The door is sealed.</h1>
-      <button type="button" class="threshold__enter" id="threshold-enter">
-        Enter
-      </button>
     </div>
   </div>
 
