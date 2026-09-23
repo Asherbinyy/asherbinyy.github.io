@@ -540,6 +540,26 @@ abstract final class Tokens {
   /// How strongly its cut edges show.
   static const double stopMarkReliefAlpha = 0.5;
 
+  /// How opaque the ground under an artwork card's name becomes, and how far
+  /// up the card that ground rises.
+  ///
+  /// The name was drawn straight over the constellation, so its dots and
+  /// orbit lines crossed the letters -- the badge above it had a solid backing
+  /// for exactly this reason and the name never got one. The ground fades in
+  /// from nothing, so the artwork is still whole above the name.
+  static const double cardNameScrimAlpha = 0.92, cardNameScrimExtent = 0.62;
+
+  /// How much of the phone nav row fades at an edge with more links past it.
+  ///
+  /// Was a bare 0.88 stop in the row's mask, which faded the last 12 percent;
+  /// named here with the same share, and now used at the leading edge too.
+  static const double navEdgeFade = 0.12;
+
+  /// How opaque the backing under an artwork card's sector badge is.
+  ///
+  /// Was a bare 0.86 in the card; named here with its value unchanged.
+  static const double cardBadgeScrimAlpha = 0.86;
+
   /// The itinerary on Home: one stop's node and the cell it sits in.
   ///
   /// Small. It is an index to the career below, not a second telling of it,

@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -173,11 +176,6 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
                     ],
                   ),
                 ),
-                _ChromeReveal(
-                  animation: widget.chromeReveal,
-                  edge: _RevealEdge.bottom,
-                  child: const _Footer(),
-                ),
               ],
             ),
           ),
@@ -309,6 +307,10 @@ class _ContentColumn extends StatelessWidget {
     );
   }
 
+  /// The height a page can fill before the footer, which closes it, scrolls.
+  double _pageHeight(BuildContext context, BoxConstraints constraints) =>
+      math.max(0, constraints.maxHeight - context.tokens.footerHeight);
+
   Widget _buildStack(BuildContext context, Widget? layer) {
     return LayoutBuilder(
       builder: (context, constraints) => Stack(
@@ -331,9 +333,6 @@ class _ContentColumn extends StatelessWidget {
           SelectionArea(
             child: SingleChildScrollView(
               controller: controller,
-              // Short pages still fill the frame, so the footer sits at the
-              // bottom of the viewport rather than floating under a half-height
-              // column.
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 // Capped and centred on a wide monitor. Every page was laid
@@ -345,16 +344,44 @@ class _ContentColumn extends StatelessWidget {
                 // The cap is the frame, not the measure: paragraphs still cap
                 // at their own reading width inside it. What this stops is the
                 // frame itself growing until the page has no shape.
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: Tokens.contentMaxWidth,
+                //
+                // The footer closes the page from inside the scroll. It was a
+                // fixed row under the viewport, which cost every screen 48
+                // pixels to show an empty bar -- on a phone, with the two-row
+                // header, a fifth of the screen or more was chrome. Its stated
+                // job was to end the content so a short page does not simply
+                // stop, and that is a job for the end of the page.
+                //
+                // Content is held to at least the viewport less the footer, so
+                // on a short page the rule still lands at the bottom of the
+                // window, and on a long one it follows the last thing. No
+                // intrinsic measurement: pages lay out with LayoutBuilder,
+                // which cannot report one.
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: _pageHeight(context, constraints),
+                      ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: Tokens.contentMaxWidth,
+                          ),
+                          // The footer is part of the page now, so the page
+                          // that fits itself to one screen -- the Journey map
+                          // -- has to leave it room, or the map grows by the
+                          // footer's height and pushes it below the fold.
+                          child: ContentViewport(
+                            height: _pageHeight(context, constraints),
+                            child: child,
+                          ),
+                        ),
+                      ),
                     ),
-                    child: ContentViewport(
-                      height: constraints.maxHeight,
-                      child: child,
-                    ),
-                  ),
+                    const _Footer(),
+                  ],
                 ),
               ),
             ),
@@ -508,13 +535,58 @@ class _ScrollableNav extends StatefulWidget {
 
 class _ScrollableNavState extends State<_ScrollableNav> {
   final ScrollController _controller = ScrollController();
-  final ValueNotifier<bool> _hasMore = ValueNotifier(false);
+  final ValueNotifier<({bool before, bool after})> _hidden = ValueNotifier((
+    before: false,
+    after: false,
+  ));
+  final GlobalKey _active = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _controller.addListener(_check);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _revealActive();
+      _check();
+    });
+  }
+
+  @override
+  void didUpdateWidget(_ScrollableNav oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.current != widget.current) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _revealActive());
+    }
+  }
+
+  /// Brings the current page's link into view if the row has hidden it.
+  ///
+  /// On a phone the row is wider than the screen, and on About or the
+  /// Courtyard the active link sat past the trailing edge -- so the row showed
+  /// no page as current and the visitor lost their place. Only moves when the
+  /// link is not already fully visible, and asks the viewport for the offsets
+  /// so it is right in Arabic too, where the row runs the other way.
+  void _revealActive() {
+    if (!mounted || !_controller.hasClients) return;
+    final item = _active.currentContext?.findRenderObject();
+    if (item == null) return;
+    final viewport = RenderAbstractViewport.maybeOf(item);
+    if (viewport == null) return;
+    final atLeading = viewport.getOffsetToReveal(item, 0).offset;
+    final atTrailing = viewport.getOffsetToReveal(item, 1).offset;
+    final offset = _controller.offset;
+    final isVisible =
+        offset >= math.min(atLeading, atTrailing) &&
+        offset <= math.max(atLeading, atTrailing);
+    if (isVisible) return;
+    // Jumped, not animated: this is where the page opens, not a movement the
+    // visitor asked for, so there is nothing to show happening.
+    _controller.jumpTo(
+      viewport
+          .getOffsetToReveal(item, 0.5)
+          .offset
+          .clamp(0, _controller.position.maxScrollExtent),
+    );
   }
 
   @override
@@ -522,13 +594,17 @@ class _ScrollableNavState extends State<_ScrollableNav> {
     _controller
       ..removeListener(_check)
       ..dispose();
-    _hasMore.dispose();
+    _hidden.dispose();
     super.dispose();
   }
 
   void _check() {
     if (!_controller.hasClients) return;
-    _hasMore.value = _controller.position.extentAfter > 1;
+    final position = _controller.position;
+    _hidden.value = (
+      before: position.extentBefore > 1,
+      after: position.extentAfter > 1,
+    );
   }
 
   @override
@@ -540,7 +616,7 @@ class _ScrollableNavState extends State<_ScrollableNav> {
         padding: EdgeInsetsDirectional.symmetric(
           horizontal: context.platform.gutter,
         ),
-        child: AppNav(current: widget.current),
+        child: AppNav(current: widget.current, activeKey: _active),
       ),
     );
 
@@ -551,9 +627,13 @@ class _ScrollableNavState extends State<_ScrollableNav> {
         WidgetsBinding.instance.addPostFrameCallback((_) => _check());
         return false;
       },
-      child: ValueListenableBuilder<bool>(
-        valueListenable: _hasMore,
-        builder: (context, hasMore, child) => ShaderMask(
+      // Faded at whichever edge has links past it. The row used to fade only
+      // its trailing edge, so once the current page had been brought into
+      // view the first link was cut through mid-word -- "urney" -- with
+      // nothing to say it was a row that scrolls rather than a broken one.
+      child: ValueListenableBuilder<({bool before, bool after})>(
+        valueListenable: _hidden,
+        builder: (context, hidden, child) => ShaderMask(
           blendMode: BlendMode.dstIn,
           shaderCallback: (bounds) => LinearGradient(
             begin: AlignmentDirectional.centerStart.resolve(
@@ -562,8 +642,13 @@ class _ScrollableNavState extends State<_ScrollableNav> {
             end: AlignmentDirectional.centerEnd.resolve(
               Directionality.of(context),
             ),
-            colors: const [Colors.white, Colors.white, Colors.transparent],
-            stops: hasMore ? const [0, 0.88, 1] : const [0, 1, 1],
+            colors: [
+              if (hidden.before) Colors.transparent else Colors.white,
+              Colors.white,
+              Colors.white,
+              if (hidden.after) Colors.transparent else Colors.white,
+            ],
+            stops: const [0, Tokens.navEdgeFade, 1 - Tokens.navEdgeFade, 1],
           ).createShader(bounds),
           child: child,
         ),
