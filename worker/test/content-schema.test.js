@@ -188,6 +188,40 @@ test('an image field will not take anything but stored media or a bundle path', 
   assert.ok(verdict.errors.some((issue) => issue.path === 'interests.0.logo'));
 });
 
+test('application-page screenshots are editable in their display order', () => {
+  const verdict = validateDocument('apps.json', {
+    apps: [
+      {
+        id: 'a',
+        name: 'A',
+        platforms: ['ios'],
+        store: {},
+        domain: 'Travel',
+        shots: [
+          'assets/media/apps/a/first.jpg',
+          '/v1/media/0123456789abcdef0123456789abcdef',
+        ],
+      },
+    ],
+  });
+  assert.deepEqual(verdict.errors, []);
+});
+
+test('an interest can keep structured names and makers', () => {
+  const verdict = validateDocument('interests.json', {
+    interests: [
+      {
+        id: 'reading',
+        label: {en: 'Reading'},
+        picks: [
+          {name: {en: 'Animal Farm'}, by: {en: 'George Orwell'}},
+        ],
+      },
+    ],
+  });
+  assert.deepEqual(verdict.errors, []);
+});
+
 test('coordinates outside the world are refused', () => {
   const verdict = validateDocument('career.json', {
     roles: [

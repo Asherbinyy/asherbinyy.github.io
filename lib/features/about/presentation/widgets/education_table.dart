@@ -334,7 +334,7 @@ class _SectionLabel extends StatelessWidget {
 /// told twice. So the sample lives in the row it belongs to, and a module
 /// without one keeps its place in the column rather than being quietly
 /// promoted or dropped.
-class _Module extends StatelessWidget {
+class _Module extends StatefulWidget {
   const _Module({required this.module});
 
   final EducationModule module;
@@ -343,57 +343,130 @@ class _Module extends StatelessWidget {
   static const double thumbnail = 56;
 
   @override
+  State<_Module> createState() => _ModuleState();
+}
+
+/// One module and its mark, with the whole row as the way into its sample.
+///
+/// The thumbnail used to be the only target: a 56px square at the left edge,
+/// with the module's name sitting inert beside it. The owner's note was that
+/// the row should be clickable and should say so, and he is right on both
+/// counts -- a small picture is a poor target on a phone, and nothing about a
+/// line of a transcript suggests it opens.
+///
+/// A module with no sample is not a button at all. Giving every row a hover
+/// state and then doing nothing for half of them is worse than leaving them
+/// plain, because it teaches the reader that the affordance means nothing.
+class _ModuleState extends State<_Module> {
+  final WidgetStatesController _states = WidgetStatesController();
+
+  @override
+  void dispose() {
+    _states.dispose();
+    super.dispose();
+  }
+
+  void _open(Evidence evidence) {
+    final caption = evidence.caption.resolve(context.channel);
+    unawaited(
+      showDialog<void>(
+        context: context,
+        // The artefact is the point, so it gets the viewport rather than a
+        // polite little box in the middle of it.
+        builder: (context) =>
+            _EvidenceDialog(src: evidence.src, caption: caption),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final type = context.type;
-    final evidence = module.evidence;
-    final name = module.name.resolve(context.channel);
+    final evidence = widget.module.evidence;
+    final name = widget.module.name.resolve(context.channel);
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: tokens.space8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: _Module.thumbnail,
-            height: _Module.thumbnail,
-            child: evidence == null
-                ? _NoSample(module: name)
-                : _SampleThumbnail(
-                    evidence: evidence,
-                    module: name,
-                    mark: module.mark,
-                  ),
-          ),
-          SizedBox(width: tokens.space16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  name,
-                  style: type.body.copyWith(color: tokens.textPrimary),
+    return ListenableBuilder(
+      listenable: _states,
+      builder: (context, _) {
+        final isLit =
+            evidence != null &&
+            (_states.value.contains(WidgetState.hovered) ||
+                _states.value.contains(WidgetState.focused));
+
+        final row = Padding(
+          padding: EdgeInsets.symmetric(vertical: tokens.space8),
+          child: Row(
+            children: [
+              SizedBox(
+                width: _Module.thumbnail,
+                height: _Module.thumbnail,
+                child: evidence == null
+                    ? _NoSample(module: name)
+                    : _SampleThumbnail(
+                        evidence: evidence,
+                        module: name,
+                        isLit: isLit,
+                      ),
+              ),
+              SizedBox(width: tokens.space16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      name,
+                      // The site's own gold, which is what it uses everywhere
+                      // else to mean "this responds".
+                      style: type.body.copyWith(
+                        color: isLit ? tokens.beacon : tokens.textPrimary,
+                      ),
+                    ),
+                    if (evidence != null) ...[
+                      SizedBox(height: tokens.space4),
+                      Text(
+                        evidence.caption.resolve(context.channel),
+                        style: type.meta.copyWith(color: tokens.textMuted),
+                      ),
+                    ],
+                  ],
                 ),
-                if (evidence != null) ...[
-                  SizedBox(height: tokens.space4),
-                  Text(
-                    evidence.caption.resolve(context.channel),
-                    style: type.meta.copyWith(color: tokens.textMuted),
-                  ),
-                ],
-              ],
+              ),
+              SizedBox(width: tokens.space16),
+              Text(
+                // Marks are whole numbers in the supplied content; the type
+                // scale puts tabular figures on numeric styles so the column
+                // aligns.
+                widget.module.mark.toStringAsFixed(0),
+                style: type.telemetry.copyWith(color: tokens.instrument),
+              ),
+            ],
+          ),
+        );
+
+        if (evidence == null) return row;
+
+        return Semantics(
+          button: true,
+          label: context.l10n.aboutEvidenceOpen(
+            evidence.caption.resolve(context.channel),
+          ),
+          child: FocusRing(
+            isFocused: _states.value.contains(WidgetState.focused),
+            child: InkWell(
+              onTap: () => _open(evidence),
+              statesController: _states,
+              hoverColor: Colors.transparent,
+              borderRadius: BorderRadius.circular(Tokens.controlRadius),
+              mouseCursor: context.platform.isPointer
+                  ? SystemMouseCursors.click
+                  : MouseCursor.defer,
+              child: ExcludeSemantics(child: row),
             ),
           ),
-          SizedBox(width: tokens.space16),
-          Text(
-            // Marks are whole numbers in the supplied content; the type
-            // scale puts tabular figures on numeric styles so the column
-            // aligns.
-            module.mark.toStringAsFixed(0),
-            style: type.telemetry.copyWith(color: tokens.instrument),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -456,86 +529,40 @@ class _NoSample extends StatelessWidget {
 /// This used to be a 260px card in a row of its own below the marks, which
 /// meant printing every module's name and mark for a second time. At this size
 /// it sits in the module's own row and still opens full width.
-class _SampleThumbnail extends StatefulWidget {
+class _SampleThumbnail extends StatelessWidget {
   const _SampleThumbnail({
     required this.evidence,
     required this.module,
-    required this.mark,
+    required this.isLit,
   });
 
   final Evidence evidence;
   final String module;
-  final double mark;
 
-  @override
-  State<_SampleThumbnail> createState() => _SampleThumbnailState();
-}
-
-class _SampleThumbnailState extends State<_SampleThumbnail> {
-  final WidgetStatesController _states = WidgetStatesController();
-
-  @override
-  void dispose() {
-    _states.dispose();
-    super.dispose();
-  }
-
-  void _open() {
-    final caption = widget.evidence.caption.resolve(context.channel);
-    unawaited(
-      showDialog<void>(
-        context: context,
-        // The artefact is the point, so it gets the viewport rather than a
-        // polite little box in the middle of it.
-        builder: (context) =>
-            _EvidenceDialog(src: widget.evidence.src, caption: caption),
-      ),
-    );
-  }
+  /// Whether the row this belongs to is hovered or focused.
+  ///
+  /// Passed in rather than sensed here: two nested tap targets in one row is
+  /// one too many, and the border has to agree with the name beside it.
+  final bool isLit;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final caption = widget.evidence.caption.resolve(context.channel);
-
-    return ListenableBuilder(
-      listenable: _states,
-      builder: (context, _) => Semantics(
-        button: true,
-        label: context.l10n.aboutEvidenceOpen(caption),
-        child: FocusRing(
-          isFocused: _states.value.contains(WidgetState.focused),
-          child: InkWell(
-            onTap: _open,
-            statesController: _states,
-            hoverColor: Colors.transparent,
-            mouseCursor: context.platform.isPointer
-                ? SystemMouseCursors.click
-                : MouseCursor.defer,
-            child: ExcludeSemantics(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: _states.value.contains(WidgetState.hovered)
-                        ? tokens.beacon
-                        : tokens.hairline,
-                    width: tokens.hairlineWidth,
-                  ),
-                  borderRadius: BorderRadius.circular(Tokens.controlRadius),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(Tokens.controlRadius),
-                  child: Image(
-                    image: contentImage(context, widget.evidence.src),
-                    fit: BoxFit.cover,
-                    // A missing file is a missing artefact, not a broken page.
-                    errorBuilder: (context, _, _) =>
-                        _NoSample(module: widget.module),
-                  ),
-                ),
-              ),
-            ),
-          ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: isLit ? tokens.beacon : tokens.hairline,
+          width: tokens.hairlineWidth,
+        ),
+        borderRadius: BorderRadius.circular(Tokens.controlRadius),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(Tokens.controlRadius),
+        child: Image(
+          image: contentImage(context, evidence.src),
+          fit: BoxFit.cover,
+          // A missing file is a missing artefact, not a broken page.
+          errorBuilder: (context, _, _) => _NoSample(module: module),
         ),
       ),
     );

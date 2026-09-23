@@ -39,6 +39,8 @@ fvm flutter build web --wasm --no-web-resources-cdn \
 - Uploaded portraits, evidence images, project screenshots, project/interest
   galleries, ordered custom contact links and name recordings have public
   consumers. Videos open their external destination only on request.
+- The current application-page screenshot strips and structured Off duty
+  favourites are editable, validated and previewed in their public order.
 - Appearance saves optional `profile.appearance` defaults using the existing
   Kemet/Deshret themes and bundled Space Grotesk/IBM Plex Sans families.
   Reset removes the override. Arabic retains its Arabic font and visitors
@@ -80,9 +82,9 @@ still requires the coordinated release work.
 
 ## Verification
 
-- `node --test worker/test/*.test.js`: 321 passing, none failing or skipped.
-- All four required FVM checks pass: format, analyze, 756 Flutter tests, Wasm build.
-- All 74 browser checks pass. Results and screenshots are linked above,
+- `node --test worker/test/*.test.js`: 323 passing, none failing or skipped.
+- The pinned SDK checks pass: format, analyze, 783 Flutter tests and Wasm build.
+- All 76 browser checks pass. Results and screenshots are linked above,
   including every destination at desktop and phone widths, private edits,
   validation failure, panel controls, Arabic, Services, appearance/reset,
   media, local publication and the current game in the isolated preview.

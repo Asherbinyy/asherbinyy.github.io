@@ -62,7 +62,15 @@ try {
   await page.eval(`setValue('f-name-en',${JSON.stringify(fullName)})`); await page.settle(900); await ready();
   await navigate('Work'); await page.settle(650); await ready();
   check('preview follows Work navigation', await page.frameEval("location.pathname==='/work'"));
+  await page.eval("clickText('#editor .pageCard','Projects')"); await pause();
+  await page.eval("clickText('#editor .row .open','MiNextStep')"); await pause();
+  check('current app-page screenshots are editable and previewable', await page.eval("$('editor').innerText.includes('App page screenshots — 5') && [...document.querySelectorAll('#editor .assetPreview img')].filter(image=>image.src.includes('/minextstep/')).length===5"));
   await capture('work-preview');
+  await navigate('Courtyard');
+  await page.eval("clickText('#editor .pageCard','Interests')"); await pause();
+  await page.eval("clickText('#editor .row .open','Reading')"); await pause(); await ready();
+  await page.eval("clickText('#editor .inlineItem .open','Animal Farm')"); await pause();
+  check('current structured favourites are editable', await page.eval("$('editor').innerText.includes('Named favourites — 2') && ['Animal Farm','George Orwell'].every(value=>[...document.querySelectorAll('#editor input')].some(input=>input.value===value))"));
   await navigate('Services');
   await page.eval("document.querySelector('.pageCard').click()"); await ready();
   check('Services opens the current public page', await page.frameEval("location.pathname==='/services'"));

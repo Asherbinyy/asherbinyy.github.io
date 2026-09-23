@@ -10,12 +10,13 @@ Finish the admin workspace, connect its preview to the current Flutter site, int
 ## What changed
 - Completed independent navigation and preview-panel controls, with a half-width live preview and a one-third compact option on desktop plus a full-width phone switch.
 - Connected every current public destination to the admin's schema-driven editors and real Flutter preview, including Services, social links, uploads, audio, galleries and the existing appearance defaults.
+- Integrated the latest application screenshot strips and structured Off duty favourites into the same validated editor and preview after they landed on `main`.
 - Replaced the decorative admin treatment with the portfolio's existing typography, limestone surfaces and functional pigment roles.
 - Added honest insights charts and empty/disabled states without seeding or estimating analytics.
 - Built the production site with an exact Worker-origin preview allowlist and isolated preview game, analytics, content and preference providers from public services and browser storage.
 - Enabled the reviewed SQLite `CONTENT_STORE` binding after confirming the production content namespace contained zero keys, so no published content, revision, password or media data required migration.
 - Integrated the custom-domain and leaderboard release while retaining all three Durable Object bindings.
-- Recorded 74 passing end-to-end browser checks and representative desktop, phone and live-preview captures.
+- Recorded 76 passing end-to-end browser checks and representative desktop, phone and live-preview captures.
 
 ## Files touched
 - `.github/workflows/ci.yml` — modified — compile the exact deployed admin origin into the Pages preview adapter.
@@ -37,15 +38,15 @@ The public site and Worker are released together because the preview accepts one
 ## Tests
 - Added: production preview assertion that the leaderboard client is disabled; browser coverage for every admin destination and the current game preview.
 - Modified: admin integration browser verification and preview isolation coverage.
-- Full suite: pass, 756 Flutter tests and 321 Worker tests passing, 0 failing.
+- Full suite: pass, 783 Flutter tests and 323 Worker tests passing, 0 failing.
 - Coverage delta: not measured.
 
 ## Verification run
 ```
-fvm dart format --set-exit-if-changed .   pass, 326 files unchanged
-fvm flutter analyze                        pass, no issues
-fvm flutter test                           pass, 756 tests
-fvm flutter build web --wasm               pass
+pinned Dart format --set-exit-if-changed .   pass, 331 files unchanged
+pinned Flutter analyze                        pass, no issues
+pinned Flutter test                           pass, 783 tests
+pinned Flutter build web --wasm               pass
 ```
 
 ## Known issues left open

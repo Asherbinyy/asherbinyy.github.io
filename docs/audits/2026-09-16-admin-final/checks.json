@@ -76,6 +76,14 @@
     "passed": true
   },
   {
+    "name": "current app-page screenshots are editable and previewable",
+    "passed": true
+  },
+  {
+    "name": "current structured favourites are editable",
+    "passed": true
+  },
+  {
     "name": "Services opens the current public page",
     "passed": true
   },

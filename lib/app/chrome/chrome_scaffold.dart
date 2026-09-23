@@ -448,14 +448,92 @@ class _NavRow extends StatelessWidget {
           ),
         ),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Padding(
-          padding: EdgeInsetsDirectional.symmetric(
-            horizontal: context.platform.gutter,
-          ),
-          child: AppNav(current: current),
+      child: _ScrollableNav(current: current),
+    );
+  }
+}
+
+/// The phone's navigation row, which says when it has more to show.
+///
+/// It has always scrolled sideways, so Courtyard was never unreachable — but
+/// nothing said so. The row ended flush against the right edge on a 390px
+/// phone with "About" as the last word anyone could see, which reads as the
+/// end of the list rather than as the edge of a window onto it.
+///
+/// A fade over the trailing edge is the whole fix, and it is only drawn while
+/// there is something behind it: a permanent gradient would dim the last item
+/// once you had scrolled to it, which says the opposite of the truth.
+class _ScrollableNav extends StatefulWidget {
+  const _ScrollableNav({required this.current});
+
+  final AppRoute current;
+
+  @override
+  State<_ScrollableNav> createState() => _ScrollableNavState();
+}
+
+class _ScrollableNavState extends State<_ScrollableNav> {
+  final ScrollController _controller = ScrollController();
+  final ValueNotifier<bool> _hasMore = ValueNotifier(false);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_check);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_check)
+      ..dispose();
+    _hasMore.dispose();
+    super.dispose();
+  }
+
+  void _check() {
+    if (!_controller.hasClients) return;
+    _hasMore.value = _controller.position.extentAfter > 1;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scroller = SingleChildScrollView(
+      controller: _controller,
+      scrollDirection: Axis.horizontal,
+      child: Padding(
+        padding: EdgeInsetsDirectional.symmetric(
+          horizontal: context.platform.gutter,
         ),
+        child: AppNav(current: widget.current),
+      ),
+    );
+
+    return NotificationListener<ScrollMetricsNotification>(
+      // Fires when the row's extent changes without a scroll -- a rotation, a
+      // text-size change -- which is when the fade would otherwise be stale.
+      onNotification: (_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+        return false;
+      },
+      child: ValueListenableBuilder<bool>(
+        valueListenable: _hasMore,
+        builder: (context, hasMore, child) => ShaderMask(
+          blendMode: BlendMode.dstIn,
+          shaderCallback: (bounds) => LinearGradient(
+            begin: AlignmentDirectional.centerStart.resolve(
+              Directionality.of(context),
+            ),
+            end: AlignmentDirectional.centerEnd.resolve(
+              Directionality.of(context),
+            ),
+            colors: const [Colors.white, Colors.white, Colors.transparent],
+            stops: hasMore ? const [0, 0.88, 1] : const [0, 1, 1],
+          ).createShader(bounds),
+          child: child,
+        ),
+        child: scroller,
       ),
     );
   }

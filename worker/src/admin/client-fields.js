@@ -423,7 +423,16 @@ function assetControl(field, value, path) {
   clear.textContent = 'Clear';
   clear.disabled = input.value === '';
   clear.onclick = () => {
-    write(path, undefined);
+    if (field.removeOnClear === true) {
+      const parentPath = path.slice(0, -1);
+      const index = path[path.length - 1];
+      const parent = getIn(current().draft, parentPath);
+      if (Array.isArray(parent)) {
+        write(parentPath, parent.filter((_, at) => at !== index), true);
+      }
+    } else {
+      write(path, undefined);
+    }
     render();
   };
 
@@ -767,6 +776,50 @@ function inlineList(field, items, path) {
   return decorate(wrap, field, path);
 }
 
+/// An ordered image list with the same uploader and media library as a single
+/// asset field.
+///
+/// A plain chip list can preserve asset paths, but it cannot upload or preview
+/// them. Application-page screenshots are real media fields, so each entry
+/// keeps the media controls while the row tools preserve their reading order.
+function assetList(field, items, path) {
+  const wrap = node('div', 'field');
+  wrap.append(node('span', 'fieldLabel', field.label + ' — ' + items.length));
+  if (field.help) wrap.append(node('p', 'help', field.help));
+  if (items.length === 0) {
+    wrap.append(node('div', 'empty', 'Nothing here yet.'));
+  }
+  items.forEach((item, index) => {
+    const at = path.concat([index]);
+    const card = node('div', 'inlineItem');
+    const head = node('div', 'head');
+    head.append(
+      node('span', 't', titleOf(field.of, item, index)),
+      rowTools(field, items, index, path),
+    );
+    const child = Object.assign({}, field.of, {
+      label: field.label + ' ' + (index + 1),
+      removeOnClear: true,
+    });
+    const body = node('div', 'body');
+    body.append(assetControl(child, item, at));
+    card.append(head, body);
+    wrap.append(card);
+  });
+  const foot = node('div', 'listFoot');
+  const add = document.createElement('button');
+  add.type = 'button';
+  add.className = 'small';
+  add.textContent = field.addLabel || 'Add';
+  add.onclick = () => {
+    write(path, items.concat(['']), true);
+    render();
+  };
+  foot.append(add);
+  wrap.append(foot);
+  return decorate(wrap, field, path);
+}
+
 /// Which inline entries the owner has open, kept across a re-render.
 const openItems = new Set();
 
@@ -777,6 +830,7 @@ function listControl(field, value, path) {
       ? inlineList(field, items, path)
       : rowList(field, items, path);
   }
+  if (field.of.kind === 'asset') return assetList(field, items, path);
   if (field.of.kind === 'reference') return referenceList(field, items, path);
   return chipList(field, items, path);
 }

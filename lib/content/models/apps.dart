@@ -93,6 +93,11 @@ class Apps with _$Apps {
 
 /// An application record; absent metrics and links remain absent.
 ///
+/// [shots] is the gallery on the application's own page: a list of paths into
+/// `assets/media/apps/<id>/`, in the order they should be read. It is separate
+/// from [screenshot], which is the single image the ledger row uses, because a
+/// card wants one wide image and a page wants several tall ones.
+///
 /// [screenshot] is a path into `assets/media/apps/`. Where it is absent the
 /// row draws the procedural station card instead, which is a designed
 /// treatment rather than a gap — so the ledger looks finished whether the
@@ -113,6 +118,7 @@ class ShippedApp with _$ShippedApp {
     String? country,
     Engagement? engagement,
     String? screenshot,
+    @Default(<String>[]) List<String> shots,
     @Default(false) bool featured,
     @Default(<GalleryEntry>[]) List<GalleryEntry> media,
   }) = _ShippedApp;

@@ -25,10 +25,20 @@
         "en": "Gaming",
         "ar": "الألعاب"
       },
-      "note": {
-        "en": "FIFA and Valorant",
-        "ar": "فيفا وفالورانت"
-      }
+      "picks": [
+        {
+          "name": {
+            "en": "FIFA",
+            "ar": "فيفا"
+          }
+        },
+        {
+          "name": {
+            "en": "Valorant",
+            "ar": "فالورانت"
+          }
+        }
+      ]
     },
     {
       "id": "reading",
@@ -36,10 +46,28 @@
         "en": "Reading",
         "ar": "القراءة"
       },
-      "note": {
-        "en": "The Alchemist, Animal Farm, The Writer",
-        "ar": "الخيميائي، مزرعة الحيوان، الكاتب"
-      }
+      "picks": [
+        {
+          "name": {
+            "en": "The Alchemist",
+            "ar": "الخيميائي"
+          },
+          "by": {
+            "en": "Paulo Coelho",
+            "ar": "باولو كويلو"
+          }
+        },
+        {
+          "name": {
+            "en": "Animal Farm",
+            "ar": "مزرعة الحيوان"
+          },
+          "by": {
+            "en": "George Orwell",
+            "ar": "جورج أورويل"
+          }
+        }
+      ]
     },
     {
       "id": "television",
@@ -47,10 +75,14 @@
         "en": "Television",
         "ar": "المسلسلات"
       },
-      "note": {
-        "en": "Better Call Saul",
-        "ar": "بيتر كول سول"
-      }
+      "picks": [
+        {
+          "name": {
+            "en": "Better Call Saul",
+            "ar": "بيتر كول سول"
+          }
+        }
+      ]
     },
     {
       "id": "padel",

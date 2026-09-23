@@ -481,6 +481,9 @@ abstract final class Tokens {
   /// The diameter of that control.
   static const double backToTopSize = 48;
 
+  /// One courtyard panel: the climb, and whatever comes next beside it.
+  static const double courtyardPanelWidth = 340;
+
   /// One service card, and the mark on it.
   static const double serviceCardWidth = 220, serviceIconSize = 26;
 
@@ -493,6 +496,13 @@ abstract final class Tokens {
   /// One contact card's smallest width, so a row of them is a grid and not a
   /// ragged line of differently sized words.
   static const double contactCardWidth = 132;
+
+  /// One skill chip's smallest width.
+  ///
+  /// Every chip is given the same box so the block reads as a grid: "Dart" and
+  /// "Adobe Premiere Pro" are a third and three times this, and sizing each to
+  /// its own word is what made the panel look like rubble.
+  static const double skillChipWidth = 132;
 
   /// How the gold glow behind a hovered contact card is thrown.
   static const double contactGlowAlpha = 0.35, contactGlowBlur = 18;
