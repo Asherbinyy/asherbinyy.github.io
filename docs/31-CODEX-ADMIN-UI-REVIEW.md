@@ -1,6 +1,6 @@
-# Admin integration review — September 17
+# Admin integration review — September 23
 
-Branch: `phase/codex-admin-ui`. Backend baseline: reviewed `edfd04c`.
+Released in PR #47 at `f6e831b`. Backend baseline: reviewed `edfd04c`.
 The release also includes the custom-domain and leaderboard changes from main.
 
 ## Open it
@@ -94,7 +94,14 @@ still requires the coordinated release work.
 
 ## Deployment
 
-The merge publishes the Flutter adapter with an exact allowlist for the deployed
-admin origin. The matching Worker deployment serves the redesigned panel at
-`/admin`, retains the game bindings and uses `https://sherbini.uk` for content,
-preview and CORS. Analytics collection remains disabled.
+PR #47 is merged. GitHub Actions run `35806357378` published the matching
+Flutter build to `https://sherbini.uk`; its Wasm bundle contains the exact
+deployed Worker origin accepted by the preview adapter. Worker version
+`889ce68c-54ed-42df-a14f-3a2b287bad14` serves the redesigned panel at
+`https://nocturne-analytics.asherbinyy.workers.dev/admin`, retains the game
+bindings and uses `https://sherbini.uk` for content, preview and CORS.
+
+Live verification returned 200 for the site, admin and leaderboard, returned
+the new site origin in the leaderboard CORS header, rejected the retired
+`https://asherbinyy.github.io` origin with 403, and rejected an unauthenticated
+admin content request with 401. Analytics collection remains disabled.
