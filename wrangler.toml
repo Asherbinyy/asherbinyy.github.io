@@ -28,6 +28,13 @@ id = "f93e4a6cc18b499f89eb67b743b3e0db"
 binding = "CONTENT"
 id = "cd8e3febcf4c4ea5beacaeb65a514f5c"
 
+# Serialises content revisions, sessions, password changes and release reads.
+# The production CONTENT namespace was confirmed empty immediately before this
+# was enabled, so there was no published document or revision to migrate.
+[[durable_objects.bindings]]
+name = "CONTENT_STORE"
+class_name = "ContentStore"
+
 # The climb's leaderboard. Two objects rather than KV because ranking is a
 # read-modify-write and KV is eventually consistent with no compare-and-swap:
 # two climbers finishing together would lose a place or leave eleven entries.
@@ -50,3 +57,7 @@ class_name = "AscentVerifier"
 [[migrations]]
 tag = "v1-ascent-board"
 new_sqlite_classes = ["AscentBoard", "AscentVerifier"]
+
+[[migrations]]
+tag = "v2-content-store"
+new_sqlite_classes = ["ContentStore"]

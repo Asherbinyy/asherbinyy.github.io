@@ -1,4 +1,5 @@
 import 'package:nocturne/content/models/apps.dart';
+import 'package:nocturne/content/models/gallery.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/content/models/education.dart';
 import 'package:nocturne/content/models/interests.dart';
@@ -29,12 +30,43 @@ abstract final class ContentParser {
       value.contact.gitlab,
       value.contact.medium,
       value.contact.calendly,
+      value.contact.linktree,
+      value.contact.whatsapp,
+      value.contact.tiktok,
+      value.contact.instagram,
+      value.contact.facebook,
+      value.contact.fiverr,
       value.venture?.url,
     ]) {
       if (link != null) _link(link);
     }
     if (value.cvFile case final String path) _asset(path);
     if (value.portrait case final Portrait portrait) _asset(portrait.src);
+    _unique(value.links.map((link) => link.id));
+    for (final link in value.links) {
+      _localized(link.label);
+      _link(link.url);
+      if (link.icon case final icon?) _asset(icon);
+    }
+    if (value.nameAudio case final audio?) {
+      _asset(audio.src);
+      if (audio.seconds case final seconds?) {
+        if (!seconds.isFinite || seconds < 0) {
+          throw const FormatException('Invalid audio length');
+        }
+      }
+    }
+    if (value.appearance case final appearance?) {
+      if (appearance.theme != null &&
+          !{'kemet', 'deshret'}.contains(appearance.theme)) {
+        throw const FormatException('Unsupported theme');
+      }
+      for (final font in [appearance.headingFont, appearance.bodyFont]) {
+        if (font != null && !{'spaceGrotesk', 'ibmPlexSans'}.contains(font)) {
+          throw const FormatException('Unsupported font');
+        }
+      }
+    }
     return value;
   }
 
@@ -86,6 +118,7 @@ abstract final class ContentParser {
       if (app.role case final LocalizedText copy) _localized(copy);
       if (app.metric case final String copy) _text(copy);
       if (app.screenshot case final String path) _asset(path);
+      _gallery(app.media);
     }
     return value;
   }
@@ -120,6 +153,8 @@ abstract final class ContentParser {
     _unique(value.interests.map((interest) => interest.id));
     for (final interest in value.interests) {
       _localized(interest.label);
+      if (interest.logo case final logo?) _asset(logo);
+      _gallery(interest.gallery);
       if (interest.note case final LocalizedText note) _localized(note);
     }
     return value;
@@ -164,7 +199,28 @@ abstract final class ContentParser {
     }
   }
 
+  static void _gallery(List<GalleryEntry> entries) {
+    _unique(entries.map((entry) => entry.id));
+    for (final entry in entries) {
+      _localized(entry.alt);
+      if (entry.caption case final caption?) _localized(caption);
+      switch (entry.kind) {
+        case GalleryKind.image:
+          if (entry.image == null) {
+            throw const FormatException('Missing gallery image');
+          }
+          _asset(entry.image!);
+        case GalleryKind.video:
+          if (entry.url == null) {
+            throw const FormatException('Missing video destination');
+          }
+          _link(entry.url!);
+      }
+    }
+  }
+
   static void _asset(String value) {
+    if (RegExp(r'^/v1/media/[0-9a-f]{32}$').hasMatch(value)) return;
     if (!value.startsWith('assets/') ||
         value.contains('..') ||
         value.contains(r'\') ||

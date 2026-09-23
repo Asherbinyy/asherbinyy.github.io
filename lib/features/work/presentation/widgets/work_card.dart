@@ -6,13 +6,16 @@ import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/app_origin.dart';
+import 'package:nocturne/content/content_media.dart';
 import 'package:nocturne/content/models/apps.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/widgets/content_gallery.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/core/widgets/loading/station_card.dart';
+import 'package:nocturne/core/widgets/loading/three_stage_image.dart';
 import 'package:nocturne/features/work/presentation/widgets/store_links.dart';
 
 /// One shipped application, as a visual card.
@@ -72,6 +75,7 @@ class WorkCard extends StatelessWidget {
     final type = context.type;
     final metric = app.metric;
     final role = app.role?.resolve(context.channel);
+    final screenshot = app.screenshot;
 
     // No LayoutBuilder here on purpose: the grid wraps each row in an
     // IntrinsicHeight so every card in it shares a baseline, and a
@@ -89,16 +93,37 @@ class WorkCard extends StatelessWidget {
       children: [
         _OpenDetail(
           app: app,
-          child: StationCard(
-            seedId: app.id,
-            name: app.name,
-            height: artHeight,
-            domainLabel: domainLabel,
-            country: origin?.country,
-            latitude: origin?.latitude,
-            longitude: origin?.longitude,
-          ),
+          child: screenshot != null
+              ? ThreeStageImage(
+                  image: contentImage(context, screenshot),
+                  width: double.infinity,
+                  height: artHeight,
+                  semanticLabel: app.name,
+                  fallback: StationCard(
+                    seedId: app.id,
+                    name: app.name,
+                    height: artHeight,
+                    domainLabel: domainLabel,
+                    country: origin?.country,
+                    latitude: origin?.latitude,
+                    longitude: origin?.longitude,
+                  ),
+                )
+              : StationCard(
+                  seedId: app.id,
+                  name: app.name,
+                  height: artHeight,
+                  domainLabel: domainLabel,
+                  country: origin?.country,
+                  latitude: origin?.latitude,
+                  longitude: origin?.longitude,
+                ),
         ),
+        if (screenshot != null) ...[
+          SizedBox(height: tokens.space12),
+          Text(app.name, style: type.heading),
+        ],
+        ContentGallery(entries: app.media, label: app.name),
         if (role != null) ...[
           SizedBox(height: tokens.space12),
           Text(role, style: type.bodyS.copyWith(color: tokens.textSecondary)),

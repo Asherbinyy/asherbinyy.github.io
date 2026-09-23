@@ -1,0 +1,11 @@
+{
+  "interests": [
+    {"id": "walking", "label": {"en": "Walking", "ar": "المشي"}},
+    {
+      "id": "reading",
+      "label": {"en": "Reading", "ar": "القراءة"},
+      "note": {"en": "Whatever is nearest", "ar": "أي كتاب قريب"}
+    },
+    {"id": "chess", "label": {"en": "Chess"}}
+  ]
+}

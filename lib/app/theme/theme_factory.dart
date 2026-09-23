@@ -11,11 +11,15 @@ abstract final class ThemeFactory {
     required Brightness brightness,
     required double viewportWidth,
     bool isArabic = false,
+    String headingFamily = Tokens.displayFamily,
+    String bodyFamily = Tokens.bodyFamily,
   }) {
     final typography = NocturneTypography(
       tokens: tokens,
       viewportWidth: viewportWidth,
       isArabic: isArabic,
+      headingFamily: headingFamily,
+      bodyFamily: bodyFamily,
     );
     final scheme = ColorScheme(
       brightness: brightness,
@@ -80,7 +84,7 @@ abstract final class ThemeFactory {
       splashFactory: NoSplash.splashFactory,
       textTheme: typography.textTheme,
       primaryTextTheme: typography.textTheme,
-      fontFamily: isArabic ? Tokens.arabicFamily : Tokens.bodyFamily,
+      fontFamily: isArabic ? Tokens.arabicFamily : bodyFamily,
       extensions: [tokens, TypographyTokens(typography)],
       tooltipTheme: const TooltipThemeData(waitDuration: Tokens.tooltipDelay),
     );

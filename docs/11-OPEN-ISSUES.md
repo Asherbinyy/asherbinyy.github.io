@@ -8,11 +8,21 @@
 > September 16: the owner set up the custom domain `sherbini.uk`, verified,
 > with an approved certificate. The site's own canonical/og/sitemap URLs,
 > `web/CNAME` and `wrangler.toml`'s `SITE_ORIGIN` were updated to match.
-> **The deployed Worker's CORS still has not been redeployed with the new
-> `SITE_ORIGIN`** -- that needs Cloudflare access, which only Codex has; the
-> live beacon at `sherbini.uk` returns 403 until that redeploy happens.
+> The Worker was redeployed on September 16 with `SITE_ORIGIN=https://sherbini.uk`.
+> Live leaderboard and beacon preflight requests now pass the origin gate;
+> both GitHub Pages origins are refused. Visitor analytics remain disabled.
+> The game bindings and secret are active, and real replay alarms were verified
+> without adding a public score. A completed ranked climb on the owner's phone
+> remains to be checked. See [the deployment worklog](worklog/2026-09-16-05-codex-game-worker-release.md).
 
-**September 13:** owner rejected the broad visual implementation; it has been rolled back to the existing Flutter design. Current scope is content-only. See [handoff](27-CONTINUE-HERE.md). Existing visual/game issues remain open; no design acceptance is implied by prior local tests.
+> September 17 admin integration: real Flutter preview, independent panel
+> controls, all current page destinations, honest charts, current
+> Services/social fields, uploaded-media consumers and base theme/font defaults
+> are included in the release. The reviewed transactional store is enabled
+> after production KV was confirmed empty. See `31-CODEX-ADMIN-UI-REVIEW.md`.
+
+
+**Historical September 13 scope:** the owner rejected the broad visual implementation and it was rolled back. Later requests authorized Claude’s public-site work and Codex’s admin integration. See [handoff](27-CONTINUE-HERE.md). Existing visual/game issues remain open; no design acceptance is implied by prior local tests.
 
 
 Reviewed 2026-09-11 against source conversations, code and browser captures; updated 2026-09-12 after the owner retained Flutter and admin afc8969 was re-reviewed. [Current admin blockers](25-ADMIN-REREVIEW.md).
@@ -45,7 +55,7 @@ Evidence: [audit](18-PROJECT-AUDIT.md). Historical issue numbers remain searchab
 | UI-6 | Real store/platform logo registry and club crest incomplete | Correct recognizable assets load with useful labels and owner overrides | F1/F5/F6 |
 | UI-7 | Local expandable education and grouped skills restored; overall About acceptance and contact refinement remain open | Portrait/research/interests/links pass section-specific visual and interaction review | F6 |
 | UI-8 | Writing remains separate and repeats on About; Work/Writing integration absent | Agreed Work tabs and preserved URLs work without repeated full feeds | F5/F6 |
-| UI-9 | Off duty galleries and full social-link controls absent | Media affordances appear only where media exists, links work, editor supports them | F1/F6 |
+| UI-9 | Local Flutter galleries and ordered/social-link controls are implemented; bundled galleries contain no supplied entries | Owner supplies media and the integrated release passes review | F1/F6, local implementation complete |
 | UI-10 | Résumé interaction needs refinement; empty footer bar and old rail remain | Chrome and résumé composition reviewed with actual content | F2/F6 |
 | UI-11 | Current empty/loading primitives retain some retired motifs | Loading/fallback vocabulary matches the selected new design without delaying content | F2 |
 
@@ -53,13 +63,7 @@ Evidence: [audit](18-PROJECT-AUDIT.md). Historical issue numbers remain searchab
 
 | ID | Still true | Closes when | Milestone |
 |---|---|---|---|
-| ADM-1 | Claude's branch adds schema-driven editor, language tabs and preview frame; real public adapter remains absent | Professional workspace demonstrates editing and preview on real components | F1, under review |
-| ADM-2 | Claude afc8969 adds flexible field/media editors and fixes async target capture; Flutter consumers remain absent | Supported fields render correctly through actual Flutter preview and public widgets | F1, integration open |
-| ADM-3 | DO content-write transaction passes local runtime concurrency; document/head and complete release reads remain non-atomic (ARR-3); binding disabled in committed config | Atomic read/write regressions pass and an integrated release uses protected storage | F1, merge blocked |
-| ADM-4 | afc8969 fixes derived references, truncated media validation and exact-draft preview gate; actual Flutter preview remains absent | End-to-end real Flutter preview and coherent release validation pass | F1/F8, integration open |
-| ADM-5 | afc8969 still allows concurrent password admission bypass and stale renewal after logout (ARR-1/2) | Atomic admission and revocation/renewal regressions pass | F1, merge blocked |
-| ADM-6 | Extra themes, fonts and per-page patterns absent | Base themes retained and customization previews/publishes/resets correctly | F7 |
-| ADM-7 | Claude's branch adds an aggregate dashboard; production client collection remains disabled. Public integration not certified | Dashboard reports available data honestly and any new collection follows explicit consent design | F7, under review |
+| ADM-6 | Existing theme/font defaults now preview, publish and reset through profile content; extra presets/patterns remain undefined | Define approved patterns/presets and verify their public consumers | F7, partial local completion |
 | CON-1 | App screenshot/gallery assets absent; no screenshot fields in bundled apps | Appropriate real public/supplied media and gallery records are available | F1/F5 |
 | CON-2 | Birth year/photo request not implemented | Owner-supplied 1997/Mansoura stop and cleared photo supported without invented exact dates | F4 |
 | CON-3 | “The Writer” may be an erroneous third book rather than a request for authors | Original phrase clarified before editing the interests record | F6 |
@@ -90,6 +94,7 @@ Production analytics positive-event and console verification from the older work
 
 | Old issue | Evidence / corrected state |
 |---|---|
+| ADM-1/2/3/4/5/7 admin integration | Real Flutter preview, supported public consumers, reviewed auth/store, every current page destination and honest charts are included; production uses the transactional binding. Static HTML parity remains SEO-5 and broader appearance options remain ADM-6 |
 | 0b.10 writing coupled to analytics | `core/net/relay.dart` separates content relay configuration; live Writing rendered six article cards with covers and titles |
 | 1.2 / 2.4 missing twelfth app / eleven-app count | Bundled inventory now contains 14 apps; no extra project is required merely to match an obsolete target |
 | 1.6 missing Arabic fields / 2.3 English-only stats | Current content has Arabic fields; linguistic review remains CON-6 |

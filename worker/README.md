@@ -49,6 +49,176 @@ from rotating the same salt concurrently. Counter keys expire after 24 calendar
 months; daily visitor hashes expire after two days; digest idempotency keys
 expire after two days.
 
+## Running the admin panel locally
+
+Neither of these reaches Cloudflare, and neither needs a production credential.
+
+```bash
+node worker/dev/serve.js 8788
+npm exec --yes --package=node@22 -- node worker/dev/verify-a1.js
+```
+
+`serve.js` runs `handleRequest` behind a plain Node server with an in-memory
+key/value store, the sanitized fixtures in `worker/contracts/fixtures/` standing
+in for both the published content and the site's own bundle, and a throwaway
+admin token printed at startup. `verify-a1.js` drives that panel in headless
+Chrome over the DevTools protocol — no automation package is installed — and
+writes screenshots to `docs/audits/`. It needs Node 22 for the global
+`WebSocket`, which is why it runs through `npm exec`.
+
+Use the harness for anything that involves typing into the panel. Editing the
+owner's live content with his real token to find out whether a button works is
+not a test.
+
+## Signing in to the admin
+
+Two credentials, and they do different jobs.
+
+**`ADMIN_TOKEN`** is the deployment secret, set with `wrangler secret put`. It
+is the way back in when the password is forgotten, and the reason an
+unreachable password store cannot lock the owner out of his own site. Keep it
+somewhere he can actually find it.
+
+**A password**, set from the Account section of the panel and stored beside the
+content as a PBKDF2-SHA256 verifier with a per-record salt and iteration count.
+Never as itself.
+
+Either one is exchanged at `POST /v1/admin/session` for a **session token**,
+and that is all the browser ever holds. Sessions expire twelve hours after
+their last use and seven days after they were created, whichever comes first,
+and are stored under a hash of themselves so a dump of the namespace yields
+nothing replayable. `DELETE /v1/admin/session` ends one. Changing the password
+ends all of them and issues a replacement to whoever made the change.
+
+**No Cloudflare account credential ever reaches the browser**, and nothing in
+the panel can touch the hosting account.
+
+### The iteration count
+
+`passwordIterations` in `worker/src/index.js` is 50,000. That is a compromise
+with the Workers free plan's per-request processor budget, which a password
+hash has to fit inside — stretching only happens at sign-in and at a password
+change, never on an ordinary request, but a sign-in that exceeds the budget
+fails. Verify a sign-in after the first deployment that sets a password.
+
+Because of that ceiling, **length is what protects this password**; the panel
+requires at least twelve characters. Each stored hash records the count it was
+made with, so the number can be raised later without invalidating the existing
+password.
+
+### Being locked out
+
+Two credentials, two rules, and the split is the point.
+
+**An ordinary password** is throttled: ten wrong attempts an hour, counted
+atomically, and once the limit is reached the endpoint stops answering
+*without deriving a key at all* — including for a correct password. An earlier
+version derived for every guess and only changed the answer once the limit was
+reached, which meant guessing was never actually bounded.
+
+**The deployment secret** is a constant-time comparison of a 48-character
+random value. It is not throttled, because there is nothing to protect from
+repetition and it has to keep working when everything else is stopped. It is
+how the owner gets back in, and getting in clears the count.
+
+So guessing is bounded, and nobody can lock the owner out of his own site by
+typing rubbish at it.
+
+### Sessions expire on idleness, not on age
+
+Twelve hours after last use, seven days after they began, whichever comes
+first. Using a session pushes the idle clock back, but only once the remaining
+window has fallen below half — so an afternoon of editing costs one write
+rather than one per request, and the absolute limit is never extended.
+
+## Where content mutations and sessions are serialised
+
+Workers KV has no compare-and-set and no transaction, so publishing used to
+read the head, decide the base matched, and then write the document, the
+revision and the head as three separate operations. Two publishes arriving
+together both read revision 0, both decided they were current, and both
+answered "revision 1" — one of them silently gone, history entry and all.
+
+A `ContentStore` Durable Object now owns publish, rollback and withdrawal.
+There is one instance across the network, its execution is serialised, and the
+commit happens in a single `storage.transaction`.
+
+The same object owns three other things that turned out to have the same
+problem:
+
+- **Failed-attempt counting**, and the admission decision itself. A slot is
+  taken and the limit checked in one step, before any key is derived, so a
+  burst of guesses gets exactly the attempts that were left rather than all
+  deriving against the same stale count.
+- **The session lifecycle.** Renewal, logout and password-change invalidation
+  cannot interleave, so a renewal already in flight cannot put back a session
+  that was just revoked.
+- **The password verifier and its generation.** Rotating the password writes
+  the verifier, advances the generation and clears every session in one
+  transaction. A login carries the generation it verified against, and the
+  session is only issued if that is still current -- so a login held up long
+  enough for a rotation to finish underneath it is refused rather than handed
+  a session earned with a password that no longer opens anything. A session
+  also carries its generation and is rejected if it is superseded.
+
+Reads that have to agree go through it in one operation too: a document and the
+revision it is, and the whole set of overrides that goes into a release.
+
+### The fallback is not protected
+
+Without the binding the Worker keeps working, and keeps being honest about what
+that means:
+
+- Concurrent publishes can still lose a revision. `GET /v1/admin/content`
+  reports `atomic: false` and the panel says so in the editing bar.
+- **Session renewal is switched off entirely.** Read-then-write renewal cannot
+  be made safe against a logout landing between the two, and a stale renewal
+  that resurrects a revoked session is worse than a session that expires twelve
+  hours after it was created. Where it cannot be done safely it is not done.
+
+Do not describe a deployment running this way as having concurrency
+protection.
+
+### Production activation
+
+The binding is enabled in `wrangler.toml` as `CONTENT_STORE`, using the
+SQLite-backed `ContentStore` class. Before activation:
+
+1. **Confirm plan availability** for SQLite-backed Durable Objects
+   (`new_sqlite_classes`), and **what it costs** — every public content read
+   becomes a request to the object rather than a KV read.
+2. **Migrate the content.** The object starts empty. Copy the existing
+   `content:*`, `revision:*` and `revision-head:*` values from the CONTENT
+   namespace into `doc:*`, `rev:*` and `head:*` in the object *before* the
+   binding goes live, or the first read finds nothing and the site falls back
+   to its bundle. Do it against a preview environment first.
+3. **Know the way back.** Re-commenting the binding returns the Worker to KV
+   immediately, and the KV values are untouched by the object — so a rollback
+   loses whatever was published after the switch, and nothing before it. Copy
+   the object's contents back out if anything was published in between.
+
+Before the production activation, the account's existing game objects proved
+SQLite Durable Objects were available and the production CONTENT namespace
+was inspected through Cloudflare: it contained zero keys. There was therefore
+no published document, revision or password record to migrate. The content
+write path was also run in local workerd: eight concurrent same-base saves
+produced one 200 and seven 409s, with one retained revision.
+
+Nothing about the public response shape changes either way.
+
+## Content validation
+
+`worker/contracts/content-schema.js` describes the five editable documents and
+`worker/contracts/validate.js` checks a document against it. Both run inside the
+Worker: `PUT /v1/admin/content/<file>` refuses a document that does not match
+with **422** and the failing paths, and `POST /v1/admin/validate` answers the
+same question without writing anything. `POST /v1/admin/review` adds what would
+change and which claims moved.
+
+The schema is derived from `lib/content/models/*.dart`. When those change, the
+schema has to follow: `worker/test/content-schema.test.js` validates every
+document in `assets/content/` and fails when the two disagree.
+
 ## Runtime and release verification
 
 Wrangler 4.129.0 requires Node 22 or later. The machine's default Node 20 can

@@ -1,3 +1,5 @@
+import 'package:nocturne/core/widgets/content_gallery.dart';
+import 'package:nocturne/content/content_media.dart';
 import 'package:nocturne/core/painting/football_scene.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -55,7 +57,17 @@ class InterestsGrid extends ConsumerWidget {
           minTileWidth: _Tile.width,
           spacing: tokens.space16,
           children: [
-            for (final interest in interests) _Tile(interest: interest),
+            for (final interest in interests)
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _Tile(interest: interest),
+                  ContentGallery(
+                    entries: interest.gallery,
+                    label: interest.label.resolve(context.channel),
+                  ),
+                ],
+              ),
           ],
         ),
       ],
@@ -294,8 +306,8 @@ class _Plate extends StatelessWidget {
                   alignment: AlignmentDirectional.bottomEnd,
                   child: Padding(
                     padding: EdgeInsets.all(tokens.space8),
-                    child: Image.asset(
-                      path,
+                    child: Image(
+                      image: contentImage(context, path),
                       height: tokens.space32,
                       errorBuilder: (context, error, stack) =>
                           const SizedBox.shrink(),

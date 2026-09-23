@@ -2,6 +2,7 @@
 // Freezed 2 emits final formal parameters; retain its supported syntax here.
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:nocturne/content/models/gallery.dart';
 
 import 'package:nocturne/content/models/localized_text.dart';
 
@@ -119,6 +120,7 @@ class ShippedApp with _$ShippedApp {
     String? screenshot,
     @Default(<String>[]) List<String> shots,
     @Default(false) bool featured,
+    @Default(<GalleryEntry>[]) List<GalleryEntry> media,
   }) = _ShippedApp;
 
   /// Decodes the documented JSON shape.

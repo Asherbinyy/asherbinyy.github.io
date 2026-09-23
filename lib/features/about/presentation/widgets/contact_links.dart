@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/content/content_media.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/core/motion/curves.dart';
@@ -33,11 +34,15 @@ class ContactLinks extends StatelessWidget {
   const ContactLinks({
     required this.contact,
     this.includesBooking = true,
+    this.links = const [],
     super.key,
   });
 
   /// Supplied contact block.
   final Contact contact;
+
+  /// Owner-ordered destinations, replacing the fixed cards when supplied.
+  final List<ProfileLink> links;
 
   /// Whether the booking link is one of the cards.
   ///
@@ -49,6 +54,20 @@ class ContactLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    if (links.isNotEmpty) {
+      return EvenGrid(
+        minTileWidth: Tokens.contactCardWidth,
+        children: [
+          for (final link in links)
+            _ContactLink(
+              name: link.label.resolve(context.channel),
+              icon: Icons.link,
+              image: link.icon,
+              url: link.url,
+            ),
+        ],
+      );
+    }
 
     // The two ways of reaching him, kept apart. The first is a message; the
     // rest are places to go and read. Mixing them made a row of eight
@@ -169,11 +188,13 @@ class _ContactLink extends StatefulWidget {
     required this.name,
     required this.icon,
     required this.url,
+    this.image,
   });
 
   final String name;
   final IconData icon;
   final Uri url;
+  final String? image;
 
   @override
   State<_ContactLink> createState() => _ContactLinkState();
@@ -255,11 +276,23 @@ class _ContactLinkState extends State<_ContactLink> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        widget.icon,
-                        size: Tokens.contactIconSize,
-                        color: isHovered ? tokens.beaconGlow : tokens.beacon,
-                      ),
+                      if (widget.image case final image?)
+                        Image(
+                          image: contentImage(context, image),
+                          width: Tokens.contactIconSize,
+                          height: Tokens.contactIconSize,
+                          errorBuilder: (context, error, stack) => Icon(
+                            widget.icon,
+                            size: Tokens.contactIconSize,
+                            color: tokens.beacon,
+                          ),
+                        )
+                      else
+                        Icon(
+                          widget.icon,
+                          size: Tokens.contactIconSize,
+                          color: isHovered ? tokens.beaconGlow : tokens.beacon,
+                        ),
                       SizedBox(width: tokens.space12),
                       Flexible(
                         child: Text(
