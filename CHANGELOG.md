@@ -5,6 +5,17 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### Merged to `main`, 2026-09-23 (owner-approved after localhost review)
+
+- **Home:** on a phone the copy stops where the hieroglyph wall starts; the wall moves behind the page and lights on a phone; the career unrolls; the two stat sheets centre their content.
+- **Chrome:** the empty footer closes the page instead of sitting fixed under every screen; the phone nav brings the current page's link into view and fades whichever edge has more links.
+- **Work and Services:** a filter on the Treasury; the Services panel uses its width; card sector badges and the "Wanna chat?" heading are limestone, not gold; each card's sign sits above its name.
+- **Design consistency:** equal card widths without stretching, one leading edge for every row, Writing aligned with the other pages, one disclosure chevron everywhere, no empty portrait frame on About.
+- **Game:** the Ascent has levels and ankhs, and the board stays visible during a climb (desk only).
+- **Theme:** one versioned renderer allowlist shared by the app and the Worker contract (the Worker itself is deployed separately).
+- Verified before merge: format, analyze, 799 tests, 84.3% coverage, Wasm build.
+
+
 - Restored hosting, canonical URLs and Worker CORS to `asherbinyy.github.io`, preserving the newer lsherbini repository history, branches and tags.
 
 - September 14: latest visual pass rejected; full app/admin ownership transferred to Claude with a tested isolated password-rotation patch. Fixed missing Material icon-font bundling. No merge/deployment.
