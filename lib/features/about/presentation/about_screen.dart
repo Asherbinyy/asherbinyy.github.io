@@ -28,6 +28,7 @@ import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
 import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
 import 'package:nocturne/features/about/presentation/widgets/education_table.dart';
+import 'package:nocturne/features/about/presentation/widgets/life_flow.dart';
 import 'package:nocturne/features/about/presentation/widgets/portrait_frame.dart';
 import 'package:nocturne/features/writing/presentation/widgets/writing_list.dart';
 
@@ -112,20 +113,25 @@ class _About extends StatelessWidget {
               // returning to the next line -- and it left the skills grid
               // stretched thin to match.
               //
-              // The reserved third is deliberately empty. The owner is going to
-              // put something there that describes him, and a column that only
-              // appears once that arrives would move the whole page on the day
-              // it does; holding the space now means the layout is already the
-              // shape it will keep.
+              // The third that was held open for "something that describes
+              // him, probably a moving image": the owner asked for it to be his
+              // life as a workflow that runs, and it is.
               Expanded(flex: 2, child: identity),
               SizedBox(width: tokens.space32),
-              const Expanded(child: _ReservedColumn()),
+              const Expanded(child: LifeFlow()),
             ],
           )
         else ...[
           portrait,
           SizedBox(height: tokens.space24),
           identity,
+          SizedBox(height: tokens.space32),
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: Tokens.lifeFlowMaxWidth,
+            ),
+            child: const LifeFlow(),
+          ),
         ],
         SizedBox(height: tokens.space48),
         Text(l10n.aboutEducation, style: context.type.heading),
@@ -141,7 +147,17 @@ class _About extends StatelessWidget {
         SizedBox(height: tokens.space48),
         Text(l10n.aboutContact, style: context.type.heading),
         SizedBox(height: tokens.space16),
-        ContactLinks(contact: profile.contact, links: profile.links),
+        // On a panel the width of the education cards above it, the way Home
+        // and Services hold theirs. Loose, the email buttons, the booking row
+        // and the social grid each stopped at a different edge.
+        SizedBox(
+          width: double.infinity,
+          child: InstrumentPanel(
+            fill: tokens.surface,
+            padding: EdgeInsets.all(tokens.space24),
+            child: ContactLinks(contact: profile.contact, links: profile.links),
+          ),
+        ),
         SizedBox(height: tokens.space48),
         Text(l10n.aboutWriting, style: context.type.heading),
         SizedBox(height: tokens.space16),
@@ -363,53 +379,35 @@ class _CourtyardDoor extends StatelessWidget {
     final type = context.type;
     final l10n = context.l10n;
 
-    return InstrumentPanel(
-      fill: tokens.surface,
-      padding: EdgeInsets.all(tokens.space24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(l10n.courtyardHeading, style: type.heading),
-          SizedBox(height: tokens.space8),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
-            child: Text(
-              l10n.courtyardIntro,
-              style: type.body.copyWith(color: tokens.textSecondary),
+    // The width of the sections around it. It sat as a card the width of its
+    // own sentence between two full-width sections, which was one of the
+    // edges the owner asked every page to line up.
+    return SizedBox(
+      width: double.infinity,
+      child: InstrumentPanel(
+        fill: tokens.surface,
+        padding: EdgeInsets.all(tokens.space24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.courtyardHeading, style: type.heading),
+            SizedBox(height: tokens.space8),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
+              child: Text(
+                l10n.courtyardIntro,
+                style: type.body.copyWith(color: tokens.textSecondary),
+              ),
             ),
-          ),
-          SizedBox(height: tokens.space16),
-          BeaconButton(
-            label: l10n.aboutOffDuty,
-            onPressed: () => context.goNamed(AppRoute.courtyard.name),
-          ),
-        ],
+            SizedBox(height: tokens.space16),
+            BeaconButton(
+              label: l10n.aboutOffDuty,
+              onPressed: () => context.goNamed(AppRoute.courtyard.name),
+            ),
+          ],
+        ),
       ),
     );
   }
-}
-
-/// The column beside the biography, held open and left empty.
-///
-/// The owner asked for the text to stop short of the right edge because he
-/// intends to put something there later — something that describes him, he
-/// said, probably a moving image. Leaving the space unclaimed until then would
-/// mean the page reflows the day it arrives; claiming it now means the only
-/// change will be that something appears inside it.
-///
-/// It draws nothing but the site's corner marks, so a visitor reads it as part
-/// of the composition rather than as a gap where an image failed to load. It
-/// carries no semantics: there is nothing here to announce.
-class _ReservedColumn extends StatelessWidget {
-  const _ReservedColumn();
-
-  // Empty ground, not an empty frame. The column is still held so the page
-  // does not reflow on the day the owner fills it, but it no longer draws a
-  // panel around nothing: in a browser the corner ticks did not read as "a
-  // space being kept", they read as an image that had failed to load, which
-  // is the one thing this comment used to say they would prevent.
-  @override
-  Widget build(BuildContext context) =>
-      const ExcludeSemantics(child: SizedBox(height: PortraitFrame.height));
 }
