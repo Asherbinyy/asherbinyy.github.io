@@ -126,8 +126,12 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
                         horizontal: tokens.space16,
                         vertical: tokens.space12,
                       ),
+                      // Centred down the sheet. The height is set for a
+                      // two-line Arabic label, so an English label that fits
+                      // on one line left the bottom half of the sheet empty.
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           TelemetryNumeral(value: widget.stat.value),

@@ -46,6 +46,16 @@ class TelemetryTrace extends ConsumerStatefulWidget {
   /// Resolves the provisional burst geometry against rendered career entries.
   final TraceAnchorRegistry anchorRegistry;
 
+  /// How much of a compact page's trailing edge the wall occupies.
+  ///
+  /// On a phone the copy fills the width, so unlike the desk layout it does not
+  /// clear the wall by being measure-limited. Without this the trailing
+  /// quarter of every line -- the name, the flags, the CV button -- ran under
+  /// the carved signs. The page reserves exactly this much, from this one
+  /// definition, so the two cannot drift apart.
+  static double compactFootprint(double available) =>
+      available * Tokens.traceColumnFractionCompact;
+
   @override
   ConsumerState<TelemetryTrace> createState() => _TelemetryTraceState();
 }
@@ -268,7 +278,7 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace>
     double available, {
     required bool isCompact,
   }) {
-    if (isCompact) return available * Tokens.traceColumnFractionCompact;
+    if (isCompact) return TelemetryTrace.compactFootprint(available);
     // The prose has to clear the wall completely. Reserving one measure was
     // enough when the wall was thin rules; a column of carved blocks is opaque,
     // and a career entry that runs under it is unreadable. The gutter is

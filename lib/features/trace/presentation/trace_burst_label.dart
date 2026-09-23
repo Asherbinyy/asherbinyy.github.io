@@ -90,9 +90,14 @@ class TraceBurstLabel extends StatelessWidget {
                     ),
                     SizedBox(width: tokens.space8),
                     Flexible(
+                      // Two lines before anything is cut. The gap beside the
+                      // wall is about 230 pixels at 1440 wide, and on one line
+                      // "Manchester, United Kingdom" lost its country to an
+                      // ellipsis -- which is the half of a place name a reader
+                      // actually needs.
                       child: Text(
                         content.location,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: context.type.bodyS.copyWith(
                           color: tokens.textPrimary,
