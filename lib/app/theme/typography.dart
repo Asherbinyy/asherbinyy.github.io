@@ -49,6 +49,8 @@ class NocturneTypography {
     required this.tokens,
     required this.viewportWidth,
     this.isArabic = false,
+    this.headingFamily = Tokens.displayFamily,
+    this.bodyFamily = Tokens.bodyFamily,
   });
 
   /// Active theme palette.
@@ -60,6 +62,12 @@ class NocturneTypography {
   /// Whether Arabic ascenders and descenders need extra line height.
   final bool isArabic;
 
+  /// One of the existing bundled heading families.
+  final String headingFamily;
+
+  /// One of the existing bundled Latin body families.
+  final String bodyFamily;
+
   TextStyle _style(
     double size,
     double height, {
@@ -68,7 +76,7 @@ class NocturneTypography {
     double tracking = Tokens.zero,
     Color? color,
   }) => TextStyle(
-    fontFamily: family ?? (isArabic ? Tokens.arabicFamily : Tokens.bodyFamily),
+    fontFamily: family ?? (isArabic ? Tokens.arabicFamily : bodyFamily),
     fontFamilyFallback: const [Tokens.arabicFamily],
     fontSize: size,
     height: height + (isArabic ? Tokens.arabicHeightIncrease : Tokens.zero),
@@ -85,7 +93,7 @@ class NocturneTypography {
       Tokens.displayXlMax,
     ),
     Tokens.displayXlHeight,
-    family: Tokens.displayFamily,
+    family: isArabic ? Tokens.arabicFamily : headingFamily,
     weight: Tokens.weightBold,
     tracking: Tokens.displayXlTracking,
   );
@@ -97,7 +105,7 @@ class NocturneTypography {
       Tokens.displayLMax,
     ),
     Tokens.displayLHeight,
-    family: Tokens.displayFamily,
+    family: isArabic ? Tokens.arabicFamily : headingFamily,
     weight: Tokens.weightBold,
     tracking: Tokens.displayLTracking,
   );
@@ -109,7 +117,7 @@ class NocturneTypography {
       Tokens.displayMMax,
     ),
     Tokens.displayMHeight,
-    family: Tokens.displayFamily,
+    family: isArabic ? Tokens.arabicFamily : headingFamily,
     weight: Tokens.weightMedium,
     tracking: Tokens.displayMTracking,
   );
@@ -118,7 +126,7 @@ class NocturneTypography {
   TextStyle get heading => _style(
     Tokens.headingSize,
     Tokens.headingHeight,
-    family: Tokens.displayFamily,
+    family: isArabic ? Tokens.arabicFamily : headingFamily,
     weight: Tokens.weightMedium,
   );
 

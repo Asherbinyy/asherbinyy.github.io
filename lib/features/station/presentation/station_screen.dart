@@ -134,12 +134,12 @@ class _Reach extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final contact = switch (ref.watch(profileProvider).valueOrNull) {
-      ContentReady<Profile>(:final data) => data.contact,
-      ContentFallback<Profile>(:final profile) => profile.contact,
+    final profile = switch (ref.watch(profileProvider).valueOrNull) {
+      ContentReady<Profile>(:final data) => data,
+      ContentFallback<Profile>(:final profile) => profile,
       _ => null,
     };
-    if (contact == null) return const SizedBox.shrink();
+    if (profile == null) return const SizedBox.shrink();
 
     return Padding(
       padding: EdgeInsets.only(top: context.platform.sectionGap),
@@ -156,7 +156,7 @@ class _Reach extends ConsumerWidget {
             constraints: BoxConstraints(
               maxWidth: context.type.measureFor(context.type.body),
             ),
-            child: ContactLinks(contact: contact),
+            child: ContactLinks(contact: profile.contact, links: profile.links),
           ),
         ],
       ),

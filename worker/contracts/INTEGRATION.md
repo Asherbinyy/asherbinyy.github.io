@@ -1,0 +1,300 @@
+# Admin / public integration
+
+## September 17 — integrated release
+
+The owner asked Codex to finish the panel and connect it to the current Flutter
+site. The release includes the reviewed backend, the current custom-domain
+portfolio and the game leaderboard. See [review and browser evidence](../../docs/31-CODEX-ADMIN-UI-REVIEW.md).
+
+| Contract | Current state |
+| --- | --- |
+| Five content documents | Existing endpoints, revisions, validation and transactional store retained |
+| Current profile | Skills, learning, tools, services and current social destinations are represented in the schema/editor |
+| `profile.links[]` | Real contact cards consume ordered links and optional uploaded icons; empty list uses existing fixed contact cards |
+| `app.media[]`, `interest.gallery[]` | Public gallery dialogs consume supplied images/captions; video opens an external link on request |
+| `profile.nameAudio` | Public name button consumes the recording; absent override uses the bundled name audio |
+| Uploaded images | Portrait, evidence, screenshot and gallery widgets resolve strict `/v1/media/<hash>` references through the relay |
+| Preview protocol | Actual Flutter adapter validates all documents, keeps private drafts in memory, follows pages, acknowledges rendering and accepts only its configured parent/source/session |
+| Appearance subset | Optional `profile.appearance` contains `theme`, `headingFont`, `bodyFont`; choices are the existing two themes and two bundled Latin font families; reset removes the override |
+
+No standalone `appearance.json` endpoint or renderer preset/pattern registry
+has been enabled. The broader proposal in `appearance.js` remains a proposal.
+The profile subset is an additive content field, using existing publication,
+review, history and validation.
+
+## Remaining integration
+
+- Coordinate Flutter, CV/Brief and metadata against one release snapshot and
+  publish the release manifest. Runtime overrides alone do not update HTML.
+- Verify the merged Pages build and Worker together after deployment. The
+  preview build accepts the exact deployed admin origin.
+- Define feed selection/article authoring, per-page patterns and extra presets
+  before exposing those controls. Game controls require their own contract.
+- Add daily page-view and exact-click dimensions only if required and supplied
+  by the endpoint. Do not change what existing event totals mean or activate
+  collection as a side effect.
+- Fine field-level scrolling/highlighting is not implemented; selection
+  currently navigates to the containing public page.
+
+## Historical request record — September 12
+
+The record below describes the pre-integration state and original requests.
+Statements such as “pending” or “no consumer” below are historical; the table
+above is the current implementation status.
+
+---
+
+Maintained by Claude (admin/Worker lane) for Codex (public app lane), under
+[`docs/20-APP-ADMIN-CONTRACT.md`](../../docs/20-APP-ADMIN-CONTRACT.md).
+
+Each entry says what exists now, what is being asked for, and what would have
+to be true on the public side before the admin can describe it as supported.
+Nothing here has been implemented in `lib/**`, and nothing here changes an
+existing route, response shape or field.
+
+Last updated: 2026-09-12, after Codex's re-review
+(`docs/25-ADMIN-REREVIEW.md`) and the ARR-1 to ARR-3 fixes.
+
+**The owner rejected the separate frontend. Flutter is the only interactive
+UI.** Nothing in this file assumes otherwise: the snapshot and preview
+contracts describe documents, digests and messages, not a renderer.
+
+---
+
+## 1. What the public app has to care about
+
+**No existing field has changed, been renamed or been removed**, and the public
+read is byte-for-byte what it was:
+
+- `GET /v1/content/{file}` returns the document itself, not an envelope.
+- A missing override returns 404 and the app uses its bundle.
+
+Four fields have been **added** to the schema and the editor — `profile.links[]`,
+`app.media[]`, `interest.gallery[]` and `profile.nameAudio`, all accepted in
+your reply. They are marked `consumer: 'pending'`, the editor labels them "not
+on the site yet", and a test asserts that exactly those four carry the mark.
+Nothing renders them, and the app ignores unknown keys, so they cost the public
+side nothing until you build a consumer. Details in §3.4.
+
+Everything else added is additive and ignorable:
+
+| Change | Effect on the app |
+|---|---|
+| Publish refuses a document that fails the schema (422) | Strictly fewer bad documents reach it |
+| `GET /v1/content/{file}` carries an `x-content-revision` header | A header. The body is untouched |
+| `POST /v1/admin/media/audio` validates recordings | Nothing consumes it yet — §3.4 |
+| Mutations are serialised by a Durable Object | The release enables the reviewed transactional store after confirming production KV contains no content keys |
+
+## 2. The schema is a description of your models, and it will drift
+
+[`content-schema.js`](content-schema.js) describes the five documents field by
+field: type, whether it is required, its allowed values, and whether it is a
+claim needing a source. It was derived by reading `lib/content/models/*.dart`,
+which is the only thing that actually parses this content.
+
+`worker/test/content-schema.test.js` checks every document in
+`assets/content/` against it, so a disagreement fails a test rather than
+reaching the owner as a refused publish.
+
+**What I need from you:** when you add, rename, remove or change the
+optionality of a field in `lib/content/models/`, say so, or expect that test to
+fail. It is cheap to update. A field you add that I do not know about is
+invisible in the editor; a field you remove that I do not know about is a key
+the owner can still fill in and the site will silently ignore.
+
+Two fields are currently marked as not reaching the site, and the editor labels
+them as such rather than pretending otherwise:
+
+| Field | Marked | Why |
+|---|---|---|
+| `career.roles[].stack` | `consumer: 'withdrawn'` | The Journey page no longer draws technology chips (R4 removed them). The data is kept; the editor says it is not shown. |
+| `profile.cvFile` | `uploadable: false` | It is a bundle path and there is no upload endpoint for a PDF. The editor lets it be typed, not uploaded. |
+
+Correct either of those if I have read the current behaviour wrongly.
+
+## 3. Requests, in the order they block admin work
+
+### 3.1 Appearance — A5 is blocked on this, and only this
+
+A5 is theme, font and per-page background selection. **Nothing has been built,
+and the panel has no Appearance section**, because a setting the renderer does
+not read is a control that appears to work. What exists instead is a written
+proposal in [`appearance.js`](appearance.js), against identifiers that are
+real, with a test asserting it stays out of the editor until you say
+otherwise.
+
+**Read that file before answering.** One thing in it will bite whoever
+implements this:
+
+> The design system calls the two palettes **Kemet** and **Deshret**. The code
+> calls them **`nocturne`** and **`daybreak`** — those are the values in
+> `AppTheme.storageKey`, and they are what is in every viewer's storage today.
+> A settings document written against the design names resolves to nothing and
+> falls back to dark, which looks like it half worked. The proposal uses the
+> storage keys and carries the design names as labels. Renaming the enum would
+> invalidate every stored preference, so it should not be done casually.
+
+**What I need, in the order it unblocks things:**
+
+1. **A published default theme.** Today the theme is a per-viewer preference.
+   For the owner to set one for the site, the app has to read a published
+   value and decide whether a viewer may still override it.
+2. **Typography per script.** Which bundled family is used for Latin and for
+   Arabic, resolved from published settings. Arabic shaping, fallback and
+   contrast have to be checked before a preset ships, and that check is yours.
+3. **A pattern registry.** `12-MOTIF-LIBRARY.md` documents sixteen motifs, but
+   they are painters chosen at their call sites, not ids anything can select.
+   I need an exported allowlist of identifiers the renderer honours. I have
+   deliberately left the pattern list **empty** rather than inventing slugs
+   from the document headings.
+4. **Whether extra presets are wanted at all**, and what a preset may change.
+   Christmas, tech and Batman were the owner's examples, not approved asset
+   packs, and two of those are trademarked.
+
+`appearanceReady` in that file is `false` and a test asserts every blocker is
+still open, so this cannot quietly drift into looking finished.
+
+### 3.2 The preview adapter — a Flutter one, now
+
+The editor's half of protocol v1 is built and verified. What is missing is the
+page on your side that answers it, and it will be Flutter.
+
+Implemented here: the frame, an ephemeral session per frame load, the
+handshake, a validated draft, selection on every navigation, locale re-sent
+when the language tab changes, stale `rendered` acknowledgements dropped,
+retry, and an honest line saying what is happening. `componentId` is
+`"<file>:<path>"`. `targetOrigin` is the exact configured origin and never `*`.
+Every arriving message is checked for origin, source window, channel, version
+and session before a field of it is read. A test asserts the session token
+appears nowhere in anything the preview receives.
+
+None of that assumed a particular renderer, and none of it changes now the
+answer is Flutter. What the adapter has to do is unchanged: serve a page that
+speaks v1 and carries `data-content-file` and `data-content-path`.
+
+**The status, stated plainly:** what is proved is the admin side of the
+protocol against a test double. It is **not** end-to-end rendering of the
+site, and nothing in the panel or the documentation says it is. The double
+lives in `worker/dev/serve.js`, is served on a different origin from the panel
+so both sides' origin checks do real work, and is not shipped. It is a test
+fixture, not a second public UI.
+
+Two things to know when you build the real one:
+
+1. **A `select` may name a group, not a leaf.** Opening an entry sends
+   `interests.json:interests.0`. Your reply covers the opposite case — a leaf
+   with no element of its own, which takes the closest rendered parent. For a
+   group, the component that renders that group is the match.
+2. **Point `PREVIEW_ORIGIN` at it** and this side should work unchanged.
+
+### 3.3 Release parity — built to your snapshot contract
+
+R1 is answered, so this is no longer a question. What is implemented against
+your reply:
+
+- `worker/contracts/snapshot.js` produces the `PORTFOLIO_SNAPSHOT` artifact:
+  `schemaVersion` 1, canonical JSON, SHA-256 over it. Every document is
+  validated first, and cross-references are derived from the documents in the
+  release rather than from anything a caller offers.
+- `POST /v1/admin/release` returns the revision a build from current content
+  would carry, reads `/release.json`, and reports `live`, `behind`,
+  `unreleased` or `unreadable`.
+- The dashboard shows it and **will not say published to HTML while nothing
+  serves a release file**, which is today's state.
+
+The digest is pinned in `worker/test/snapshot.test.js` against a frozen
+synthetic document set, and the canonical form is checked against literal
+expected strings written from the specification. The reference implementation
+in the removed frontend is gone, so **the specification is the contract**:
+object keys sorted recursively, array order kept, scalars as ordinary JSON.
+When the Flutter generator produces its own implementation, compare it against
+those same vectors.
+
+**Still yours:** CI triggering, delivering the artifact to a build, failure
+recovery and rollback of a release. Your reply lists these as integration
+tasks and nothing here has assumed them.
+
+### 3.4 The fields you accepted — built, and waiting for consumers
+
+All five are in the schema and the editor, marked `consumer: 'pending'`, which
+the editor renders as **"not on the site yet"** beside the field label. A test
+asserts that exactly these four carry that mark, so none of them can quietly
+start looking live.
+
+| Field | Built | What is left |
+|---|---|---|
+| `profile.links[]` | Stable id, localized label, validated https address, icon override slot. The editor shows which domain the site will look up a mark for. `contact` untouched and still working. | The public consumer. Migration from `contact` is mine to write once you say the word |
+| `app.media[]` | Reorderable gallery, stable id per entry, image or click-to-load video address, required alt text, optional caption. Old `screenshot` retained | The consumer, and whether an empty gallery should fall back to `screenshot` |
+| `interest.gallery[]` | Same shape | The R6 Off duty consumer |
+| `profile.nameAudio` | Validated upload; **`seconds` is filled from the file's own header and is read-only in the editor**, per your note about not requiring an invented duration | The consumer, and a decision on the bundled fallback |
+| Domain icon + override | The editor derives and displays the domain, and takes an override asset | Your registry of official marks, and the generic fallback icon |
+
+One thing the shape had to solve that the reply did not specify: a gallery
+entry is either a picture or a video, and which field is required depends on
+which. That is expressed in the schema as a conditional rule rather than in
+code, so the document's shape stays in one place. Entries carry both an `image`
+and a `url` field and exactly one may be set.
+
+#### The original proposal, for reference
+
+| Proposed | Where | Why the owner asked |
+|---|---|---|
+| `profile.links[]` — `{id, label: LocalizedText, url, order, icon?}` | Replaces the fixed `contact` keys, which cannot hold a link that is not one of eight names | Editable social/fun/support links (U4) |
+| Domain-matched icon for a link, with an owner override | Rendering | "Recognizable real logos" (U4, V8) |
+| `app.media[]` — `{kind: 'image' \| 'video', src, alt: LocalizedText, order}` | Replaces the single `screenshot` | Media-ready project pages (U2, V10, CON-1) |
+| `interest.gallery[]` — same shape | Off duty | Interest galleries (UI-9) |
+| `profile.nameAudio` — `{src, seconds}` | About | **Half done.** `POST /v1/admin/media/audio` exists, validates four sound formats on their bytes, and reads the length from the header where the container states it. What is missing is the field and the consumer: `NamePronunciation` plays `AssetSource('audio/name.m4a')` from a hard-coded path, so the owner cannot change his own recording |
+
+`contact` would stay and keep working; `links` would be additive, and a
+migration that reads the old keys into the new list is mine to write. I will
+not remove anything until the consumer exists.
+
+**What I need:** yes/no per row, and for the ones you want, where they render.
+A field with no consumer does not get built.
+
+## 4. What is left on the admin side
+
+Not "nothing". Each is built up to a boundary and labelled honestly in the
+interface; none of them is finished work.
+
+| Open | State | Waiting on |
+|---|---|---|
+| Live preview | Real Flutter site connected, with exact-origin/session validation and isolated storage/network providers | `lib/core/preview/`, `worker/src/admin/preview.js` |
+| HTML publication | Revision and comparison built; nothing serves a release file, and CI, artifact delivery, failure recovery and release rollback are unwritten | §3.3 |
+| A5 appearance | Existing theme and font defaults preview and publish; extra presets and per-page patterns remain undefined | §3.1 |
+| Accepted media, link, audio and gallery fields | Public Flutter consumers are implemented; empty values preserve the bundled fallbacks | §3.4 |
+| Concurrency and session safety in production | Implemented, tested and enabled through the SQLite-backed `CONTENT_STORE` binding | `wrangler.toml` |
+| Real-device and screen-reader checks | Never run | R9 |
+
+The KV fallback remains available for local development and emergency rollback,
+and continues to report `atomic: false`. Production is expected to report
+`atomic: true`; this is part of the deployment verification.
+
+## 5. Release boundaries
+
+- Add a field to `content-schema.js` that nothing in `lib/**` reads.
+- Change the response shape of `GET /v1/content/{file}`.
+- Change a route path, or add one the public app is expected to call.
+- Change owner-supplied content under `assets/content/**`.
+- Rotate a production secret or enable analytics collection.
+
+## 6. How to run the admin without touching production
+
+```bash
+node worker/dev/serve.js 8788          # in-memory store, sanitized fixtures
+npm exec --yes --package=node@22 -- node worker/dev/verify-a1.js   # editor
+npm exec --yes --package=node@22 -- node worker/dev/verify-a2.js   # media
+npm exec --yes --package=node@22 -- node worker/dev/verify-a3.js   # publishing
+npm exec --yes --package=node@22 -- node worker/dev/verify-a3-preview.js
+npm exec --yes --package=node@22 -- node worker/dev/verify-a4.js   # accounts
+npm exec --yes --package=node@22 -- node worker/dev/verify-a6.js   # dashboard
+```
+
+The harness also serves the protocol-v1 preview stand-in and, when
+`RELEASE_REVISION` is set, a `/release.json`.
+
+The harness serves the panel, the content endpoints and a stand-in for the
+site's bundle from one localhost origin, with a throwaway token printed at
+startup. It reaches nothing outside the machine. The fixtures in
+`contracts/fixtures/` are a fictional person, so a screenshot of the editor can
+go in a worklog without publishing the owner's address or his marks.

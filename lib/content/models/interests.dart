@@ -2,6 +2,7 @@
 // Freezed 2 emits final formal parameters; retain its supported syntax here.
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:nocturne/content/models/gallery.dart';
 
 import 'package:nocturne/content/models/localized_text.dart';
 
@@ -63,6 +64,7 @@ class Interest with _$Interest {
     /// path that resolves to nothing falls back to the drawn scene, so this is
     /// safe to declare before the file exists.
     String? logo,
+    @Default(<GalleryEntry>[]) List<GalleryEntry> gallery,
 
     /// The specific things this interest is made of, and who made them.
     ///

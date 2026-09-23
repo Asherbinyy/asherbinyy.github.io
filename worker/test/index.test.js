@@ -649,10 +649,15 @@ test('a document with nothing published is not found', async () => {
 
 test('a published document comes back to the site', async () => {
   const env = publishing();
+  const document = {
+    name: {en: 'Ahmed'},
+    positioning: {en: 'Mobile developer'},
+    contact: {email: 'someone@example.com'},
+  };
   const put = await handleRequest(
     adminRequest('/v1/admin/content/profile.json', {
       method: 'PUT',
-      body: JSON.stringify({name: 'Ahmed'}),
+      body: JSON.stringify(document),
     }),
     env,
   );
@@ -660,7 +665,9 @@ test('a published document comes back to the site', async () => {
 
   const read = await handleRequest(siteRequest('/v1/content/profile.json'), env);
   assert.equal(read.status, 200);
-  assert.deepEqual(await read.json(), {name: 'Ahmed'});
+  // The document itself, not an envelope: the site parses this straight into
+  // its content models.
+  assert.deepEqual(await read.json(), document);
 });
 
 test('withdrawing a document returns the site to its bundle', async () => {
@@ -668,7 +675,7 @@ test('withdrawing a document returns the site to its bundle', async () => {
   await handleRequest(
     adminRequest('/v1/admin/content/career.json', {
       method: 'PUT',
-      body: JSON.stringify({stops: []}),
+      body: JSON.stringify({roles: []}),
     }),
     env,
   );
@@ -817,10 +824,21 @@ test('repeated wrong tokens stop being answered', async () => {
   );
   assert.equal(limited.status, 429);
 
-  // And the right token is refused too while the limit holds: the point is
-  // that the endpoint stops answering, not that it keeps a door open.
+  // The owner still gets in. This used to answer 429 as well, on the reasoning
+  // that the endpoint should stop answering entirely -- but the effect was
+  // that anyone who could reach the Worker could lock the owner out of his own
+  // site by typing rubbish at it ten times (A-F9). The correct credential is
+  // checked first now, so guessing is still bounded and he is not collateral.
   const correct = await handleRequest(adminRequest('/v1/admin/content'), env);
-  assert.equal(correct.status, 429);
+  assert.equal(correct.status, 200);
+
+  // And getting in clears the count, so the next wrong guess starts over
+  // rather than landing on a limit someone else filled up.
+  const after = await handleRequest(
+    adminRequest('/v1/admin/content', {token: 'c'.repeat(48)}),
+    env,
+  );
+  assert.equal(after.status, 401);
 });
 
 test('a correct token does not count against the limit', async () => {
@@ -841,7 +859,11 @@ test('the listing says what is currently published', async () => {
     env,
   );
   const listed = await handleRequest(adminRequest('/v1/admin/content'), env);
-  assert.deepEqual(await listed.json(), {published: ['apps.json']});
+  const listing = await listed.json();
+  assert.deepEqual(listing.published, ['apps.json']);
+  // The revision each published document is at, so the panel can name a base
+  // when it publishes rather than asking per document.
+  assert.equal(listing.heads['apps.json'], 1);
 });
 
 test('a site read from another origin is refused', async () => {
@@ -1088,9 +1110,17 @@ test('media can be listed and removed', async () => {
   const {id} = await uploaded.json();
 
   const listed = await handleRequest(adminRequest('/v1/admin/media'), env);
-  assert.deepEqual(await listed.json(), {
-    media: [{id, type: 'image/png', width: 200, height: 150, bytes: 32}],
-  });
+  const {media} = await listed.json();
+  assert.equal(media.length, 1);
+  // The fields the library draws a row from. Asserted by name rather than as
+  // a whole-shape snapshot, so adding one to the listing is not a test change.
+  assert.equal(media[0].id, id);
+  assert.equal(media[0].kind, 'image');
+  assert.equal(media[0].type, 'image/png');
+  assert.equal(media[0].width, 200);
+  assert.equal(media[0].height, 150);
+  assert.equal(media[0].bytes, 32);
+  assert.equal(media[0].url, `/v1/media/${id}`);
 
   const removed = await handleRequest(
     adminRequest(`/v1/admin/media/${id}`, {method: 'DELETE'}),
@@ -1115,11 +1145,15 @@ test('the panel is served at /admin', async () => {
   assert.match(page.headers.get('content-type'), /text\/html/);
 
   const html = await page.text();
-  // The five documents the owner is allowed to edit, and the token gate.
+  // The five documents the owner is allowed to edit, and a gate in front of
+  // them. Checked by structure rather than by the words on the label, which
+  // are wording and change.
   for (const file of ['profile.json', 'career.json', 'education.json']) {
     assert.ok(html.includes(file), file);
   }
-  assert.ok(html.includes('Admin token'));
+  assert.match(html, /<input id="token" type="password"/);
+  assert.match(html, /<label for="token">/);
+  assert.match(html, /id="unlock"/);
 });
 
 test('the panel is not indexable and cannot be framed', async () => {
@@ -1155,7 +1189,17 @@ test('a source given for a changed figure is recorded', async () => {
         'content-type': 'application/json',
         'x-change-note': encodeURIComponent('Transcript, 2026-09-09'),
       },
-      body: JSON.stringify({overallMark: 75}),
+      body: JSON.stringify({
+        entries: [
+          {
+            institution: {en: 'A university'},
+            award: {en: 'MSc'},
+            start: '2025-09',
+            end: '2026-09',
+            overallMark: 75,
+          },
+        ],
+      }),
     }),
     env,
   );

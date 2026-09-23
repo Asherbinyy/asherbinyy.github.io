@@ -16,13 +16,21 @@ part 'theme_controller.g.dart';
 PreferenceStore preferenceStore(PreferenceStoreRef ref) =>
     InMemoryPreferenceStore();
 
+/// The owner's default, used only before the visitor chooses a theme.
+final defaultThemeProvider = Provider<AppTheme>((ref) => AppTheme.nocturne);
+
 /// Holds the visitor's chosen artifact and persists it.
 @Riverpod(keepAlive: true)
 class ThemeController extends _$ThemeController {
   @override
-  AppTheme build() => AppTheme.fromStorage(
-    ref.watch(preferenceStoreProvider).read(PreferenceKey.theme.storageKey),
-  );
+  AppTheme build() {
+    final saved = ref
+        .watch(preferenceStoreProvider)
+        .read(PreferenceKey.theme.storageKey);
+    return saved == null
+        ? ref.watch(defaultThemeProvider)
+        : AppTheme.fromStorage(saved);
+  }
 
   /// Switches to the other artifact.
   void toggle() => select(state.opposite);

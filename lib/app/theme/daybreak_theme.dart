@@ -9,10 +9,14 @@ abstract final class DaybreakTheme {
   static ThemeData create({
     required double viewportWidth,
     bool isArabic = false,
+    String headingFamily = Tokens.displayFamily,
+    String bodyFamily = Tokens.bodyFamily,
   }) => ThemeFactory.create(
     tokens: daybreakTokens,
     brightness: Brightness.light,
     viewportWidth: viewportWidth,
     isArabic: isArabic,
+    headingFamily: headingFamily,
+    bodyFamily: bodyFamily,
   );
 }

@@ -1,3 +1,5 @@
+import 'package:nocturne/content/content_media.dart';
+
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -192,7 +194,7 @@ class _Preview extends StatelessWidget {
       child: screenshot == null
           ? card
           : ThreeStageImage(
-              image: AssetImage(screenshot),
+              image: contentImage(context, screenshot),
               width: width,
               height: size,
               // A path that points at nothing falls back to the card rather

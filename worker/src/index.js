@@ -1,4 +1,19 @@
+import {editableFiles} from '../contracts/content-schema.js';
+import {
+  changedClaims,
+  collectClaims,
+  differences,
+  validateDocument,
+} from '../contracts/validate.js';
 import {adminPage} from './admin.js';
+import {buildSnapshot, compareRelease} from '../contracts/snapshot.js';
+import {defaultRange, summarise, validDay} from './insights.js';
+import {ContentStore, contentBackend} from './store.js';
+
+// The Durable Object has to be reachable from the entry module for the
+// runtime to bind it. See `worker/src/store.js` for why it exists.
+export {ContentStore};
+
 import {handleGame} from './game/leaderboard.js';
 
 export {AscentBoard} from './game/board.js';
@@ -74,7 +89,7 @@ export async function handleRequest(request, env, now = new Date()) {
   // the HTML would mean inventing a session before there is anything to hold
   // one for.
   if (url.pathname === '/admin' && request.method === 'GET') {
-    return new Response(adminPage(env.SITE_ORIGIN), {
+    return new Response(adminPage(env), {
       status: 200,
       headers: new Headers({
         'content-type': 'text/html; charset=utf-8',
@@ -89,6 +104,10 @@ export async function handleRequest(request, env, now = new Date()) {
           "style-src 'unsafe-inline'",
           `img-src 'self' data: ${env.SITE_ORIGIN}`,
           `connect-src 'self' ${env.SITE_ORIGIN}`,
+          // The preview adapter, and nothing else, may be framed. Messages
+          // between the two are checked on their origin as well; this stops a
+          // different page ever being loaded there in the first place.
+          `frame-src ${env.PREVIEW_ORIGIN ?? env.SITE_ORIGIN}`,
           "form-action 'none'",
           "base-uri 'none'",
           "frame-ancestors 'none'",
@@ -142,9 +161,25 @@ export async function handleRequest(request, env, now = new Date()) {
     return readMedia(url.pathname.slice('/v1/media/'.length), env, origin);
   }
 
+  // Signing in is the one admin route that cannot require being signed in.
+  // It has the same failure counting as everything else behind the gate.
+  if (url.pathname === '/v1/admin/session' && request.method === 'POST') {
+    return openSession(request, env, now, headers);
+  }
+
   if (url.pathname.startsWith('/v1/admin/')) {
     const refusal = await refuseUnauthorisedAdmin(request, env, now, headers);
     if (refusal) return refusal;
+
+    if (url.pathname === '/v1/admin/session' && request.method === 'GET') {
+      return describeSession(request, env, headers);
+    }
+    if (url.pathname === '/v1/admin/session' && request.method === 'DELETE') {
+      return closeSession(request, env, headers);
+    }
+    if (url.pathname === '/v1/admin/password' && request.method === 'POST') {
+      return changePassword(request, env, now, headers);
+    }
 
     if (url.pathname === '/v1/admin/content' && request.method === 'GET') {
       return listPublished(env, headers);
@@ -152,22 +187,55 @@ export async function handleRequest(request, env, now = new Date()) {
     if (url.pathname === '/v1/admin/changes' && request.method === 'GET') {
       return listChanges(env, headers);
     }
+    if (url.pathname === '/v1/admin/insights' && request.method === 'GET') {
+      return readInsights(url, env, now, headers);
+    }
+    if (url.pathname === '/v1/admin/release' && request.method === 'POST') {
+      return describeRelease(request, env, headers);
+    }
+    if (url.pathname === '/v1/admin/validate' && request.method === 'POST') {
+      return checkDraft(request, env, headers, false);
+    }
+    if (url.pathname === '/v1/admin/review' && request.method === 'POST') {
+      return checkDraft(request, env, headers, true);
+    }
     if (url.pathname === '/v1/admin/media' && request.method === 'GET') {
       return listMedia(env, headers);
     }
     if (url.pathname === '/v1/admin/media' && request.method === 'POST') {
       return uploadMedia(request, env, headers);
     }
+    // Its own path, not a flag on the image endpoint. The image endpoint's
+    // whole argument is that it decodes enough of each container to know it is
+    // a raster image; widening it to "or some audio" would throw that away.
+    if (url.pathname === '/v1/admin/media/audio' && request.method === 'POST') {
+      return uploadAudio(request, env, headers);
+    }
     if (url.pathname.startsWith('/v1/admin/media/') && request.method === 'DELETE') {
       return removeMedia(url.pathname.slice('/v1/admin/media/'.length), env, headers);
     }
     if (url.pathname.startsWith('/v1/admin/content/')) {
-      const file = url.pathname.slice('/v1/admin/content/'.length);
-      if (request.method === 'PUT') {
+      const rest = url.pathname.slice('/v1/admin/content/'.length);
+      const [file, action] = rest.split('/');
+      if (action === 'revisions' && request.method === 'GET') {
+        return listRevisions(file, env, headers);
+      }
+      if (action === 'rollback' && request.method === 'POST') {
+        return rollback(file, request, env, now, headers);
+      }
+      // The document and the revision it is, in one answer. The panel used to
+      // read content through the public route, which is origin-gated and so
+      // refuses a same-origin request from the panel itself -- and it had to
+      // learn the revision separately, which is how a draft ended up paired
+      // with somebody else's revision number (AR-4).
+      if (action === undefined && request.method === 'GET') {
+        return readForEditing(file, env, headers);
+      }
+      if (action === undefined && request.method === 'PUT') {
         return publish(file, request, env, now, headers);
       }
-      if (request.method === 'DELETE') {
-        return withdraw(file, env, headers);
+      if (action === undefined && request.method === 'DELETE') {
+        return withdraw(file, request, env, now, headers);
       }
     }
     return response({error: 'Not found'}, 404, headers);
@@ -197,13 +265,7 @@ export async function handleRequest(request, env, now = new Date()) {
 /// A closed list, checked before the key is built. The path segment reaches
 /// KV, so without this an admin request could read or write any key in the
 /// namespace, including the analytics counters sharing it.
-const publishableFiles = new Set([
-  'profile.json',
-  'career.json',
-  'apps.json',
-  'education.json',
-  'interests.json',
-]);
+const publishableFiles = new Set(editableFiles);
 
 /// How long a published document may be, in bytes.
 ///
@@ -214,10 +276,6 @@ const maximumDocumentBytes = 256 * 1024;
 
 /// Failed admin attempts allowed per hour before the endpoint stops answering.
 const maximumFailedAttempts = 10;
-
-function contentKey(file) {
-  return `content:${file}`;
-}
 
 /// Whether the store that holds published content is configured at all.
 ///
@@ -232,10 +290,12 @@ async function readPublished(file, env, headers) {
   if (!publishableFiles.has(file)) {
     return response({error: 'Not found'}, 404, headers);
   }
-  const store = contentStore(env);
-  if (!store) return response({error: 'Not found'}, 404, headers);
+  const backend = contentBackend(env);
+  if (!backend) return response({error: 'Not found'}, 404, headers);
 
-  const document = await store.get(contentKey(file));
+  // Together, so the header cannot describe a different revision from the
+  // body it is attached to.
+  const {document, head} = await backend.readWithHead(file);
   if (document === null) return response({error: 'Not found'}, 404, headers);
 
   const published = new Headers(headers);
@@ -243,17 +303,36 @@ async function readPublished(file, env, headers) {
   // Short, because the point of publishing is that a correction is live
   // quickly, and the site falls back to its bundle if this is slow anyway.
   published.set('cache-control', 'public, max-age=60');
-  return new Response(document, {status: 200, headers: published});
+  // Additive, and in a header rather than the body: the body is the document
+  // the app parses, and it stays exactly what it was.
+  if (head?.revision) published.set('x-content-revision', String(head.revision));
+  return new Response(JSON.stringify(document), {status: 200, headers: published});
 }
 
 async function listPublished(env, headers) {
-  const store = contentStore(env);
-  if (!store) {
+  const backend = contentBackend(env);
+  if (!backend) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
-  const listing = await store.list({prefix: 'content:'});
+  // Asked of whichever store is in use. Reading the KV prefix directly meant
+  // that once mutations moved into the object, the panel was told nothing had
+  // ever been published.
+  const published = [];
+  for (const file of publishableFiles) {
+    if ((await backend.readDocument(file)) !== null) published.push(file);
+  }
+  published.sort();
+  // The revision each document is at, so the panel can declare a base when it
+  // publishes without asking five more times.
+  const heads = {};
+  for (const file of publishableFiles) {
+    const head = await backend.head(file);
+    if (head) heads[file] = head.revision;
+  }
+  // Said plainly, because the panel must not imply a protection that is not
+  // configured. See `worker/src/store.js`.
   return response(
-    {published: listing.keys.map((entry) => entry.name.slice('content:'.length))},
+    {published, heads, atomic: contentBackend(env)?.atomic === true},
     200,
     headers,
   );
@@ -277,7 +356,8 @@ async function publish(file, request, env, now, headers) {
     return response({error: 'Not a publishable document'}, 400, headers);
   }
   const store = contentStore(env);
-  if (!store) {
+  const backend = contentBackend(env);
+  if (!store || !backend) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
 
@@ -304,36 +384,370 @@ async function publish(file, request, env, now, headers) {
     return response({error: 'Document must be an object'}, 400, headers);
   }
 
-  // Stored re-serialised rather than as received, so the bytes in KV are
-  // exactly what was parsed and nothing rides along outside the JSON.
-  await store.put(contentKey(file), JSON.stringify(document));
+  // The real schema, not just "it is an object" (A-F6). Before this, a
+  // document the app could not parse was accepted here, reported to the owner
+  // as published, and then silently discarded by the site in favour of its
+  // bundle -- so the panel said the change was live and the change was not.
+  const verdict = validateDocument(file, document, {
+    references: await referenceSets(file, env),
+  });
+  if (verdict.errors.length > 0) {
+    return response(
+      {error: 'The document does not match the schema', errors: verdict.errors},
+      422,
+      headers,
+    );
+  }
 
-  // §7.5: a figure is a claim and a claim needs a source. The panel asks for
-  // one whenever a number changed and sends it here, and it is recorded beside
-  // the document rather than inside it, because a source belongs to the act of
-  // publishing and not to the content the site renders.
-  const note = decodeURIComponent(request.headers.get('x-change-note') ?? '');
+  // A figure is a claim and a claim needs a source. Enforced here rather than
+  // only asked for in the browser (A-F7): a note that the panel prompts for
+  // and the Worker does not require is a convention, not a rule.
+  //
+  // The comparison is against the published copy, or against nothing. Never
+  // against a baseline the caller supplied, which is the whole point of doing
+  // it here.
+  const live = await backend.readDocument(file);
+  const claims = live === null
+    ? collectClaims(file, document)
+    : changedClaims(file, live, document);
+  const note = decodeURIComponent(request.headers.get('x-change-note') ?? '').trim();
+  if (claims.length > 0 && note === '') {
+    return response(
+      {
+        error: 'A claim cannot be published without a source',
+        claims: claims.map((claim) => ({path: claim.path, label: claim.label})),
+      },
+      422,
+      headers,
+    );
+  }
+
+  // Two people, or one person in two tabs, editing the same page. The base
+  // revision is the one the draft was built from; whether it is still current
+  // is decided inside the store, where nothing can move between the check and
+  // the write.
+  const committed = await backend.commit({
+    file,
+    kind: 'publish',
+    document,
+    note,
+    claims: claims.map((claim) => claim.path),
+    base: baseRevisionFrom(request),
+    at: now.toISOString(),
+  });
+  if (committed.conflict) return conflictResponse(committed, headers);
+
+  // Kept as it was: the change log is the ledger the provenance practice
+  // already reads, and moving it would orphan what is in there.
   if (note) {
     await store.put(
       key(changeLogPrefix, [now.toISOString(), file]),
       JSON.stringify({file, note, at: now.toISOString()}),
     );
   }
-  return response({published: file}, 200, headers);
+  return response({published: file, revision: committed.revision}, 200, headers);
 }
 
-async function withdraw(file, env, headers) {
+/// The revision the caller believes it is writing on top of.
+///
+/// Absent means "no expectation", which is what a client that does not track
+/// revisions sends. Present and wrong is a conflict.
+function baseRevisionFrom(request) {
+  const declared = request.headers.get('x-base-revision');
+  if (declared === null) return null;
+  const base = Number(declared);
+  return Number.isFinite(base) ? base : null;
+}
+
+function conflictResponse(committed, headers) {
+  return response(
+    {
+      error: 'This page has changed since you started editing it',
+      expected: committed.expected,
+      current: committed.current,
+      document: committed.document,
+      changedAt: committed.changedAt,
+    },
+    409,
+    headers,
+  );
+}
+
+/// What the editor should open: the document, and the revision it is.
+///
+/// Both together, always. Fetching them separately is what let a draft based
+/// on revision 1 be told it was based on revision 2.
+async function readForEditing(file, env, headers) {
   if (!publishableFiles.has(file)) {
     return response({error: 'Not a publishable document'}, 400, headers);
   }
-  const store = contentStore(env);
-  if (!store) {
+  const backend = contentBackend(env);
+  if (!backend) {
     return response({error: 'Content store is not configured'}, 503, headers);
   }
-  await store.delete(contentKey(file));
+  // One operation (ARR-3). Two reads with a commit landing between them hand
+  // the editor revision one paired with revision two's document -- and the
+  // draft built on it then carries a base that was never true of it. An
+  // envelope around two separate reads is still two separate reads.
+  const {document, head} = await backend.readWithHead(file);
+  return response(
+    {
+      file,
+      document,
+      revision: head?.revision ?? 0,
+      published: document !== null,
+      withdrawn: head?.withdrawn === true,
+    },
+    200,
+    headers,
+  );
+}
+
+/// Every revision of a document, newest first.
+///
+/// The stored document is left out of the listing: five of these would be most
+/// of a response for something the panel only needs when rolling back.
+async function listRevisions(file, env, headers) {
+  if (!publishableFiles.has(file)) {
+    return response({error: 'Not a publishable document'}, 400, headers);
+  }
+  const backend = contentBackend(env);
+  if (!backend) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  const entries = await backend.revisions(file);
+  const head = await backend.head(file);
+  return response(
+    {
+      current: head?.revision ?? 0,
+      withdrawn: head?.withdrawn ?? false,
+      revisions: entries
+        .filter(Boolean)
+        .map((entry) => ({
+          revision: entry.revision,
+          at: entry.at,
+          note: entry.note,
+          claims: entry.claims ?? [],
+          withdrawal: entry.withdrawal === true,
+        }))
+        .reverse(),
+    },
+    200,
+    headers,
+  );
+}
+
+/// Puts a previous revision back, as a new revision.
+///
+/// Append-only. Rewinding the counter would make two different documents
+/// share a revision number, and a number that does not identify one document
+/// is worse than no number.
+async function rollback(file, request, env, now, headers) {
+  if (!publishableFiles.has(file)) {
+    return response({error: 'Not a publishable document'}, 400, headers);
+  }
+  const backend = contentBackend(env);
+  if (!backend) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  let asked;
+  try {
+    asked = JSON.parse(await request.text());
+  } catch {
+    return response({error: 'Request is not valid JSON'}, 400, headers);
+  }
+  const wanted = Number(asked?.revision);
+  if (!Number.isInteger(wanted) || wanted < 1) {
+    return response({error: 'Which revision?'}, 400, headers);
+  }
+  const history = await backend.revisions(file);
+  const stored = history.find((entry) => entry.revision === wanted);
+  if (!stored || stored.withdrawal === true) {
+    return response({error: 'No such revision to go back to'}, 404, headers);
+  }
+
+  // Checked again on the way back in. A revision that was valid when it was
+  // published can stop being valid when the schema tightens, and restoring
+  // one the app can no longer parse would be a new outage, not a recovery.
+  const verdict = validateDocument(file, stored.document, {
+    references: await referenceSets(file, env),
+  });
+  if (verdict.errors.length > 0) {
+    return response(
+      {
+        error: 'That revision no longer matches the schema',
+        errors: verdict.errors,
+      },
+      422,
+      headers,
+    );
+  }
+
+  // The same precondition a publish carries (AR-5). Putting an old revision
+  // back is a write like any other, and doing it on top of something the
+  // caller has not seen replaces content it did not know existed.
+  const committed = await backend.commit({
+    file,
+    kind: 'publish',
+    document: stored.document,
+    note: `Went back to revision ${wanted}`,
+    claims: stored.claims ?? [],
+    base: baseRevisionFrom(request),
+    at: now.toISOString(),
+  });
+  if (committed.conflict) return conflictResponse(committed, headers);
+
+  return response(
+    {published: file, revision: committed.revision, restoredFrom: wanted},
+    200,
+    headers,
+  );
+}
+
+/// Checks a draft, and for a review also says what would change.
+///
+/// The panel has no validator of its own. It asks this, so there is exactly
+/// one answer to "would this be accepted" and the panel cannot disagree with
+/// the endpoint that decides.
+async function checkDraft(request, env, headers, full) {
+  const declared = Number(request.headers.get('content-length') ?? 0);
+  if (declared > maximumDocumentBytes) {
+    return response({error: 'Payload too large'}, 413, headers);
+  }
+  let body;
+  try {
+    body = JSON.parse(await request.text());
+  } catch {
+    return response({error: 'Request is not valid JSON'}, 400, headers);
+  }
+  if (!plainObject(body) || !publishableFiles.has(body.file)) {
+    return response({error: 'Not a document this panel edits'}, 400, headers);
+  }
+
+  const verdict = validateDocument(body.file, body.document, {
+    references: await referenceSets(body.file, env, body.references),
+  });
+  if (!full) return response(verdict, 200, headers);
+
+  // What the site is showing right now, which is not always something this
+  // Worker can read. Where nothing has been published the site falls back to
+  // the copy in its own bundle, and only the panel has that -- so it may say
+  // what it is comparing against, and the answer says which it was.
+  //
+  // Advisory, and only for what the owner is shown. When the provenance rule
+  // is enforced here in A3 it has to compare against the published copy or
+  // against nothing, never against a baseline the caller supplied.
+  const published = await liveDocument(body.file, env);
+  const offered = plainObject(body.baseline) ? body.baseline : null;
+  const live = published ?? offered;
+
+  // What the publish endpoint will actually insist on, worked out the same
+  // way it works it out: against the published copy, or against nothing.
+  // Without this the panel would not ask for a source on a first publish and
+  // the Worker would refuse it, which is a worse experience than either rule
+  // on its own.
+  const sourceClaims = published === null
+    ? collectClaims(body.file, body.document)
+    : changedClaims(body.file, published, body.document);
+
+  return response(
+    {
+      ...verdict,
+      changes: live === null ? [] : differences(live, body.document),
+      claims: live === null ? [] : changedClaims(body.file, live, body.document),
+      sourceRequired: sourceClaims.length > 0,
+      sourceClaims: sourceClaims.map((claim) => ({
+        path: claim.path,
+        label: claim.label,
+        value: claim.value,
+      })),
+      // Nothing has been published, so every figure in the document is one
+      // the Worker has never been given a source for.
+      sourceReason: published === null ? 'first-publish' : 'changed',
+      comparedWith:
+        published !== null ? 'published' : offered !== null ? 'shipped' : 'nothing',
+    },
+    200,
+    headers,
+  );
+}
+
+/// The published document, or null when the site is using its own bundle.
+async function liveDocument(file, env) {
+  const backend = contentBackend(env);
+  if (!backend) return null;
+  return backend.readDocument(file);
+}
+
+/// The identifiers another document offers, so a reference can be checked.
+///
+/// Published content is the authority: it is what the site is actually
+/// serving. Where nothing is published the site falls back to the copy in its
+/// own bundle, which this Worker cannot read -- so the panel, which has both,
+/// may declare what it loaded. That declaration is advisory and only ever
+/// used to answer the panel's own question; a publish is checked against KV
+/// alone. The worst a wrong declaration can do is quiet a warning about the
+/// owner's own content, in a panel only he can open.
+async function referenceSets(file, env, declared = null) {
+  const wanted = referencedBy[file];
+  if (!wanted) return null;
+  const sets = {};
+  for (const name of wanted) {
+    const published = await liveDocument(name, env);
+    if (published !== null) {
+      sets[name] = collectIdentifiers(published) ?? [];
+      continue;
+    }
+    const offered = declared?.[name];
+    if (Array.isArray(offered) && offered.every((id) => typeof id === 'string')) {
+      sets[name] = offered;
+    }
+  }
+  return sets;
+}
+
+/// Which documents each document points at. The schema's `references` fields
+/// are the authority for a field; this says where to go looking.
+const referencedBy = {'career.json': ['apps.json']};
+
+/// Every `id` in the first list of objects a document holds.
+function collectIdentifiers(document) {
+  if (!plainObject(document)) return null;
+  for (const value of Object.values(document)) {
+    if (!Array.isArray(value)) continue;
+    const ids = value
+      .filter((entry) => plainObject(entry) && typeof entry.id === 'string')
+      .map((entry) => entry.id);
+    if (ids.length > 0) return ids;
+  }
+  return [];
+}
+
+async function withdraw(file, request, env, now, headers) {
+  if (!publishableFiles.has(file)) {
+    return response({error: 'Not a publishable document'}, 400, headers);
+  }
+  const backend = contentBackend(env);
+  if (!backend) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+
+  // Recorded, and with the same precondition as every other mutation (AR-5).
+  // Withdrawing is a change to what the site shows, and a history with a hole
+  // in it is not a history. The revisions themselves stay where they are, so
+  // this is still undoable.
+  const committed = await backend.commit({
+    file,
+    kind: 'withdraw',
+    note: 'Withdrawn; the site went back to the copy in its bundle',
+    base: baseRevisionFrom(request),
+    at: now.toISOString(),
+  });
+  if (committed.conflict) return conflictResponse(committed, headers);
+
   // Withdrawing is not deleting content: the bundled document is still there
   // and the site goes back to it.
-  return response({withdrawn: file}, 200, headers);
+  return response({withdrawn: file, revision: committed.revision}, 200, headers);
 }
 
 /// Refuses an admin request, or returns null to let it through.
@@ -343,21 +757,330 @@ async function withdraw(file, env, headers) {
 /// that will answer an unlimited number of guesses is a different claim from
 /// one that will not, and the second is cheap.
 async function refuseUnauthorisedAdmin(request, env, now, headers) {
-  const attemptKey = key(adminFailurePrefix, [
-    isoDate(now),
-    String(now.getUTCHours()),
-  ]);
-  const failures = Number((await env.ANALYTICS.get(attemptKey)) ?? 0);
-  if (failures >= maximumFailedAttempts) {
+  // A bearer credential is a constant-time comparison and one lookup, so the
+  // limit is applied after it rather than before: there is nothing expensive
+  // here to protect, and the owner arriving with a valid session must not be
+  // turned away because somebody else has been guessing (A-F9).
+  //
+  // Guessing is still bounded, and the counting is atomic so two guesses
+  // arriving together cannot both read the same number (AR-2).
+  const backend = contentBackend(env);
+  const who = await identify(request, env, now);
+  if (who) {
+    if (backend) await backend.attempts('bearer', 'clear', now.getTime());
+    request.admin = who;
+    return null;
+  }
+  if (!backend) {
+    return response({error: 'Unauthorised', reason: 'signed-out'}, 401, headers);
+  }
+  const {count} = await backend.attempts('bearer', 'record', now.getTime());
+  if (count > maximumFailedAttempts) {
     return response({error: 'Too many attempts'}, 429, headers);
   }
-  if (!authorised(request, env.ADMIN_TOKEN)) {
-    await env.ANALYTICS.put(attemptKey, String(failures + 1), {
-      expirationTtl: 3600,
-    });
-    return response({error: 'Unauthorised'}, 401, headers);
+  return response({error: 'Unauthorised', reason: 'signed-out'}, 401, headers);
+}
+
+/// Who is making this request, or null.
+///
+/// Two ways in. A session, which is what the panel gets after signing in and
+/// what it holds in the browser; and the deployment secret, which is the
+/// recovery path and works even if the password store is unreachable. The
+/// browser never receives a Cloudflare credential either way.
+/// The store, or nothing, without throwing when neither binding exists.
+function backendFor(env) {
+  return contentBackend(env);
+}
+
+async function identify(request, env, now) {
+  const offered = (request.headers.get('authorization') ?? '')
+    .replace(/^Bearer\s+/i, '');
+  if (offered === '') return null;
+
+  if (
+    typeof env.ADMIN_TOKEN === 'string' &&
+    env.ADMIN_TOKEN.length >= 32 &&
+    offered === env.ADMIN_TOKEN
+  ) {
+    return {kind: 'recovery'};
   }
-  return null;
+
+  const held = await backendFor(env)?.session({
+    action: 'use',
+    id: await fingerprint(offered),
+    now: now.getTime(),
+    idleMs: sessionIdleMs,
+    lifetimeMs: sessionLifetimeMs,
+  });
+  if (!held) return null;
+  return {kind: 'session', token: offered, session: held};
+}
+
+// --- sessions and the password ---------------------------------------------
+
+/// How long a session lasts without being used, and the longest it can live
+/// however often it is used.
+const sessionIdleMs = 12 * 60 * 60 * 1000;
+const sessionLifetimeMs = 7 * 24 * 60 * 60 * 1000;
+
+/// The shortest password the panel will set.
+///
+/// The stretching below is bounded by how much processor time a Worker may
+/// spend on one request, so length is what carries the strength here. See
+/// `worker/README.md`.
+const minimumPasswordLength = 12;
+
+/// Stretching applied to a password before it is stored.
+///
+/// Recorded with each hash rather than fixed in code, so it can be raised
+/// later without making every existing password unverifiable.
+const passwordIterations = 50000;
+
+/// A token's fingerprint, which is what gets stored.
+///
+/// The session token itself is never written down. A dump of the namespace
+/// yields hashes, not credentials that can be replayed.
+async function fingerprint(value) {
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(value),
+  );
+  return bytesToHex(new Uint8Array(digest));
+}
+
+async function derive(password, salt, iterations) {
+  const key_ = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits'],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {name: 'PBKDF2', hash: 'SHA-256', salt: hexToBytes(salt), iterations},
+    key_,
+    256,
+  );
+  return bytesToHex(new Uint8Array(bits));
+}
+
+function hexToBytes(hex) {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let at = 0; at < bytes.length; at += 1) {
+    bytes[at] = parseInt(hex.slice(at * 2, at * 2 + 2), 16);
+  }
+  return bytes;
+}
+
+/// Compares two hex strings without returning early on the first difference.
+function sameSecret(left, right) {
+  if (typeof left !== 'string' || typeof right !== 'string') return false;
+  if (left.length !== right.length) return false;
+  let difference = 0;
+  for (let at = 0; at < left.length; at += 1) {
+    difference |= left.charCodeAt(at) ^ right.charCodeAt(at);
+  }
+  return difference === 0;
+}
+
+/// Hands out a session, unless the password it was earned with has been
+/// rotated since it was checked.
+///
+/// [requireEpoch] is the generation the credential was actually verified
+/// against, or null where nothing was verified against a generation at all --
+/// the deployment secret, which rotation does not change. A null takes
+/// whatever the current generation is, inside the same serialised step, so it
+/// is either wiped by a rotation that has not run yet or stamped with the one
+/// that has.
+async function issueSession(env, now, headers, requireEpoch = null) {
+  const backend = contentBackend(env);
+  if (!backend) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  const raw = bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
+  const expires = new Date(now.getTime() + sessionIdleMs).toISOString();
+  const absoluteExpiry = new Date(now.getTime() + sessionLifetimeMs).toISOString();
+  const created = await backend.session({
+    action: 'create',
+    id: await fingerprint(raw),
+    record: {started: now.toISOString(), expires, absoluteExpiry},
+    requireEpoch,
+  });
+  if (created?.stale) {
+    return response(
+      {
+        // Reached from a sign-in and from a password change, so the wording
+        // has to make sense after either.
+        error: 'The password changed while this was in progress. Sign in again.',
+        reason: 'password-rotated',
+      },
+      401,
+      headers,
+    );
+  }
+  return response({token: raw, expires, absoluteExpiry}, 200, headers);
+}
+
+/// Signs in with the password, or with the deployment secret.
+async function openSession(request, env, now, headers) {
+  let body;
+  try {
+    body = JSON.parse(await request.text());
+  } catch {
+    return response({error: 'Request is not valid JSON'}, 400, headers);
+  }
+  const offered = typeof body?.password === 'string' ? body.password : '';
+  if (offered === '') {
+    return response({error: 'No password given'}, 400, headers);
+  }
+  const backend = contentBackend(env);
+  if (!backend) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+
+  // The deployment secret first, because it is a constant-time comparison of
+  // a 48-character random value: nothing to protect from repetition, and it
+  // has to keep working when everything else is throttled. It is how the owner
+  // gets back in if he forgets the password, and why a store that is slow or
+  // unreachable cannot lock him out of his own site.
+  if (
+    typeof env.ADMIN_TOKEN === 'string' &&
+    env.ADMIN_TOKEN.length >= 32 &&
+    sameSecret(offered, env.ADMIN_TOKEN)
+  ) {
+    await backend.attempts('sign-in', 'clear', now.getTime());
+    return issueSession(env, now, headers);
+  }
+
+  // A slot is taken and the limit checked in one indivisible step, before any
+  // key is derived (ARR-1). Reading the count, deciding, and recording the
+  // failure afterwards left a gap: thirty guesses arriving together all read
+  // the same number, all passed the check, and all thirty went on to derive.
+  //
+  // The reservation is kept whatever happens next -- a failure, a success, or
+  // a request that dies half way. Holding one costs an attempt from the hour's
+  // allowance, which is the conservative direction: the alternative is
+  // releasing it and handing a burst its bypass back.
+  const {admitted} = await backend.attempts(
+    'sign-in',
+    'reserve',
+    now.getTime(),
+    maximumFailedAttempts,
+  );
+  if (!admitted) {
+    return response({error: 'Too many attempts'}, 429, headers);
+  }
+
+  // The generation this password is about to be checked against. Deriving a
+  // key takes long enough for a rotation to finish underneath it, and a
+  // password that was correct when the read happened is not a password that
+  // opens anything now.
+  const {record, epoch} = await backend.password('get');
+  let accepted = false;
+  if (record) {
+    const derived = await derive(offered, record.salt, record.iterations);
+    accepted = sameSecret(derived, record.hash);
+  }
+
+  if (!accepted) {
+    return response({error: 'That was not right'}, 401, headers);
+  }
+  await backend.attempts('sign-in', 'clear', now.getTime());
+  // Issued only if that generation is still current, decided inside the store
+  // rather than out here where it could be overtaken again.
+  return issueSession(env, now, headers, epoch);
+}
+
+async function describeSession(request, env, headers) {
+  const held = await contentBackend(env)?.password('get');
+  const record = held?.record ?? null;
+  return response(
+    {
+      kind: request.admin?.kind ?? 'recovery',
+      expires: request.admin?.session?.expires ?? null,
+      passwordSet: record !== null,
+      // Said plainly, because a panel that looks signed in with the master
+      // credential and one signed in with a session are different situations.
+      recovery: request.admin?.kind === 'recovery',
+    },
+    200,
+    headers,
+  );
+}
+
+async function closeSession(request, env, headers) {
+  const backend = contentBackend(env);
+  if (backend && request.admin?.kind === 'session') {
+    await backend.session({
+      action: 'end',
+      id: await fingerprint(request.admin.token),
+    });
+  }
+  return response({signedOut: true}, 200, headers);
+}
+
+/// Sets or changes the password, and signs every other session out.
+async function changePassword(request, env, now, headers) {
+  const backend = contentBackend(env);
+  if (!backend) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  let body;
+  try {
+    body = JSON.parse(await request.text());
+  } catch {
+    return response({error: 'Request is not valid JSON'}, 400, headers);
+  }
+  const next = typeof body?.next === 'string' ? body.next : '';
+  const current = typeof body?.current === 'string' ? body.current : '';
+  if (next.length < minimumPasswordLength) {
+    return response(
+      {
+        error: `A password needs at least ${minimumPasswordLength} characters`,
+        minimum: minimumPasswordLength,
+      },
+      400,
+      headers,
+    );
+  }
+
+  // Re-authenticated at the moment of the change, even though the request is
+  // already authorised. A session left open on a borrowed machine should not
+  // be enough to take the site away from its owner.
+  const {record, epoch: verifiedEpoch} = await backend.password('get');
+  const recovery = typeof env.ADMIN_TOKEN === 'string' &&
+    env.ADMIN_TOKEN.length >= 32 && sameSecret(current, env.ADMIN_TOKEN);
+  let allowed = recovery;
+  if (!allowed && record) {
+    const derived = await derive(current, record.salt, record.iterations);
+    allowed = sameSecret(derived, record.hash);
+  }
+  if (!allowed) {
+    return response({error: 'The current password was not right'}, 403, headers);
+  }
+
+  const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+  const hash = await derive(next, salt, passwordIterations);
+  // The verifier, the generation and every existing session, in one
+  // transaction. A password change that leaves the old sessions alive has not
+  // changed anything for whoever the owner was changing it because of; one
+  // that half-applies is worse than either outcome.
+  // Only verification of the recovery credential itself bypasses the epoch.
+  // A recovery bearer with an old current password still verified old state.
+  const rotated = await backend.password('rotate', {
+    salt,
+    hash,
+    iterations: passwordIterations,
+    at: now.toISOString(),
+  }, recovery ? null : verifiedEpoch);
+  if (rotated.stale) {
+    return response({
+      error: 'The password changed while this was in progress. Sign in again.',
+      reason: 'password-rotated',
+    }, 401, headers);
+  }
+
+  return issueSession(env, now, headers, rotated.epoch);
 }
 
 /// Image types the upload endpoint will take.
@@ -430,7 +1153,11 @@ async function listMedia(env, headers) {
     {
       media: listing.keys.map((entry) => ({
         id: entry.name.slice(mediaPrefix.length),
+        // Inferred for anything stored before the library existed, rather
+        // than left undefined for the panel to guess at.
+        kind: (entry.metadata?.type ?? '').startsWith('audio/') ? 'audio' : 'image',
         ...(entry.metadata ?? {}),
+        url: `/v1/media/${entry.name.slice(mediaPrefix.length)}`,
       })),
     },
     200,
@@ -467,7 +1194,12 @@ async function uploadMedia(request, env, headers) {
   // The declared type is a claim by the client. This reads the actual bytes,
   // so a script renamed to .png with an image content-type is refused on what
   // it is rather than on what it says it is.
-  const measured = measureImage(bytes);
+  let measured = null;
+  try {
+    measured = measureImage(bytes);
+  } catch {
+    measured = null;
+  }
   if (!measured) {
     return response({error: 'Not a readable image'}, 400, headers);
   }
@@ -491,6 +1223,7 @@ async function uploadMedia(request, env, headers) {
 
   await store.put(mediaPrefix + id, bytes, {
     metadata: {
+      kind: 'image',
       type: measured.type,
       width: measured.width,
       height: measured.height,
@@ -507,6 +1240,188 @@ async function uploadMedia(request, env, headers) {
     200,
     headers,
   );
+}
+
+/// Sound formats the recording endpoint will take.
+///
+/// Closed, like the image list, and for the same reason: each of these has a
+/// header this Worker can read well enough to say what the bytes actually are.
+/// A container that can carry a video track or a script is not on it.
+const audioTypes = new Map([
+  ['audio/mpeg', 'mp3'],
+  ['audio/mp4', 'm4a'],
+  ['audio/wav', 'wav'],
+  ['audio/ogg', 'ogg'],
+]);
+
+/// The largest recording the endpoint will store.
+///
+/// The owner's name is 1.4 seconds and 12KB. This is three orders of magnitude
+/// above that, and still small enough that the endpoint is not somewhere to
+/// keep a podcast.
+const maximumAudioBytes = 2 * 1024 * 1024;
+
+async function uploadAudio(request, env, headers) {
+  const store = mediaStore(env);
+  if (!store) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+
+  const declaredType = (request.headers.get('content-type') ?? '')
+    .split(';')[0]
+    .trim()
+    .toLowerCase();
+  if (!audioTypes.has(declaredType)) {
+    return response({error: 'Unsupported sound format'}, 415, headers);
+  }
+
+  const declared = Number(request.headers.get('content-length') ?? 0);
+  if (declared > maximumAudioBytes) {
+    return response({error: 'Recording too large'}, 413, headers);
+  }
+  const bytes = new Uint8Array(await request.arrayBuffer());
+  if (bytes.byteLength > maximumAudioBytes) {
+    return response({error: 'Recording too large'}, 413, headers);
+  }
+  if (bytes.byteLength === 0) {
+    return response({error: 'Recording is empty'}, 400, headers);
+  }
+
+  // A malformed file is a 400, always. Parsing something a stranger uploaded
+  // is exactly where an unexpected shape turns into a thrown error, and a
+  // thrown error here would be a 500 for what is really "that file is broken".
+  let measured = null;
+  try {
+    measured = measureAudio(bytes);
+  } catch {
+    measured = null;
+  }
+  if (!measured) {
+    return response({error: 'Not a readable recording'}, 400, headers);
+  }
+  // The same rule the image endpoint applies: the header says what this is,
+  // not the caller. An .m4a renamed to .wav is refused on its bytes.
+  if (measured.type !== declaredType) {
+    return response({error: 'Recording does not match its type'}, 400, headers);
+  }
+
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  const id = bytesToHex(new Uint8Array(digest)).slice(0, 32);
+  await store.put(mediaPrefix + id, bytes, {
+    metadata: {
+      kind: 'audio',
+      type: measured.type,
+      bytes: bytes.byteLength,
+      // Absent where the container does not state it plainly. A length this
+      // Worker cannot read is reported as unknown rather than estimated.
+      ...(measured.seconds === null ? {} : {seconds: measured.seconds}),
+    },
+  });
+  return response(
+    {id, url: `/v1/media/${id}`, seconds: measured.seconds},
+    200,
+    headers,
+  );
+}
+
+/// Reads a recording's real format, and its length where the header says so.
+///
+/// Parses only as far as the fields it needs. Nothing here decodes sound.
+function measureAudio(bytes) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const ascii = (at, length) =>
+    String.fromCharCode(...bytes.slice(at, at + length));
+
+  // WAV: a RIFF container. The length is the data chunk over the byte rate,
+  // both of which are stated in the header.
+  if (bytes.byteLength > 44 && ascii(0, 4) === 'RIFF' && ascii(8, 4) === 'WAVE') {
+    let at = 12;
+    let byteRate = 0;
+    while (at + 8 <= bytes.byteLength) {
+      const chunk = ascii(at, 4);
+      const size = view.getUint32(at + 4, true);
+      // Inside the fmt chunk's own data, which starts eight bytes in: format,
+      // channels, sample rate, then the byte rate at offset eight.
+      if (chunk === 'fmt ' && at + 20 <= bytes.byteLength) {
+        byteRate = view.getUint32(at + 16, true);
+      }
+      if (chunk === 'data') {
+        return {
+          type: 'audio/wav',
+          seconds: byteRate > 0 ? Math.round((size / byteRate) * 100) / 100 : null,
+        };
+      }
+      at += 8 + size + (size % 2);
+    }
+    return {type: 'audio/wav', seconds: null};
+  }
+
+  // OggS: the length lives in the last page's granule position, which means
+  // reading the end of the file. Not worth it for a name recording.
+  if (bytes.byteLength > 4 && ascii(0, 4) === 'OggS') {
+    return {type: 'audio/ogg', seconds: null};
+  }
+
+  // MPEG-4: atoms, with the length in mvhd inside moov.
+  if (bytes.byteLength > 12 && ascii(4, 4) === 'ftyp') {
+    const brand = ascii(8, 4);
+    if (!['M4A ', 'mp42', 'isom', 'M4B ', 'mp41'].includes(brand)) return null;
+    // Unlike MP3 and Ogg, an MPEG-4 file always states its length in the movie
+    // header. Not being able to read one means the container is truncated or
+    // inconsistent, which is a broken file rather than a format that keeps its
+    // length to itself -- so it is refused rather than stored with an unknown
+    // duration (AR-8).
+    const seconds = mpeg4Seconds(view, bytes, ascii);
+    if (seconds === null) return null;
+    return {type: 'audio/mp4', seconds};
+  }
+
+  // MP3: either an ID3 tag or a bare frame sync. Its length needs every frame
+  // header counted, so it is reported as unknown.
+  if (bytes.byteLength > 4) {
+    const tagged = ascii(0, 3) === 'ID3';
+    const synced = bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0;
+    if (tagged || synced) return {type: 'audio/mpeg', seconds: null};
+  }
+
+  return null;
+}
+
+/// Walks MPEG-4 atoms to the movie header and reads its duration.
+function mpeg4Seconds(view, bytes, ascii) {
+  const findAtom = (name, from, until) => {
+    let at = from;
+    while (at + 8 <= until) {
+      const size = view.getUint32(at);
+      if (size < 8) return null;
+      if (ascii(at + 4, 4) === name) return {at: at + 8, end: at + size};
+      at += size;
+    }
+    return null;
+  };
+  const moov = findAtom('moov', 0, bytes.byteLength);
+  if (!moov) return null;
+  const mvhd = findAtom('mvhd', moov.at, Math.min(moov.end, bytes.byteLength));
+  if (!mvhd) return null;
+
+  const version = bytes[mvhd.at];
+  // Version 1 widened the timestamps to 64 bits, which moves both fields and
+  // makes the header twelve bytes longer. Checking one length for both (AR-8)
+  // let a 52-byte truncated file walk a DataView off the end of the buffer and
+  // throw, which reached the client as a 500 instead of "not a readable
+  // recording". Both the file and the atom's own stated end are checked.
+  const needed = version === 1 ? 32 : 20;
+  const limit = Math.min(mvhd.end, bytes.byteLength);
+  if (mvhd.at + needed > limit) return null;
+
+  const timescale = version === 1
+    ? view.getUint32(mvhd.at + 20)
+    : view.getUint32(mvhd.at + 12);
+  const duration = version === 1
+    ? Number(view.getBigUint64(mvhd.at + 24))
+    : view.getUint32(mvhd.at + 16);
+  if (!timescale) return null;
+  return Math.round((duration / timescale) * 100) / 100;
 }
 
 async function removeMedia(id, env, headers) {
@@ -925,6 +1840,138 @@ export async function visitorHash(salt, address, agent, siteId) {
     `${salt}\u0000${address}\u0000${agent}\u0000${siteId}`,
   );
   return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256', material)));
+}
+
+/// What a build made from the current content would be, and whether the site
+/// is serving it yet.
+///
+/// R1 was answered in `docs/23-ADMIN-INTEGRATION-REPLY.md`: Astro,
+/// build-and-release. So "published" now has two distinct meanings and the
+/// panel has to be able to tell them apart -- the content endpoint the app
+/// reads can be up to date while the HTML the search engines read is a build
+/// behind. This answers the second question honestly, including when the
+/// answer is "nothing is serving a release file yet".
+async function describeRelease(request, env, headers) {
+  let body;
+  try {
+    body = JSON.parse(await request.text());
+  } catch {
+    return response({error: 'Request is not valid JSON'}, 400, headers);
+  }
+  const offered = plainObject(body?.documents) ? body.documents : {};
+
+  // Every override at one instant (ARR-3). Read one at a time, a release could
+  // contain the first half of one edit and the second half of another, and a
+  // digest over that identifies a state of the site that never existed.
+  const backend = contentBackend(env);
+  if (!backend) {
+    return response({error: 'Content store is not configured'}, 503, headers);
+  }
+  const captured = await backend.capture([...publishableFiles]);
+
+  // The published copy wins wherever there is one. The panel supplies the
+  // bundled documents because only it can read them, but it does not get to
+  // describe a document this Worker is already serving.
+  const documents = {};
+  const revisions = {};
+  for (const file of publishableFiles) {
+    const published = captured.documents[file] ?? null;
+    const supplied = offered[file];
+    if (published !== null) {
+      documents[file] = published;
+      revisions[file] = captured.heads[file]?.revision ?? 0;
+    } else if (plainObject(supplied)) {
+      documents[file] = supplied;
+      revisions[file] = 0;
+    }
+  }
+
+  // No reference hints. A release is validated against the documents it is
+  // made of and nothing else (AR-7).
+  const {problems, snapshot} = await buildSnapshot(documents);
+  if (snapshot === null) {
+    return response(
+      {
+        problems,
+        revision: null,
+        release: null,
+        // A snapshot that cannot be built is not a release that is behind; it
+        // is content that would fail the build.
+        state: 'invalid',
+      },
+      200,
+      headers,
+    );
+  }
+
+  const live = await readReleaseFile(env);
+  return response(
+    {
+      problems: [],
+      revision: snapshot.revision,
+      snapshot,
+      // Which revision each override was at when the capture was taken. A
+      // reader can see exactly what went into the digest.
+      capturedAt: revisions,
+      release: compareRelease(snapshot.revision, live),
+    },
+    200,
+    headers,
+  );
+}
+
+/// Reads the release file the public build writes.
+///
+/// Absent is the ordinary answer today: the Astro slice is not the production
+/// host, so nothing is serving one. That is reported as unreleased rather than
+/// as an error, and never as published.
+async function readReleaseFile(env) {
+  const where = env.RELEASE_URL ?? `${env.SITE_ORIGIN}/release.json`;
+  if (where === '') return null;
+  try {
+    const response_ = await fetch(where, {signal: AbortSignal.timeout(2500)});
+    if (!response_.ok) return null;
+    return await response_.json();
+  } catch {
+    return null;
+  }
+}
+
+/// What the counters already hold, over a range of days.
+///
+/// Reads. It does not enable collection, it does not write a counter, and it
+/// does not fill a gap with an estimate. A range with nothing in it comes back
+/// with nothing in it.
+async function readInsights(url, env, now, headers) {
+  const asked = {
+    from: url.searchParams.get('from'),
+    to: url.searchParams.get('to'),
+  };
+  const fallback = defaultRange(now);
+  const from = validDay(asked.from) ? asked.from : fallback.from;
+  const to = validDay(asked.to) ? asked.to : fallback.to;
+  if (from > to) {
+    return response({error: 'That range ends before it starts'}, 400, headers);
+  }
+
+  const snapshot = await aggregateSnapshot(env);
+  return response(
+    {
+      ...summarise(snapshot.counters, snapshot.totals, {from, to}),
+      // Stated rather than inferred: this Worker cannot see how the public
+      // build was configured, and guessing would be worse than citing.
+      configuration: {
+        knownDisabled: true,
+        note:
+          'The published site is built without an analytics endpoint, so it ' +
+          'sends nothing. Until that changes these counters can only grow ' +
+          'from a consented session or a test.',
+        reference: 'docs/06-ANALYTICS-AND-PRIVACY.md',
+      },
+    },
+    200,
+    headers,
+  );
 }
 
 export async function aggregateSnapshot(env) {

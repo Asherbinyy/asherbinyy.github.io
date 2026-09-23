@@ -34,7 +34,11 @@ final relayEndpointProvider = Provider<Uri?>((ref) {
   if (value.isEmpty) return null;
   final parsed = Uri.tryParse(value);
   // https only, and a host: this is the one outbound origin the app talks to.
-  if (parsed == null || parsed.scheme != 'https' || parsed.host.isEmpty) {
+  if (parsed == null ||
+      parsed.host.isEmpty ||
+      (parsed.scheme != 'https' &&
+          !(parsed.scheme == 'http' &&
+              {'localhost', '127.0.0.1'}.contains(parsed.host)))) {
     return null;
   }
   return parsed;

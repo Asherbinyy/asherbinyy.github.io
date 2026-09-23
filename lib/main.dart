@@ -3,6 +3,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nocturne/app/app.dart';
+import 'package:nocturne/core/preview/preview_connection.dart';
+import 'package:nocturne/core/preview/preview_host.dart';
 import 'package:nocturne/app/bootstrap.dart';
 import 'package:nocturne/core/platform/browser_navigation.dart';
 import 'package:nocturne/core/platform/shared_preference_store.dart';
@@ -17,6 +19,16 @@ import 'package:nocturne/core/platform/shared_preference_store.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   configureBrowserNavigation();
+  final preview = createPreviewConnection();
+  if (preview != null) {
+    runApp(
+      ProviderScope(
+        overrides: previewOverrides(),
+        child: PreviewHost(transport: preview),
+      ),
+    );
+    return;
+  }
   final preferences = await SharedPreferenceStore.load();
   runApp(
     ProviderScope(

@@ -1,3 +1,5 @@
+import 'package:nocturne/content/content_media.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,7 +68,7 @@ class PortraitFrame extends ConsumerWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(tokens.controlRadius),
         child: ThreeStageImage(
-          image: AssetImage(portrait.src),
+          image: contentImage(context, portrait.src),
           width: width,
           height: height,
           fallback: const _EmptyFrame(),

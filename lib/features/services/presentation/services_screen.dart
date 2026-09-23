@@ -75,7 +75,11 @@ class ServicesScreen extends ConsumerWidget {
               _Offer(services: profile.services),
             SizedBox(height: tokens.space64),
             if (profile != null)
-              _Invitation(contact: profile.contact, locale: locale),
+              _Invitation(
+                contact: profile.contact,
+                links: profile.links,
+                locale: locale,
+              ),
           ],
         ),
       ),
@@ -196,9 +200,14 @@ class _ServiceCardState extends State<_ServiceCard> {
 
 /// "Wanna chat?" — the ask, and the two ways to make it.
 class _Invitation extends StatelessWidget {
-  const _Invitation({required this.contact, required this.locale});
+  const _Invitation({
+    required this.contact,
+    required this.links,
+    required this.locale,
+  });
 
   final Contact contact;
+  final List<ProfileLink> links;
   final AppLocale locale;
 
   @override
@@ -237,9 +246,14 @@ class _Invitation extends StatelessWidget {
                   style: type.heading.copyWith(color: tokens.textPrimary),
                 ),
                 SizedBox(height: tokens.space12),
-                Text(
-                  l10n.servicesChatBody,
-                  style: type.body.copyWith(color: tokens.textSecondary),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: type.measureFor(type.body),
+                  ),
+                  child: Text(
+                    l10n.servicesChatBody,
+                    style: type.body.copyWith(color: tokens.textSecondary),
+                  ),
                 ),
                 SizedBox(height: tokens.space24),
                 if (contact.calendly case final url?)
@@ -247,7 +261,11 @@ class _Invitation extends StatelessWidget {
               ],
             );
 
-            final ways = ContactLinks(contact: contact, includesBooking: false);
+            final ways = ContactLinks(
+              contact: contact,
+              links: links,
+              includesBooking: false,
+            );
 
             // Below this the two columns would each be too narrow for a
             // sentence, so they stack -- which is the original layout, kept

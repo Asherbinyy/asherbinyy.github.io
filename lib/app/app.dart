@@ -1,3 +1,6 @@
+import 'package:nocturne/content/asset_content.dart';
+import 'package:nocturne/content/content_result.dart';
+import 'package:nocturne/content/models/profile.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,7 +29,10 @@ const String shellTitle =
 /// The app shell. Theme, language and Recruiter Mode are driven by controllers.
 class NocturneApp extends ConsumerStatefulWidget {
   /// Explicit inputs allow testing both artifacts without touching storage.
-  const NocturneApp({this.themeMode, this.locale, super.key});
+  const NocturneApp({this.themeMode, this.locale, this.router, super.key});
+
+  /// Optional router owned by an embedding host.
+  final GoRouter? router;
 
   /// Optional host override; otherwise the persisted theme controller wins.
   final ThemeMode? themeMode;
@@ -39,11 +45,11 @@ class NocturneApp extends ConsumerStatefulWidget {
 }
 
 class _NocturneAppState extends ConsumerState<NocturneApp> {
-  final GoRouter _router = AppRouter.create();
+  late final GoRouter _router = widget.router ?? AppRouter.create();
 
   @override
   void dispose() {
-    _router.dispose();
+    if (widget.router == null) _router.dispose();
     super.dispose();
   }
 
@@ -52,6 +58,16 @@ class _NocturneAppState extends ConsumerState<NocturneApp> {
     final locale =
         widget.locale ??
         Locale(ref.watch(localeControllerProvider).languageCode);
+    final profile = ref.watch(profileProvider).valueOrNull;
+    final appearance = profile is ContentReady<Profile>
+        ? profile.data.appearance
+        : null;
+    final headingFamily = appearance?.headingFont == 'ibmPlexSans'
+        ? Tokens.bodyFamily
+        : Tokens.displayFamily;
+    final bodyFamily = appearance?.bodyFont == 'spaceGrotesk'
+        ? Tokens.displayFamily
+        : Tokens.bodyFamily;
     final themeMode =
         widget.themeMode ??
         switch (ref.watch(themeControllerProvider)) {
@@ -79,10 +95,14 @@ class _NocturneAppState extends ConsumerState<NocturneApp> {
         theme: DaybreakTheme.create(
           viewportWidth: constraints.maxWidth,
           isArabic: locale.languageCode == 'ar',
+          headingFamily: headingFamily,
+          bodyFamily: bodyFamily,
         ),
         darkTheme: NocturneTheme.create(
           viewportWidth: constraints.maxWidth,
           isArabic: locale.languageCode == 'ar',
+          headingFamily: headingFamily,
+          bodyFamily: bodyFamily,
         ),
         locale: locale,
         supportedLocales: AppLocalizations.supportedLocales,

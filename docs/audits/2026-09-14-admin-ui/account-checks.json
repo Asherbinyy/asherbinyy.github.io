@@ -1,0 +1,22 @@
+[
+  {
+    "name": "account failure is visible",
+    "passed": true
+  },
+  {
+    "name": "account failure does not invent password state or expose a change form",
+    "passed": true
+  },
+  {
+    "name": "account retry recovers the real details",
+    "passed": true
+  },
+  {
+    "name": "updated pages still fit phone",
+    "passed": true
+  },
+  {
+    "name": "focused account review has no browser errors",
+    "passed": true
+  }
+]

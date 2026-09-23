@@ -1,3 +1,6 @@
+import 'package:nocturne/content/content_result.dart';
+import 'package:nocturne/content/models/profile.dart';
+import 'package:nocturne/app/theme/app_theme.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +25,7 @@ import 'package:nocturne/core/platform/preference_store.dart';
 /// construction.
 List<Override> productionOverrides({required PreferenceStore preferences}) => [
   preferenceStoreProvider.overrideWithValue(preferences),
+  defaultThemeProvider.overrideWith(publishedDefaultTheme),
   // The one line whose absence emptied every page on the site.
   assetReaderProvider.overrideWithValue(rootBundle.loadString),
   // Content the owner published from the panel, preferred over the bundle and
@@ -32,3 +36,12 @@ List<Override> productionOverrides({required PreferenceStore preferences}) => [
     (ref) => ref.watch(publishedContentReaderProvider),
   ),
 ];
+
+/// Maps the published default onto the existing theme controller.
+AppTheme publishedDefaultTheme(Ref ref) {
+  final profile = ref.watch(profileProvider).valueOrNull;
+  return profile is ContentReady<Profile> &&
+          profile.data.appearance?.theme == 'deshret'
+      ? AppTheme.daybreak
+      : AppTheme.nocturne;
+}

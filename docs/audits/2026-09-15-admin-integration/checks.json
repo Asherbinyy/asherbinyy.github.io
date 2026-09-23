@@ -1,0 +1,190 @@
+[
+  {
+    "name": "overview shows disabled collection and no invented data",
+    "passed": true
+  },
+  {
+    "name": "real preview completes handshake and renders",
+    "passed": true
+  },
+  {
+    "name": "preview is the actual Flutter app",
+    "passed": true
+  },
+  {
+    "name": "current bundled content is loaded in the editor",
+    "passed": true
+  },
+  {
+    "name": "current greeting appears in actual Flutter semantics",
+    "passed": true
+  },
+  {
+    "name": "preview occupies half the desktop window",
+    "passed": true
+  },
+  {
+    "name": "decorative grain and inset navigation accents are gone",
+    "passed": true
+  },
+  {
+    "name": "preview makes no third-party requests",
+    "passed": true
+  },
+  {
+    "name": "preview writes no browser storage",
+    "passed": true
+  },
+  {
+    "name": "navigation minimizes from the keyboard",
+    "passed": true
+  },
+  {
+    "name": "navigation expands from the keyboard",
+    "passed": true
+  },
+  {
+    "name": "third-width preview stays at least one third of the screen",
+    "passed": true
+  },
+  {
+    "name": "right panel minimizes",
+    "passed": true
+  },
+  {
+    "name": "right panel restores without discarding its frame",
+    "passed": true
+  },
+  {
+    "name": "valid draft receives render acknowledgment",
+    "passed": true
+  },
+  {
+    "name": "draft changes the visible Flutter text",
+    "passed": true
+  },
+  {
+    "name": "invalid draft is blocked before preview",
+    "passed": true
+  },
+  {
+    "name": "invalid draft leaves the last valid website visible",
+    "passed": true
+  },
+  {
+    "name": "preview follows Work navigation",
+    "passed": true
+  },
+  {
+    "name": "Services opens the current public page",
+    "passed": true
+  },
+  {
+    "name": "service edits reach the real page",
+    "passed": true
+  },
+  {
+    "name": "draft survives switching pages",
+    "passed": true
+  },
+  {
+    "name": "Arabic switches editor fields and Flutter content",
+    "passed": true
+  },
+  {
+    "name": "review contains the actual unpublished change",
+    "passed": true
+  },
+  {
+    "name": "cancelling review preserves the draft and does not publish",
+    "passed": true
+  },
+  {
+    "name": "appearance controls expose supported live settings",
+    "passed": true
+  },
+  {
+    "name": "appearance change is acknowledged by Flutter",
+    "passed": true
+  },
+  {
+    "name": "reset returns appearance to site defaults without an empty saved object",
+    "passed": true
+  },
+  {
+    "name": "restored content clears navigation draft indicators",
+    "passed": true
+  },
+  {
+    "name": "editor fits 1280px",
+    "passed": true
+  },
+  {
+    "name": "editor fits 1024px",
+    "passed": true
+  },
+  {
+    "name": "editor fits 390px",
+    "passed": true
+  },
+  {
+    "name": "navigation expands at 390px",
+    "passed": true
+  },
+  {
+    "name": "preview is usable at 390px",
+    "passed": true
+  },
+  {
+    "name": "phone can return from preview to editor at 390px",
+    "passed": true
+  },
+  {
+    "name": "editor fits 320px",
+    "passed": true
+  },
+  {
+    "name": "navigation expands at 320px",
+    "passed": true
+  },
+  {
+    "name": "preview is usable at 320px",
+    "passed": true
+  },
+  {
+    "name": "phone can return from preview to editor at 320px",
+    "passed": true
+  },
+  {
+    "name": "current social destinations are editable",
+    "passed": true
+  },
+  {
+    "name": "bundled portrait source resolves to Flutter asset path",
+    "passed": true
+  },
+  {
+    "name": "media library accepts the existing portrait through its file input",
+    "passed": true
+  },
+  {
+    "name": "Flutter requests the uploaded portrait",
+    "passed": true
+  },
+  {
+    "name": "review publishes the selected document locally",
+    "passed": true
+  },
+  {
+    "name": "normal public app reads the local publication without admin credentials",
+    "passed": true
+  },
+  {
+    "name": "local test publication is withdrawn after verification",
+    "passed": true
+  },
+  {
+    "name": "no JavaScript exception during the workflow",
+    "passed": true
+  }
+]

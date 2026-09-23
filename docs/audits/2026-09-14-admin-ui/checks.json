@@ -1,0 +1,230 @@
+[
+  {
+    "name": "sign-in error is visible at the gate",
+    "passed": true
+  },
+  {
+    "name": "overview opens after sign-in",
+    "passed": true
+  },
+  {
+    "name": "all portfolio font faces load",
+    "passed": true
+  },
+  {
+    "name": "collection disabled is visible",
+    "passed": true
+  },
+  {
+    "name": "empty dashboard shows unavailable metrics",
+    "passed": true
+  },
+  {
+    "name": "empty dashboard draws no invented data",
+    "passed": true
+  },
+  {
+    "name": "Overview fits desktop",
+    "passed": true
+  },
+  {
+    "name": "Home fits desktop",
+    "passed": true
+  },
+  {
+    "name": "Journey fits desktop",
+    "passed": true
+  },
+  {
+    "name": "Work fits desktop",
+    "passed": true
+  },
+  {
+    "name": "Writing fits desktop",
+    "passed": true
+  },
+  {
+    "name": "About fits desktop",
+    "passed": true
+  },
+  {
+    "name": "Courtyard fits desktop",
+    "passed": true
+  },
+  {
+    "name": "CV & brief fits desktop",
+    "passed": true
+  },
+  {
+    "name": "Appearance fits desktop",
+    "passed": true
+  },
+  {
+    "name": "Media fits desktop",
+    "passed": true
+  },
+  {
+    "name": "Account fits desktop",
+    "passed": true
+  },
+  {
+    "name": "Overview menu opens on phone",
+    "passed": true
+  },
+  {
+    "name": "Overview fits phone",
+    "passed": true
+  },
+  {
+    "name": "Home menu opens on phone",
+    "passed": true
+  },
+  {
+    "name": "Home fits phone",
+    "passed": true
+  },
+  {
+    "name": "Journey menu opens on phone",
+    "passed": true
+  },
+  {
+    "name": "Journey fits phone",
+    "passed": true
+  },
+  {
+    "name": "Work menu opens on phone",
+    "passed": true
+  },
+  {
+    "name": "Work fits phone",
+    "passed": true
+  },
+  {
+    "name": "Writing menu opens on phone",
+    "passed": true
+  },
+  {
+    "name": "Writing fits phone",
+    "passed": true
+  },
+  {
+    "name": "About menu opens on phone",
+    "passed": true
+  },
+  {
+    "name": "About fits phone",
+    "passed": true
+  },
+  {
+    "name": "Courtyard menu opens on phone",
+    "passed": true
+  },
+  {
+    "name": "Courtyard fits phone",
+    "passed": true
+  },
+  {
+    "name": "CV & brief menu opens on phone",
+    "passed": true
+  },
+  {
+    "name": "CV & brief fits phone",
+    "passed": true
+  },
+  {
+    "name": "Appearance menu opens on phone",
+    "passed": true
+  },
+  {
+    "name": "Appearance fits phone",
+    "passed": true
+  },
+  {
+    "name": "Media menu opens on phone",
+    "passed": true
+  },
+  {
+    "name": "Media fits phone",
+    "passed": true
+  },
+  {
+    "name": "Account menu opens on phone",
+    "passed": true
+  },
+  {
+    "name": "Account fits phone",
+    "passed": true
+  },
+  {
+    "name": "Home opens a working profile editor",
+    "passed": true
+  },
+  {
+    "name": "draft survives switching public pages",
+    "passed": true
+  },
+  {
+    "name": "Arabic tab supports keyboard and RTL fields",
+    "passed": true
+  },
+  {
+    "name": "review uses the visible review dialog",
+    "passed": true
+  },
+  {
+    "name": "cancelling review preserves the draft",
+    "passed": true
+  },
+  {
+    "name": "cancelled review did not publish",
+    "passed": true
+  },
+  {
+    "name": "Home editor fits phone",
+    "passed": true
+  },
+  {
+    "name": "Journey editor fits phone",
+    "passed": true
+  },
+  {
+    "name": "Work editor fits phone",
+    "passed": true
+  },
+  {
+    "name": "About editor fits phone",
+    "passed": true
+  },
+  {
+    "name": "Courtyard editor fits phone",
+    "passed": true
+  },
+  {
+    "name": "Appearance explains that settings cannot change the site",
+    "passed": true
+  },
+  {
+    "name": "base theme samples stay distinct in light mode",
+    "passed": true
+  },
+  {
+    "name": "overview fits 320px",
+    "passed": true
+  },
+  {
+    "name": "invalid range produces a visible error",
+    "passed": true
+  },
+  {
+    "name": "no fake telemetry words in rendered interface",
+    "passed": true
+  },
+  {
+    "name": "no duplicate element IDs",
+    "passed": true
+  },
+  {
+    "name": "no browser errors",
+    "passed": true
+  }
+]
