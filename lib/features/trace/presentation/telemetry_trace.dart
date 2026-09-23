@@ -1,15 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 
-import 'dart:math' as math;
-
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nocturne/app/chrome/pointer_beacon.dart';
 import 'package:nocturne/app/theme/tokens.dart';
-import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
@@ -41,6 +38,12 @@ class TelemetryTrace extends ConsumerStatefulWidget {
   final List<TraceBurst> bursts;
 
   /// One label per burst, keyed by the burst id.
+  ///
+  /// Held, not drawn, since the wall became the page's background on a wide
+  /// screen (2026-09-23): there is no clear ground beside it for a card any
+  /// more, and every career card prints its own location. A phone never had
+  /// room for them. Kept so the column layout can come back without anyone
+  /// reconstructing where each stop was.
   final Map<String, TraceLabel> labels;
 
   /// Resolves the provisional burst geometry against rendered career entries.
@@ -255,13 +258,6 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace>
     return nearest;
   }
 
-  String? _lockedBurstId(double offset) {
-    final nearest = _nearestBurst(offset);
-    return nearest != null && nearest.distance <= Tokens.traceLockDistance
-        ? nearest.id
-        : null;
-  }
-
   void _publish(TraceState state) {
     final controller = ref.read(traceControllerProvider.notifier);
     if (controller.current == state) return;
@@ -272,27 +268,16 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace>
     });
   }
 
-  /// How wide the wall may be without touching the content column.
-  double _columnWidth(
-    BuildContext context,
-    double available, {
-    required bool isCompact,
-  }) {
-    if (isCompact) return TelemetryTrace.compactFootprint(available);
-    // The prose has to clear the wall completely. Reserving one measure was
-    // enough when the wall was thin rules; a column of carved blocks is opaque,
-    // and a career entry that runs under it is unreadable. The gutter is
-    // counted twice -- once either side of the text -- so there is real space
-    // between the last word and the first block.
-    final reserved =
-        context.platform.gutter * 2 +
-        context.type.measureFor(context.type.body) +
-        Tokens.space48;
-    final remaining = available - reserved;
-    final floor = available * Tokens.traceColumnFractionMinimum;
-    final ceiling = available * Tokens.traceColumnFraction;
-    return math.min(ceiling, math.max(floor, remaining));
-  }
+  /// How wide the wall is.
+  ///
+  /// On a phone, a strip down the trailing edge that the page reserves. On
+  /// anything wider, all of it: the owner asked for the wall to stop filling
+  /// the right-hand side of a desk screen and to become the pattern behind the
+  /// whole page instead, less visible, with the right of the hero given to a
+  /// picture. The copy sits on cards, so it no longer needs a column of its
+  /// own to stay legible.
+  double _columnWidth(double available, {required bool isCompact}) =>
+      isCompact ? TelemetryTrace.compactFootprint(available) : available;
 
   @override
   Widget build(BuildContext context) {
@@ -303,36 +288,13 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace>
     return LayoutBuilder(
       builder: (context, constraints) {
         final columnWidth = _columnWidth(
-          context,
           constraints.maxWidth,
           isCompact: isCompact,
         );
-        // The clear ground the moving card is centred on: what is left of the
-        // frame once the copy's own column and the wall have taken theirs.
-        // Zero on a phone, where there is no such ground and no card.
-        final gap = isCompact
-            ? 0.0
-            : math.max<double>(
-                0,
-                constraints.maxWidth -
-                    columnWidth -
-                    context.platform.gutter -
-                    context.type.measureFor(context.type.body),
-              );
 
         return Align(
-          // The wall runs down the trailing part of the page, and must never
-          // reach the content column. A fixed fraction cannot promise that:
-          // at 1024px the trailing 66 per cent began at x=348 while the hero
-          // text ran to x=636, so register rules and signs were drawn straight
-          // through the copy. The owner reported it as overlapping content and
-          // he was right.
-          //
-          // So it is computed instead. The wall takes whatever is left after
-          // the gutter, the body measure and a clear gap, and never less than
-          // a minimum -- below which it would be a sliver rather than a wall,
-          // and on a phone it keeps its own narrow strip because a phone's
-          // text column has no measure to clear.
+          // A strip down the trailing edge on a phone; the whole page behind
+          // everything else on a wider screen. See [_columnWidth].
           alignment: AlignmentDirectional.centerEnd,
           child: SizedBox(
             key: _traceKey,
@@ -350,68 +312,38 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace>
                       : position.maxScrollExtent + position.viewportDimension;
                   _scheduleMeasurement();
                   final bursts = _anchoredBursts();
-                  final lockedBurstId = _lockedBurstId(frame.offset);
 
-                  return Stack(
-                    fit: StackFit.expand,
-                    // The moving card is pushed out of this box on purpose:
-                    // it belongs on the clear ground beside the wall, not on
-                    // the stone. A Stack clips to itself by default, which
-                    // threw the card away and left the middle of the page
-                    // empty. A geometry test cannot see this -- a clipped
-                    // child still reports its rect -- so it took a browser.
-                    clipBehavior: Clip.none,
-                    children: [
-                      RepaintBoundary(
-                        child: AnimatedBuilder(
-                          // Both halves of the light: how far it has come
-                          // up, and where the hand is holding it.
-                          animation: Listenable.merge([_torchFade, _torchAt]),
-                          builder: (context, _) => CustomPaint(
-                            painter: WallPainter(
-                              bursts: bursts,
-                              phase: frame.phase,
-                              coherence: isSettled ? 1 : frame.coherence,
-                              scrollOffset: frame.offset,
-                              viewportHeight: constraints.maxHeight,
-                              wallHeight: traceHeight,
-                              restColour: tokens.instrumentDim,
-                              lockedColour: tokens.instrument,
-                              peakColour: tokens.beacon,
-                              strokeWidth: tokens.hairlineWidth,
-                              stoneColour: tokens.hairline,
-                              carveShadow: tokens.void_,
-                              carveLight: tokens.ornamentField,
-                              torch: _torchAt.value,
-                              torchStrength: _torchFade.value,
-                            ),
-                          ),
+                  final wall = RepaintBoundary(
+                    child: AnimatedBuilder(
+                      // Both halves of the light: how far it has come
+                      // up, and where the hand is holding it.
+                      animation: Listenable.merge([_torchFade, _torchAt]),
+                      builder: (context, _) => CustomPaint(
+                        painter: WallPainter(
+                          bursts: bursts,
+                          phase: frame.phase,
+                          coherence: isSettled ? 1 : frame.coherence,
+                          scrollOffset: frame.offset,
+                          viewportHeight: constraints.maxHeight,
+                          wallHeight: traceHeight,
+                          restColour: tokens.instrumentDim,
+                          lockedColour: tokens.instrument,
+                          peakColour: tokens.beacon,
+                          strokeWidth: tokens.hairlineWidth,
+                          stoneColour: tokens.hairline,
+                          carveShadow: tokens.void_,
+                          carveLight: tokens.ornamentField,
+                          torch: _torchAt.value,
+                          torchStrength: _torchFade.value,
+                          // Faint behind the page on a wide screen, full
+                          // under the torch; full everywhere on a phone,
+                          // where the wall keeps a strip of its own.
+                          restAlpha: isCompact ? 1 : Tokens.wallPatternOpacity,
                         ),
                       ),
-                      // No labels on a phone. They are a readout drawn inside
-                      // the trace column, which only has room for them beside
-                      // a measure-limited text column; on a narrow strip they
-                      // wrap over the copy, which is what the owner reported
-                      // as the trace and its titles overlapping the text.
-                      //
-                      // Nothing is lost by dropping them: each label repeats
-                      // the company, dates and country the career entry it is
-                      // anchored to already prints, in full, close by.
-                      if (!isCompact)
-                        for (final burst in bursts)
-                          TraceBurstLabel(
-                            label: widget.labels[burst.id],
-                            top:
-                                burst.anchor * traceHeight -
-                                frame.offset -
-                                Tokens.space48,
-                            // Under reduced motion every label stays visible,
-                            // because there is no lock state to reveal them.
-                            isVisible: isSettled || lockedBurstId == burst.id,
-                            gap: gap,
-                          ),
-                    ],
+                    ),
                   );
+                  return wall;
                 },
               ),
             ),

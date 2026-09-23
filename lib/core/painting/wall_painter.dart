@@ -39,7 +39,17 @@ class WallPainter extends CustomPainter {
     required this.carveLight,
     this.torch,
     this.torchStrength = 0,
+    this.restAlpha = 1,
   });
+
+  /// How much of the wall shows where no torch is held, 0 to 1.
+  ///
+  /// One on a phone, where the wall is a strip of its own. Lower on a wider
+  /// screen, where it is the pattern behind the whole page and the copy sits
+  /// over it: the stone, its joints and its resting signs fade to this, and
+  /// the torch still brings a sign all the way up to gold -- so the carving is
+  /// faint behind the reading and bright wherever the viewer holds the light.
+  final double restAlpha;
 
   /// Where the viewer is holding the light, in this painter's own pixels.
   ///
@@ -124,29 +134,52 @@ class WallPainter extends CustomPainter {
     // its own box does.
     canvas.clipRect(Offset.zero & size);
 
+    final bounds = Offset.zero & size;
+
+    // Behind the page, the whole resting wall goes into one layer at
+    // [restAlpha]. Fading each colour instead compounded: every sign is three
+    // overlapping passes of the same shape, so a 0.3 body over a 0.3 shadow
+    // over a 0.3 highlight came out at twice the strength asked for.
+    final isFaded = restAlpha < 1;
+    if (isFaded) {
+      canvas.saveLayer(
+        bounds,
+        Paint()..color = Color.fromRGBO(0, 0, 0, restAlpha),
+      );
+    }
+
     // The unlit pass. Everything is on the wall whether or not the torch is
     // near it -- a wall does not stop existing in the dark, and a viewer who
     // has scrolled past should still see the inscription they left behind.
     _masonry(canvas, size, from: from, to: to);
-    _signs(canvas, size, from: from, to: to);
+    _signs(canvas, size, from: from, to: to, withTorch: !isFaded);
 
-    if (coherence <= 0) return;
+    if (coherence > 0) {
+      // The lit pass, masked to the torch. Drawn as a layer so the gradient
+      // erases it at the edges rather than being drawn on top of it: a bright
+      // pool painted over dim signs reads as a spotlight decal, this reads as
+      // light falling on carved stone.
+      canvas.saveLayer(bounds, Paint());
+      _signs(canvas, size, from: from, to: to, lit: true, withTorch: !isFaded);
+      canvas
+        ..drawRect(
+          bounds,
+          Paint()
+            ..blendMode = BlendMode.dstIn
+            ..shader = _torch(size),
+        )
+        ..restore();
+    }
 
-    // The lit pass, masked to the torch. Drawn as a layer so the gradient
-    // erases it at the edges rather than being drawn on top of it: a bright
-    // pool painted over dim signs reads as a spotlight decal, this reads as
-    // light falling on carved stone.
-    final bounds = Offset.zero & size;
-    canvas.saveLayer(bounds, Paint());
-    _signs(canvas, size, from: from, to: to, lit: true);
-    canvas
-      ..drawRect(
-        bounds,
-        Paint()
-          ..blendMode = BlendMode.dstIn
-          ..shader = _torch(size),
-      )
-      ..restore();
+    if (!isFaded) return;
+    canvas.restore();
+
+    // And the hand's light over the top, at full strength: the carving stays
+    // faint behind the reading and comes up gold wherever the pointer holds
+    // the flame.
+    if (torch != null && torchStrength > 0) {
+      _signs(canvas, size, from: from, to: to, torchOnly: true);
+    }
   }
 
   /// One sign to a block, most cut in stone and a few gilded.
@@ -164,6 +197,8 @@ class WallPainter extends CustomPainter {
     required double from,
     required double to,
     bool lit = false,
+    bool withTorch = true,
+    bool torchOnly = false,
   }) {
     const cell = Tokens.wallCourseHeight;
     const block = Tokens.wallBlockWidth;
@@ -190,6 +225,24 @@ class WallPainter extends CustomPainter {
         final path = SignPaths.of(sign, box);
         final dx = column * width + (width - box) / 2;
         final dy = top + (cell - box) / 2;
+        final centre = Offset(dx + box / 2, dy + box / 2);
+
+        if (torchOnly) {
+          // Only what the hand is lighting, as gold over the faded wall.
+          final reached = _reached(centre);
+          if (reached <= 0) continue;
+          canvas
+            ..save()
+            ..translate(dx, dy)
+            ..drawPath(
+              path,
+              Paint()
+                ..color = peakColour.withValues(alpha: peakColour.a * reached)
+                ..maskFilter = _bloom(reached),
+            )
+            ..restore();
+          continue;
+        }
 
         canvas
           ..save()
@@ -201,7 +254,8 @@ class WallPainter extends CustomPainter {
             gilded: gilded,
             row: row,
             lit: lit,
-            centre: Offset(dx + box / 2, dy + box / 2),
+            centre: centre,
+            withTorch: withTorch,
           ),
           box,
         );
@@ -221,19 +275,12 @@ class WallPainter extends CustomPainter {
     required int row,
     required bool lit,
     required Offset centre,
+    bool withTorch = true,
   }) {
     // How much of the torch this block is getting. Zero when the light is
-    // elsewhere or absent, which is every block on a phone.
-    var reached = 0.0;
-    if (torch case final held? when torchStrength > 0) {
-      final distance = (held - centre).distance;
-      final falloff = (1 - distance / Tokens.wallTorchReach).clamp(0.0, 1.0);
-      // Eased rather than squared. Squaring kept the pool's whole strength in
-      // the last few pixels, so a block a hand's width from the flame barely
-      // moved and the wall read as tinted instead of lit; this holds the
-      // middle of the range up and still falls to nothing at the edge.
-      reached = falloff * falloff * (3 - 2 * falloff) * torchStrength;
-    }
+    // elsewhere or absent, which is every block on a phone -- and zero here
+    // when the torch is drawn in a pass of its own over a faded wall.
+    final reached = withTorch ? _reached(centre) : 0.0;
 
     // The base state. One block in five is gilded and breathes on its own, so
     // a wall nobody is touching -- a phone, or a pointer somewhere else -- is
@@ -254,13 +301,29 @@ class WallPainter extends CustomPainter {
     // leaves, which is what a flame does to a gilded relief.
     return Paint()
       ..color = Color.lerp(base, peakColour, reached)!
-      ..maskFilter = reached > Tokens.wallShimmerBloomAt
-          ? MaskFilter.blur(
-              BlurStyle.solid,
-              (reached - Tokens.wallShimmerBloomAt) * Tokens.wallShimmerBloom,
-            )
-          : null;
+      ..maskFilter = _bloom(reached);
   }
+
+  /// How much of the hand's torch a block centred at [centre] is getting.
+  double _reached(Offset centre) {
+    final held = torch;
+    if (held == null || torchStrength <= 0) return 0;
+    final distance = (held - centre).distance;
+    final falloff = (1 - distance / Tokens.wallTorchReach).clamp(0.0, 1.0);
+    // Eased rather than squared. Squaring kept the pool's whole strength in
+    // the last few pixels, so a block a hand's width from the flame barely
+    // moved and the wall read as tinted instead of lit; this holds the
+    // middle of the range up and still falls to nothing at the edge.
+    return falloff * falloff * (3 - 2 * falloff) * torchStrength;
+  }
+
+  /// The glow of a sign lit past the bloom threshold.
+  MaskFilter? _bloom(double reached) => reached > Tokens.wallShimmerBloomAt
+      ? MaskFilter.blur(
+          BlurStyle.solid,
+          (reached - Tokens.wallShimmerBloomAt) * Tokens.wallShimmerBloom,
+        )
+      : null;
 
   /// The torch's falloff over the visible wall.
   ///
@@ -356,5 +419,6 @@ class WallPainter extends CustomPainter {
       oldDelegate.carveLight != carveLight ||
       oldDelegate.torch != torch ||
       oldDelegate.torchStrength != torchStrength ||
+      oldDelegate.restAlpha != restAlpha ||
       !identical(oldDelegate.bursts, bursts);
 }
