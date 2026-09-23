@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:nocturne/core/widgets/profile_skills.dart';
 
 import 'package:go_router/go_router.dart';
 
@@ -124,11 +123,6 @@ class HeroContent extends StatelessWidget {
             ),
             const CvButton(route: AppRoute.home),
           ],
-        ),
-        SizedBox(height: tokens.space24),
-        ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
-          child: ProfileSkills(profile: profile),
         ),
       ],
     );

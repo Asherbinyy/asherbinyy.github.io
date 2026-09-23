@@ -8,6 +8,7 @@ import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
@@ -71,20 +72,18 @@ class CareerStops extends StatelessWidget {
         // the width it was supposed to be filling empty. As cards it is a row
         // of places, which is what it is.
         //
-        // Capped to the copy's own measure, because the wall owns the trailing
-        // part of this page and nothing else on it runs underneath.
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: context.type.measureFor(context.type.body),
-          ),
-          child: Wrap(
-            spacing: tokens.space12,
-            runSpacing: tokens.space12,
-            children: [
-              for (final role in roles)
-                _Stop(role: role, anchorRegistry: anchorRegistry),
-            ],
-          ),
+        // The full width of the page, in even rows. It was capped to the
+        // copy's measure while the wall owned the trailing part of the page;
+        // the wall is the background now, and the owner asked for every
+        // section to share one width, edges lined up top to bottom.
+        EvenGrid(
+          minTileWidth: Tokens.stopCardMinWidth,
+          spacing: tokens.space12,
+          stretch: true,
+          children: [
+            for (final role in roles)
+              _Stop(role: role, anchorRegistry: anchorRegistry),
+          ],
         ),
       ],
     );
