@@ -222,6 +222,20 @@ abstract final class Tokens {
   /// Design-system value for reducedAcquisition.
   static const Duration reducedAcquisition = Duration(milliseconds: 200);
 
+  /// The theme brazier: one loop of its flame, and the time it takes to catch
+  /// or go out. Values unchanged from when they were written in the widget.
+  static const Duration brazierFlicker = Duration(milliseconds: 2600),
+      brazierStrike = Duration(milliseconds: 520);
+
+  /// One rise and fall of the three bars while the name recording plays.
+  static const Duration voicePulse = Duration(milliseconds: 1400);
+
+  /// The papyrus figures winding up and opening out again. Nothing drives
+  /// them at present -- the owner asked for the sheets to stay flat -- but the
+  /// controller still needs a length.
+  static const Duration papyrusRoll = Duration(milliseconds: 460),
+      papyrusUnroll = Duration(milliseconds: 520);
+
   /// Design-system value for emphasized.
   static const Curve emphasized = Cubic(0.2, 0, 0, 1);
 

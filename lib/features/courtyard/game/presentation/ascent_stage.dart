@@ -11,6 +11,8 @@ import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/ascent_painter.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_audio.dart';
+import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/platform/render_scale.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_contract.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_run.dart';
@@ -402,7 +404,7 @@ class _AscentStageState extends ConsumerState<AscentStage>
               // the shaft *is* the frame, so a rail would be a panel over the
               // playfield rather than beside it. There it stays where it was,
               // on the results, which is the only place a phone has room.
-              if (MediaQuery.sizeOf(context).width >= Tokens.mediumBreakpoint)
+              if (context.platform.viewport != ViewportClass.compact)
                 PositionedDirectional(
                   start: tokens.space16,
                   top: tokens.space64 + tokens.space24,

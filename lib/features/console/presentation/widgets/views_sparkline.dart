@@ -37,7 +37,11 @@ class ViewsSparkline extends StatelessWidget {
             for (final (index, count) in daily.indexed)
               Expanded(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: tokens.space4 / 4),
+                  // A hairline either side: the bars read as separate days
+                  // without the gaps becoming part of the shape.
+                  padding: EdgeInsets.symmetric(
+                    horizontal: tokens.hairlineWidth,
+                  ),
                   child: _Bar(
                     // A zero day still draws a hairline, so a gap reads as
                     // "no views" rather than as missing data.

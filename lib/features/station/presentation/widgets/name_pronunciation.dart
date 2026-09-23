@@ -33,7 +33,7 @@ class _NamePronunciationState extends State<NamePronunciation>
   StreamSubscription<void>? _finished;
   late final AnimationController _pulse = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1400),
+    duration: Tokens.voicePulse,
   );
   bool _isPlaying = false;
 

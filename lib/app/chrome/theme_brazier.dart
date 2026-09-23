@@ -33,13 +33,13 @@ class _ThemeBrazierState extends State<ThemeBrazier>
   /// Runs forever while lit: the flicker.
   late final AnimationController _flicker = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 2600),
+    duration: Tokens.brazierFlicker,
   );
 
   /// Runs once per change: the catching or the going out.
   late final AnimationController _strike = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 520),
+    duration: Tokens.brazierStrike,
     value: widget.isLit ? 1 : 0,
   );
 

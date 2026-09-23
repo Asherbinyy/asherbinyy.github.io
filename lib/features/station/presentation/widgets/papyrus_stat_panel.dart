@@ -64,8 +64,8 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
   /// Held at zero: a sheet, fully unrolled.
   late final AnimationController _roll = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 460),
-    reverseDuration: const Duration(milliseconds: 520),
+    duration: Tokens.papyrusRoll,
+    reverseDuration: Tokens.papyrusUnroll,
   );
 
   @override
