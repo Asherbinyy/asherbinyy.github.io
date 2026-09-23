@@ -5,6 +5,16 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### Merged to `main`, 2026-09-23 (second; owner-approved after localhost review)
+
+- **Home:** the wall is a faint pattern behind the whole page on a desk, lit gold by the pointer; a painted picture beside the hero follows the theme (a dawn or dusk between them) and its sun or moon switches the theme; career entries sit on cards; every section shares one width; the page closes on one panel.
+- **About:** the owner's life as a looping automation beside the portrait; skills preview five rows; full-width sections.
+- **Work / Writing:** the article grid runs the full width.
+- **Courtyard:** the second-game placeholder is gone; the Ascent panel shows a still of the climb and credits Icy Tower.
+- **Content:** skills and tools from the resume (13→47, 8→17), Docker; the dissertation's 80%.
+- Verified: format, analyze, 829 tests, 85.0% coverage, Wasm build.
+
+
 ### Merged to `main`, 2026-09-23 (owner-approved after localhost review)
 
 - **Home:** on a phone the copy stops where the hieroglyph wall starts; the wall moves behind the page and lights on a phone; the career unrolls; the two stat sheets centre their content.

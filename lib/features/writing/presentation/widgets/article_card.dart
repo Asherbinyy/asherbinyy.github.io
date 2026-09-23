@@ -33,10 +33,14 @@ class ArticleCard extends ConsumerStatefulWidget {
   /// The article this card stands for.
   final Article article;
 
-  /// Declared, never inferred; matches the work grid so the two pages align.
+  /// The narrowest a card may be, and the width its artwork is proportioned
+  /// against. The card itself fills its grid tile: the article grid stretches
+  /// to the full width of the page so its edges line up with every other
+  /// section, where a row of fixed 280px cards stopped short of them.
   static const double width = 280;
 
-  /// Taller than a work card: a title is longer than an application name.
+  /// The artwork's height at [width]; it scales with the card, so a wider
+  /// card gets a bigger cover rather than a more tightly cropped one.
   static const double artHeight = 180;
 
   @override
@@ -89,7 +93,7 @@ class _ArticleCardState extends ConsumerState<ArticleCard> {
                 : MouseCursor.defer,
             child: ExcludeSemantics(
               child: SizedBox(
-                width: ArticleCard.width,
+                width: double.infinity,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -179,16 +183,27 @@ class _Art extends ConsumerWidget {
   final Article article;
   final String seed;
 
+  // The tile's width, and the cover's proportions held at that width. An
+  // AspectRatio rather than a LayoutBuilder: the grid asks every tile for its
+  // intrinsic height to square its rows, and a LayoutBuilder cannot answer.
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) => AspectRatio(
+    aspectRatio: ArticleCard.width / ArticleCard.artHeight,
+    child: _filled(ref),
+  );
+
+  /// The artwork at whatever size the ratio above grants.
+  Widget _filled(WidgetRef ref) {
+    const width = double.infinity;
+    const height = double.infinity;
     final mark = StationCard(
       seedId: seed,
       // Deliberately unlabelled. The card prints the title below the artwork
       // now, and the mark drawing it too was how the headline came to appear
       // twice on any article whose cover did not resolve.
       name: '',
-      width: ArticleCard.width,
-      height: ArticleCard.artHeight,
+      width: width,
+      height: height,
     );
 
     final proxied = ref.watch(coverProxyProvider)(article.cover);
@@ -198,8 +213,8 @@ class _Art extends ConsumerWidget {
     if (bundled != null) {
       return ThreeStageImage(
         image: AssetImage(bundled),
-        width: ArticleCard.width,
-        height: ArticleCard.artHeight,
+        width: width,
+        height: height,
         fallback: mark,
       );
     }
@@ -207,8 +222,8 @@ class _Art extends ConsumerWidget {
 
     return ThreeStageImage(
       image: NetworkImage(proxied.toString()),
-      width: ArticleCard.width,
-      height: ArticleCard.artHeight,
+      width: width,
+      height: height,
       fallback: mark,
       semanticLabel: article.title,
     );

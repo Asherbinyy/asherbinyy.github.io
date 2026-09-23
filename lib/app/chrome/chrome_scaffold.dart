@@ -315,21 +315,13 @@ class _ContentColumn extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) => Stack(
         children: [
-          // The wall shares the content's frame rather than the window's.
-          // Filling the viewport while the copy is centred inside a cap puts
-          // the two in different coordinate systems, and the wall starts
-          // drawing over the paragraph again on a wide monitor.
-          if (layer != null)
-            Positioned.fill(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: Tokens.contentMaxWidth,
-                  ),
-                  child: layer,
-                ),
-              ),
-            ),
+          // The whole window. The wall used to share the content's capped
+          // frame, because as a column it had to line up with the copy it sat
+          // beside. It is the page's background now on anything wider than a
+          // phone, and a background that stops at the frame leaves bare bands
+          // down both sides of a wide monitor. On a phone the window is the
+          // frame, so its trailing strip lands where it always did.
+          if (layer != null) Positioned.fill(child: layer),
           SelectionArea(
             child: SingleChildScrollView(
               controller: controller,

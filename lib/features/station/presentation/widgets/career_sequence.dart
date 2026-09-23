@@ -6,6 +6,9 @@ import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/career_thread_painter.dart';
+import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/platform/platform_service.dart';
+import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/core/widgets/reveal_on_scroll.dart';
 import 'package:nocturne/content/period.dart';
 import 'package:nocturne/app/theme/typography.dart';
@@ -204,8 +207,29 @@ class _CareerEntry extends StatelessWidget {
     final tokens = context.tokens;
     final type = context.type;
 
+    // On a phone the column is what is left beside the wall's strip, and the
+    // stop's sign beside the card took a third of it: the card's text was
+    // down to a hundred pixels and names broke mid-word. There the card has
+    // the column to itself -- the index above already carries each stop's
+    // mark -- and a tighter inset.
+    if (context.platform.viewport == ViewportClass.compact) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: tokens.space8),
+        // The column's width whatever the entry holds, so a short one like
+        // the freelance stop does not shrink to its own words.
+        child: SizedBox(
+          width: double.infinity,
+          child: InstrumentPanel(
+            fill: tokens.surface,
+            padding: EdgeInsets.all(tokens.space16),
+            child: _entry(context, tokens, type),
+          ),
+        ),
+      );
+    }
+
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: tokens.space32),
+      padding: EdgeInsets.symmetric(vertical: tokens.space12),
       // The sign runs down the leading edge, beside the entry rather than
       // above it, so a reader scanning the column can tell study from
       // employment from freelance without reading a word.
@@ -217,7 +241,17 @@ class _CareerEntry extends StatelessWidget {
             child: StopMark(role: role),
           ),
           SizedBox(width: tokens.space24),
-          Expanded(child: _entry(context, tokens, type)),
+          // On a card. The entries were bare text over the wall, and once the
+          // wall became the pattern behind the whole page the owner asked for
+          // them to have a ground of their own -- and for them to run the
+          // full width, lined up with every other section.
+          Expanded(
+            child: InstrumentPanel(
+              fill: tokens.surface,
+              padding: EdgeInsets.all(tokens.space24),
+              child: _entry(context, tokens, type),
+            ),
+          ),
         ],
       ),
     );
@@ -238,17 +272,15 @@ class _CareerEntry extends StatelessWidget {
     final company = role.company;
     final title = role.title;
     final summary = role.summary;
+    final hasSummary = summary != null && role.id != 'freelance';
 
-    return Column(
+    // Who and where on one side, what happened on the other, once the card is
+    // wide enough for both to keep a readable line. The hairline that opened
+    // each entry is gone: the card's own edge separates them now.
+    final facts = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          height: tokens.hairlineWidth,
-          width: tokens.heroRuleWidth,
-          child: ColoredBox(color: tokens.hairline),
-        ),
-        SizedBox(height: tokens.space16),
         Text(
           formatPeriod(context.l10n, role.start, role.end),
           style: type.telemetryS.copyWith(color: tokens.textMuted),
@@ -265,14 +297,37 @@ class _CareerEntry extends StatelessWidget {
           ),
         if (company != null)
           Text(role.id == 'freelance' ? 'Remote' : _place, style: type.meta),
-        if (summary != null && role.id != 'freelance') ...[
-          SizedBox(height: tokens.space12),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
-            child: Text(summary.resolve(locale), style: type.body),
-          ),
-        ],
       ],
+    );
+    if (!hasSummary) return facts;
+
+    final story = ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
+      child: Text(summary.resolve(locale), style: type.body),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < Tokens.careerCardSplitWidth) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              facts,
+              SizedBox(height: tokens.space12),
+              story,
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: Tokens.careerFactsFlex, child: facts),
+            SizedBox(width: tokens.space32),
+            Expanded(flex: Tokens.careerStoryFlex, child: story),
+          ],
+        );
+      },
     );
   }
 }

@@ -25,7 +25,10 @@ import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
 import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_stops.dart';
+import 'package:nocturne/core/widgets/instrument_panel.dart';
+import 'package:nocturne/core/widgets/profile_skills.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
+import 'package:nocturne/features/station/presentation/widgets/hero_scene.dart';
 import 'package:nocturne/features/trace/presentation/telemetry_trace.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
@@ -81,14 +84,11 @@ class StationScreen extends ConsumerWidget {
               // never reflows the page.
               const CqResponse(),
               _Career(locale: locale),
-              // The forward-looking half. Everything above this is what has
-              // already happened; this is the one line on Home that answers
-              // "can you build me one?".
-              const _ServicesDoor(),
-              // The way to reach him, at the foot of the page he lands on. A
-              // visitor who has read to the bottom of Home should not have to
-              // find About to send an email.
-              const _Reach(),
+              // The forward-looking half and the way to reach him, together:
+              // everything above this is what has already happened, and this
+              // is the one place on Home that answers "can you build me one?"
+              // and says how to ask.
+              const _Closing(),
             ],
           ),
         ),
@@ -97,68 +97,104 @@ class StationScreen extends ConsumerWidget {
   }
 }
 
-/// The door to the services page.
-class _ServicesDoor extends StatelessWidget {
-  const _ServicesDoor();
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    return Padding(
-      padding: EdgeInsets.only(top: context.platform.sectionGap),
-      // Wrapped, because on a phone the question and the button do not share
-      // a line and a Row would push one of them off the screen.
-      child: Wrap(
-        spacing: tokens.space16,
-        runSpacing: tokens.space16,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(
-            context.l10n.homeServices,
-            style: context.type.heading.copyWith(color: tokens.textSecondary),
-          ),
-          BeaconButton(
-            label: context.l10n.homeServicesAction,
-            emphasis: ButtonEmphasis.primary,
-            onPressed: () => context.goNamed(AppRoute.services.name),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Contact, at the end of Home.
-class _Reach extends ConsumerWidget {
-  const _Reach();
+/// The end of Home: the ask, and the ways of reaching him.
+///
+/// It was a line with a button and then a heading over a list, each its own
+/// width -- the question as wide as its words, the links capped to the copy's
+/// measure -- so the page ended on three different edges. One panel the width
+/// of everything above it, laid out like the "Wanna chat?" panel on Services
+/// so the two pages close the same way.
+class _Closing extends ConsumerWidget {
+  const _Closing();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = context.tokens;
+    final type = context.type;
+    final l10n = context.l10n;
     final profile = switch (ref.watch(profileProvider).valueOrNull) {
       ContentReady<Profile>(:final data) => data,
       ContentFallback<Profile>(:final profile) => profile,
       _ => null,
     };
-    if (profile == null) return const SizedBox.shrink();
+
+    final ask = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(l10n.homeServices, style: type.heading),
+        SizedBox(height: tokens.space12),
+        // The Services page's own sentence, not a new one: it says what to
+        // send and what comes back, which is what this half of the panel is
+        // for, and it balances the column of ways to reach him beside it.
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
+          child: Text(
+            l10n.servicesChatBody,
+            style: type.body.copyWith(color: tokens.textSecondary),
+          ),
+        ),
+        SizedBox(height: tokens.space24),
+        BeaconButton(
+          label: l10n.homeServicesAction,
+          emphasis: ButtonEmphasis.primary,
+          onPressed: () => context.goNamed(AppRoute.services.name),
+        ),
+      ],
+    );
+
+    final reach = profile == null
+        ? null
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.aboutContact, style: type.heading),
+              SizedBox(height: tokens.space16),
+              ContactLinks(contact: profile.contact, links: profile.links),
+            ],
+          );
 
     return Padding(
       padding: EdgeInsets.only(top: context.platform.sectionGap),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(context.l10n.aboutContact, style: context.type.heading),
-          SizedBox(height: context.tokens.space24),
-          // Capped to the same measure the copy uses. Left to run the frame's
-          // full width the row reached under the wall, which is the rule the
-          // rest of this page already keeps.
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: context.type.measureFor(context.type.body),
-            ),
-            child: ContactLinks(contact: profile.contact, links: profile.links),
+      child: SizedBox(
+        width: double.infinity,
+        child: InstrumentPanel(
+          fill: tokens.surface,
+          // A phone's column is already narrow beside the wall's strip; the
+          // desk inset would leave the contact links no room at all.
+          padding: EdgeInsets.all(
+            context.platform.viewport == ViewportClass.compact
+                ? tokens.space16
+                : tokens.space32,
           ),
-        ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Side by side where each half still has room for a sentence;
+              // stacked below that, which is how a phone always had it.
+              if (reach == null) return ask;
+              if (constraints.maxWidth < Tokens.mediumBreakpoint) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ask,
+                    SizedBox(height: tokens.space32),
+                    reach,
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: ask),
+                  SizedBox(width: tokens.space48),
+                  Expanded(child: reach),
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -216,21 +252,65 @@ class _Resolved extends StatelessWidget {
   final Animation<double>? acquisitionReveal;
 
   @override
-  Widget build(BuildContext context) => switch (result) {
+  Widget build(BuildContext context) {
     // A fallback still carries the owner's real name, positioning and contact,
     // so it renders as the hero rather than as an error.
-    ContentReady(:final data) => HeroContent(
-      profile: data,
-      locale: locale,
-      acquisitionReveal: acquisitionReveal,
-    ),
-    ContentFallback(:final profile) => HeroContent(
-      profile: profile,
-      locale: locale,
-      acquisitionReveal: acquisitionReveal,
-    ),
-    ContentUnavailable() => const _Unavailable(),
-  };
+    final profile = switch (result) {
+      ContentReady(:final data) => data,
+      ContentFallback(:final profile) => profile,
+      ContentUnavailable() => null,
+    };
+    if (profile == null) return const _Unavailable();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _Hero(
+          copy: HeroContent(
+            profile: profile,
+            locale: locale,
+            acquisitionReveal: acquisitionReveal,
+          ),
+        ),
+        SizedBox(height: context.tokens.space32),
+        // The whole width, like every section below it. It used to sit at the
+        // foot of the hero, capped to the copy's measure, which made it the
+        // first of several edges on this page that did not line up.
+        SizedBox(
+          width: double.infinity,
+          child: ProfileSkills(profile: profile),
+        ),
+      ],
+    );
+  }
+}
+
+/// The hero's copy, and the picture beside it where there is room.
+///
+/// The owner asked for the right of the hero to stop being the wall and to
+/// hold a picture that stands for him instead; the wall became the pattern
+/// behind the whole page. On anything narrower than [Tokens.heroSceneMinWidth]
+/// the copy needs the width more than the picture needs the space, so a phone
+/// keeps the hero it had.
+class _Hero extends StatelessWidget {
+  const _Hero({required this.copy});
+
+  final Widget copy;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth < Tokens.heroSceneMinWidth) return copy;
+      return Row(
+        children: [
+          Expanded(flex: Tokens.heroCopyFlex, child: copy),
+          SizedBox(width: context.tokens.space48),
+          const Expanded(flex: Tokens.heroSceneFlex, child: HeroScene()),
+        ],
+      );
+    },
+  );
 }
 
 /// Skeleton geometry matching the settled hero, so nothing shifts on arrival.

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/disclosure_chevron.dart';
 import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/app/theme/typography.dart';
@@ -9,6 +10,7 @@ import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
+import 'package:nocturne/core/motion/settling_size.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 
 /// What the owner can do, in three tiers that do not look alike.
@@ -109,6 +111,46 @@ class _Group extends StatefulWidget {
 class _GroupState extends State<_Group> {
   late bool _isOpen = widget.isOpenAtRest;
 
+  /// Whether every value is showing, or only the first rows of them.
+  ///
+  /// The skills grew from thirteen to forty-seven when the owner's resume was
+  /// added in full, and an open group became a wall of chips two screens
+  /// tall between the biography and his education. It opens on the first
+  /// rows now, with the rest one press away -- the pattern Home already uses.
+  bool _showsAll = false;
+
+  Widget _chips(BuildContext context) {
+    final tokens = context.tokens;
+    final values = widget.values;
+    final isCapped = values.length > Tokens.skillsPreviewCount && !_showsAll;
+    final shown = isCapped ? values.take(Tokens.skillsPreviewCount) : values;
+    final hidden = values.length - Tokens.skillsPreviewCount;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        EvenGrid(
+          minTileWidth: Tokens.skillChipWidth,
+          spacing: tokens.space8,
+          children: [
+            for (final value in shown)
+              _Chip(value: value, emphasis: widget.emphasis),
+          ],
+        ),
+        if (hidden > 0) ...[
+          SizedBox(height: tokens.space12),
+          BeaconButton(
+            label: _showsAll
+                ? context.l10n.profileSkillsLess
+                : context.l10n.profileSkillsMore(hidden),
+            onPressed: () => setState(() => _showsAll = !_showsAll),
+          ),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -136,10 +178,8 @@ class _GroupState extends State<_Group> {
             // Height and opacity together. Height alone slides a fully drawn
             // block up behind the heading, which reads as the page jumping
             // rather than as a group closing.
-            AnimatedSize(
-              duration: ReducedMotion.duration(context, Motion.standard),
-              curve: MotionCurves.emphasized,
-              alignment: AlignmentDirectional.topStart,
+            SettlingSize(
+              duration: Motion.standard,
               child: AnimatedOpacity(
                 opacity: _isOpen ? 1 : 0,
                 duration: ReducedMotion.duration(context, Motion.quick),
@@ -153,17 +193,7 @@ class _GroupState extends State<_Group> {
                                   color: tokens.textMuted,
                                 ),
                               )
-                            : EvenGrid(
-                                minTileWidth: Tokens.skillChipWidth,
-                                spacing: tokens.space8,
-                                children: [
-                                  for (final value in widget.values)
-                                    _Chip(
-                                      value: value,
-                                      emphasis: widget.emphasis,
-                                    ),
-                                ],
-                              ),
+                            : _chips(context),
                       )
                     : const SizedBox(width: double.infinity),
               ),

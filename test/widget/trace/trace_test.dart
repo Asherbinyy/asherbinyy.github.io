@@ -1,5 +1,4 @@
 import 'dart:ui' show PointerDeviceKind;
-import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -10,7 +9,6 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/content/country_names.dart';
 import 'package:nocturne/core/painting/wall_painter.dart';
-import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
 import 'package:nocturne/features/trace/domain/trace_controller.dart';
 import 'package:nocturne/features/trace/domain/trace_state.dart';
@@ -80,26 +78,28 @@ void main() {
     expect(find.byType(TraceBurstLabel), findsNothing);
   });
 
-  testWidgets('the trace keeps a column of its own, clear of the copy', (
+  testWidgets('on a desk the wall is the background of the whole page', (
     tester,
   ) async {
     await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
 
+    // The owner asked for the wall to stop filling the right-hand side of a
+    // desk screen and to become the pattern behind everything, less visible,
+    // with the right of the hero given to a picture. So it spans the window
+    // rather than a column of it, and rests faint -- the torch still brings a
+    // sign up to full gold.
     final scaffold = tester.getRect(find.byType(ChromeScaffold));
     final painted = tester.getRect(_tracePaint);
-    // Against the content frame, not the window. The frame is capped and
-    // centred on a wide monitor, and the wall lives inside it, so measuring
-    // the window would compare the wall to space it is deliberately not
-    // allowed to use.
-    final frame = math.min(scaffold.width, Tokens.contentMaxWidth);
+    expect(painted.left, 0);
+    expect(painted.width, scaffold.width);
 
-    // A column, not half the page. This used to require more than half the
-    // frame, which is what the owner objected to once the wall became opaque
-    // blocks: it crowded the copy and took the screen. It still has to be a
-    // wall rather than a strip, so there is a floor as well as a ceiling.
-    expect(painted.width, greaterThan(frame * 0.2));
-    expect(painted.width, lessThan(frame / 2));
-    expect(find.byType(TraceBurstLabel), findsWidgets);
+    final wall = tester.widget<CustomPaint>(_tracePaint).painter;
+    if (wall is! WallPainter) fail('Expected the wall painter');
+    expect(wall.restAlpha, Tokens.wallPatternOpacity);
+
+    // No location cards: there is no clear ground beside the wall any more,
+    // and each career card prints its own location.
+    expect(find.byType(TraceBurstLabel), findsNothing);
   });
 
   testWidgets('one burst per career role', (tester) async {
@@ -189,9 +189,7 @@ void main() {
     expect(find.text(l10n.traceStandby), findsNothing);
   });
 
-  testWidgets('reduced motion settles the trace with every label visible', (
-    tester,
-  ) async {
+  testWidgets('reduced motion settles the trace', (tester) async {
     final container = await pumpStation(
       tester,
       breakpoint: ChromeBreakpoint.large,
@@ -202,50 +200,6 @@ void main() {
     await pumpFrames(tester);
     expect(container.read(traceControllerProvider), TraceState.standby);
     expect(find.byType(TelemetryTrace), findsOneWidget);
-  });
-
-  testWidgets('a locked label sits in the gap, not on the wall', (
-    tester,
-  ) async {
-    // Reduced motion shows every label without having to drive a scroll into
-    // a lock, which is what makes this measurable at all.
-    await pumpStation(
-      tester,
-      breakpoint: ChromeBreakpoint.large,
-      reducedMotion: true,
-    );
-    await pumpFrames(tester);
-
-    final wall = tester.getRect(_tracePaint);
-    // The panel, not the widget: the card is pushed across by a paint-time
-    // translation, which the label's own box does not carry.
-    final labels = find.descendant(
-      of: find.byType(TraceBurstLabel),
-      matching: find.byType(InstrumentPanel),
-    );
-    expect(labels, findsWidgets);
-
-    for (var i = 0; i < tester.widgetList(labels).length; i++) {
-      final card = tester.getRect(labels.at(i));
-      if (card.width == 0) continue;
-      expect(
-        card.right,
-        lessThanOrEqualTo(wall.left),
-        reason: 'the card is drawn over the blocks',
-      );
-      expect(card.left, greaterThanOrEqualTo(0), reason: 'and off the page');
-
-      // And centred on the clear ground rather than pressed against the
-      // stone: the owner asked for it in the middle of the empty middle.
-      final label = tester.widget<TraceBurstLabel>(
-        find.ancestor(of: labels.at(i), matching: find.byType(TraceBurstLabel)),
-      );
-      expect(
-        card.center.dx,
-        closeTo(wall.left - label.gap / 2, 1),
-        reason: 'the card should sit in the middle of the gap',
-      );
-    }
   });
 
   testWidgets('a career that will not load leaves the trace out', (
@@ -263,14 +217,10 @@ void main() {
     expect(find.byType(TelemetryTrace), findsNothing);
     expect(tester.takeException(), isNull);
   });
-  group('the wall never reaches the copy', () {
-    // The owner reported overlapping content on a laptop twice. At 1024px the
-    // trailing 66 per cent began at x=348 while the hero text ran to x=636, so
-    // register rules and signs were drawn straight through the paragraph.
-    //
-    // Swept rather than pinned to the one width that failed: the wall's width
-    // is computed from the body measure, which is itself derived from the type
-    // scale, so the failing band moves with the viewport.
+  group('the wall covers the window at every desk width', () {
+    // A background that stopped at the capped content frame left bare bands
+    // down both sides of a wide monitor. Swept, because the frame is capped
+    // and the widths either side of the cap behave differently.
     for (final width in [1024.0, 1280.0, 1440.0, 1600.0, 1920.0]) {
       testWidgets('at ${width.toInt()}px', (tester) async {
         tester.view
@@ -281,26 +231,12 @@ void main() {
         await pumpStation(tester, breakpoint: ChromeBreakpoint.large);
         await pumpFrames(tester);
 
-        final wall = tester.getRect(
-          find.byWidgetPredicate(
-            (widget) => widget is CustomPaint && widget.painter is WallPainter,
-          ),
-        );
-        // The hero's own box is full width -- it is a Column aligned to the
-        // start -- so the thing to measure is the copy inside it, which is
-        // capped to the body measure. Comparing against the box would pass
-        // nothing and fail everything.
-        final positioning =
-            (bundledJson('assets/content/profile.json')['positioning']
-                    as Map<String, dynamic>)['en']
-                as String;
-        final copy = tester.getRect(find.text(positioning));
-
-        expect(
-          wall.left,
-          greaterThanOrEqualTo(copy.right),
-          reason: 'the wall starts inside the hero copy at ${width.toInt()}px',
-        );
+        // Against the scaffold, which is the window the harness actually
+        // laid out, rather than the number requested of it.
+        final window = tester.getRect(find.byType(ChromeScaffold));
+        final wall = tester.getRect(_tracePaint);
+        expect(wall.left, window.left, reason: 'at ${width.toInt()}px');
+        expect(wall.width, window.width, reason: 'at ${width.toInt()}px');
       });
     }
   });
@@ -337,8 +273,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(wall().torchStrength, 1, reason: 'held on the wall, fully lit');
 
-    // Off the wall entirely, onto the copy.
-    await hand.moveTo(Offset(strip.left - 200, strip.center.dy));
+    // Off the page entirely. The wall is the whole background now, so the
+    // only way to take the light off it is to leave the window.
+    await hand.moveTo(const Offset(-50, -50));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 40));
     expect(

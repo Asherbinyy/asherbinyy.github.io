@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:nocturne/app/app_route.dart';
+import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/features/writing/data/writing_providers.dart';
 import 'package:nocturne/features/writing/domain/article.dart';
 import 'package:nocturne/features/writing/presentation/widgets/article_card.dart';
@@ -109,5 +110,38 @@ void main() {
 
       expect(semantics.label, contains('Shipping Flutter to the web'));
     });
+  });
+
+  testWidgets('the article grid runs the full width of the page', (
+    tester,
+  ) async {
+    await pumpStation(
+      tester,
+      breakpoint: ChromeBreakpoint.large,
+      initialRoute: AppRoute.writing,
+      overrides: withArticles([
+        for (var i = 0; i < 3; i++)
+          (
+            title: 'Post $i',
+            url: Uri.parse('https://sherbini.medium.com/post-$i'),
+            published: DateTime.utc(2026, 9, i + 1),
+            cover: null,
+            tags: const <String>[],
+          ),
+      ]),
+    );
+
+    // The owner's note: the articles did not fill the width the projects
+    // did. Three fixed 280px cards stopped well short of the right edge; the
+    // grid stretches its tiles now, so the row ends where every section does.
+    final grid = tester.getRect(find.byType(EvenGrid));
+    final cards = [
+      for (final element in find.byType(ArticleCard).evaluate())
+        tester.getRect(find.byWidget(element.widget)),
+    ]..sort((a, b) => a.left.compareTo(b.left));
+    expect(cards, hasLength(3));
+    expect(cards.first.left, closeTo(grid.left, 1));
+    expect(cards.last.right, closeTo(grid.right, 1));
+    expect(cards.first.width, greaterThan(ArticleCard.width));
   });
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
 import 'package:nocturne/features/writing/data/writing_providers.dart';
@@ -27,9 +28,14 @@ class WritingList extends ConsumerWidget {
     final articles = ref.watch(articlesProvider);
 
     return switch (articles) {
-      AsyncData(:final value) when value.isNotEmpty => Wrap(
+      // Stretched, like the application grid on /work: a card that is
+      // mostly a picture gets a bigger picture from a wider tile, and the
+      // grid's edges then line up with every other section on the page.
+      AsyncData(:final value) when value.isNotEmpty => EvenGrid(
+        minTileWidth: ArticleCard.width,
         spacing: context.tokens.space32,
-        runSpacing: context.tokens.space32,
+        runSpacing: context.tokens.space48,
+        stretch: true,
         children: [
           for (final article in value.take(limit ?? value.length))
             ArticleCard(article: article),

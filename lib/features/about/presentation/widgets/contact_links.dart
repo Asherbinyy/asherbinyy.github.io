@@ -182,9 +182,13 @@ class _Label extends StatelessWidget {
           child: ColoredBox(color: tokens.instrumentDim),
         ),
         SizedBox(width: tokens.space8),
-        Text(
-          text,
-          style: context.type.telemetryS.copyWith(color: tokens.textMuted),
+        // Flexible: inside a panel on a phone this has well under two hundred
+        // pixels, and a label that cannot wrap pushes the row past its edge.
+        Flexible(
+          child: Text(
+            text,
+            style: context.type.telemetryS.copyWith(color: tokens.textMuted),
+          ),
         ),
       ],
     );

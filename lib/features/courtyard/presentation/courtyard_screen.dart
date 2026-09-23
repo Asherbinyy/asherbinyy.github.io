@@ -7,11 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/core/painting/ascent_painter.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
-import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/features/about/presentation/widgets/interests_grid.dart';
+import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
 import 'package:nocturne/features/courtyard/game/presentation/ascent_stage.dart';
 import 'package:nocturne/features/courtyard/game/presentation/widgets/leaderboard_panel.dart';
 
@@ -64,18 +65,12 @@ class _CourtyardScreenState extends ConsumerState<CourtyardScreen> {
           // The climb opens full screen rather than unfolding inside the page.
           // A game embedded in a document competes with it for the keyboard,
           // for the width, and for the reader's attention, and loses all three.
-          // Two halves. The climb had the page to itself and used about half
-          // of it, which left a large empty right-hand side the owner asked to
-          // fill; the second panel is honest about being empty rather than
-          // pretending the shelf is full.
-          EvenGrid(
-            minTileWidth: Tokens.courtyardPanelWidth,
-            spacing: tokens.space24,
-            children: [
-              _GameInvitation(onPlay: () => AscentStage.open(context)),
-              const _ComingSoon(),
-            ],
-          ),
+          //
+          // The whole width, like the section under it. It used to share a
+          // row with a panel announcing a second game nobody had decided on;
+          // the owner asked for that to go, and a half-width panel beside
+          // nothing is the ragged edge he asked every page to lose.
+          _GameInvitation(onPlay: () => AscentStage.open(context)),
           SizedBox(height: tokens.space48),
           const InterestsGrid(),
         ],
@@ -96,49 +91,72 @@ class _GameInvitation extends StatelessWidget {
     final type = context.type;
     final l10n = context.l10n;
 
+    final invitation = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: tokens.space48,
+          height: tokens.hairlineWidth * 2,
+          child: ColoredBox(color: tokens.beacon),
+        ),
+        SizedBox(height: tokens.space12),
+        Text(l10n.ascentHeading, style: type.heading),
+        SizedBox(height: tokens.space8),
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
+          child: Text(
+            l10n.courtyardGamePitch,
+            style: type.body.copyWith(color: tokens.textSecondary),
+          ),
+        ),
+        SizedBox(height: tokens.space8),
+        // Where the climb comes from, in the owner's words. Muted: it is
+        // the story behind the game, not the offer to play it.
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
+          child: Text(
+            l10n.courtyardGameInspiration,
+            style: type.bodyS.copyWith(color: tokens.textMuted),
+          ),
+        ),
+        SizedBox(height: tokens.space24),
+        Wrap(
+          spacing: tokens.space8,
+          runSpacing: tokens.space8,
+          children: [
+            BeaconButton(
+              label: l10n.courtyardPlay,
+              emphasis: ButtonEmphasis.primary,
+              onPressed: onPlay,
+            ),
+            BeaconButton(
+              label: l10n.courtyardScoreboard,
+              onPressed: () => _showBoard(context),
+            ),
+          ],
+        ),
+      ],
+    );
+
     return InstrumentPanel(
       fill: tokens.surface,
       padding: EdgeInsets.all(tokens.space24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: tokens.space48,
-            height: tokens.hairlineWidth * 2,
-            child: ColoredBox(color: tokens.beacon),
-          ),
-          SizedBox(height: tokens.space12),
-          Text(l10n.ascentHeading, style: type.heading),
-          SizedBox(height: tokens.space8),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
-            child: Text(
-              l10n.courtyardGamePitch,
-              style: type.body.copyWith(color: tokens.textSecondary),
-            ),
-          ),
-          // Pushes the two controls to the bottom of whichever panel is
-          // taller, so they sit on one line across the pair instead of
-          // wherever each panel's prose happens to end.
-          const Spacer(),
-          SizedBox(height: tokens.space16),
-          Wrap(
-            spacing: tokens.space8,
-            runSpacing: tokens.space8,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Below this the still would squeeze the copy into a column too
+          // narrow for a sentence, so a phone gets the words and the buttons.
+          if (constraints.maxWidth < Tokens.mediumBreakpoint) {
+            return invitation;
+          }
+          return Row(
             children: [
-              BeaconButton(
-                label: l10n.courtyardPlay,
-                emphasis: ButtonEmphasis.primary,
-                onPressed: onPlay,
-              ),
-              BeaconButton(
-                label: l10n.courtyardScoreboard,
-                onPressed: () => _showBoard(context),
-              ),
+              Expanded(flex: 3, child: invitation),
+              SizedBox(width: tokens.space32),
+              const Expanded(flex: 2, child: _ClimbStill()),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -172,43 +190,45 @@ class _GameInvitation extends StatelessWidget {
   }
 }
 
-/// The shelf beside the climb, kept honestly empty.
+/// The first moment of a climb, drawn by the game's own painter.
 ///
-/// The owner wants a second game and has not decided what it is. A panel that
-/// says so is better than a gap, and much better than inventing a placeholder
-/// game to fill it: the courtyard is the one page on this site that is allowed
-/// to be unfinished out loud.
-class _ComingSoon extends StatelessWidget {
-  const _ComingSoon();
+/// It shows what the Play button leads to -- the shaft, the ledges, the
+/// climber on the floor -- without starting anything: one frame of a fresh
+/// run, painted once and never animated, so it costs nothing while a visitor
+/// reads. Decorative; the panel's heading and buttons carry the meaning.
+class _ClimbStill extends StatelessWidget {
+  const _ClimbStill();
+
+  /// A fixed seed, so the still is the same climb on every visit.
+  static final AscentWorld _world = AscentWorld.seeded(
+    best: 0,
+    isPractice: true,
+    seed: Tokens.courtyardStillSeed,
+  );
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final type = context.type;
-    final l10n = context.l10n;
-
-    return InstrumentPanel(
-      padding: EdgeInsets.all(tokens.space24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: tokens.space48,
-            height: tokens.hairlineWidth * 2,
-            child: ColoredBox(color: tokens.instrumentDim),
+    return ExcludeSemantics(
+      child: SizedBox(
+        height: Tokens.courtyardStillHeight,
+        child: ClipRect(
+          child: CustomPaint(
+            painter: AscentPainter(
+              world: _world,
+              entrance: 1,
+              stone: tokens.instrument,
+              cracked: tokens.instrumentDim,
+              gold: tokens.beacon,
+              glow: tokens.beaconGlow,
+              wall: tokens.hairline,
+              chamber: tokens.surfaceRaised,
+              pier: tokens.void_,
+              strokeWidth: tokens.hairlineWidth,
+              isReducedMotion: true,
+            ),
           ),
-          SizedBox(height: tokens.space12),
-          Text(
-            l10n.courtyardNextHeading,
-            style: type.heading.copyWith(color: tokens.textMuted),
-          ),
-          SizedBox(height: tokens.space8),
-          Text(
-            l10n.courtyardNextBody,
-            style: type.body.copyWith(color: tokens.textMuted),
-          ),
-        ],
+        ),
       ),
     );
   }

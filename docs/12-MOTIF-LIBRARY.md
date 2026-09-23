@@ -79,6 +79,10 @@ what it says never arises. See §2 for the set and §0 for how the rule failed.
 | 14 | **Wedjat (Eye of Horus)** | Watching, protection | `/console` only — the one page that observes | Painter |
 | 15 | **Sarcophagus / wrapped form** | A thing at rest, not yet opened | Empty and dormant states, the click-to-load poster | Painter |
 | 16 | **Ornament field** | A low-contrast decorated ground — texture with real provenance and no phonetic content | Page backgrounds, one field per route | Pre-rendered tile, see §4 |
+| 17 | **Ra's disc** | The sun: day. Here it is also a control — pressing it sets the sun, and the site's theme with it — which is what licenses it to be gold | The hero picture on `/` (≥900px wide) | `hero_scene_painter.dart`, `Sign.sun` |
+| 18 | **Star (sba)** | Night: the five-pointed star painted across tomb ceilings | The hero picture's night sky | `hero_scene_painter.dart`, path |
+
+**Added 2026-09-23 at the owner's request** for a hero picture that "represents me … different at night … a sun that moves up and down … some laptop, some coding, something to do with the culture". Existing motifs took new places in the same picture: the **obelisk** (#6) as a pair on the far bank, pyramidions gilded; the **scarab** (#7) rolling the sun over the horizon while it is low; a **register** with its **ticks** (#2, #10) along the desk. The **ankh** (#4) is also the trigger node of the life loop on `/about`. The laptop, phone and cup in the picture are the owner's tools, not motifs, and the seated figure is the game's climber at rest. Still excluded, per the list below: no pyramid silhouette, no palm tree.
 
 ### Explicitly excluded
 

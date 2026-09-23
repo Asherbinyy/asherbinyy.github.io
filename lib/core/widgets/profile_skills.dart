@@ -8,6 +8,7 @@ import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
+import 'package:nocturne/core/motion/settling_size.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 
@@ -80,10 +81,8 @@ class _ProfileSkillsState extends State<ProfileSkills> {
             ),
             SizedBox(height: tokens.space16),
             // Height animated, so the extra rows arrive rather than appearing.
-            AnimatedSize(
-              duration: ReducedMotion.duration(context, Motion.standard),
-              curve: MotionCurves.emphasized,
-              alignment: AlignmentDirectional.topStart,
+            SettlingSize(
+              duration: Motion.standard,
               child: Wrap(
                 spacing: tokens.space8,
                 runSpacing: tokens.space8,

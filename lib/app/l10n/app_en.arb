@@ -487,6 +487,10 @@
   "@courtyardGamePitch": {
     "description": "The line offering the climb before it is started"
   },
+  "courtyardGameInspiration": "Icy Tower was the first game I ever played. This is my tribute to it, rebuilt inside an obelisk.",
+  "@courtyardGameInspiration": {
+    "description": "Courtyard: where the climb comes from, in the owner's words"
+  },
   "courtyardPlay": "Play",
   "@courtyardPlay": {
     "description": "Starts the climb"
@@ -564,14 +568,6 @@
   "courtyardScoreboard": "Scoreboard",
   "@courtyardScoreboard": {
     "description": "Opens the climb leaderboard from the courtyard"
-  },
-  "courtyardNextHeading": "Something else",
-  "@courtyardNextHeading": {
-    "description": "Heading of the placeholder panel for a future game"
-  },
-  "courtyardNextBody": "A second game is coming. I have not decided what it is yet.",
-  "@courtyardNextBody": {
-    "description": "Says a second game is planned but undecided"
   },
   "offDutyBy": "by {name}",
   "@offDutyBy": {
@@ -955,5 +951,41 @@
   },
   "@profileTools": {
     "description": "Owner-requested content label; Arabic copy review pending."
+  },
+  "heroSceneSunset": "Let the sun set",
+  "@heroSceneSunset": {
+    "description": "The sun in the hero picture, as a control: switches to the dark theme"
+  },
+  "heroSceneSunrise": "Bring the sun up",
+  "@heroSceneSunrise": {
+    "description": "The moon in the hero picture, as a control: switches to the light theme"
+  },
+  "aboutFlowLife": "Life",
+  "@aboutFlowLife": {
+    "description": "About life loop: the trigger node, drawn with the ankh"
+  },
+  "aboutFlowStudy": "Study",
+  "@aboutFlowStudy": {
+    "description": "About life loop: a step"
+  },
+  "aboutFlowCode": "Code",
+  "@aboutFlowCode": {
+    "description": "About life loop: a step"
+  },
+  "aboutFlowApps": "Build apps",
+  "@aboutFlowApps": {
+    "description": "About life loop: a step"
+  },
+  "aboutFlowAutomate": "Automate",
+  "@aboutFlowAutomate": {
+    "description": "About life loop: a step"
+  },
+  "aboutFlowGym": "Gym",
+  "@aboutFlowGym": {
+    "description": "About life loop: a step"
+  },
+  "aboutFlowLabel": "My loop: life, study, code, build apps, automate, gym, and round again.",
+  "@aboutFlowLabel": {
+    "description": "About life loop: what a screen reader hears for the whole animation"
   }
 }

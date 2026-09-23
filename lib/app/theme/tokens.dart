@@ -515,8 +515,13 @@ abstract final class Tokens {
   /// like a bug.
   static const double ornamentParallax = 0.25;
 
-  /// One courtyard panel: the climb, and whatever comes next beside it.
-  static const double courtyardPanelWidth = 340;
+  /// The still of the climb beside the courtyard's Play button: how tall it
+  /// is, and which fresh run it shows. A fixed seed, so the picture is the
+  /// same climb on every visit rather than a new one per page load.
+  static const double courtyardStillHeight = 240;
+
+  /// See [courtyardStillHeight].
+  static const int courtyardStillSeed = 7;
 
   /// One service card, and the mark on it.
   static const double serviceCardWidth = 220, serviceIconSize = 26;
@@ -541,6 +546,9 @@ abstract final class Tokens {
   /// each to its own text made the panel look like rubble; sizing each to a
   /// share of the row made "Dart" mostly empty box.
   static const double skillChipWidth = 168;
+
+  /// How many chips an open skills group shows before "N more".
+  static const int skillsPreviewCount = 15;
 
   /// How the gold glow behind a hovered contact card is thrown.
   static const double contactGlowAlpha = 0.35, contactGlowBlur = 18;
@@ -697,6 +705,68 @@ abstract final class Tokens {
   /// indistinguishable from no torch — which is exactly how the first broken
   /// version of this went unnoticed.
   static const double wallTorchTouchPeak = 0.85;
+
+  /// The picture beside the hero: its shape (width over height), how long
+  /// the sun takes to rise or set when the theme changes, and how quickly the
+  /// layers follow the pointer each frame (a share of the remaining distance).
+  static const double heroSceneAspect = 0.96, heroParallaxEase = 0.08;
+
+  /// See [heroSceneAspect].
+  static const Duration heroSunTravel = Duration(milliseconds: 2400);
+
+  /// The sun's button: its hit area as a multiple of the disc's radius, the
+  /// focus ring's radius, and the faience wash of a press.
+  static const double heroSunTargetScale = 2.6,
+      heroSunFocusRadius = 999,
+      heroSunSplashAlpha = 0.18;
+
+  /// The life loop on `/about`: one step's share of a run (a run is six of
+  /// them), the loop's height, a node's size and the width its label may use.
+  static const Duration lifeFlowStep = Duration(milliseconds: 1400);
+
+  /// See [lifeFlowStep].
+  static const double lifeFlowHeight = 560,
+      lifeFlowNodeSize = 56,
+      lifeFlowLabelWidth = 120;
+
+  /// The widest the life loop runs when it stacks under the biography.
+  static const double lifeFlowMaxWidth = 420;
+
+  /// A running node's light, and the tick a finished node keeps.
+  static const double lifeFlowGlowAlpha = 0.35,
+      lifeFlowGlowBlur = 18,
+      lifeFlowTickSize = 18,
+      lifeFlowTickInset = 6;
+
+  /// How the hero's width is shared between the copy and the picture.
+  static const int heroCopyFlex = 11, heroSceneFlex = 9;
+
+  /// A career card splits into facts and story from this width, and shares
+  /// it between them in this ratio.
+  static const double careerCardSplitWidth = 720;
+
+  /// See [careerCardSplitWidth].
+  static const int careerFactsFlex = 2, careerStoryFlex = 3;
+
+  /// The narrowest a career stop card may be in its grid.
+  static const double stopCardMinWidth = 220;
+
+  /// The narrowest hero that gets the picture beside it. Below this the copy
+  /// needs the width, and the picture would be a postage stamp.
+  static const double heroSceneMinWidth = 900;
+
+  /// How strongly the wall shows at rest when it is the whole page's
+  /// background.
+  ///
+  /// On a wide screen the wall stopped being a column beside the copy and
+  /// became the pattern behind everything, at the owner's suggestion. He
+  /// suggested half; at half, and then at 0.3, the pale signs still ran
+  /// through the grey positioning line in a browser -- they are light on dark,
+  /// so they carry further than the number suggests. This is the resting
+  /// strength only: the torch still lights a sign to full gold, so the carving
+  /// comes up bright wherever the pointer holds the light and stays out of the
+  /// way of the reading everywhere else.
+  static const double wallPatternOpacity = 0.2;
 
   /// Where in the wave a gilded sign starts to bloom.
   static const double wallShimmerBloomAt = 0.62;
