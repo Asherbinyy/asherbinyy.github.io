@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/widgets/disclosure_chevron.dart';
 import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/profile.dart';
@@ -231,9 +232,11 @@ class _GroupLabelState extends State<_GroupLabel> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // The rule grows when the group is open: the same mark the
-                  // site already uses, carrying the state instead of a
-                  // borrowed chevron.
+                  // The rule grows when the group is open. It is not enough
+                  // on its own: a hairline going from 16 to 32 pixels does
+                  // not read as a control, and the closed groups looked like
+                  // headings with nothing under them. The chevron after the
+                  // count is the same one every other disclosure uses.
                   AnimatedContainer(
                     duration: ReducedMotion.duration(context, Motion.quick),
                     curve: MotionCurves.emphasized,
@@ -245,7 +248,10 @@ class _GroupLabelState extends State<_GroupLabel> {
                   Text(
                     widget.label,
                     style: context.type.telemetryS.copyWith(
-                      color: isLit ? tokens.textPrimary : tokens.textMuted,
+                      // Secondary rather than muted at rest: muted is for
+                      // disabled things, and this is the most important
+                      // control in the group.
+                      color: isLit ? tokens.textPrimary : tokens.textSecondary,
                     ),
                   ),
                   SizedBox(width: tokens.space8),
@@ -255,6 +261,8 @@ class _GroupLabelState extends State<_GroupLabel> {
                       color: tokens.instrumentDim,
                     ),
                   ),
+                  SizedBox(width: tokens.space4),
+                  DisclosureChevron(isOpen: widget.isOpen, isLit: isLit),
                 ],
               ),
             ),
