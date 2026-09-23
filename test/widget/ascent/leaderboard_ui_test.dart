@@ -38,6 +38,7 @@ Future<void> _pumpPanel(
   required (int, String) Function() reply,
   bool refreshFirst = true,
   String language = 'en',
+  Widget panel = const LeaderboardPanel(),
 }) async {
   final container = ProviderContainer(
     overrides: [
@@ -59,7 +60,7 @@ Future<void> _pumpPanel(
       container: container,
       child: LoadingHarness(
         language: language,
-        child: const _Machine(child: LeaderboardPanel()),
+        child: _Machine(child: panel),
       ),
     ),
   );
@@ -110,6 +111,109 @@ void main() {
         find.text('Every height here was replayed on the server.'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('the first three places are marked, the rest are numbered', (
+      tester,
+    ) async {
+      // The owner asked for an emoji on the top three. It is also the thing
+      // that makes the rail legible at a glance during a climb -- and the
+      // reason it stops at three is that a column of identical medals marks
+      // nothing at all.
+      await _pumpPanel(
+        tester,
+        reply: () => (
+          200,
+          jsonEncode({
+            'entries': [
+              {'rank': 1, 'nickname': 'Ahmed', 'metres': 507},
+              {'rank': 2, 'nickname': 'Nour', 'metres': 362},
+              {'rank': 3, 'nickname': 'Salma', 'metres': 140},
+              {'rank': 4, 'nickname': 'Omar', 'metres': 98},
+            ],
+          }),
+        ),
+      );
+
+      expect(find.text('\u{1F947}'), findsOneWidget);
+      expect(find.text('\u{1F948}'), findsOneWidget);
+      expect(find.text('\u{1F949}'), findsOneWidget);
+      expect(find.text('4'), findsOneWidget);
+      // The medal is decoration; the rank is what is announced.
+      expect(
+        find.bySemanticsLabel('1. Ahmed, 507 m'),
+        findsOneWidget,
+        reason: 'a screen reader was read an emoji instead of a place',
+      );
+    });
+
+    testWidgets('it stops at five, however many the server sends', (
+      tester,
+    ) async {
+      await _pumpPanel(
+        tester,
+        reply: () => (
+          200,
+          jsonEncode({
+            'entries': [
+              for (var rank = 1; rank <= 9; rank++)
+                {
+                  'rank': rank,
+                  'nickname': 'Climber $rank',
+                  'metres': 500 - rank,
+                },
+            ],
+          }),
+        ),
+      );
+
+      expect(find.text('Climber 5'), findsOneWidget);
+      expect(find.text('Climber 6'), findsNothing);
+    });
+
+    testWidgets('the rail beside the climb drops everything but the names', (
+      tester,
+    ) async {
+      // The quiet variant sits over the playfield, so it loses the border, the
+      // footnote and -- when the board cannot be reached -- itself. What it
+      // must not lose is the title, because a column of names with no heading
+      // over a game is not obviously a leaderboard at all.
+      await _pumpPanel(
+        tester,
+        panel: const LeaderboardPanel(isQuiet: true),
+        reply: () => (
+          200,
+          jsonEncode({
+            'entries': [
+              {'rank': 1, 'nickname': 'Ahmed', 'metres': 507},
+            ],
+          }),
+        ),
+      );
+
+      expect(find.text('Top climbers'), findsOneWidget);
+      expect(find.text('Ahmed'), findsOneWidget);
+      expect(
+        find.text('Every height here was replayed on the server.'),
+        findsNothing,
+      );
+    });
+
+    testWidgets('the rail says nothing at all when the board is away', (
+      tester,
+    ) async {
+      // A retry button floating over a game somebody is playing is an errand.
+      // The results screen behind it offers the same button at the moment it
+      // is worth pressing.
+      await _pumpPanel(
+        tester,
+        panel: const LeaderboardPanel(isQuiet: true),
+        reply: () => (503, ''),
+      );
+
+      expect(find.text('The board is not answering.'), findsNothing);
+      expect(find.text('Try again'), findsNothing);
+      expect(find.text('Top climbers'), findsNothing);
     });
 
     testWidgets('an empty board is not confused with a broken one', (
@@ -184,9 +288,11 @@ void main() {
   });
 
   group('the join prompt', () {
-    testWidgets('says what becomes public before anything is chosen', (
-      tester,
-    ) async {
+    testWidgets('asks for a name and nothing else', (tester) async {
+      // The owner's instruction, in as many words: "just ask the name to join
+      // the leaderboard, that's it, no more and no hints". This is the guard
+      // on that -- the next person to feel the sheet is under-explained will
+      // reach for a paragraph, and the paragraph is what was wrong with it.
       Participation? chosen;
       await tester.pumpWidget(
         ProviderScope(
@@ -198,15 +304,23 @@ void main() {
         ),
       );
 
-      expect(find.text('Climb for the record?'), findsOneWidget);
+      // What it still says is enough to know where the name goes: the sheet is
+      // titled with the board, the field is labelled for it, and so is the
+      // button. Disclosure by naming rather than by explaining.
+      expect(find.text('Top climbers'), findsOneWidget);
+      expect(find.text('Name on the board'), findsOneWidget);
+      expect(find.text('Join the board'), findsOneWidget);
+
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.byType(Checkbox), findsNothing);
       expect(
-        find.textContaining('public board'),
-        findsOneWidget,
-        reason: 'joining must state what is published before it happens',
+        find.textContaining('No account'),
+        findsNothing,
+        reason: 'the explanatory paragraph is back',
       );
       expect(
         find.text('A place belongs to a browser, not a person.'),
-        findsOneWidget,
+        findsNothing,
       );
       expect(chosen, isNull, reason: 'showing the prompt decided something');
     });
@@ -266,7 +380,13 @@ void main() {
       expect(chosen, isA<PlayingLocally>());
     });
 
-    testWidgets('a choice not to be remembered stores nothing', (tester) async {
+    testWidgets('remembers either answer, so it is only asked once', (
+      tester,
+    ) async {
+      // The tick box that used to ask went with the rest of the sheet, which
+      // makes this the assertion that matters: both answers have to stick.
+      // If a decline stopped being stored, the prompt would come back after
+      // every single climb, which is the toll gate the design rules out.
       Participation? chosen;
       await tester.pumpWidget(
         ProviderScope(
@@ -278,18 +398,21 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byType(Checkbox));
-      await tester.pump();
       await tester.enterText(find.byType(TextField), 'Ahmed');
       await tester.pump();
       await tester.tap(find.text('Join the board'));
       await tester.pump();
 
-      expect((chosen! as Joined).remembered, isFalse);
+      expect((chosen! as Joined).remembered, isTrue);
+      expect(chosen!.persisted(), isNotNull);
+
+      await tester.tap(find.text('Just play'));
+      await tester.pump();
+      expect(chosen, isA<PlayingLocally>());
       expect(
         chosen!.persisted(),
-        isNull,
-        reason: 'a visitor who declined to be remembered was remembered',
+        isNotNull,
+        reason: 'a visitor who declined would be asked again every climb',
       );
     });
   });

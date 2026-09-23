@@ -5,7 +5,7 @@
 /// Cloudflare Worker, in JavaScript — and re-deriving Dart's internal generator
 /// from its source would be a guess dressed up as a contract. So the generator
 /// is ours, it is thirty lines, and `worker/src/game/ascent.js` contains the
-/// same thirty lines. `worker/contracts/fixtures/ascent-v1-vectors.json` is
+/// same thirty lines. `worker/contracts/fixtures/ascent-vectors.json` is
 /// what proves the two agree; neither implementation is trusted on its looks.
 ///
 /// Every operation here stays inside 32 bits, and every product is split into

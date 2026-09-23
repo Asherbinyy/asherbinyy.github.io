@@ -12,6 +12,7 @@ class AscentOutcome {
     required this.metres,
     required this.ticks,
     required this.endedInFall,
+    this.boonsTaken = 0,
   });
 
   /// The height reached, in whole metres. The score.
@@ -23,19 +24,29 @@ class AscentOutcome {
   /// Whether the climber fell, rather than the tape simply stopping.
   final bool endedInFall;
 
+  /// How many boons the run took.
+  ///
+  /// Checked across the two implementations rather than reported to anybody. A
+  /// disagreement about whether the climber passed near enough to an ankh only
+  /// shows up in the height once the extra lift has changed a landing, which
+  /// might be a hundred metres later or not on this run at all.
+  final int boonsTaken;
+
   @override
   bool operator ==(Object other) =>
       other is AscentOutcome &&
       other.metres == metres &&
       other.ticks == ticks &&
-      other.endedInFall == endedInFall;
+      other.endedInFall == endedInFall &&
+      other.boonsTaken == boonsTaken;
 
   @override
-  int get hashCode => Object.hash(metres, ticks, endedInFall);
+  int get hashCode => Object.hash(metres, ticks, endedInFall, boonsTaken);
 
   @override
   String toString() =>
-      'AscentOutcome(metres: $metres, ticks: $ticks, fell: $endedInFall)';
+      'AscentOutcome(metres: $metres, ticks: $ticks, fell: $endedInFall, '
+      'boons: $boonsTaken)';
 }
 
 /// The climb, driven at a fixed rate.
@@ -147,6 +158,7 @@ class AscentSimulation {
       metres: world.metres,
       ticks: ticks,
       endedInFall: world.isOver,
+      boonsTaken: world.boonsTaken,
     );
   }
 }

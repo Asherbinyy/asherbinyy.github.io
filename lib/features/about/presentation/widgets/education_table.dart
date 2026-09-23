@@ -11,6 +11,7 @@ import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/education.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
+import 'package:nocturne/core/widgets/disclosure_chevron.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
 
@@ -188,17 +189,7 @@ class _EntryState extends State<_Entry> {
                             ),
                           ),
                           SizedBox(width: tokens.space8),
-                          AnimatedRotation(
-                            turns: _expanded ? 0.5 : 0,
-                            duration: ReducedMotion.duration(
-                              context,
-                              Tokens.quick,
-                            ),
-                            child: Icon(
-                              Icons.expand_more,
-                              color: tokens.beacon,
-                            ),
-                          ),
+                          DisclosureChevron(isOpen: _expanded),
                         ],
                       ),
                     ),

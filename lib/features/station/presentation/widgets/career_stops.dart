@@ -198,41 +198,45 @@ class _StopState extends State<_Stop> {
                     // Bounded, so a long name shortens instead of pushing the
                     // card off a phone. "University of Salford" does not fit
                     // a 312px column and the card must not try to make it.
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: Tokens.stopCardTextWidth,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          AnimatedDefaultTextStyle(
-                            duration: ReducedMotion.duration(
-                              context,
-                              Motion.quick,
+                    // Flexible as well, because on a phone the column is
+                    // narrower again once the wall has its own edge.
+                    Flexible(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: Tokens.stopCardTextWidth,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AnimatedDefaultTextStyle(
+                              duration: ReducedMotion.duration(
+                                context,
+                                Motion.quick,
+                              ),
+                              style: type.telemetryS.copyWith(
+                                color: isLit ? tokens.beacon : tokens.textMuted,
+                              ),
+                              child: Text(_year),
                             ),
-                            style: type.telemetryS.copyWith(
-                              color: isLit ? tokens.beacon : tokens.textMuted,
+                            AnimatedDefaultTextStyle(
+                              duration: ReducedMotion.duration(
+                                context,
+                                Motion.quick,
+                              ),
+                              style: type.body.copyWith(
+                                color: isLit
+                                    ? tokens.textPrimary
+                                    : tokens.textSecondary,
+                              ),
+                              child: Text(
+                                _name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                            child: Text(_year),
-                          ),
-                          AnimatedDefaultTextStyle(
-                            duration: ReducedMotion.duration(
-                              context,
-                              Motion.quick,
-                            ),
-                            style: type.body.copyWith(
-                              color: isLit
-                                  ? tokens.textPrimary
-                                  : tokens.textSecondary,
-                            ),
-                            child: Text(
-                              _name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ],

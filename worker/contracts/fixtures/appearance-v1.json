@@ -1,0 +1,15 @@
+{
+  "note": "The renderer allowlist, asserted by both the Flutter app and the Worker. Neither generates it: a list that regenerates itself from one side agrees with that side and proves nothing about the other.",
+  "version": 1,
+  "supported": ["nocturne", "daybreak"],
+  "resolutions": [
+    {"id": null, "state": "unset"},
+    {"id": "", "state": "unset"},
+    {"id": "nocturne", "state": "supported"},
+    {"id": "daybreak", "state": "supported"},
+    {"id": "papyrus-v2", "state": "unsupported"},
+    {"id": "Nocturne", "state": "unsupported"},
+    {"id": "nocturne ", "state": "unsupported"},
+    {"id": "default", "state": "unsupported"}
+  ]
+}

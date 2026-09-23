@@ -35,7 +35,7 @@ class EvenGrid extends StatelessWidget {
     this.spacing,
     this.runSpacing,
     this.maxColumns,
-    this.maxTileWidth,
+    this.stretch = false,
     super.key,
   });
 
@@ -57,36 +57,37 @@ class EvenGrid extends StatelessWidget {
   /// An upper bound on columns, for a set that should not stretch thin.
   final int? maxColumns;
 
-  /// The widest a tile may grow before the row stops filling the space.
+  /// Whether tiles share out the whole row, or stay their declared size.
   ///
-  /// Without this, two cards in a wide container become two enormous cards:
-  /// "Email" and "WhatsApp" each took half a monitor, which is the same fault
-  /// as ragged widths wearing the opposite costume. Past this the tiles keep a
-  /// sensible size and the row aligns to the start instead of stretching.
+  /// False by default, and the default matters. The first version of this
+  /// widget always stretched, and the owner's reaction to the result was the
+  /// correct one: "Dart" became a 230px box with 170px of empty padding in it,
+  /// because equalising widths and filling the row are two different jobs and
+  /// only the first was asked for.
   ///
-  /// Defaults to 1.75x [minTileWidth], which is about as far as a tile can be
-  /// pulled before it stops looking like its siblings.
-  final double? maxTileWidth;
+  /// True suits a card that is mostly a picture -- a service, an application,
+  /// an interest -- where a wider tile means a bigger image. False suits
+  /// anything that is a word in a box, where a wider tile means nothing but
+  /// more space around the word.
+  ///
+  /// Below the compact breakpoint everything fills regardless: a card that
+  /// keeps its desktop width on a phone sits against one edge with all the
+  /// slack on the other, which is the fault this widget was built to fix.
+  final bool stretch;
 
   /// How many columns [width] affords, and how many tiles go on each row.
   ///
   /// Separated out and exercised directly by tests: the arithmetic is the
   /// whole widget, and asserting it through a rendered tree would prove much
   /// less about the cases that actually went wrong.
-  static ({
-    int columns,
-    int perRow,
-    List<int> rowLengths,
-    double tileWidth,
-    bool fillsWidth,
-  })
+  static ({int columns, int perRow, List<int> rowLengths, double tileWidth})
   measure({
     required double width,
     required int count,
     required double minTileWidth,
     required double spacing,
     int? maxColumns,
-    double? maxTileWidth,
+    bool stretch = false,
   }) {
     if (count <= 0 || width <= 0) {
       return (
@@ -94,7 +95,6 @@ class EvenGrid extends StatelessWidget {
         perRow: 1,
         rowLengths: const <int>[],
         tileWidth: math.max(width, 0),
-        fillsWidth: true,
       );
     }
     final fits = ((width + spacing) / (minTileWidth + spacing)).floor();
@@ -116,33 +116,25 @@ class EvenGrid extends StatelessWidget {
       for (var row = 0; row < rows; row++) base + (row < extra ? 1 : 0),
     ];
 
-    // Every tile is the width of a slot in the longest row, so tiles are one
-    // size across the whole grid and a shorter row is simply centred.
+    // Every tile is one width across the whole grid.
+    //
+    // On a phone that width is the column, because a card narrower than the
+    // screen leaves all its slack on one side. Anywhere else it is the size
+    // the caller declared, unless it asked to stretch -- equalising widths and
+    // filling a row are different jobs, and running them together is what
+    // turned a row of short words into a row of mostly-empty boxes.
     final perRow = rowLengths.first;
     final filled = (width - (perRow - 1) * spacing) / perRow;
-
-    // The ceiling stops two cards stretching across a monitor. It is lifted
-    // entirely below the compact breakpoint, because on a phone a full-width
-    // card *is* the right answer and a capped one sits against an edge with
-    // all the slack on the other -- the exact fault this widget exists to fix.
-    //
-    // Two earlier rules were wrong here and both were caught by the sweep
-    // below rather than by reading: capping unconditionally left a card off
-    // centre at 320px, and lifting the cap only when a single column fits
-    // still left one off centre at 360, where two columns fit but only one
-    // card exists. What matters is the width of the screen, not the number of
-    // tiles that would go on it.
     final isPhone = width < Tokens.mediumBreakpoint;
-    final ceiling = isPhone
-        ? double.infinity
-        : (maxTileWidth ?? minTileWidth * 1.75);
-    final tileWidth = math.min(filled, ceiling);
+    final tileWidth = isPhone || stretch
+        ? filled
+        : math.min(minTileWidth, filled);
+
     return (
       columns: columns,
       perRow: perRow,
       rowLengths: rowLengths,
       tileWidth: math.max(tileWidth, 0),
-      fillsWidth: filled <= ceiling,
     );
   }
 
@@ -169,7 +161,7 @@ class EvenGrid extends StatelessWidget {
           minTileWidth: minTileWidth,
           spacing: gap,
           maxColumns: maxColumns,
-          maxTileWidth: maxTileWidth,
+          stretch: stretch,
         );
 
         final rows = <Widget>[];
@@ -181,13 +173,10 @@ class EvenGrid extends StatelessWidget {
           rows.add(
             IntrinsicHeight(
               child: Row(
-                // When the tiles fill the width, centring changes nothing for
-                // a full row and centres a short last one. When they are
-                // capped and the row no longer reaches both edges, the block
-                // reads as a left-aligned set instead of floating.
-                mainAxisAlignment: layout.fillsWidth
-                    ? MainAxisAlignment.center
-                    : MainAxisAlignment.start,
+                // Every row starts at the same edge, always. Centring a short
+                // last row under left-aligned full ones was meant to look
+                // balanced and read as a mistake instead: some rows began at
+                // the margin and some began in the middle of the page.
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (var i = 0; i < slice.length; i++) ...[

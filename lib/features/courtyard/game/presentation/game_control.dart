@@ -44,11 +44,12 @@ class GameControl extends StatefulWidget {
        _isBar = false,
        _isIcon = true;
 
-  /// The wide jump bar: the touch stand-in for the space bar.
+  /// The jump button: the touch stand-in for the space bar.
   ///
-  /// Deliberately much wider than a steering key. It is the only action in the
-  /// game and the one a thumb has to find without looking, so it gets the
-  /// width the keyboard gives the space bar for the same reason.
+  /// Deliberately much bigger than a steering key, and round. It is the only
+  /// action in the game and the one a thumb has to find without looking, which
+  /// is exactly why every phone game with a jump in it draws a fat circle in
+  /// the bottom corner — the owner's reference was Roblox and Roblox is right.
   const GameControl.jump({
     required String this.label,
     required ValueChanged<bool> this.onHeld,
@@ -118,6 +119,13 @@ class _GameControlState extends State<GameControl> {
     final isLit = _isActive || widget.isPrimary;
     final target = context.platform.minimumTarget;
 
+    // Inside the border, not around it.
+    //
+    // The padding used to wrap the whole decorated box, which insets the
+    // *button* from its neighbours and leaves the label sitting against its
+    // own frame. That is what the owner was pointing at in every screenshot:
+    // the buttons had no padding, and adding more of the kind already there
+    // would only have spread them further apart.
     final surface = DecoratedBox(
       decoration: BoxDecoration(
         color: isLit
@@ -125,17 +133,42 @@ class _GameControlState extends State<GameControl> {
             : tokens.surfaceRaised,
         border: Border.all(
           color: isLit ? tokens.beacon : tokens.hairlineStrong,
-          width: tokens.hairlineWidth,
+          // A touch control is held rather than read, so its edge is drawn to
+          // be found by a thumb at the corner of an eye rather than to match
+          // the hairline the rest of the site is ruled with.
+          width: isBar || isKey
+              ? tokens.hairlineWidth * 2
+              : tokens.hairlineWidth,
         ),
-        borderRadius: BorderRadius.circular(tokens.controlRadius),
+        shape: isBar || isKey ? BoxShape.circle : BoxShape.rectangle,
+        borderRadius: isBar || isKey
+            ? null
+            : BorderRadius.circular(tokens.controlRadius),
       ),
-      child: Center(
-        widthFactor: isKey || isBar || isIcon ? null : 1,
-        child: Text(
-          widget.glyph ?? widget.label!,
-          style:
-              (isKey || isIcon ? context.type.heading : context.type.telemetry)
-                  .copyWith(color: isLit ? tokens.beacon : tokens.instrument),
+      child: Padding(
+        padding: isKey || isBar || isIcon
+            ? EdgeInsets.zero
+            : EdgeInsets.symmetric(
+                // Wider than tall, the proportion a label wants. A square of
+                // padding round a line of text reads as a box someone forgot
+                // to fill.
+                horizontal: tokens.space24,
+                vertical: tokens.space12,
+              ),
+        child: Center(
+          widthFactor: isKey || isBar || isIcon ? null : 1,
+          child: Text(
+            // A mark, not a word, on the jump button. It is the only thing on
+            // the screen a thumb has to hit while looking somewhere else, and
+            // an arrow is read in the peripheral vision that a word is not.
+            // The word survives as what it announces.
+            isBar ? '▲' : widget.glyph ?? widget.label!,
+            style:
+                (isKey || isIcon || isBar
+                        ? context.type.heading
+                        : context.type.telemetry)
+                    .copyWith(color: isLit ? tokens.beacon : tokens.instrument),
+          ),
         ),
       ),
     );
@@ -158,31 +191,26 @@ class _GameControlState extends State<GameControl> {
           onTapUp: widget.onHeld != null ? (_) => _setActive(false) : null,
           onTapCancel: widget.onHeld != null ? () => _setActive(false) : null,
           child: isBar
+              // Round and fat. It was a 4x-wide bar running most of the frame,
+              // which is the shape of a space key rather than of the thing a
+              // thumb rests on, and it made the two steering keys look like an
+              // afterthought at the other end of it.
               ? SizedBox(
-                  width: target * 4,
-                  height: target * 1.35,
+                  width: target * 1.9,
+                  height: target * 1.9,
                   child: surface,
                 )
               : isIcon
               ? SizedBox(width: target, height: target, child: surface)
               : isKey
               ? SizedBox(
-                  width: target * 1.35,
-                  height: target * 1.35,
+                  width: target * 1.45,
+                  height: target * 1.45,
                   child: surface,
                 )
               : ConstrainedBox(
                   constraints: BoxConstraints(minHeight: target),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      // Wider than tall. At an even 16 either side the label
-                      // sat hard against the border and the button read as
-                      // cramped, which the owner said of "Climb again".
-                      horizontal: tokens.space32,
-                      vertical: tokens.space12,
-                    ),
-                    child: surface,
-                  ),
+                  child: surface,
                 ),
         ),
       ),

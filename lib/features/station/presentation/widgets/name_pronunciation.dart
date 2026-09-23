@@ -39,7 +39,7 @@ class _NamePronunciationState extends ConsumerState<NamePronunciation>
   StreamSubscription<void>? _finished;
   late final AnimationController _pulse = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1400),
+    duration: Tokens.voicePulse,
   );
   bool _isPlaying = false;
 
@@ -130,10 +130,14 @@ class _NamePronunciationState extends ConsumerState<NamePronunciation>
                   ),
                 ),
                 SizedBox(width: tokens.space8),
-                Text(
-                  l10n.heroSayName,
-                  style: context.type.telemetryS.copyWith(
-                    color: tokens.textMuted,
+                // Flexible, so on a narrow phone or at a large text size the
+                // caption wraps under itself instead of running off the row.
+                Flexible(
+                  child: Text(
+                    l10n.heroSayName,
+                    style: context.type.telemetryS.copyWith(
+                      color: tokens.textMuted,
+                    ),
                   ),
                 ),
               ],

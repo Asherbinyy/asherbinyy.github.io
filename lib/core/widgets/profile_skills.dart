@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/widgets/disclosure_chevron.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/motion/curves.dart';
@@ -194,26 +195,18 @@ class _MoreState extends State<_More> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        widget.label,
-                        style: context.type.bodyS.copyWith(
-                          color: isLit ? tokens.beaconGlow : tokens.beacon,
+                      // Flexible for the same reason as every chip: the panel
+                      // is narrowest on a phone, where the label must wrap.
+                      Flexible(
+                        child: Text(
+                          widget.label,
+                          style: context.type.bodyS.copyWith(
+                            color: isLit ? tokens.beaconGlow : tokens.beacon,
+                          ),
                         ),
                       ),
                       SizedBox(width: tokens.space8),
-                      AnimatedRotation(
-                        turns: widget.isOpen ? 0.5 : 0,
-                        duration: ReducedMotion.duration(
-                          context,
-                          Motion.standard,
-                        ),
-                        curve: MotionCurves.emphasized,
-                        child: Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          size: Tokens.contactIconSize,
-                          color: isLit ? tokens.beaconGlow : tokens.beacon,
-                        ),
-                      ),
+                      DisclosureChevron(isOpen: widget.isOpen, isLit: isLit),
                     ],
                   ),
                 ),

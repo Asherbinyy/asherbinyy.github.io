@@ -50,7 +50,10 @@ void main() {
         'drags', (tester) async {
       await pumpChrome(tester, breakpoint: ChromeBreakpoint.expanded);
 
-      for (final chrome in [AppHeader, AppNav, AppFooter]) {
+      // The footer is not in this list. It closes the page from inside the
+      // scroll now, so it sits in the selectable region with the content --
+      // and it holds no control, so there is no drag for it to steal.
+      for (final chrome in [AppHeader, AppNav]) {
         expect(
           find.descendant(
             of: find.byType(SelectionArea),

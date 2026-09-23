@@ -1,33 +1,25 @@
-import 'dart:async';
-
 import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/app_locale.dart';
-import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/profile.dart';
-import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/papyrus_painter.dart';
 import 'package:nocturne/core/painting/papyrus_roll_painter.dart';
-import 'package:nocturne/core/platform/platform_scope.dart';
-import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/core/widgets/telemetry_value.dart';
 
-/// A figure on a sheet of papyrus that rolls up when you click it.
+/// A figure written on a sheet of papyrus.
 ///
 /// Only the first two figures get this, by the owner's instruction: the years
 /// and the degree. It is not a treatment for every card on the site, and
 /// applying it to the education or career panels was the thing he turned down.
 ///
-/// The behaviour he asked for, exactly: **rolled closed on a click, open again
-/// when the pointer leaves, or on a second click.** The pointer-exit rule is
-/// what keeps it from being a trap — a card you closed and cannot reopen
-/// because the control you would click is now rolled up inside it.
-///
-/// Touch has no pointer to leave, so there the second tap is the whole story.
-/// With reduced motion the roll is instant rather than absent: the state is
-/// information, and removing it would remove the card's only interaction.
+/// It used to roll itself up -- closed under the pointer or on a tap, open
+/// again when the pointer left. That is gone at his request, and his reason is
+/// the right one: these were meant to read as two sheets of papyrus, and a
+/// sheet that spends most of its time wound into a cylinder does not. The
+/// painters that draw the roll are still here and still correct; nothing
+/// drives them.
 class PapyrusStatPanel extends StatefulWidget {
   /// [locale] resolves the label's channel without a `BuildContext` lookup.
   const PapyrusStatPanel({required this.stat, required this.locale, super.key});
@@ -69,57 +61,17 @@ class PapyrusStatPanel extends StatefulWidget {
 
 class _PapyrusStatPanelState extends State<PapyrusStatPanel>
     with SingleTickerProviderStateMixin {
+  /// Held at zero: a sheet, fully unrolled.
   late final AnimationController _roll = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 460),
-    reverseDuration: const Duration(milliseconds: 520),
+    duration: Tokens.papyrusRoll,
+    reverseDuration: Tokens.papyrusUnroll,
   );
-  final WidgetStatesController _states = WidgetStatesController();
 
   @override
   void dispose() {
     _roll.dispose();
-    _states.dispose();
     super.dispose();
-  }
-
-  bool get _closed => _roll.value > 0.5;
-
-  /// Rolls the sheet up. Hovering does this now, not clicking.
-  ///
-  /// The owner asked for the roll to happen under the pointer and to come
-  /// back when it leaves: a sheet on a table lifts as a hand passes over it.
-  /// Tapping still works, because a phone has no hover.
-  void _close() {
-    if (_closed) return;
-    if (ReducedMotion.of(context)) {
-      _roll.value = 1;
-      return;
-    }
-    unawaited(_roll.animateTo(1, curve: Curves.easeInOut));
-  }
-
-  void _toggle() {
-    if (ReducedMotion.of(context)) {
-      _roll.value = _closed ? 0 : 1;
-      return;
-    }
-    // Unrolling is the heavier half: a sheet springs open rather than being
-    // wound, so it gets the easing that overshoots slightly and settles.
-    if (_closed) {
-      unawaited(_roll.animateBack(0, curve: Curves.easeOutBack));
-    } else {
-      unawaited(_roll.animateTo(1, curve: Curves.easeInOut));
-    }
-  }
-
-  void _open() {
-    if (!_closed) return;
-    if (ReducedMotion.of(context)) {
-      _roll.value = 0;
-      return;
-    }
-    unawaited(_roll.animateBack(0, curve: Curves.easeOutBack));
   }
 
   @override
@@ -127,105 +79,89 @@ class _PapyrusStatPanelState extends State<PapyrusStatPanel>
     final tokens = context.tokens;
     final label = widget.stat.label.resolve(widget.locale);
 
+    // A sheet, and it stays one.
+    //
+    // This used to wind itself up as the pointer arrived and unwind as it
+    // left, and tapping did the same. The owner's objection is that the two of
+    // these were meant to read as papyrus and did not -- and the rolling is
+    // why: the thing being shown spent most of its time being a cylinder. So
+    // there is no hover, no tap, no hint and no button. It is a number written
+    // on papyrus, which is all it was ever meant to be.
+    //
+    // The roll stays at zero rather than being torn out. `PapyrusPainter`,
+    // `PapyrusRollPainter` and `_ExposedSheet` all take a roll amount and are
+    // all still correct; reinstating the treatment means driving the
+    // controller again and nothing else.
     return Semantics(
-      button: true,
       label: '${widget.stat.value}. $label',
-      hint: context.l10n.heroStatRollHint,
-      onTap: _toggle,
       child: ExcludeSemantics(
-        child: MouseRegion(
-          // The whole interaction on a pointer: the sheet winds up as the hand
-          // arrives and unwinds as it leaves. There is nothing to click and
-          // nothing to click back.
-          onEnter: (_) => _close(),
-          onExit: (_) => _open(),
-          cursor: context.platform.isPointer
-              ? SystemMouseCursors.click
-              : MouseCursor.defer,
-          child: ListenableBuilder(
-            listenable: _states,
-            builder: (context, child) => FocusRing(
-              isFocused: _states.value.contains(WidgetState.focused),
-              child: InkWell(
-                onTap: _toggle,
-                statesController: _states,
-                hoverColor: Colors.transparent,
-                splashColor: Colors.transparent,
-                highlightColor: Colors.transparent,
-                child: child,
-              ),
-            ),
-            // Width comes from the grid, not from here. Insisting on 200px
-            // inside a 350px phone column is what left these sitting against
-            // the left edge with the slack all on one side.
-            child: SizedBox(
-              width: double.infinity,
-              height: PapyrusStatPanel.height,
-              child: AnimatedBuilder(
-                animation: _roll,
-                builder: (context, _) {
-                  final rolled = _roll.value.clamp(0.0, 1.0);
-                  return Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // The sheet shortens with the roll. Painting it full
-                      // height and putting the cylinder over it left a roll
-                      // sitting on top of a sheet that was still all there.
-                      ClipRect(
-                        clipper: _ExposedSheet(rolled),
-                        child: CustomPaint(
-                          painter: PapyrusPainter(
-                            sheet: tokens.surfaceRaised,
-                            fibre: tokens.hairline,
-                            edge: tokens.hairlineStrong,
-                            hairlineWidth: tokens.hairlineWidth,
-                            fibresAcross: PapyrusStatPanel.fibresAcross,
-                            fibresDown: PapyrusStatPanel.fibresDown,
-                          ),
-                        ),
+        // Width comes from the grid, not from here.
+        child: SizedBox(
+          width: double.infinity,
+          height: PapyrusStatPanel.height,
+          child: AnimatedBuilder(
+            animation: _roll,
+            builder: (context, _) {
+              final rolled = _roll.value.clamp(0.0, 1.0);
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRect(
+                    clipper: _ExposedSheet(rolled),
+                    child: CustomPaint(
+                      painter: PapyrusPainter(
+                        sheet: tokens.surfaceRaised,
+                        fibre: tokens.hairline,
+                        edge: tokens.hairlineStrong,
+                        hairlineWidth: tokens.hairlineWidth,
+                        fibresAcross: PapyrusStatPanel.fibresAcross,
+                        fibresDown: PapyrusStatPanel.fibresDown,
                       ),
-                      // The writing goes away with the sheet it is written on.
-                      ClipRect(
-                        clipper: _ExposedSheet(rolled),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: tokens.space16,
-                            vertical: tokens.space12,
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              TelemetryNumeral(value: widget.stat.value),
-                              // Flexible as well as sized: a text scale this
-                              // was not measured against should shorten the
-                              // label, not paint over the edge of the sheet.
-                              Flexible(
-                                child: Text(
-                                  label,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: context.type.meta,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                    ),
+                  ),
+                  ClipRect(
+                    clipper: _ExposedSheet(rolled),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.space16,
+                        vertical: tokens.space12,
                       ),
-                      CustomPaint(
-                        painter: PapyrusRollPainter(
-                          roll: rolled,
-                          sheet: tokens.surfaceRaised,
-                          fibre: tokens.hairline,
-                          shadow: tokens.surface,
-                          hairlineWidth: tokens.hairlineWidth,
-                        ),
+                      // Centred down the sheet. The height is set for a
+                      // two-line Arabic label, so an English label that fits
+                      // on one line left the bottom half of the sheet empty.
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TelemetryNumeral(value: widget.stat.value),
+                          // Flexible as well as sized: a text scale this was
+                          // not measured against should shorten the label, not
+                          // paint over the edge of the sheet.
+                          Flexible(
+                            child: Text(
+                              label,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.type.meta,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  );
-                },
-              ),
-            ),
+                    ),
+                  ),
+                  CustomPaint(
+                    painter: PapyrusRollPainter(
+                      roll: rolled,
+                      sheet: tokens.surfaceRaised,
+                      fibre: tokens.hairline,
+                      shadow: tokens.surface,
+                      hairlineWidth: tokens.hairlineWidth,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),

@@ -195,4 +195,59 @@ void main() {
       expect(find.byType(RecruiterView), findsNothing);
     });
   });
+
+  group('the work filter', () {
+    testWidgets('shows both sections until asked otherwise', (tester) async {
+      await pumpStation(
+        tester,
+        breakpoint: ChromeBreakpoint.large,
+        initialRoute: AppRoute.work,
+      );
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+
+      expect(find.byType(WorkCard), findsWidgets);
+      expect(find.text(l10n.aboutWriting), findsWidgets);
+    });
+
+    testWidgets('narrowing to the writing puts the applications away', (
+      tester,
+    ) async {
+      await pumpStation(
+        tester,
+        breakpoint: ChromeBreakpoint.large,
+        initialRoute: AppRoute.work,
+      );
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+
+      await tester.tap(find.byKey(WorkScreen.filterKey('writing')));
+      await pumpFrames(tester);
+
+      // Asserted on the cards rather than the heading: "Apps" is both a
+      // section heading and a filter chip, so the word is still on the page
+      // when the section is not.
+      expect(
+        find.byType(WorkCard),
+        findsNothing,
+        reason: 'the applications survived a writing-only filter',
+      );
+      expect(find.text(l10n.aboutWriting), findsWidgets);
+    });
+
+    testWidgets('and back again, without reloading the page', (tester) async {
+      await pumpStation(
+        tester,
+        breakpoint: ChromeBreakpoint.large,
+        initialRoute: AppRoute.work,
+      );
+      final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+
+      await tester.tap(find.byKey(WorkScreen.filterKey('writing')));
+      await pumpFrames(tester);
+      await tester.tap(find.byKey(WorkScreen.filterKey('everything')));
+      await pumpFrames(tester);
+
+      expect(find.byType(WorkCard), findsWidgets);
+      expect(find.text(l10n.aboutWriting), findsWidgets);
+    });
+  });
 }

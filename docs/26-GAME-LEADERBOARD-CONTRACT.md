@@ -2,18 +2,29 @@
 
 Updated 2026-09-13. Owner request: a more engaging game, a one-time player prompt and a visible top 5/top 10 board, retaining only the top 10 scores in the cloud. This explicitly supersedes the earlier no-leaderboard plan. **No leaderboard endpoint, prompt or persistence is implemented yet.** September 14: Claude owns both the Worker and Flutter. Do not deploy during implementation.
 
-## Status — September 16
+## Status — September 17
 
-**The physics is frozen at version 1 and the cross-language replay agreement is proved.** This was the precondition the rest of the document depends on, and it is done:
+**The physics is frozen at version 2 and the cross-language replay agreement is proved.** This was the precondition the rest of the document depends on, and it is done:
 
-- `AscentContract.version = 1`, a fixed timestep of exactly 1/128s, and a specified 32-bit PRNG (`AscentRng`) replacing `dart:math`'s.
+- `AscentContract.version = 2`, a fixed timestep of exactly 1/128s, and a specified 32-bit PRNG (`AscentRng`) replacing `dart:math`'s.
 - A run is a seed plus a base64url input tape, bounded at 15 minutes and 12,000 input changes. A submitted height is never read.
-- `worker/src/game/ascent.js` is the JavaScript half. `worker/contracts/fixtures/ascent-v1-vectors.json` is generated from Dart and asserted by both suites; neither writes it. 56 runs up to 362m agree on metre, tick and ending.
+- `worker/src/game/ascent.js` is the JavaScript half. `worker/contracts/fixtures/ascent-vectors.json` is generated from Dart and asserted by both suites; neither writes it. 56 runs up to 507m agree on metre, tick, ending and boons taken, and eighteen ledges per seed are sampled directly at height so that every level is checked rather than only the part a bot can climb to.
 - CI runs both halves.
 
-Detail and the bugs it found: `worklog/2026-09-16-03-claude-frozen-physics.md`.
+**Version 2 empties the board.** It adds levels every hundred metres, a floor that steps up every fifty, and collectable ankhs that lift the jump — all of which change what a metre costs. A version 1 entry was earned on a different climb and is never ranked against a version 2 one. Detail: `worklog/2026-09-17-01-claude-ascent-v2.md`.
+
+Detail on the freeze itself and the bugs it found: `worklog/2026-09-16-03-claude-frozen-physics.md`.
 
 Still to do, in order: the endpoints below, transactional top-ten storage, and the Flutter participant flow. One correction to make plainly on the board when it ships — replay proves a score is *reachable under the physics*, not that a person reached it; a scripted tape replays exactly like a played one.
+
+### Amendments — September 17
+
+Two product decisions below were overruled by the owner after seeing them built, and the code now follows the amendment rather than the bullet:
+
+- **The prompt asks for a name and nothing else.** "Explain before joining that nickname and qualifying score are public" produced a paragraph, a note about browser identity and a tick box; the owner's instruction was "just ask the name to join the leaderboard, that's it, no more and no hints". Disclosure is now carried by naming rather than explaining — the sheet is titled with the board, the field is labelled *name on the board*, the button says join it, and the board is visible behind it with other people's names on it.
+- **Both answers are remembered.** "Remember only after the visitor explicitly chooses to" was the tick box. Without it, the honest default is to remember either answer: somebody who joins expects to still be on the board next time, and somebody who declines expects not to be asked again after every climb. Dismissing the sheet without answering is still not an answer and still brings it back. Change-name and forget controls are unchanged.
+
+The board is also **top five everywhere**, not five beside play and ten in the results — the owner asked for five, and five is what a rail beside a live climb can be read at a glance.
 
 ## Product decisions
 

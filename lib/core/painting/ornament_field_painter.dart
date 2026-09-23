@@ -35,6 +35,7 @@ class OrnamentFieldPainter extends CustomPainter {
     required this.colour,
     required this.opacity,
     required this.hairlineWidth,
+    this.drift = 0,
   });
 
   /// Distinguishes one route's field from another's.
@@ -49,6 +50,19 @@ class OrnamentFieldPainter extends CustomPainter {
 
   /// Stroke weight for the signs.
   final double hairlineWidth;
+
+  /// How far the field has slid up, in logical pixels.
+  ///
+  /// The wall behind the page moves more slowly than the page does, which is
+  /// the whole of the parallax: two planes at different speeds read as depth,
+  /// and a carved wall that scrolled in lockstep with the text read as
+  /// wallpaper printed on the same sheet.
+  ///
+  /// Only the remainder matters. The field is one tile repeated, so sliding it
+  /// by a whole tile is indistinguishable from not sliding it at all, and
+  /// taking the modulus keeps the number small however far the page is
+  /// scrolled.
+  final double drift;
 
   /// Tile edge in logical pixels.
   static const double tile = 168;
@@ -119,9 +133,14 @@ class OrnamentFieldPainter extends CustomPainter {
 
     final picture = _tilePicture();
     final columns = (size.width / tile).ceil();
-    final rows = (size.height / tile).ceil();
+    // One extra row, because the field is offset upward and the bottom edge
+    // would otherwise show the surface behind it.
+    final rows = (size.height / tile).ceil() + 1;
+    final shift = drift % tile;
 
-    canvas.save();
+    canvas
+      ..save()
+      ..translate(0, -shift);
     for (var row = 0; row < rows; row++) {
       for (var column = 0; column < columns; column++) {
         canvas
@@ -135,6 +154,10 @@ class OrnamentFieldPainter extends CustomPainter {
   }
 
   @override
+  // The drift has to be here, and a test is why it is: `_key` identifies the
+  // tile's *contents*, which the parallax does not change, so a field that
+  // compared only the key would have been handed a new offset every frame and
+  // repainted none of them.
   bool shouldRepaint(OrnamentFieldPainter oldDelegate) =>
-      oldDelegate._key != _key;
+      oldDelegate._key != _key || oldDelegate.drift != drift;
 }

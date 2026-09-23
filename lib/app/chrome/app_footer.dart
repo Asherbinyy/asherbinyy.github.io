@@ -11,10 +11,12 @@ import 'package:nocturne/app/theme/tokens.dart';
 /// `/cv` and `/brief` where a recruiter looks for it.
 ///
 /// The row keeps its height and its top hairline. That is deliberate: the rule
-/// terminates the content column so a short page does not simply stop, and the
-/// reserved height is what stops the footer moving when a page grows. An empty
-/// bar is the honest result of having nothing to say here, and inventing a
-/// tagline to fill it would be exactly the kind of copy the owner objected to.
+/// terminates the content column so a short page does not simply stop. It
+/// closes the page from the end of the scroll rather than sitting fixed under
+/// the viewport, where it cost every screen 48 pixels -- on a phone, with the
+/// two-row header, a fifth of the screen or more was chrome. An empty bar is
+/// the honest result of having nothing to say here, and inventing a tagline to
+/// fill it would be exactly the kind of copy the owner objected to.
 class AppFooter extends StatelessWidget {
   /// Creates the footer.
   const AppFooter({super.key});

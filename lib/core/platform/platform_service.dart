@@ -77,4 +77,19 @@ class PlatformService {
     ViewportClass.expanded => Tokens.expandedGutter,
     ViewportClass.large => Tokens.largeGutter,
   };
+
+  /// The vertical gap between one section of a long page and the next.
+  ///
+  /// It was a flat 96 everywhere, which the owner said made the desktop page
+  /// too spread out — and he is right about why: a gap is read against the
+  /// width beside it, so the same 96 points that separate two sections on a
+  /// phone read as a hole on a 1440 monitor with a measure-capped column in the
+  /// middle of it. It gets *smaller* as the frame grows, which is the opposite
+  /// of the usual rule and the correct one here.
+  double get sectionGap => switch (viewport) {
+    ViewportClass.compact => Tokens.space64,
+    ViewportClass.medium => Tokens.space64,
+    ViewportClass.expanded => Tokens.space48,
+    ViewportClass.large => Tokens.space48,
+  };
 }

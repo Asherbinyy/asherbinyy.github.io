@@ -5,16 +5,19 @@ import 'package:nocturne/core/widgets/even_grid.dart';
 
 import '../support/loading_harness.dart';
 
-/// Cards sit square in their column, at every width.
+/// Cards sit square in their column on a phone, and line up on a desktop.
 ///
-/// The owner's report was "on the phone, most of the cards are on the left side
-/// not centered". Every instance had the same shape: a card with a fixed width
-/// inside a column wider than it, so all the slack fell on one side — a 200px
-/// stat panel in a 350px phone column left 150px of it, all on the right.
+/// Two reports, and the second corrected the first. "On the phone, most of the
+/// cards are on the left side not centered" was a card with a fixed width in
+/// a wider column — a 200px stat panel in a 350px column left 150px of slack,
+/// all of it on the right. Below the compact breakpoint a tile takes the
+/// column.
 ///
-/// This measures the thing that was wrong. A grid's tiles must either fill the
-/// row or sit with equal space on both sides; there is no arrangement where one
-/// edge gets the remainder.
+/// The fix for that went too far: short rows were centred while full rows
+/// filled, and the owner's second report was the right one — "you made some
+/// start from the beginning then the rest start from the centre". So every row
+/// starts at the same edge, always, and what a phone guarantees is that a full
+/// row reaches both of them.
 void main() {
   /// Renders [count] marked tiles in a [width]-wide box and reports each row's
   /// left and right margins.
@@ -59,7 +62,7 @@ void main() {
   }
 
   group('a phone column', () {
-    testWidgets('one card fills it rather than hugging the left edge', (
+    testWidgets('a full row reaches both edges rather than hugging one', (
       tester,
     ) async {
       // The exact case from the home page: a 200px stat panel on a 350px
@@ -71,30 +74,18 @@ void main() {
         minTileWidth: 200,
       );
       for (final row in rows) {
+        expect(row.left, closeTo(0, 0.5));
         expect(
-          row.left,
-          closeTo(row.right, 0.5),
-          reason: 'a card sat off-centre: ${row.left} left, ${row.right} right',
+          row.right,
+          closeTo(0, 0.5),
+          reason: 'a phone card left slack at one edge: ${row.right}px',
         );
       }
     });
 
-    testWidgets('a short last row is centred, not left behind', (tester) async {
-      final rows = await rowsOf(
-        tester,
-        count: 5,
-        width: 360,
-        minTileWidth: 160,
-      );
-      expect(rows, hasLength(3), reason: 'two columns over five tiles');
-      for (final row in rows) {
-        expect(row.left, closeTo(row.right, 0.5));
-      }
-    });
-  });
-
-  group('every phone width, not just the one that was reported', () {
-    testWidgets('no row ever favours one edge', (tester) async {
+    testWidgets('every row begins at the same edge', (tester) async {
+      // Never centred, whatever the row holds. A short last row sitting in the
+      // middle under left-aligned full ones reads as a mistake, not a balance.
       for (final width in [320.0, 360.0, 390.0, 414.0, 430.0]) {
         for (final count in [1, 2, 3, 5, 8, 13]) {
           final rows = await rowsOf(
@@ -106,10 +97,10 @@ void main() {
           for (final row in rows) {
             expect(
               row.left,
-              closeTo(row.right, 0.5),
+              closeTo(0, 0.5),
               reason:
-                  'off-centre at width=$width count=$count: '
-                  '${row.left} left, ${row.right} right',
+                  'a row was indented at width=$width count=$count: '
+                  '${row.left}px',
             );
           }
         }
@@ -117,15 +108,12 @@ void main() {
     });
   });
 
-  group('a wide screen keeps the block against the reading edge', () {
-    testWidgets('a couple of cards start at the left, not in the middle', (
+  group('a wide screen', () {
+    testWidgets('tiles keep their declared size instead of filling', (
       tester,
     ) async {
-      // The opposite failure, and it is not the same bug: under a left-aligned
-      // heading, two cards floated to the centre of a 1440 monitor look
-      // detached from it. Narrow screens centre because the tile fills; wide
-      // ones align, because there the block genuinely is narrower than the
-      // page.
+      // Equalising widths and filling a row are different jobs. Running them
+      // together gave a short word a box three times its length.
       final rows = await rowsOf(
         tester,
         count: 2,
@@ -133,7 +121,7 @@ void main() {
         minTileWidth: 160,
       );
       expect(rows.single.left, closeTo(0, 0.5));
-      expect(rows.single.right, greaterThan(100));
+      expect(rows.single.right, greaterThan(1000));
     });
   });
 }

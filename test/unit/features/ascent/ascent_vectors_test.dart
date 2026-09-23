@@ -22,7 +22,7 @@ import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
 /// worklog. The old board does not carry over.
 void main() {
   final fixture = jsonDecode(
-    File('worker/contracts/fixtures/ascent-v1-vectors.json').readAsStringSync(),
+    File('worker/contracts/fixtures/ascent-vectors.json').readAsStringSync(),
   ) as Map<String, dynamic>;
 
   // Two halves, not one getUint64: a Dart int is signed, so a pattern with the
@@ -118,6 +118,16 @@ void main() {
     });
   });
 
+  void expectLedge(Ledge got, Map<String, dynamic> want, String where) {
+    expect(got.id, want['id'], reason: where);
+    expect(got.kind.name, want['kind'], reason: '$where kind');
+    expect(bits(got.x), want['x'], reason: '$where x');
+    expect(bits(got.y), want['y'], reason: '$where y');
+    expect(bits(got.width), want['width'], reason: '$where width');
+    expect(bits(got.drift), want['drift'], reason: '$where drift');
+    expect(got.hasBoon, want['hasBoon'], reason: '$where boon');
+  }
+
   test('a shaft is a pure function of its seed', () {
     for (final vector in fixture['shafts'] as List<dynamic>) {
       final entry = vector as Map<String, dynamic>;
@@ -126,24 +136,75 @@ void main() {
       final expected = entry['ledges'] as List<dynamic>;
       expect(world.ledges, hasLength(expected.length));
       for (var i = 0; i < expected.length; i++) {
-        final want = expected[i] as Map<String, dynamic>;
-        final got = world.ledges[i];
-        expect(got.id, want['id'], reason: 'seed $seed, ledge $i');
-        expect(got.kind.name, want['kind'], reason: 'seed $seed, ledge $i');
-        expect(bits(got.x), want['x'], reason: 'seed $seed, ledge $i x');
-        expect(bits(got.y), want['y'], reason: 'seed $seed, ledge $i y');
-        expect(
-          bits(got.width),
-          want['width'],
-          reason: 'seed $seed, ledge $i w',
-        );
-        expect(
-          bits(got.drift),
-          want['drift'],
-          reason: 'seed $seed, ledge $i drift',
+        expectLedge(
+          world.ledges[i],
+          expected[i] as Map<String, dynamic>,
+          'seed $seed, ledge $i',
         );
       }
     }
+  });
+
+  test('every level builds the shaft its mode calls for', () {
+    // Sampled at height rather than climbed to. No recorded run reaches the
+    // third or fourth level -- the bot in the generator is not that good -- so
+    // without these two hundred metres of shaft would be ground that neither
+    // implementation had ever been checked on.
+    for (final vector in fixture['levels'] as List<dynamic>) {
+      final entry = vector as Map<String, dynamic>;
+      final seed = entry['seed'] as int;
+      final expected = entry['ledges'] as List<dynamic>;
+      for (var i = 0; i < expected.length; i++) {
+        final want = expected[i] as Map<String, dynamic>;
+        final data = ByteData(8)
+          ..setUint32(
+            0,
+            int.parse((want['y'] as String).substring(0, 8), radix: 16),
+          )
+          ..setUint32(
+            4,
+            int.parse((want['y'] as String).substring(8), radix: 16),
+          );
+        expectLedge(
+          AscentWorld.generate(want['id']! as int, data.getFloat64(0), seed),
+          want,
+          'seed $seed, sample $i',
+        );
+      }
+    }
+  });
+
+  test('the samples cover every level and both sides of the boon floor', () {
+    // The fixture is only as good as the heights it was taken at. This is the
+    // guard that notices if somebody trims the sample list back to the part of
+    // the shaft a player usually sees.
+    final levels = <int>{};
+    var withBoon = 0;
+    var withoutBoon = 0;
+    for (final vector in fixture['levels'] as List<dynamic>) {
+      for (final row
+          in (vector as Map<String, dynamic>)['ledges'] as List<dynamic>) {
+        final want = row as Map<String, dynamic>;
+        final data = ByteData(8)
+          ..setUint32(
+            0,
+            int.parse((want['y'] as String).substring(0, 8), radix: 16),
+          )
+          ..setUint32(
+            4,
+            int.parse((want['y'] as String).substring(8), radix: 16),
+          );
+        levels.add((data.getFloat64(0) / AscentWorld.levelHeight).floor());
+        if (want['hasBoon'] == true) {
+          withBoon++;
+        } else {
+          withoutBoon++;
+        }
+      }
+    }
+    expect(levels, containsAll([0, 1, 2, 3]));
+    expect(withBoon, greaterThan(0), reason: 'no sampled ledge carries a boon');
+    expect(withoutBoon, greaterThan(0));
   });
 
   group('the tape', () {
@@ -209,6 +270,7 @@ void main() {
             metres: entry['metres'] as int,
             ticks: entry['ticks'] as int,
             endedInFall: entry['endedInFall'] as bool,
+            boonsTaken: entry['boonsTaken'] as int,
           ),
           reason: '${entry['script']} on seed ${entry['seed']}',
         );
@@ -248,6 +310,14 @@ void main() {
         ].where((fell) => fell == true),
         isNotEmpty,
         reason: 'no vector ends in a fall, so the loss condition is untested',
+      );
+      expect(
+        [
+          for (final vector in fixture['runs'] as List<dynamic>)
+            (vector as Map<String, dynamic>)['boonsTaken']! as int,
+        ].reduce((a, b) => a + b),
+        greaterThan(0),
+        reason: 'no vector ever takes a boon, so the lift is untested',
       );
     });
   });

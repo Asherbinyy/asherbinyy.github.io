@@ -6,16 +6,24 @@ import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/features/courtyard/game/domain/leaderboard.dart';
 import 'package:nocturne/features/courtyard/game/presentation/game_control.dart';
 
-/// The one question this feature asks, asked once.
+/// The one question this feature asks, asked once: what to call you.
 ///
-/// Two answers, neither of them a default and neither of them buried. Joining
-/// says what becomes public before it happens rather than after; playing on is
-/// a button of the same size, not a dismissal in grey text.
+/// A name, and two buttons. That is the whole sheet, on the owner's
+/// instruction — "just ask the name to join the leaderboard, that's it, no more
+/// and no hints". What went was a paragraph explaining what a public board is,
+/// a note about places belonging to browsers, and a tick box offering to
+/// remember somebody who is in the middle of asking to be remembered.
 ///
-/// "Once" is the whole design. A modal that reappears every time somebody
+/// None of that was dishonest and all of it was in the way. What it was there
+/// to disclose is said by the things that remain: the sheet is titled with the
+/// board, the field is labelled *name on the board*, the button says join it,
+/// and the board itself is on the screen behind with other people's names on
+/// it. Somebody typing into this knows where it goes.
+///
+/// "Once" is the rest of the design. A modal that reappears every time somebody
 /// presses Play is not a consent prompt, it is a toll gate, so the answer is
-/// remembered when the visitor says it may be — and when they say it may not,
-/// the honest consequence is being asked again, which they chose.
+/// remembered either way — joining and declining both stick, and only
+/// dismissing the sheet without answering brings it back.
 class JoinPrompt extends StatefulWidget {
   /// Creates the prompt.
   const JoinPrompt({required this.onChosen, super.key});
@@ -43,8 +51,13 @@ class JoinPrompt extends StatefulWidget {
 class _JoinPromptState extends State<JoinPrompt> {
   final TextEditingController _name = TextEditingController();
   final FocusNode _nameFocus = FocusNode(debugLabel: 'ascent-nickname');
-  bool _remember = true;
   bool _showError = false;
+
+  /// Answers are remembered. The tick box that used to ask is gone with the
+  /// rest of the sheet, and true is the reading that matches what the buttons
+  /// say: somebody who joins a board expects to still be on it next time, and
+  /// somebody who declines expects not to be asked again every climb.
+  static const bool _remember = true;
 
   @override
   void dispose() {
@@ -106,23 +119,14 @@ class _JoinPromptState extends State<JoinPrompt> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.ascentJoinTitle,
+                  l10n.ascentBoardTitle,
                   style: type.heading.copyWith(color: tokens.textPrimary),
                 ),
-                SizedBox(height: tokens.space12),
-                Text(
-                  l10n.ascentJoinBody,
-                  style: type.body.copyWith(color: tokens.textSecondary),
-                ),
-                SizedBox(height: tokens.space8),
-                Text(
-                  l10n.ascentBoardBrowser,
-                  style: type.telemetryS.copyWith(color: tokens.textMuted),
-                ),
-                SizedBox(height: tokens.space24),
+                SizedBox(height: tokens.space16),
                 TextField(
                   controller: _name,
                   focusNode: _nameFocus,
+                  autofocus: true,
                   maxLength: 16,
                   textInputAction: TextInputAction.done,
                   onChanged: (_) {
@@ -133,30 +137,6 @@ class _JoinPromptState extends State<JoinPrompt> {
                     labelText: l10n.ascentJoinName,
                     errorText: _showError ? l10n.ascentJoinNameError : null,
                     counterText: '',
-                  ),
-                ),
-                SizedBox(height: tokens.space8),
-                InkWell(
-                  onTap: () => setState(() => _remember = !_remember),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: tokens.space4),
-                    child: Row(
-                      children: [
-                        Checkbox(
-                          value: _remember,
-                          onChanged: (value) =>
-                              setState(() => _remember = value ?? false),
-                        ),
-                        Expanded(
-                          child: Text(
-                            l10n.ascentJoinRemember,
-                            style: type.body.copyWith(
-                              color: tokens.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
                 SizedBox(height: tokens.space24),
@@ -172,7 +152,7 @@ class _JoinPromptState extends State<JoinPrompt> {
                     GameControl(
                       label: l10n.ascentJoinLocal,
                       onPressed: () => widget.onChosen(
-                        PlayingLocally(remembered: _remember),
+                        const PlayingLocally(remembered: _remember),
                       ),
                     ),
                   ],

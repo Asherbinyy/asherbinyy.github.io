@@ -12,6 +12,7 @@ import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/features/station/presentation/widgets/cq_response.dart';
 import 'package:nocturne/features/station/presentation/widgets/cv_button.dart';
@@ -25,6 +26,7 @@ import 'package:nocturne/features/about/presentation/widgets/contact_links.dart'
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_stops.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
+import 'package:nocturne/features/trace/presentation/telemetry_trace.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
 /// The ground station: the acquisition sequence, then the settled hero.
@@ -41,44 +43,54 @@ class StationScreen extends ConsumerWidget {
     final locale = ref.watch(localeControllerProvider);
     final profile = ref.watch(profileProvider);
 
-    return Padding(
-      padding: EdgeInsetsDirectional.only(
-        start: context.platform.gutter,
-        end: context.platform.gutter,
-        top: context.tokens.space64,
-        bottom: context.tokens.space64,
-      ),
-      child: Align(
-        // Left-aligned to the rail. The screen spec is explicit that nothing
-        // in the hero is centred.
-        alignment: AlignmentDirectional.topStart,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            switch (profile) {
-              AsyncData(:final value) => _Resolved(
-                result: value,
-                locale: locale,
-                acquisitionReveal: acquisitionReveal,
-              ),
-              AsyncError() => const _Unavailable(),
-              _ => const _Loading(),
-            },
-            // Roadmap 3.4's one easter egg. Silent and invisible until a
-            // viewer types CQ; its height is reserved either way so an answer
-            // never reflows the page.
-            const CqResponse(),
-            _Career(locale: locale),
-            // The forward-looking half. Everything above this is what has
-            // already happened; this is the one line on Home that answers
-            // "can you build me one?".
-            const _ServicesDoor(),
-            // The way to reach him, at the foot of the page he lands on. A
-            // visitor who has read to the bottom of Home should not have to
-            // find About to send an email.
-            const _Reach(),
-          ],
+    // The wall runs down the trailing edge behind this page. On a desk the
+    // copy is measure-limited and clears it on its own; on a phone it fills
+    // the width, so it has to be told to stop where the wall starts.
+    final isCompact = context.platform.viewport == ViewportClass.compact;
+
+    return LayoutBuilder(
+      builder: (context, constraints) => Padding(
+        padding: EdgeInsetsDirectional.only(
+          start: context.platform.gutter,
+          end: isCompact
+              ? TelemetryTrace.compactFootprint(constraints.maxWidth) +
+                    context.tokens.space12
+              : context.platform.gutter,
+          top: context.tokens.space64,
+          bottom: context.tokens.space64,
+        ),
+        child: Align(
+          // Left-aligned to the rail. The screen spec is explicit that nothing
+          // in the hero is centred.
+          alignment: AlignmentDirectional.topStart,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              switch (profile) {
+                AsyncData(:final value) => _Resolved(
+                  result: value,
+                  locale: locale,
+                  acquisitionReveal: acquisitionReveal,
+                ),
+                AsyncError() => const _Unavailable(),
+                _ => const _Loading(),
+              },
+              // Roadmap 3.4's one easter egg. Silent and invisible until a
+              // viewer types CQ; its height is reserved either way so an answer
+              // never reflows the page.
+              const CqResponse(),
+              _Career(locale: locale),
+              // The forward-looking half. Everything above this is what has
+              // already happened; this is the one line on Home that answers
+              // "can you build me one?".
+              const _ServicesDoor(),
+              // The way to reach him, at the foot of the page he lands on. A
+              // visitor who has read to the bottom of Home should not have to
+              // find About to send an email.
+              const _Reach(),
+            ],
+          ),
         ),
       ),
     );
@@ -93,7 +105,7 @@ class _ServicesDoor extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     return Padding(
-      padding: EdgeInsets.only(top: context.tokens.space96),
+      padding: EdgeInsets.only(top: context.platform.sectionGap),
       // Wrapped, because on a phone the question and the button do not share
       // a line and a Row would push one of them off the screen.
       child: Wrap(
@@ -130,7 +142,7 @@ class _Reach extends ConsumerWidget {
     if (profile == null) return const SizedBox.shrink();
 
     return Padding(
-      padding: EdgeInsets.only(top: context.tokens.space96),
+      padding: EdgeInsets.only(top: context.platform.sectionGap),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -173,7 +185,7 @@ class _Career extends ConsumerWidget {
     final ordered = [...roles]..sort((a, b) => b.start.compareTo(a.start));
 
     return Padding(
-      padding: EdgeInsets.only(top: context.tokens.space96),
+      padding: EdgeInsets.only(top: context.platform.sectionGap),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

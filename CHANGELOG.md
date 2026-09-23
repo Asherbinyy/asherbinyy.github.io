@@ -5,6 +5,16 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### Merged to `main`, 2026-09-23 (owner-approved after localhost review)
+
+- **Home:** on a phone the copy stops where the hieroglyph wall starts; the wall moves behind the page and lights on a phone; the career unrolls; the two stat sheets centre their content.
+- **Chrome:** the empty footer closes the page instead of sitting fixed under every screen; the phone nav brings the current page's link into view and fades whichever edge has more links.
+- **Work and Services:** a filter on the Treasury; the Services panel uses its width; card sector badges and the "Wanna chat?" heading are limestone, not gold; each card's sign sits above its name.
+- **Design consistency:** equal card widths without stretching, one leading edge for every row, Writing aligned with the other pages, one disclosure chevron everywhere, no empty portrait frame on About.
+- **Game:** the Ascent has levels and ankhs, and the board stays visible during a climb (desk only).
+- **Theme:** one versioned renderer allowlist shared by the app and the Worker contract (the Worker itself is deployed separately).
+- Verified on the merged tree before merge: format, analyze, 805 app tests, 83.6% coverage, 327 Worker tests, Wasm build.
+
 - Connected the admin to the current Flutter portfolio, including a real half-screen preview, independent collapsible panels, every public page, honest charts, Services/social fields, uploaded media and existing theme/font defaults. Removed the rejected decorative admin accents and enabled the reviewed transactional content store.
 
 - Activated the game leaderboard and custom-domain Worker origin at `sherbini.uk`; fixed production challenge timestamps and aligned admin bundle loading with its permitted origin.

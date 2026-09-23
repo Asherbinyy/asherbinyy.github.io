@@ -34,6 +34,7 @@ class StationCardPainter extends CustomPainter {
     required this.hairlineWidth,
     this.latitude,
     this.longitude,
+    this.isNamed = false,
   });
 
   /// Application id; the only input to the deterministic layout.
@@ -56,6 +57,15 @@ class StationCardPainter extends CustomPainter {
 
   /// Longitude of the application's country, when the content records one.
   final double? longitude;
+
+  /// Whether the card prints its name over the lower half of this artwork.
+  ///
+  /// The sign sat in the dead centre of the seal, and a name set large along
+  /// the bottom reached up into it -- "Tripster" split around its sign, the C
+  /// of "AZ Courses" drawn through one. A named card lifts the sign into
+  /// the upper part of the seal, clear of the name; an unnamed thumbnail keeps
+  /// it centred, which is where a seal's sign belongs.
+  final bool isNamed;
 
   /// Resolves the constellation for [size].
   ///
@@ -112,13 +122,7 @@ class StationCardPainter extends CustomPainter {
 
     // The seal's ring. Drawn first and inset from the card, so the marks sit
     // inside an impression rather than floating on a panel.
-    final inset = math.min(size.width, size.height) * _ringInset;
-    final ring = Rect.fromLTRB(
-      inset,
-      inset,
-      size.width - inset,
-      size.height - inset,
-    );
+    final ring = _ringFor(size);
     final ringPaint = Paint()
       ..color = linkColour
       ..style = PaintingStyle.stroke
@@ -175,7 +179,7 @@ class StationCardPainter extends CustomPainter {
     final glyphBox = math.min(ring.width, ring.height) * _glyphShare;
     if (glyphBox <= 0) return;
     final ornament = Ornament.values[seed.nextInt(Ornament.values.length)];
-    final origin = ring.center.translate(-glyphBox / 2, -glyphBox / 2);
+    final origin = signCentreFor(size).translate(-glyphBox / 2, -glyphBox / 2);
     final path = Path();
     for (final stroke in OrnamentPaths.strokes(ornament, glyphBox)) {
       path.moveTo(origin.dx + stroke.first.x, origin.dy + stroke.first.y);
@@ -194,12 +198,33 @@ class StationCardPainter extends CustomPainter {
     );
   }
 
+  /// Where the seal's sign is centred for [size]; see [isNamed].
+  ///
+  /// Exposed for the same reason as [nodesFor]: so where the sign sits can be
+  /// asserted directly rather than read off a rendered image.
+  Offset signCentreFor(Size size) {
+    final ring = _ringFor(size);
+    return isNamed
+        ? Offset(ring.center.dx, ring.top + ring.height * _namedGlyphCentre)
+        : ring.center;
+  }
+
+  Rect _ringFor(Size size) {
+    final inset = math.min(size.width, size.height) * _ringInset;
+    return Rect.fromLTRB(inset, inset, size.width - inset, size.height - inset);
+  }
+
   /// How far the seal's ring sits inside the card, as a fraction of its
   /// shorter side.
   static const double _ringInset = 0.06;
 
   /// The sign's share of the ring.
   static const double _glyphShare = 0.34;
+
+  /// Where a named card's sign is centred, as a share of the ring's height
+  /// from its top: high enough that the sign's box ends above a display-size
+  /// name, low enough that it stays inside the seal.
+  static const double _namedGlyphCentre = 0.36;
 
   @override
   bool shouldRepaint(StationCardPainter oldDelegate) =>
@@ -209,5 +234,6 @@ class StationCardPainter extends CustomPainter {
       oldDelegate.linkColour != linkColour ||
       oldDelegate.hairlineWidth != hairlineWidth ||
       oldDelegate.latitude != latitude ||
-      oldDelegate.longitude != longitude;
+      oldDelegate.longitude != longitude ||
+      oldDelegate.isNamed != isNamed;
 }

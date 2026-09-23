@@ -72,14 +72,16 @@ class ContactLinks extends StatelessWidget {
     // The two ways of reaching him, kept apart. The first is a message; the
     // rest are places to go and read. Mixing them made a row of eight
     // identical cards where the important one was third from the left.
+    // Booking is deliberately not in this row. It was the third identical
+    // card, which made "send a message" and "take an hour of his week" look
+    // like the same size of decision -- and the owner asked for it to be its
+    // own thing, after an "or".
     final direct = <(String, IconData, Uri)>[
       ('Email', SimpleIcons.gmail, Uri(scheme: 'mailto', path: contact.email)),
       if (contact.whatsapp ?? _whatsApp(contact.phone) case final url?)
         ('WhatsApp', SimpleIcons.whatsapp, url),
-      if (includesBooking)
-        if (contact.calendly case final url?)
-          ('Book a call', SimpleIcons.calendly, url),
     ];
+    final booking = includesBooking ? contact.calendly : null;
 
     final social = <(String, IconData, Uri)>[
       // Linktree first: it is the one page that collects the rest, so a reader
@@ -108,6 +110,12 @@ class ContactLinks extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _Row(destinations: direct),
+        if (booking != null) ...[
+          SizedBox(height: tokens.space16),
+          _Or(text: context.l10n.contactOr),
+          SizedBox(height: tokens.space16),
+          _BookingCard(url: booking),
+        ],
         if (social.isNotEmpty) ...[
           SizedBox(height: tokens.space24),
           _Label(text: context.l10n.contactSocial),
@@ -305,6 +313,157 @@ class _ContactLinkState extends State<_ContactLink> {
                                 ? tokens.beaconGlow
                                 : tokens.beacon,
                           ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// The word between two ways of doing something, with a rule either side.
+class _Or extends StatelessWidget {
+  const _Or({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final line = Expanded(
+      child: SizedBox(
+        height: tokens.hairlineWidth,
+        child: ColoredBox(color: tokens.hairline),
+      ),
+    );
+    return Row(
+      children: [
+        line,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: tokens.space12),
+          child: Text(
+            text,
+            style: context.type.telemetryS.copyWith(color: tokens.textMuted),
+          ),
+        ),
+        line,
+      ],
+    );
+  }
+}
+
+/// Booking a call, as a thing of its own rather than a third link.
+///
+/// It used to be one of three identical cards, which made "send an email" and
+/// "put an hour in his calendar" read as the same size of decision. This one
+/// carries a sentence and the site's own gold, because it is the action the
+/// page actually wants.
+///
+/// It does not name a duration. The owner suggested "30 mins", and the length
+/// of the meeting is a fact about his Calendly rather than something this file
+/// can know -- printing a number the booking page then contradicts is worse
+/// than not printing one.
+class _BookingCard extends StatefulWidget {
+  const _BookingCard({required this.url});
+
+  final Uri url;
+
+  @override
+  State<_BookingCard> createState() => _BookingCardState();
+}
+
+class _BookingCardState extends State<_BookingCard> {
+  final WidgetStatesController _states = WidgetStatesController();
+
+  @override
+  void dispose() {
+    _states.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final type = context.type;
+    final l10n = context.l10n;
+
+    return Semantics(
+      link: true,
+      label: l10n.aboutOpenLink(l10n.contactBookTitle),
+      child: ListenableBuilder(
+        listenable: _states,
+        builder: (context, _) {
+          final isLit =
+              _states.value.contains(WidgetState.hovered) ||
+              _states.value.contains(WidgetState.focused);
+          return FocusRing(
+            isFocused: _states.value.contains(WidgetState.focused),
+            child: InkWell(
+              onTap: () => unawaited(
+                launchUrl(widget.url, mode: LaunchMode.externalApplication),
+              ),
+              statesController: _states,
+              borderRadius: BorderRadius.circular(tokens.controlRadius),
+              hoverColor: Colors.transparent,
+              mouseCursor: context.platform.isPointer
+                  ? SystemMouseCursors.click
+                  : MouseCursor.defer,
+              child: ExcludeSemantics(
+                child: AnimatedContainer(
+                  duration: ReducedMotion.duration(context, Motion.quick),
+                  curve: MotionCurves.emphasized,
+                  padding: EdgeInsets.all(tokens.space16),
+                  decoration: BoxDecoration(
+                    color: isLit
+                        ? tokens.beacon.withValues(alpha: 0.10)
+                        : tokens.surface,
+                    borderRadius: BorderRadius.circular(tokens.controlRadius),
+                    border: Border.all(
+                      color: tokens.beacon,
+                      width: tokens.hairlineWidth,
+                    ),
+                    boxShadow: isLit
+                        ? [
+                            BoxShadow(
+                              color: tokens.beacon.withValues(
+                                alpha: Tokens.contactGlowAlpha,
+                              ),
+                              blurRadius: Tokens.contactGlowBlur,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        SimpleIcons.calendly,
+                        size: Tokens.serviceIconSize,
+                        color: tokens.beacon,
+                      ),
+                      SizedBox(width: tokens.space16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              l10n.contactBookTitle,
+                              style: type.body.copyWith(color: tokens.beacon),
+                            ),
+                            SizedBox(height: tokens.space4),
+                            Text(
+                              l10n.contactBookBody,
+                              style: type.telemetryS.copyWith(
+                                color: tokens.textMuted,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

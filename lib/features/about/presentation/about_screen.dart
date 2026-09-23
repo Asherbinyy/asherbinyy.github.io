@@ -404,14 +404,12 @@ class _CourtyardDoor extends StatelessWidget {
 class _ReservedColumn extends StatelessWidget {
   const _ReservedColumn();
 
+  // Empty ground, not an empty frame. The column is still held so the page
+  // does not reflow on the day the owner fills it, but it no longer draws a
+  // panel around nothing: in a browser the corner ticks did not read as "a
+  // space being kept", they read as an image that had failed to load, which
+  // is the one thing this comment used to say they would prevent.
   @override
-  Widget build(BuildContext context) => const ExcludeSemantics(
-    child: SizedBox(
-      height: PortraitFrame.height,
-      // The site's own corner ticks, which is how it marks a panel. Without
-      // them this reads as a gap where an image failed to load rather than as
-      // a space being kept.
-      child: InstrumentPanel(child: SizedBox.expand()),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      const ExcludeSemantics(child: SizedBox(height: PortraitFrame.height));
 }

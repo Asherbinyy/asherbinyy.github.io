@@ -84,7 +84,7 @@ arrangement of the same arithmetic is a different answer.
 
 ## The proof
 
-`worker/contracts/fixtures/ascent-v1-vectors.json`, generated from Dart by
+`worker/contracts/fixtures/ascent-vectors.json`, generated from Dart by
 `tool/generate_ascent_vectors.dart` and **read by both test suites, written by
 neither**. A test that can regenerate what it checks against agrees with itself
 and proves nothing.
@@ -140,7 +140,7 @@ That is the argument for writing it twice, in one bug.
 - `lib/features/courtyard/game/presentation/ascent_stage.dart` — modified — drives the simulation, sounds every tick of a late frame.
 - `lib/features/courtyard/game/presentation/ascent_controls.dart` — modified — the pad emits the recorded input type.
 - `worker/src/game/ascent.js` — added.
-- `worker/contracts/fixtures/ascent-v1-vectors.json` — added — generated, not hand-written.
+- `worker/contracts/fixtures/ascent-vectors.json` — added — generated, not hand-written.
 - `tool/generate_ascent_vectors.dart` — added.
 - `test/unit/features/ascent/ascent_vectors_test.dart`, `worker/test/ascent.test.js` — added.
 - `pubspec.yaml` — modified — `meta`.

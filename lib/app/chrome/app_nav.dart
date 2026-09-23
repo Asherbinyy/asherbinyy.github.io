@@ -54,10 +54,14 @@ enum NavDestination {
 /// The header's route links.
 class AppNav extends StatelessWidget {
   /// [current] is the route being displayed, which renders as active.
-  const AppNav({required this.current, super.key});
+  const AppNav({required this.current, this.activeKey, super.key});
 
   /// The active route, or null on a route that is not a destination.
   final AppRoute? current;
+
+  /// Attached to the active link, so a row too wide for its space can
+  /// scroll it into view.
+  final GlobalKey? activeKey;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -65,6 +69,7 @@ class AppNav extends StatelessWidget {
     children: [
       for (final destination in NavDestination.values)
         _NavLink(
+          key: destination.route == current ? activeKey : null,
           destination: destination,
           isActive: destination.route == current,
         ),
@@ -73,7 +78,11 @@ class AppNav extends StatelessWidget {
 }
 
 class _NavLink extends StatefulWidget {
-  const _NavLink({required this.destination, required this.isActive});
+  const _NavLink({
+    required this.destination,
+    required this.isActive,
+    super.key,
+  });
 
   final NavDestination destination;
   final bool isActive;
