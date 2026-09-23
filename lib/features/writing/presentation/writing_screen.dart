@@ -33,21 +33,27 @@ class WritingScreen extends ConsumerWidget {
         top: tokens.space48,
         bottom: tokens.space64,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(l10n.writingHeading, style: context.type.displayM),
-          SizedBox(height: tokens.space8),
-          Text(
-            // The subheading names where the writing lives, because every row
-            // leaves the site and a viewer should know that before clicking.
-            hasArticles ? l10n.writingSubheading : l10n.writingUnavailable,
-            style: context.type.bodyL.copyWith(color: tokens.textSecondary),
-          ),
-          SizedBox(height: tokens.space32),
-          const WritingList(),
-        ],
+      // Held to the leading edge. The grid is narrower than the frame, so on
+      // its own the page shrank to the grid and the frame centred it -- which
+      // put this heading 150 pixels right of every other page's on a desk.
+      child: Align(
+        alignment: AlignmentDirectional.topStart,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.writingHeading, style: context.type.displayM),
+            SizedBox(height: tokens.space8),
+            Text(
+              // The subheading names where the writing lives, because every row
+              // leaves the site and a viewer should know that before clicking.
+              hasArticles ? l10n.writingSubheading : l10n.writingUnavailable,
+              style: context.type.bodyL.copyWith(color: tokens.textSecondary),
+            ),
+            SizedBox(height: tokens.space32),
+            const WritingList(),
+          ],
+        ),
       ),
     );
   }
