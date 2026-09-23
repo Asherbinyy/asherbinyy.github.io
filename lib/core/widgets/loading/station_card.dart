@@ -91,6 +91,14 @@ class StationCard extends StatelessWidget {
     // The sector moved to a badge over the artwork, so it is no longer
     // repeated in the line underneath.
     final telemetry = [if (origin != null) origin];
+    // A thumbnail is too small for display-m to be legible, let alone to fit.
+    // Below that the constellation stands alone, and the name is already
+    // beside it wherever a card this size is used.
+    //
+    // An empty name is also a caller saying it prints the name itself, which
+    // the article card does: drawing it here as well put the headline on the
+    // card twice.
+    final isNamed = name.isNotEmpty && height >= _minimumLabelledHeight(type);
 
     return SizedBox(
       width: width ?? double.infinity,
@@ -110,6 +118,7 @@ class StationCard extends StatelessWidget {
                   hairlineWidth: tokens.hairlineWidth,
                   latitude: latitude,
                   longitude: longitude,
+                  isNamed: isNamed,
                 ),
               ),
             ),
@@ -129,7 +138,9 @@ class StationCard extends StatelessWidget {
                     // Over the page colour rather than the artwork's, so the
                     // badge stays legible wherever the constellation happens
                     // to fall behind it.
-                    color: tokens.surface.withValues(alpha: 0.86),
+                    color: tokens.surface.withValues(
+                      alpha: Tokens.cardBadgeScrimAlpha,
+                    ),
                     borderRadius: BorderRadius.circular(tokens.tagRadius),
                     border: Border.all(
                       color: tokens.hairlineStrong,
@@ -141,21 +152,43 @@ class StationCard extends StatelessWidget {
                       horizontal: tokens.space8,
                       vertical: tokens.space4,
                     ),
+                    // Limestone, not gold. A sector is a category, and gold
+                    // is kept for the person and the things a viewer can act
+                    // on: a gold badge on every card read as a button on
+                    // every card.
                     child: Text(
                       domain,
-                      style: type.meta.copyWith(color: tokens.beacon),
+                      style: type.meta.copyWith(color: tokens.textSecondary),
                     ),
                   ),
                 ),
               ),
-            // A thumbnail is too small for display-m to be legible, let alone
-            // to fit. Below that the constellation stands alone, and the name
-            // is already beside it wherever a card this size is used.
-            //
-            // An empty name is also a caller saying it prints the name itself,
-            // which the article card does: drawing it here as well put the
-            // headline on the card twice.
-            if (name.isNotEmpty && height >= _minimumLabelledHeight(type))
+            // The ground under the name, rising out of nothing so the
+            // constellation stays whole above it. See `cardNameScrimAlpha`.
+            if (isNamed)
+              PositionedDirectional(
+                start: 0,
+                end: 0,
+                bottom: 0,
+                height: height * Tokens.cardNameScrimExtent,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          tokens.surface.withValues(alpha: 0),
+                          tokens.surface.withValues(
+                            alpha: Tokens.cardNameScrimAlpha,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            if (isNamed)
               Padding(
                 padding: EdgeInsets.all(tokens.space16),
                 child: Column(

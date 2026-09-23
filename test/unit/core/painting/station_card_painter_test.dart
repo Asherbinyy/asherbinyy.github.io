@@ -12,6 +12,7 @@ StationCardPainter _painter({
   String seedId = 'az-courses',
   double? latitude,
   double? longitude,
+  bool isNamed = false,
 }) => StationCardPainter(
   seedId: seedId,
   nodeColour: nocturneTokens.instrumentDim,
@@ -20,9 +21,25 @@ StationCardPainter _painter({
   hairlineWidth: Tokens.hairlineWidth,
   latitude: latitude,
   longitude: longitude,
+  isNamed: isNamed,
 );
 
 void main() {
+  test('an unnamed card keeps its sign in the centre of the seal', () {
+    expect(_painter().signCentreFor(_size), _size.center(Offset.zero));
+  });
+
+  test('a named card lifts its sign into the upper half of the seal', () {
+    // The name is set large along the bottom of the card and used to run
+    // through the sign. Lifted, the sign stays centred across and stays inside
+    // the card, but it sits above the middle, where the name does not reach.
+    final lifted = _painter(isNamed: true).signCentreFor(_size);
+
+    expect(lifted.dx, _size.width / 2);
+    expect(lifted.dy, lessThan(_size.height / 2));
+    expect(lifted.dy, greaterThan(0));
+  });
+
   test('the same application id always produces the same constellation', () {
     final first = _painter().nodesFor(_size);
     final second = _painter().nodesFor(_size);

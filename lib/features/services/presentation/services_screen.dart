@@ -230,9 +230,11 @@ class _Invitation extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
+                // A heading, so limestone. The button under it is the ask,
+                // and it is the one gold thing in this panel.
                 Text(
                   l10n.servicesChatHeading,
-                  style: type.heading.copyWith(color: tokens.beacon),
+                  style: type.heading.copyWith(color: tokens.textPrimary),
                 ),
                 SizedBox(height: tokens.space12),
                 Text(
