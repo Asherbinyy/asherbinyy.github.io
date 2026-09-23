@@ -17,6 +17,8 @@ Finish the admin workspace, connect its preview to the current Flutter site, int
 - Enabled the reviewed SQLite `CONTENT_STORE` binding after confirming the production content namespace contained zero keys, so no published content, revision, password or media data required migration.
 - Integrated the custom-domain and leaderboard release while retaining all three Durable Object bindings.
 - Recorded 76 passing end-to-end browser checks and representative desktop, phone and live-preview captures.
+- Merged PR #47 as `f6e831b`, deployed the matching GitHub Pages build in run `35806357378`, and deployed Worker version `889ce68c-54ed-42df-a14f-3a2b287bad14`.
+- Verified the live admin, site, CORS boundary, protected content route and game leaderboard on September 23. The deployed Wasm bundle contains the exact Worker origin used by the preview adapter.
 
 ## Files touched
 - `.github/workflows/ci.yml` — modified — compile the exact deployed admin origin into the Pages preview adapter.
@@ -53,4 +55,4 @@ pinned Flutter build web --wasm               pass
 Static CV, brief and search-metadata publication still require the coordinated HTML release tracked as SEO-5. Extra appearance presets and per-page patterns remain undefined under ADM-6. Exact field-level preview scrolling, physical Safari/Android testing and a screen-reader pass remain open. The existing successful Wasm build still reports the Cupertino icon-font warning.
 
 ## Next
-Merge the checked release, wait for GitHub Pages to publish the matching preview-capable build, deploy the Worker from that same revision, and verify the production origin, routes and bindings.
+Use the hosted admin with the existing production recovery credential and complete owner acceptance on a physical phone and screen reader. Coordinate static CV, brief and search-metadata publication separately if those generated surfaces must update on every admin publish.
