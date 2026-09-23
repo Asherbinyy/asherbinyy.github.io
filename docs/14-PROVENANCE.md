@@ -51,6 +51,7 @@ of 2026-09-07.
 | Seven module marks | `/about` education table | **OWN** | ⚠️ **See §2.3** |
 | "Edumundo simulation — 2nd of cohort" | education highlight | **OWN**, corroborated **MED** (*NEXO: My First Time as CEO*) | ✅ |
 | Dissertation topic | education highlight | **OWN** | ⚠️ Owner asked to withhold until published — **§3.4** |
+| Dissertation mark, 80% | education highlight, `/about` | **OWN**, 2026-09-23 conversation ("for the dissertation … I got 80%") | ✅ Mark only; findings still withheld per §3.4 |
 | BEng, Mansoura, 2015–2020 | `education.json` | **CV1**, **LI-P** | ✅ |
 | Employer names, titles, dates | `career.json` | **CV1**/**CV2**, corroborated **LI-P** | ⚠️ one conflict — **§2.4** |
 | Eleven application entries | `/work` ledger | `apps.json`; store links hand-verified milestone 1 | ✅ |
@@ -379,3 +380,25 @@ New English wording is used literally in Arabic where an approved translation is
 The owner explicitly asked to bring back article images. Six original cover files were retrieved unchanged from the first image in each article’s published RSS body on September 13. `assets/content/writing-covers.json` records the canonical article URL, original CDN URL and bundled asset path for each. They are existing published artwork, not newly generated images or evidence of independent design authorship. No article body is bundled. The browser loads these files from the portfolio’s own origin.
 
 Education facts, marks, dates, highlight text and source artefacts are unchanged by the expandable-card restoration. New UI labels use literal English in Arabic pending approved translation.
+
+## September 23 skills, tools and dissertation mark
+
+The owner asked for the skills to be expanded from his resumes, named Docker himself, and gave the dissertation mark in conversation on 2026-09-23.
+
+| Added content | Source / limit |
+|---|---|
+| Skills: UIKit, iOS, Android, Swift Concurrency, Deep linking, Bluetooth / BLE | **CV2**, SKILLS › Mobile. |
+| Skills: Clean Architecture, SOLID, Design patterns, BLoC, Riverpod, Provider, GetX | **CV2**, SKILLS › Architecture & State Management. |
+| Skills: RESTful APIs, Firebase, Supabase, Core Data, Local persistence | **CV2**, SKILLS › Backend & Data. Firebase's five sub-products are one chip; "Local Persistence, Local storage" are one. |
+| Skills: Unit tests, Widget tests, Integration tests, Golden tests, TDD | **CV2**, SKILLS › Testing & Debugging ("Unit, Widget, Integration & Golden Testing, TDD"), split so each fits a chip. |
+| Skills: Codemagic, Fastlane, App Store Connect, Play Console, TestFlight | **CV2**, SKILLS › CI/CD & Release. "Google Play Console" shortened to Google's own short name so it fits a chip. |
+| Skill: Docker | **OWN**, 2026-09-23 ("there are dockers"). Not on the CV. |
+| Skills: Google Maps, Apple Pay, STC Pay, TAP SDK, Python scripting | **CV2**, SKILLS › Tools & Integrations; the payment integrations also appear in the Techlabs role (**CV1**). |
+| Tools: Xcode, Flutter DevTools, Git, GitHub, GitLab, Azure DevOps, Jira, Trello, Zoho | **CV2**, SKILLS › Mobile, Testing & Debugging, CI/CD & Release, Tools & Integrations. |
+| Dissertation (80%) | **OWN**, 2026-09-23. The MSc's overall mark (79) and Distinction are unchanged; whether 79 already includes the dissertation is not stated, so it was not recalculated. |
+| Courtyard: "Icy Tower was the first game I ever played. This is my tribute to it, rebuilt inside an obelisk." | **OWN**, 2026-09-23 ("I was inspired with the ice tower because it was my first game I played"). Wording by Claude at the owner's request to say it "in a nice articulated way"; Arabic carries the English until translated. |
+| About life loop: Life, Study, Code, Build apps, Automate, Gym | **OWN**, 2026-09-23 ("coding, studying, automating stuff, developing apps … going to the gym"). Labels only: no times, frequencies or order of a real day are claimed. |
+
+The existing six headline skills keep their order, so Home's first chips are unchanged. No proficiency levels, years or project counts were attached to any new skill.
+
+**Conflict noticed, not resolved:** AZ Courses downloads are "15,000+" on **CV2** and on the site, but "Over 8,000" on **LI-X**. The site keeps the CV figure; the owner should reconcile LinkedIn or the CV.
