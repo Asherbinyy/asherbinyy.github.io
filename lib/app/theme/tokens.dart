@@ -520,6 +520,14 @@ abstract final class Tokens {
   /// meant to be legible at a glance becomes a muddle.
   static const double careerThreadGap = 12;
 
+  /// The narrowest column that holds half the skill titles on one line;
+  /// below it they are one wrap rather than two broken halves.
+  static const double skillsTwoLinesFrom = 820;
+
+  /// The phone's stops beside the career cards: the rail's width and the
+  /// mark on it.
+  static const double careerRailCompact = 44, careerRailNode = 36;
+
   /// How fast the carved field travels against the page.
   ///
   /// A quarter of the scroll. Far enough that the two planes separate and the
@@ -557,6 +565,10 @@ abstract final class Tokens {
   /// The narrowest a social profile's tile may be: narrower than the two
   /// ways to message him, so nine profiles take three rows, not five.
   static const double contactSocialWidth = 148;
+
+  /// The "or" line between messaging and booking: four profile tiles and
+  /// the gaps between them, so it ends where they do.
+  static const double contactOrMaxWidth = 640;
 
   /// On a phone: the narrowest a way to message him may be (two across),
   /// and a profile tile (four across).
@@ -712,6 +724,19 @@ abstract final class Tokens {
   /// and anything wider starts competing with the shaft for the middle of the
   /// screen — which is where the thing the player is actually watching is.
   static const double ascentRailWidth = 190;
+
+  /// The touch controls: the share of the screen's width that steers (the
+  /// rest jumps), the stick's base and knob, how far the knob must move
+  /// before it steers, the jump button and its mark, how much of the jump
+  /// button's gold shows at rest, and the fill behind the stick.
+  static const double ascentStickShare = 0.55,
+      ascentStickBase = 120,
+      ascentStickKnob = 52,
+      ascentStickDead = 12,
+      ascentJumpSize = 96,
+      ascentJumpIcon = 40,
+      ascentJumpRest = 0.14,
+      ascentTouchFill = 0.35;
 
   /// The cursor wake: how long a mote lives, how many may live at once, and
   /// how large one starts.
