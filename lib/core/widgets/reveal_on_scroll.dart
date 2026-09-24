@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:nocturne/app/theme/tokens.dart';
+
 import 'package:nocturne/app/chrome/chrome_scaffold.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
@@ -23,7 +25,20 @@ import 'package:nocturne/core/motion/reduced_motion.dart';
 /// unrolling is a flourish, and a flourish is the first thing to go.
 class RevealOnScroll extends StatefulWidget {
   /// Reveals [child] when it reaches [revealAt] of the viewport height.
-  const RevealOnScroll({required this.child, this.revealAt = 0.9, super.key});
+  const RevealOnScroll({
+    required this.child,
+    this.revealAt = 0.9,
+    this.style = RevealStyle.unroll,
+    this.delay = Duration.zero,
+    super.key,
+  });
+
+  /// How the child arrives.
+  final RevealStyle style;
+
+  /// How long after reaching the fold it waits before arriving -- so a row of
+  /// cards can come in one after another rather than all at once.
+  final Duration delay;
 
   /// What is revealed.
   final Widget child;
@@ -34,15 +49,35 @@ class RevealOnScroll extends StatefulWidget {
   /// than after it has already been in view for a moment.
   final double revealAt;
 
+  /// How far the nearest reveal above [context] has got, 0 to 1, so a part
+  /// of a card can finish arriving after the card itself has. Complete where
+  /// there is no reveal above it.
+  static Animation<double> of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_RevealScope>()?.reveal ??
+      kAlwaysCompleteAnimation;
+
   @override
   State<RevealOnScroll> createState() => _RevealOnScrollState();
+}
+
+/// Hands the reveal's progress down to whatever is being revealed.
+class _RevealScope extends InheritedWidget {
+  const _RevealScope({required this.reveal, required super.child});
+
+  final Animation<double> reveal;
+
+  @override
+  bool updateShouldNotify(_RevealScope oldWidget) =>
+      !identical(oldWidget.reveal, reveal);
 }
 
 class _RevealOnScrollState extends State<RevealOnScroll>
     with SingleTickerProviderStateMixin {
   late final AnimationController _reveal = AnimationController(
     vsync: this,
-    duration: Motion.considered,
+    duration: widget.style == RevealStyle.rise
+        ? Tokens.revealRise
+        : Motion.considered,
   );
   bool _started = false;
 
@@ -111,8 +146,12 @@ class _RevealOnScrollState extends State<RevealOnScroll>
     _started = true;
     if (immediate || ReducedMotion.of(context)) {
       _reveal.value = 1;
-    } else {
+    } else if (widget.delay == Duration.zero) {
       _reveal.forward();
+    } else {
+      Future<void>.delayed(widget.delay, () {
+        if (mounted) _reveal.forward();
+      });
     }
   }
 
@@ -124,6 +163,26 @@ class _RevealOnScrollState extends State<RevealOnScroll>
         final value = MotionCurves.emphasized.transform(
           _reveal.value.clamp(0.0, 1.0),
         );
+        if (widget.style == RevealStyle.rise) {
+          // Up from below and in from the trailing side, growing the last
+          // few per cent into place: a card arriving, rather than a line of
+          // text appearing.
+          final isRtl = Directionality.of(context) == TextDirection.rtl;
+          final away = 1 - value;
+          return Opacity(
+            opacity: value.clamp(0.0, 1.0),
+            child: Transform.translate(
+              offset: Offset(
+                (isRtl ? -1 : 1) * away * Tokens.revealRiseSlide,
+                away * Tokens.revealRiseLift,
+              ),
+              child: Transform.scale(
+                scale: 1 - away * Tokens.revealRiseShrink,
+                child: child,
+              ),
+            ),
+          );
+        }
         return Opacity(
           // Fades over the first half only. A sheet is opaque before it is
           // fully unrolled; fading for the whole travel makes it a ghost
@@ -132,7 +191,7 @@ class _RevealOnScrollState extends State<RevealOnScroll>
           child: ClipRect(clipper: _Unrolled(value), child: child),
         );
       },
-      child: widget.child,
+      child: _RevealScope(reveal: _reveal, child: widget.child),
     );
   }
 }
@@ -149,4 +208,13 @@ class _Unrolled extends CustomClipper<Rect> {
 
   @override
   bool shouldReclip(_Unrolled old) => old.progress != progress;
+}
+
+/// How a [RevealOnScroll] child arrives.
+enum RevealStyle {
+  /// Unrolled from its top edge, like a sheet: text that arrives.
+  unroll,
+
+  /// Risen into place from below and the trailing side: a card that arrives.
+  rise,
 }

@@ -7,6 +7,7 @@ import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/content/app_maker.dart';
 import 'package:nocturne/content/app_origin.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
@@ -20,6 +21,7 @@ import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
+import 'package:nocturne/core/widgets/reveal_on_scroll.dart';
 import 'package:nocturne/features/work/presentation/widgets/work_card.dart';
 import 'package:nocturne/features/writing/presentation/widgets/writing_list.dart';
 
@@ -348,13 +350,22 @@ class _Grid extends StatelessWidget {
       minTileWidth: WorkCard.width,
       spacing: tokens.space32,
       stretch: true,
+      // In order: each row full before the next begins.
+      balance: false,
       runSpacing: tokens.space48,
       children: [
-        for (final app in apps)
-          WorkCard(
-            app: app,
-            domainLabel: app.domain.label(l10n),
-            origin: AppOrigins.resolve(app: app, career: career),
+        for (final (index, app) in apps.indexed)
+          // Each card rises in as the reader reaches it, a beat after the one
+          // before it along the row.
+          RevealOnScroll(
+            style: RevealStyle.rise,
+            delay: Tokens.workStagger * (index % 3),
+            child: WorkCard(
+              app: app,
+              domainLabel: app.domain.label(l10n),
+              origin: AppOrigins.resolve(app: app, career: career),
+              maker: AppMakers.resolve(app: app, career: career),
+            ),
           ),
       ],
     );

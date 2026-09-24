@@ -7,17 +7,30 @@ const _size = Size(300, 560);
 const _count = 6;
 
 void main() {
-  test('the nodes zigzag down the column', () {
-    for (var i = 0; i < _count - 1; i++) {
-      final here = LifeFlowPainter.centreOf(i, _count, _size);
-      final next = LifeFlowPainter.centreOf(i + 1, _count, _size);
-      expect(next.dy, greaterThan(here.dy), reason: 'step $i goes down');
-      expect(
-        next.dx == here.dx,
-        isFalse,
-        reason: 'step $i changes side, so the wire can curve',
-      );
+  test('the nodes sit on the ankh, in the order the run reaches them', () {
+    Offset at(int index) => LifeFlowPainter.centreOf(index, _count, _size);
+    // The day starts at the foot of the stem, the lowest point of the sign.
+    for (var i = 1; i < _count; i++) {
+      expect(at(0).dy, greaterThan(at(i).dy), reason: 'the foot is lowest');
     }
+    // The two ends of the bar are level, either side of the stem.
+    expect(at(1).dy, at(5).dy);
+    expect(at(1).dx, lessThan(at(0).dx));
+    expect(at(5).dx, greaterThan(at(0).dx));
+    // The loop sits above the bar: its sides level, its top highest.
+    expect(at(2).dy, at(4).dy);
+    expect(at(2).dy, lessThan(at(1).dy));
+    expect(at(3).dy, lessThan(at(2).dy));
+    expect(at(3).dx, closeTo(at(0).dx, 0.001), reason: 'loop over the stem');
+  });
+
+  test('a wide column gets a wider margin, not a squashed ankh', () {
+    const wide = Size(900, 560);
+    final narrow = LifeFlowPainter.ankhIn(_size);
+    final broad = LifeFlowPainter.ankhIn(wide);
+    expect(broad.rx, lessThanOrEqualTo(wide.height * 0.74 * 0.24 + 0.001));
+    expect(broad.loop.dx, wide.width / 2);
+    expect(narrow.loop.dx, _size.width / 2);
   });
 
   test('every node sits inside the column', () {

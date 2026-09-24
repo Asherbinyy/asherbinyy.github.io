@@ -6,19 +6,21 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/painting/life_flow_painter.dart';
-import 'package:nocturne/core/painting/mark_painter.dart';
 
-/// The owner's life as an automation that runs on a loop.
+/// The owner's life as an automation that runs on a loop -- on the ankh.
 ///
 /// He asked for the space beside his portrait to hold something like an n8n
 /// workflow that represents him -- coding, studying, automating, building
 /// apps, the gym -- animated, running continuously. So it is one: a trigger
-/// and five steps, wired in order, with a run travelling through them. Each
-/// node lights as it executes and keeps a tick once it has, the result moves
-/// down the wire to the next, and the last hands back to the first.
+/// and five steps with a run travelling through them. Each node lights as it
+/// executes and keeps a tick once it has, and the result moves along to the
+/// next.
 ///
-/// The trigger is Life, drawn with the site's own ankh, which is the sign for
-/// it. The steps are his words and nothing more: no hours, no frequencies, no
+/// Then he asked for the automation to run on the ankh itself, and for the
+/// page to say what the ankh means. So the wiring is the sign: the day starts
+/// at the foot of the stem ("Wake up"), goes out along the bar, round the
+/// loop and back, and the line under it says the ankh is the sign for life.
+/// The steps are his words and nothing more: no hours, no frequencies, no
 /// claims the owner has not made.
 ///
 /// Gold is the run, because gold is what is live; the nodes at rest are
@@ -33,7 +35,7 @@ class LifeFlow extends StatefulWidget {
 }
 
 /// One node: what it is called and what it looks like.
-typedef _Step = ({String label, IconData? icon});
+typedef _Step = ({String label, IconData icon});
 
 class _LifeFlowState extends State<LifeFlow>
     with SingleTickerProviderStateMixin {
@@ -102,7 +104,7 @@ class _LifeFlowState extends State<LifeFlow>
     final tokens = context.tokens;
     final l10n = context.l10n;
     final steps = <_Step>[
-      (label: l10n.aboutFlowLife, icon: null),
+      (label: l10n.aboutFlowWake, icon: Icons.wb_twilight_rounded),
       (label: l10n.aboutFlowStudy, icon: Icons.menu_book_rounded),
       (label: l10n.aboutFlowCode, icon: Icons.code_rounded),
       (label: l10n.aboutFlowApps, icon: Icons.smartphone_rounded),
@@ -114,63 +116,78 @@ class _LifeFlowState extends State<LifeFlow>
     return Semantics(
       label: l10n.aboutFlowLabel,
       child: ExcludeSemantics(
-        child: SizedBox(
-          key: _key,
-          height: Tokens.lifeFlowHeight,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final size = constraints.biggest;
-              const node = Tokens.lifeFlowNodeSize;
-              return AnimatedBuilder(
-                animation: Listenable.merge([_run, _hovered]),
-                builder: (context, _) {
-                  // At rest under reduced motion the run has finished: every
-                  // wire travelled, every node ticked, nothing in transit.
-                  final progress = _isReduced
-                      ? _count.toDouble()
-                      : _run.value * _count;
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: LifeFlowPainter(
-                            count: _count,
-                            progress: progress,
-                            nodeSize: node,
-                            wire: tokens.hairlineStrong,
-                            done: tokens.beaconDim,
-                            packet: tokens.beacon,
-                            glow: tokens.beaconGlow,
-                            strokeWidth: tokens.hairlineWidth,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              key: _key,
+              height: Tokens.lifeFlowHeight,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final size = constraints.biggest;
+                  const node = Tokens.lifeFlowNodeSize;
+                  return AnimatedBuilder(
+                    animation: Listenable.merge([_run, _hovered]),
+                    builder: (context, _) {
+                      // At rest under reduced motion the run has finished:
+                      // every wire travelled, every node ticked, nothing in
+                      // transit.
+                      final progress = _isReduced
+                          ? _count.toDouble()
+                          : _run.value * _count;
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: LifeFlowPainter(
+                                count: _count,
+                                progress: progress,
+                                nodeSize: node,
+                                wire: tokens.hairlineStrong,
+                                done: tokens.beaconDim,
+                                packet: tokens.beacon,
+                                glow: tokens.beaconGlow,
+                                strokeWidth: tokens.hairlineWidth,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      for (final (index, step) in steps.indexed)
-                        _positioned(
-                          index,
-                          size,
-                          _FlowNode(
-                            step: step,
-                            isTrigger: index == 0,
-                            isRunning:
-                                !_isReduced &&
-                                progress >= index &&
-                                progress < index + LifeFlowPainter.executing,
-                            isDone:
-                                _isReduced ||
-                                progress >= index + LifeFlowPainter.executing,
-                            isHovered: _hovered.value == index,
-                            onHover: (inside) =>
-                                _hovered.value = inside ? index : null,
-                          ),
-                        ),
-                    ],
+                          for (final (index, step) in steps.indexed)
+                            _positioned(
+                              index,
+                              size,
+                              _FlowNode(
+                                step: step,
+                                isTrigger: index == 0,
+                                isRunning:
+                                    !_isReduced &&
+                                    progress >= index &&
+                                    progress <
+                                        index + LifeFlowPainter.executing,
+                                isDone:
+                                    _isReduced ||
+                                    progress >=
+                                        index + LifeFlowPainter.executing,
+                                isHovered: _hovered.value == index,
+                                onHover: (inside) =>
+                                    _hovered.value = inside ? index : null,
+                              ),
+                            ),
+                        ],
+                      );
+                    },
                   );
                 },
-              );
-            },
-          ),
+              ),
+            ),
+            SizedBox(height: tokens.space16),
+            Text(
+              l10n.aboutFlowCaption,
+              textAlign: TextAlign.center,
+              style: context.type.bodyS.copyWith(color: tokens.textSecondary),
+            ),
+          ],
         ),
       ),
     );
@@ -260,19 +277,11 @@ class _FlowNode extends StatelessWidget {
                           : null,
                     ),
                     child: Center(
-                      child: step.icon == null
-                          ? SizedBox.square(
-                              dimension: size * 0.46,
-                              child: CustomPaint(
-                                painter: MarkPainter(
-                                  colour: isRunning
-                                      ? tokens.beaconGlow
-                                      : tokens.beacon,
-                                  strokeWidth: tokens.hairlineWidth * 2,
-                                ),
-                              ),
-                            )
-                          : Icon(step.icon, size: size * 0.42, color: mark),
+                      child: Icon(
+                        step.icon,
+                        size: size * 0.42,
+                        color: isTrigger && !isRunning ? tokens.beacon : mark,
+                      ),
                     ),
                   ),
                 ),

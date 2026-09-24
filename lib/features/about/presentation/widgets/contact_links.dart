@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -120,7 +122,10 @@ class ContactLinks extends StatelessWidget {
           SizedBox(height: tokens.space24),
           _Label(text: context.l10n.contactSocial),
           SizedBox(height: tokens.space12),
-          _Row(destinations: social),
+          // Narrower tiles than the two ways to message him: nine profiles in
+          // two columns made the contact half of a panel twice the height of
+          // the half beside it.
+          _Row(destinations: social, minTileWidth: Tokens.contactSocialWidth),
         ],
       ],
     );
@@ -148,15 +153,20 @@ class ContactLinks extends StatelessWidget {
 /// which the owner reported as the social links looking unorganised. Equal
 /// tiles, balanced rows.
 class _Row extends StatelessWidget {
-  const _Row({required this.destinations});
+  const _Row({
+    required this.destinations,
+    this.minTileWidth = Tokens.contactCardWidth,
+  });
 
   final List<(String, IconData, Uri)> destinations;
 
+  /// Wide enough for the longest of these words plus its mark, so a column
+  /// is dropped before a name is ever squeezed.
+  final double minTileWidth;
+
   @override
   Widget build(BuildContext context) => EvenGrid(
-    // Wide enough for the longest of these words plus its mark, so a column is
-    // dropped before a name is ever squeezed.
-    minTileWidth: Tokens.contactCardWidth,
+    minTileWidth: minTileWidth,
     children: [
       for (final (name, icon, url) in destinations)
         _ContactLink(name: name, icon: icon, url: url),
@@ -187,7 +197,7 @@ class _Label extends StatelessWidget {
         Flexible(
           child: Text(
             text,
-            style: context.type.telemetryS.copyWith(color: tokens.textMuted),
+            style: context.type.meta.copyWith(color: tokens.textMuted),
           ),
         ),
       ],
@@ -253,7 +263,6 @@ class _ContactLinkState extends State<_ContactLink> {
                 curve: MotionCurves.emphasized,
                 constraints: BoxConstraints(
                   minHeight: context.platform.minimumTarget,
-                  minWidth: Tokens.contactCardWidth,
                 ),
                 padding: EdgeInsets.symmetric(
                   horizontal: tokens.space16,
@@ -353,7 +362,7 @@ class _Or extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: tokens.space12),
           child: Text(
             text,
-            style: context.type.telemetryS.copyWith(color: tokens.textMuted),
+            style: context.type.meta.copyWith(color: tokens.textMuted),
           ),
         ),
         line,
@@ -422,7 +431,16 @@ class _BookingCardState extends State<_BookingCard> {
                 child: AnimatedContainer(
                   duration: ReducedMotion.duration(context, Motion.quick),
                   curve: MotionCurves.emphasized,
-                  padding: EdgeInsets.all(tokens.space16),
+                  // Its own size, not the panel's. Stretched across a whole
+                  // panel it read as a banner rather than a thing to press --
+                  // the owner called it wide and odd.
+                  constraints: const BoxConstraints(
+                    maxWidth: Tokens.bookingCardMaxWidth,
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: tokens.space16,
+                    vertical: tokens.space12,
+                  ),
                   decoration: BoxDecoration(
                     color: isLit
                         ? tokens.beacon.withValues(alpha: 0.10)
@@ -444,14 +462,11 @@ class _BookingCardState extends State<_BookingCard> {
                         : null,
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        SimpleIcons.calendly,
-                        size: Tokens.serviceIconSize,
-                        color: tokens.beacon,
-                      ),
+                      _ShadowClock(isLit: isLit),
                       SizedBox(width: tokens.space16),
-                      Expanded(
+                      Flexible(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
@@ -461,13 +476,28 @@ class _BookingCardState extends State<_BookingCard> {
                               style: type.body.copyWith(color: tokens.beacon),
                             ),
                             SizedBox(height: tokens.space4),
+                            // The body face, not the telemetry one: this is a
+                            // sentence to a person, not a readout.
                             Text(
                               l10n.contactBookBody,
-                              style: type.telemetryS.copyWith(
-                                color: tokens.textMuted,
+                              style: type.bodyS.copyWith(
+                                color: tokens.textSecondary,
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      SizedBox(width: tokens.space16),
+                      AnimatedSlide(
+                        offset: isLit
+                            ? const Offset(Tokens.bookingArrowTravel, 0)
+                            : Offset.zero,
+                        duration: ReducedMotion.duration(context, Motion.quick),
+                        curve: MotionCurves.emphasized,
+                        child: Icon(
+                          Icons.arrow_forward_rounded,
+                          size: Tokens.contactIconSize,
+                          color: isLit ? tokens.beaconGlow : tokens.beacon,
                         ),
                       ),
                     ],
@@ -480,4 +510,139 @@ class _BookingCardState extends State<_BookingCard> {
       ),
     );
   }
+}
+
+/// An Egyptian shadow clock, drawn small: a half dial, its hour lines, and the
+/// shadow the gnomon throws across them.
+///
+/// The booking card's mark, because booking is choosing a time, and this is
+/// how the builders of this site's temples told it. While the card is held
+/// the shadow sweeps the dial -- the hours going by -- and it rests on the
+/// middle hour otherwise. Still under reduced motion.
+class _ShadowClock extends StatefulWidget {
+  const _ShadowClock({required this.isLit});
+
+  final bool isLit;
+
+  @override
+  State<_ShadowClock> createState() => _ShadowClockState();
+}
+
+class _ShadowClockState extends State<_ShadowClock>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _sweep = AnimationController(
+    vsync: this,
+    duration: Tokens.bookingClockSweep,
+    value: 0.5,
+  );
+
+  @override
+  void didUpdateWidget(_ShadowClock oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isLit == oldWidget.isLit) return;
+    if (ReducedMotion.of(context)) return;
+    if (widget.isLit) {
+      _sweep.repeat(reverse: true);
+    } else {
+      _sweep.animateTo(0.5, duration: Motion.standard);
+    }
+  }
+
+  @override
+  void dispose() {
+    _sweep.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return ExcludeSemantics(
+      child: SizedBox.square(
+        dimension: Tokens.bookingClockSize,
+        child: AnimatedBuilder(
+          animation: _sweep,
+          builder: (context, _) => CustomPaint(
+            painter: _ShadowClockPainter(
+              hour: Curves.easeInOut.transform(_sweep.value),
+              dial: widget.isLit ? tokens.beacon : tokens.beaconDim,
+              lines: tokens.hairlineStrong,
+              shadow: widget.isLit ? tokens.beaconGlow : tokens.beacon,
+              strokeWidth: tokens.hairlineWidth,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShadowClockPainter extends CustomPainter {
+  const _ShadowClockPainter({
+    required this.hour,
+    required this.dial,
+    required this.lines,
+    required this.shadow,
+    required this.strokeWidth,
+  });
+
+  /// Where the shadow falls, 0 at dawn to 1 at dusk.
+  final double hour;
+  final Color dial;
+  final Color lines;
+  final Color shadow;
+  final double strokeWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final centre = Offset(size.width / 2, size.height * 0.78);
+    final radius = size.width * 0.44;
+    final rim = Paint()
+      ..color = dial
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth * 1.5
+      ..strokeCap = StrokeCap.round;
+    canvas
+      ..drawArc(
+        Rect.fromCircle(center: centre, radius: radius),
+        math.pi,
+        math.pi,
+        false,
+        rim,
+      )
+      ..drawLine(centre - Offset(radius, 0), centre + Offset(radius, 0), rim);
+    // The hour lines.
+    final tick = Paint()
+      ..color = lines
+      ..strokeWidth = strokeWidth;
+    for (var i = 1; i < 6; i++) {
+      final angle = math.pi + i * math.pi / 6;
+      final direction = Offset(math.cos(angle), math.sin(angle));
+      canvas.drawLine(
+        centre + direction * radius * 0.55,
+        centre + direction * radius * 0.92,
+        tick,
+      );
+    }
+    // The shadow, and the gnomon that throws it.
+    final angle = math.pi + (0.12 + hour * 0.76) * math.pi;
+    canvas
+      ..drawLine(
+        centre,
+        centre + Offset(math.cos(angle), math.sin(angle)) * radius * 0.9,
+        Paint()
+          ..color = shadow
+          ..strokeWidth = strokeWidth * 2
+          ..strokeCap = StrokeCap.round,
+      )
+      ..drawCircle(centre, strokeWidth * 2.2, Paint()..color = shadow);
+  }
+
+  @override
+  bool shouldRepaint(_ShadowClockPainter oldDelegate) =>
+      oldDelegate.hour != hour ||
+      oldDelegate.dial != dial ||
+      oldDelegate.lines != lines ||
+      oldDelegate.shadow != shadow ||
+      oldDelegate.strokeWidth != strokeWidth;
 }

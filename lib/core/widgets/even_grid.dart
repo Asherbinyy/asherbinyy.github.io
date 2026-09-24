@@ -36,6 +36,7 @@ class EvenGrid extends StatelessWidget {
     this.runSpacing,
     this.maxColumns,
     this.stretch = false,
+    this.balance = true,
     super.key,
   });
 
@@ -75,6 +76,14 @@ class EvenGrid extends StatelessWidget {
   /// slack on the other, which is the fault this widget was built to fix.
   final bool stretch;
 
+  /// Whether the items are spread evenly over the rows, or fill each row in
+  /// order and leave the last one short.
+  ///
+  /// True by default, for a set of small equal things. The Work grid turns it
+  /// off: its cards are read in order, and the owner found a card from the
+  /// last row pushed down while a slot above it stood empty.
+  final bool balance;
+
   /// How many columns [width] affords, and how many tiles go on each row.
   ///
   /// Separated out and exercised directly by tests: the arithmetic is the
@@ -88,6 +97,7 @@ class EvenGrid extends StatelessWidget {
     required double spacing,
     int? maxColumns,
     bool stretch = false,
+    bool balance = true,
   }) {
     if (count <= 0 || width <= 0) {
       return (
@@ -112,9 +122,14 @@ class EvenGrid extends StatelessWidget {
     final rows = (count / columns).ceil();
     final base = count ~/ rows;
     final extra = count % rows;
-    final rowLengths = <int>[
-      for (var row = 0; row < rows; row++) base + (row < extra ? 1 : 0),
-    ];
+    final rowLengths = balance
+        ? <int>[
+            for (var row = 0; row < rows; row++) base + (row < extra ? 1 : 0),
+          ]
+        : <int>[
+            for (var row = 0; row < rows - 1; row++) columns,
+            count - columns * (rows - 1),
+          ];
 
     // Every tile is one width across the whole grid.
     //
@@ -162,6 +177,7 @@ class EvenGrid extends StatelessWidget {
           spacing: gap,
           maxColumns: maxColumns,
           stretch: stretch,
+          balance: balance,
         );
 
         final rows = <Widget>[];

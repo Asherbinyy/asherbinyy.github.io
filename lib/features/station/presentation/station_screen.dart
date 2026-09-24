@@ -9,6 +9,7 @@ import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
+import 'package:nocturne/content/models/apps.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
@@ -23,10 +24,12 @@ import 'package:nocturne/core/widgets/loading/carrier_empty_state.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
 import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
+import 'package:nocturne/features/station/presentation/widgets/app_being_built.dart';
+import 'package:nocturne/features/services/presentation/services_screen.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_sequence.dart';
 import 'package:nocturne/features/station/presentation/widgets/career_stops.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
-import 'package:nocturne/core/widgets/profile_skills.dart';
+import 'package:nocturne/core/widgets/skill_groups.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_scene.dart';
 import 'package:nocturne/features/trace/presentation/telemetry_trace.dart';
@@ -99,11 +102,12 @@ class StationScreen extends ConsumerWidget {
 
 /// The end of Home: the ask, and the ways of reaching him.
 ///
-/// It was a line with a button and then a heading over a list, each its own
-/// width -- the question as wide as its words, the links capped to the copy's
-/// measure -- so the page ended on three different edges. One panel the width
-/// of everything above it, laid out like the "Wanna chat?" panel on Services
-/// so the two pages close the same way.
+/// One panel the width of everything above it, laid out like the "Wanna
+/// chat?" panel on Services so the two pages close the same way. The owner
+/// found its left half empty and its words machine-made, so the ask now says
+/// plainly what to send and what comes back, lists what he builds, and -- on
+/// a screen wide enough -- stands beside a phone whose app is put together in
+/// front of the reader, which is the offer drawn rather than described.
 class _Closing extends ConsumerWidget {
   const _Closing();
 
@@ -117,6 +121,7 @@ class _Closing extends ConsumerWidget {
       ContentFallback<Profile>(:final profile) => profile,
       _ => null,
     };
+    final services = profile?.services ?? const <String>[];
 
     final ask = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,16 +129,28 @@ class _Closing extends ConsumerWidget {
       children: [
         Text(l10n.homeServices, style: type.heading),
         SizedBox(height: tokens.space12),
-        // The Services page's own sentence, not a new one: it says what to
-        // send and what comes back, which is what this half of the panel is
-        // for, and it balances the column of ways to reach him beside it.
         ConstrainedBox(
           constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
           child: Text(
-            l10n.servicesChatBody,
+            l10n.homeServicesBody,
             style: type.body.copyWith(color: tokens.textSecondary),
           ),
         ),
+        if (services.isNotEmpty) ...[
+          SizedBox(height: tokens.space24),
+          Text(
+            l10n.homeServicesList,
+            style: type.meta.copyWith(color: tokens.textMuted),
+          ),
+          SizedBox(height: tokens.space12),
+          Wrap(
+            spacing: tokens.space8,
+            runSpacing: tokens.space8,
+            children: [
+              for (final service in services) _ServiceTag(name: service),
+            ],
+          ),
+        ],
         SizedBox(height: tokens.space24),
         BeaconButton(
           label: l10n.homeServicesAction,
@@ -184,9 +201,15 @@ class _Closing extends ConsumerWidget {
                   ],
                 );
               }
+              final hasRoom =
+                  constraints.maxWidth >= Tokens.closingIllustrationFrom;
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (hasRoom) ...[
+                    const AppBeingBuilt(),
+                    SizedBox(width: tokens.space32),
+                  ],
                   Expanded(child: ask),
                   SizedBox(width: tokens.space48),
                   Expanded(child: reach),
@@ -194,6 +217,52 @@ class _Closing extends ConsumerWidget {
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One of the services, named with the mark the Services page gives it.
+///
+/// A label, not a link: eight tab stops that all go to the same page would be
+/// a chore for anyone moving through by keyboard, and the button under them
+/// already goes there.
+class _ServiceTag extends StatelessWidget {
+  const _ServiceTag({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: tokens.surfaceRaised,
+        borderRadius: BorderRadius.circular(tokens.controlRadius),
+        border: Border.all(color: tokens.hairline, width: tokens.hairlineWidth),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: tokens.space12,
+          vertical: tokens.space8,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              serviceIcon(name),
+              size: Tokens.serviceTagIconSize,
+              color: tokens.beaconDim,
+            ),
+            SizedBox(width: tokens.space8),
+            Flexible(
+              child: Text(
+                name,
+                style: context.type.bodyS.copyWith(color: tokens.textPrimary),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -215,6 +284,12 @@ class _Career extends ConsumerWidget {
     if (roles.isEmpty) return const SizedBox.shrink();
 
     final anchorRegistry = ref.watch(traceAnchorRegistryProvider);
+    // The apps, so each stop can show what was built there. A stop whose apps
+    // have not loaded yet simply shows none; nothing waits on them.
+    final apps = switch (ref.watch(appsProvider).valueOrNull) {
+      ContentReady(:final data) => {for (final app in data.apps) app.id: app},
+      _ => const <String, ShippedApp>{},
+    };
     // Most recent first, computed once and handed to both: the index and the
     // sequence have to agree about the order or clicking the third stop lands
     // on the fourth entry.
@@ -232,6 +307,7 @@ class _Career extends ConsumerWidget {
             roles: ordered,
             locale: locale,
             anchorRegistry: anchorRegistry,
+            apps: apps,
           ),
         ],
       ),
@@ -279,7 +355,7 @@ class _Resolved extends StatelessWidget {
         // first of several edges on this page that did not line up.
         SizedBox(
           width: double.infinity,
-          child: ProfileSkills(profile: profile),
+          child: SkillGroups(profile: profile, locale: locale),
         ),
       ],
     );

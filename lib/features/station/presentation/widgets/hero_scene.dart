@@ -162,16 +162,12 @@ class _HeroSceneState extends ConsumerState<HeroScene>
 
     return AspectRatio(
       aspectRatio: Tokens.heroSceneAspect,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(Tokens.cardRadius),
-          border: Border.all(
-            color: tokens.hairline,
-            width: tokens.hairlineWidth,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(Tokens.cardRadius),
+      // No frame. The owner asked for the picture to be part of the page
+      // rather than an image placed on it, in both themes, so its edges fade
+      // into whatever is behind them: the sky's top is already the page's own
+      // colour, and the sides and the foot of the desk dissolve into it.
+      child: ClipRect(
+        child: _EdgeFade(
           child: LayoutBuilder(
             builder: (context, constraints) {
               final size = constraints.biggest;
@@ -334,4 +330,49 @@ class _SunButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Fades a child out at its edges, so it sits in the page instead of on it.
+class _EdgeFade extends StatelessWidget {
+  const _EdgeFade({required this.child});
+
+  final Widget child;
+
+  static Shader _fade(Rect bounds, Axis axis, double start, double end) =>
+      LinearGradient(
+        begin: axis == Axis.horizontal
+            ? Alignment.centerLeft
+            : Alignment.topCenter,
+        end: axis == Axis.horizontal
+            ? Alignment.centerRight
+            : Alignment.bottomCenter,
+        colors: const [
+          Colors.transparent,
+          Colors.white,
+          Colors.white,
+          Colors.transparent,
+        ],
+        stops: [0, start, 1 - end, 1],
+      ).createShader(bounds);
+
+  @override
+  Widget build(BuildContext context) => ShaderMask(
+    blendMode: BlendMode.dstIn,
+    shaderCallback: (bounds) => _fade(
+      bounds,
+      Axis.horizontal,
+      Tokens.heroSceneFadeSides,
+      Tokens.heroSceneFadeSides,
+    ),
+    child: ShaderMask(
+      blendMode: BlendMode.dstIn,
+      shaderCallback: (bounds) => _fade(
+        bounds,
+        Axis.vertical,
+        Tokens.heroSceneFadeTop,
+        Tokens.heroSceneFadeBottom,
+      ),
+      child: child,
+    ),
+  );
 }

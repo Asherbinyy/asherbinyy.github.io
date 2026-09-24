@@ -41,7 +41,7 @@ void main() {
     final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
     for (final label in [
-      l10n.aboutFlowLife,
+      l10n.aboutFlowWake,
       l10n.aboutFlowStudy,
       l10n.aboutFlowCode,
       l10n.aboutFlowApps,
@@ -84,6 +84,24 @@ void main() {
       ),
       findsNWidgets(painter.count),
       reason: 'every node ticked',
+    );
+  });
+
+  testWidgets('says what the ankh it runs on means', (tester) async {
+    await pumpStation(
+      tester,
+      breakpoint: ChromeBreakpoint.large,
+      initialRoute: AppRoute.about,
+      reducedMotion: true,
+    );
+    final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
+
+    expect(
+      find.descendant(
+        of: find.byType(LifeFlow),
+        matching: find.text(l10n.aboutFlowCaption),
+      ),
+      findsOneWidget,
     );
   });
 

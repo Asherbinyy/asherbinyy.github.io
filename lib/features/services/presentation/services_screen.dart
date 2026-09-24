@@ -87,6 +87,10 @@ class ServicesScreen extends ConsumerWidget {
   }
 }
 
+/// The mark for [service], as the Services page draws it: shared so Home can
+/// list the same services with the same marks.
+IconData serviceIcon(String service) => _Offer.iconFor(service);
+
 /// The grid of what he does.
 class _Offer extends StatelessWidget {
   const _Offer({required this.services});

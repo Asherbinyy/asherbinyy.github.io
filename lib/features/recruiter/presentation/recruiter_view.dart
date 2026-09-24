@@ -5,7 +5,7 @@ import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
 import 'package:nocturne/features/about/presentation/widgets/education_table.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:nocturne/core/widgets/profile_skills.dart';
+import 'package:nocturne/core/widgets/skill_groups.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -129,9 +129,12 @@ class _Brief extends StatelessWidget {
             style: type.bodyL.copyWith(color: tokens.textSecondary),
           ),
         ),
-        if (location != null) Text(location.resolve(locale), style: type.meta),
+        if (location != null) ...[
+          SizedBox(height: tokens.space12),
+          Text(location.resolve(locale), style: type.meta),
+        ],
         if (status != null) ...[
-          SizedBox(height: tokens.space8),
+          SizedBox(height: tokens.space12),
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
             child: Text(status.resolve(locale), style: type.body),
@@ -139,7 +142,10 @@ class _Brief extends StatelessWidget {
         ],
         SizedBox(height: tokens.space32),
 
-        ProfileSkills(profile: profile),
+        SkillGroups(profile: profile, locale: locale),
+        // The skills card sat flush on the first row under it, which the
+        // owner saw as the page's spacing coming apart.
+        SizedBox(height: tokens.space48),
 
         // Most recent first. A recruiter reads a summary from the top and
         // stops when they have decided, so the newest role has to be the one
@@ -179,15 +185,11 @@ class _Brief extends StatelessWidget {
         if (featured.isNotEmpty)
           _Row(
             label: l10n.recruiterShipped,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+            // Two columns, like the experience above it: in one it filled
+            // half the page and left the other half empty.
+            child: _Columns(
               children: [
-                for (final app in featured)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: tokens.space8),
-                    child: _App(app: app, locale: locale),
-                  ),
+                for (final app in featured) _App(app: app, locale: locale),
               ],
             ),
           ),
@@ -308,9 +310,13 @@ class _App extends StatelessWidget {
               _Link(label: app.name, url: store),
             if (app.metric case final metric?) ...[
               SizedBox(width: tokens.space12),
-              Text(
-                metric,
-                style: type.telemetryS.copyWith(color: tokens.textMuted),
+              // Flexible: in half a page "50,000+ downloads on Google Play"
+              // is wider than what is left beside the name.
+              Flexible(
+                child: Text(
+                  metric,
+                  style: type.telemetryS.copyWith(color: tokens.textMuted),
+                ),
               ),
             ],
           ],
@@ -415,8 +421,10 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    // A section each, with room between them: at a gap of one line the
+    // label column read as a list of loose words rather than as headings.
     return Padding(
-      padding: EdgeInsets.only(bottom: tokens.space24),
+      padding: EdgeInsets.only(bottom: tokens.space48),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

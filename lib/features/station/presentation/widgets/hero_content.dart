@@ -34,9 +34,13 @@ class HeroContent extends StatelessWidget {
 
   /// How many of the figures are drawn on papyrus.
   ///
-  /// Two: the years and the degree. Named rather than written as a bare 2 at
-  /// the call site so the reason survives the next person to read it.
-  static const int rollingStats = 2;
+  /// Three: the years, the degree, and what he has delivered. It was two, and
+  /// the owner then asked for his thirty-plus apps and projects to be said on
+  /// Home; a third figure drawn as a plain panel beside two sheets of papyrus
+  /// read as a mistake, so the treatment covers the hero's figures -- still
+  /// nowhere else on the site. Named rather than written as a bare 3 at the
+  /// call site so the reason survives the next person to read it.
+  static const int rollingStats = 3;
 
   /// Identity and positioning.
   final Profile profile;

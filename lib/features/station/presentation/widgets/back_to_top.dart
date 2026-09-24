@@ -77,79 +77,91 @@ class _BackToTopState extends State<BackToTop> {
     final tokens = context.tokens;
     final label = context.l10n.stationBackToTop;
 
-    return PositionedDirectional(
-      end: context.platform.gutter,
+    // Centred at the foot of the window, where the owner asked for it: in the
+    // corner it sat on top of the last card's edge and read as part of it.
+    // The strip it sits in lets every other pointer through -- only the
+    // button itself is hit.
+    return Positioned(
+      left: 0,
+      right: 0,
       bottom: tokens.space32,
-      child: IgnorePointer(
-        ignoring: !_isShown,
-        child: AnimatedOpacity(
-          opacity: _isShown ? 1 : 0,
-          duration: ReducedMotion.duration(context, Motion.standard),
-          curve: MotionCurves.emphasized,
-          child: Semantics(
-            button: true,
-            label: label,
-            child: ListenableBuilder(
-              listenable: _states,
-              builder: (context, _) {
-                final isLit = _states.value.contains(WidgetState.hovered);
-                return FocusRing(
-                  isFocused: _states.value.contains(WidgetState.focused),
-                  child: Tooltip(
-                    message: label,
-                    waitDuration: Motion.considered,
-                    textStyle: context.type.meta.copyWith(
-                      color: tokens.textPrimary,
-                    ),
-                    decoration: BoxDecoration(
-                      color: tokens.surfaceRaised,
-                      borderRadius: BorderRadius.circular(tokens.controlRadius),
-                      border: Border.all(
-                        color: tokens.hairline,
-                        width: tokens.hairlineWidth,
+      child: Center(
+        child: IgnorePointer(
+          ignoring: !_isShown,
+          child: AnimatedOpacity(
+            opacity: _isShown ? 1 : 0,
+            duration: ReducedMotion.duration(context, Motion.standard),
+            curve: MotionCurves.emphasized,
+            child: Semantics(
+              button: true,
+              label: label,
+              child: ListenableBuilder(
+                listenable: _states,
+                builder: (context, _) {
+                  final isLit = _states.value.contains(WidgetState.hovered);
+                  return FocusRing(
+                    isFocused: _states.value.contains(WidgetState.focused),
+                    child: Tooltip(
+                      message: label,
+                      waitDuration: Motion.considered,
+                      textStyle: context.type.meta.copyWith(
+                        color: tokens.textPrimary,
                       ),
-                    ),
-                    child: InkWell(
-                      onTap: _goUp,
-                      statesController: _states,
-                      customBorder: const CircleBorder(),
-                      mouseCursor: context.platform.isPointer
-                          ? SystemMouseCursors.click
-                          : MouseCursor.defer,
-                      child: AnimatedContainer(
-                        duration: ReducedMotion.duration(context, Motion.quick),
-                        width: Tokens.backToTopSize,
-                        height: Tokens.backToTopSize,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isLit ? tokens.beacon : tokens.surface,
-                          border: Border.all(
-                            color: isLit
-                                ? tokens.beacon
-                                : tokens.hairlineStrong,
-                            width: tokens.hairlineWidth,
+                      decoration: BoxDecoration(
+                        color: tokens.surfaceRaised,
+                        borderRadius: BorderRadius.circular(
+                          tokens.controlRadius,
+                        ),
+                        border: Border.all(
+                          color: tokens.hairline,
+                          width: tokens.hairlineWidth,
+                        ),
+                      ),
+                      child: InkWell(
+                        onTap: _goUp,
+                        statesController: _states,
+                        customBorder: const CircleBorder(),
+                        mouseCursor: context.platform.isPointer
+                            ? SystemMouseCursors.click
+                            : MouseCursor.defer,
+                        child: AnimatedContainer(
+                          duration: ReducedMotion.duration(
+                            context,
+                            Motion.quick,
                           ),
-                          boxShadow: isLit
-                              ? [
-                                  BoxShadow(
-                                    color: tokens.beacon.withValues(
-                                      alpha: Tokens.contactGlowAlpha,
+                          width: Tokens.backToTopSize,
+                          height: Tokens.backToTopSize,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isLit ? tokens.beacon : tokens.surface,
+                            border: Border.all(
+                              color: isLit
+                                  ? tokens.beacon
+                                  : tokens.hairlineStrong,
+                              width: tokens.hairlineWidth,
+                            ),
+                            boxShadow: isLit
+                                ? [
+                                    BoxShadow(
+                                      color: tokens.beacon.withValues(
+                                        alpha: Tokens.contactGlowAlpha,
+                                      ),
+                                      blurRadius: Tokens.contactGlowBlur,
                                     ),
-                                    blurRadius: Tokens.contactGlowBlur,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Icon(
-                          Icons.arrow_upward_rounded,
-                          size: Tokens.chromeIconSize,
-                          color: isLit ? tokens.void_ : tokens.beacon,
+                                  ]
+                                : null,
+                          ),
+                          child: Icon(
+                            Icons.arrow_upward_rounded,
+                            size: Tokens.chromeIconSize,
+                            color: isLit ? tokens.void_ : tokens.beacon,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),
