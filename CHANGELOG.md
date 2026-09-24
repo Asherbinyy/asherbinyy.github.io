@@ -5,7 +5,7 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
-### On `feat/work-of-art`, 2026-09-24 (awaiting the owner's localhost review; not merged)
+### Merged to `main`, 2026-09-24 (owner-approved after localhost review)
 
 - **Home hero:** the picture blends into the page; a pyramid going up, with a tower crane setting its top courses in step with the automation on a second curved screen; the owner at two screens, one mirroring his phone; skin tone, a real shoulder, the nemes redrawn. Hover a flag and it flies. A third stat: 30+ apps and projects delivered.
 - **Home:** skills under titles, one open at a time; career cards rise in, carry a timeline band, a relief of the stop's sign, the country's flag and the apps built there; the closing panel has new copy, the services, and a phone whose app is built in front of you; back-to-top is centred.
@@ -16,6 +16,7 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 - **Intro:** faster (2.2 s), Bastet in black stone on the left, a strike with weight and a ring of light, and "Knock to enter" in gold.
 - **Brief (in-app):** section spacing, two columns of shipped apps. **Header:** the three controls on one line.
 - **Arabic:** every remaining English string translated.
+- **After review:** skill titles toggle and sit in two lines; the stops are a timeline; one sentence per career card; a compact phone hero and contact; a calendar for booking; the Courtyard door shows the game playing, the contact panel a falcon; Anubis joins Bastet at the door; Mokaf and Snunu screens.
 - **Content (owner-supplied):** Techlab and Techlab Solutions names, which app was built where, AZ Courses 50,000+ on Google Play, MSc 80% overall, app descriptions from the stores, learning folded into skills.
 
 ### Merged to `main`, 2026-09-23 (second; owner-approved after localhost review)
