@@ -63,6 +63,8 @@ flutter:
     - assets/media/apps/
     - assets/media/apps/minextstep/
     - assets/media/apps/tripster/
+    - assets/media/apps/snunu/
+    - assets/media/apps/mokaf/
     - assets/media/apps/az-courses/
     - assets/media/apps/az-exams/
     - assets/media/apps/guardy/

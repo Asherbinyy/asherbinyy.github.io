@@ -422,3 +422,12 @@ The owner's round of nine screenshots, and his answers in conversation on 2026-0
 | Home closing copy ("Got an app in mind?") | Claude, at the owner's request to replace copy he called machine-made. A promise of a reply, no figure. |
 | About life loop on the ankh; "Wake up" | **OWN**, 2026-09-23 ("replace the Life node … Wake up"). Labels only. |
 | The Ascent's levels, relics and summit | Game design at the owner's request; no claim about the owner. The golden mask is the reward art `12-MOTIF-LIBRARY.md` reserves for the top of the game. |
+
+## September 24: screens for Mokaf and Snunu, one-sentence career cards
+
+| Content | Source / limit |
+|---|---|
+| Mokaf screens (`assets/media/apps/mokaf/`) | **OWN**, the owner's Figma file `MOKF.app` (Techlab Projects), shared by link on 2026-09-24; three frames cropped from its public embed: the map with a spot, choosing a date and time, picking a bay. Design frames, shown as the app's own screens. |
+| Snunu screens (`assets/media/apps/snunu/`) and recording link | **OWN**, a screen recording in the owner's Google Drive folder "Snunu", shared on 2026-09-24; four frames (home, hotel list, an Umrah trip, discount coupons), status bar cropped. The gallery links to the recording itself. A login screen with redacted fields was deliberately not used. |
+| Career cards show one sentence | Presentation only: the first sentence of each existing summary. No wording changed; the full text stays on the CV and the brief. |
+| Anubis guardian in the intro | **OWN**-supplied file, 2026-09-24; author and licence to be named (see `web/intro/models/LICENSE.md`). |

@@ -60,7 +60,12 @@
       },
       "domain": "Mobility",
       "featured": true,
-      "country": "QA"
+      "country": "QA",
+      "shots": [
+        "assets/media/apps/mokaf/01.jpg",
+        "assets/media/apps/mokaf/02.jpg",
+        "assets/media/apps/mokaf/03.jpg"
+      ]
     },
     {
       "id": "az-courses",
@@ -227,7 +232,28 @@
       "role": {
         "en": "A booking platform for local and international tour programmes in Iraq.",
         "ar": "منصة لحجز البرامج السياحية الداخلية والخارجية في العراق."
-      }
+      },
+      "shots": [
+        "assets/media/apps/snunu/01.jpg",
+        "assets/media/apps/snunu/02.jpg",
+        "assets/media/apps/snunu/03.jpg",
+        "assets/media/apps/snunu/04.jpg"
+      ],
+      "media": [
+        {
+          "id": "snunu-recording",
+          "kind": "video",
+          "alt": {
+            "en": "A screen recording of Snunu, the travel booking app",
+            "ar": "تسجيل شاشة لتطبيق سنونو لحجز الرحلات"
+          },
+          "url": "https://drive.google.com/file/d/1t4YEtyp9LpPiBTVLk68GXMiYgcgZJXQj/view",
+          "caption": {
+            "en": "Watch the app in use",
+            "ar": "شاهد التطبيق أثناء الاستخدام"
+          }
+        }
+      ]
     },
     {
       "id": "mostaqbaly",
