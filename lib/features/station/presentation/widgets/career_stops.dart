@@ -8,7 +8,6 @@ import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
-import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
@@ -76,14 +75,39 @@ class CareerStops extends StatelessWidget {
         // copy's measure while the wall owned the trailing part of the page;
         // the wall is the background now, and the owner asked for every
         // section to share one width, edges lined up top to bottom.
-        EvenGrid(
-          minTileWidth: Tokens.stopCardMinWidth,
-          spacing: tokens.space12,
-          stretch: true,
-          children: [
-            for (final role in roles)
-              _Stop(role: role, anchorRegistry: anchorRegistry),
-          ],
+        // A timeline, not a grid of cards: the stops are a sequence, and a
+        // line through them says so. The owner found the cards dull and
+        // their mark meaningless, so each stop's marker is now what it was
+        // -- study, a job, freelance -- and the years sit above the line.
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final share = width / roles.length;
+            final item = share < Tokens.stopItemWidth
+                ? Tokens.stopItemWidth
+                : share;
+            final row = Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final (index, role) in roles.indexed)
+                  SizedBox(
+                    width: item,
+                    child: _Stop(
+                      role: role,
+                      anchorRegistry: anchorRegistry,
+                      isFirst: index == 0,
+                      isLast: index == roles.length - 1,
+                    ),
+                  ),
+              ],
+            );
+            // On a phone the line runs on past the edge and scrolls.
+            if (item * roles.length <= width) return row;
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: row,
+            );
+          },
         ),
       ],
     );
@@ -91,10 +115,17 @@ class CareerStops extends StatelessWidget {
 }
 
 class _Stop extends StatefulWidget {
-  const _Stop({required this.role, required this.anchorRegistry});
+  const _Stop({
+    required this.role,
+    required this.anchorRegistry,
+    required this.isFirst,
+    required this.isLast,
+  });
 
   final CareerRole role;
   final TraceAnchorRegistry anchorRegistry;
+  final bool isFirst;
+  final bool isLast;
 
   @override
   State<_Stop> createState() => _StopState();
@@ -109,20 +140,27 @@ class _StopState extends State<_Stop> {
     super.dispose();
   }
 
-  /// The name this stop is known by, which is not the same field on every role.
-  ///
-  /// Five of the six roles carry no company, so the sequence below falls back
-  /// to the city. This must say the same thing the entry it scrolls to says,
-  /// or the viewer arrives somewhere that does not look like what he clicked.
   String get _name {
     final company = widget.role.company;
-    if (company != null) return company;
+    if (company != null) {
+      return widget.role.id == 'freelance'
+          ? context.l10n.careerFreelance
+          : company;
+    }
     return '${widget.role.city}, ${widget.role.country}';
   }
 
-  /// Just the year. The entry prints the full period; repeating it here would
-  /// make the index as wide as the thing it indexes.
   String get _year => widget.role.start.split('-').first;
+
+  /// What kind of stop this was, as a mark anyone reads: a cap for study, a
+  /// briefcase for a job, a laptop for freelance.
+  IconData get _mark {
+    if (widget.role.id == 'freelance') return Icons.laptop_mac_rounded;
+    return switch (widget.role.kind) {
+      StopKind.study => Icons.school_rounded,
+      StopKind.role => Icons.work_rounded,
+    };
+  }
 
   void _goThere() {
     final target = widget.anchorRegistry.keyFor(widget.role.id).currentContext;
@@ -131,8 +169,6 @@ class _StopState extends State<_Stop> {
       target,
       duration: ReducedMotion.duration(context, Motion.considered),
       curve: Curves.easeInOutCubic,
-      // Not flush to the top: the page has a fixed chrome above it, and a stop
-      // that lands under it looks like nothing happened.
       alignment: 0.12,
     );
   }
@@ -141,100 +177,95 @@ class _StopState extends State<_Stop> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final type = context.type;
+    final line = SizedBox(
+      height: tokens.hairlineWidth * 2,
+      child: ColoredBox(color: tokens.hairlineStrong),
+    );
 
     return Semantics(
       button: true,
       label: context.l10n.stationStopGoTo(_name),
+      excludeSemantics: true,
       child: ListenableBuilder(
         listenable: _states,
         builder: (context, _) {
           final isLit =
               _states.value.contains(WidgetState.hovered) ||
               _states.value.contains(WidgetState.focused);
-
+          final quick = ReducedMotion.duration(context, Motion.quick);
           return FocusRing(
             isFocused: _states.value.contains(WidgetState.focused),
             child: InkWell(
               onTap: _goThere,
               statesController: _states,
               borderRadius: BorderRadius.circular(tokens.controlRadius),
+              hoverColor: Colors.transparent,
               mouseCursor: context.platform.isPointer
                   ? SystemMouseCursors.click
                   : MouseCursor.defer,
-              child: AnimatedContainer(
-                duration: ReducedMotion.duration(context, Motion.quick),
-                curve: MotionCurves.emphasized,
-                padding: EdgeInsets.symmetric(
-                  horizontal: tokens.space16,
-                  vertical: tokens.space12,
-                ),
-                decoration: BoxDecoration(
-                  color: isLit ? tokens.surfaceRaised : tokens.surface,
-                  borderRadius: BorderRadius.circular(tokens.controlRadius),
-                  border: Border.all(
-                    color: isLit ? tokens.beacon : tokens.hairline,
-                    width: tokens.hairlineWidth,
-                  ),
-                ),
-                child: Row(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: tokens.space8),
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // The cartouche, which is how this site marks a stop
-                    // everywhere else it draws one.
-                    CustomPaint(
-                      size: const Size(
-                        Tokens.stopRailWidth,
-                        Tokens.stopNodeRadius * 3,
+                    AnimatedDefaultTextStyle(
+                      duration: quick,
+                      style: type.telemetryS.copyWith(
+                        color: isLit ? tokens.beacon : tokens.textMuted,
                       ),
-                      painter: _StopMarkPainter(
-                        rest: tokens.instrumentDim,
-                        lit: tokens.beacon,
-                        strokeWidth: tokens.hairlineWidth,
-                        isLit: isLit,
-                      ),
+                      child: Text(_year),
                     ),
-                    SizedBox(width: tokens.space12),
-                    // Bounded, so a long name shortens instead of pushing the
-                    // card off a phone. "University of Salford" does not fit
-                    // a 312px column and the card must not try to make it.
-                    // Flexible as well, because on a phone the column is
-                    // narrower again once the wall has its own edge.
-                    Flexible(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: Tokens.stopCardTextWidth,
+                    SizedBox(height: tokens.space8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: widget.isFirst ? const SizedBox() : line,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AnimatedDefaultTextStyle(
-                              duration: ReducedMotion.duration(
-                                context,
-                                Motion.quick,
-                              ),
-                              style: type.telemetryS.copyWith(
-                                color: isLit ? tokens.beacon : tokens.textMuted,
-                              ),
-                              child: Text(_year),
-                            ),
-                            AnimatedDefaultTextStyle(
-                              duration: ReducedMotion.duration(
-                                context,
-                                Motion.quick,
-                              ),
-                              style: type.body.copyWith(
+                        AnimatedScale(
+                          scale: isLit ? Tokens.stopNodeLift : 1,
+                          duration: quick,
+                          curve: MotionCurves.emphasized,
+                          child: AnimatedContainer(
+                            duration: quick,
+                            width: Tokens.stopNodeSize,
+                            height: Tokens.stopNodeSize,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isLit ? tokens.beacon : tokens.surface,
+                              border: Border.all(
                                 color: isLit
-                                    ? tokens.textPrimary
-                                    : tokens.textSecondary,
-                              ),
-                              child: Text(
-                                _name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                    ? tokens.beacon
+                                    : tokens.hairlineStrong,
+                                width: tokens.hairlineWidth * 1.5,
                               ),
                             ),
-                          ],
+                            child: Icon(
+                              _mark,
+                              size: Tokens.stopNodeSize * 0.5,
+                              color: isLit ? tokens.void_ : tokens.beacon,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: widget.isLast ? const SizedBox() : line,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: tokens.space8),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: tokens.space4),
+                      child: AnimatedDefaultTextStyle(
+                        duration: quick,
+                        style: type.bodyS.copyWith(
+                          color: isLit
+                              ? tokens.textPrimary
+                              : tokens.textSecondary,
+                        ),
+                        child: Text(
+                          _name,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
@@ -247,60 +278,4 @@ class _StopState extends State<_Stop> {
       ),
     );
   }
-}
-
-/// The cartouche on a stop card.
-class _StopMarkPainter extends CustomPainter {
-  const _StopMarkPainter({
-    required this.rest,
-    required this.lit,
-    required this.strokeWidth,
-    required this.isLit,
-  });
-
-  final Color rest;
-  final Color lit;
-  final double strokeWidth;
-  final bool isLit;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final centre = Offset(size.width / 2, size.height / 2);
-
-    // Enclosed, like the stations on the atlas: filled gold when this is the
-    // one the viewer is pointing at, a hairline ring otherwise.
-    final loop = RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: centre,
-        width: Tokens.stopNodeRadius * 2 * Tokens.stationCartoucheRatio,
-        height: Tokens.stopNodeRadius * 2,
-      ),
-      const Radius.circular(Tokens.stopNodeRadius),
-    );
-    canvas.drawRRect(
-      loop,
-      Paint()
-        ..color = isLit ? lit : rest
-        ..style = isLit ? PaintingStyle.fill : PaintingStyle.stroke
-        ..strokeWidth = strokeWidth,
-    );
-
-    // The tie bar closes the cartouche. Only when lit, for the same reason the
-    // atlas only draws it on the selected stop: at this size it is noise.
-    if (!isLit) return;
-    canvas.drawLine(
-      Offset(loop.right, centre.dy - Tokens.stopNodeRadius * 0.6),
-      Offset(loop.right, centre.dy + Tokens.stopNodeRadius * 0.6),
-      Paint()
-        ..color = lit
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_StopMarkPainter oldDelegate) =>
-      oldDelegate.isLit != isLit ||
-      oldDelegate.rest != rest ||
-      oldDelegate.lit != lit;
 }

@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -18,6 +16,7 @@ import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 
 /// The owner's public destinations, in the order a recruiter uses them.
@@ -107,11 +106,21 @@ class ContactLinks extends StatelessWidget {
       if (contact.fiverr case final url?) ('Fiverr', SimpleIcons.fiverr, url),
     ];
 
+    // A phone had every destination as a full-width bar, fourteen of them
+    // down the screen; the owner found it far too much. There the two ways to
+    // message sit side by side and the profiles are small tiles, four across.
+    final isCompact = context.platform.viewport == ViewportClass.compact;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _Row(destinations: direct),
+        _Row(
+          destinations: direct,
+          minTileWidth: isCompact
+              ? Tokens.contactCompactDirect
+              : Tokens.contactCardWidth,
+        ),
         if (booking != null) ...[
           SizedBox(height: tokens.space16),
           _Or(text: context.l10n.contactOr),
@@ -125,7 +134,13 @@ class ContactLinks extends StatelessWidget {
           // Narrower tiles than the two ways to message him: nine profiles in
           // two columns made the contact half of a panel twice the height of
           // the half beside it.
-          _Row(destinations: social, minTileWidth: Tokens.contactSocialWidth),
+          _Row(
+            destinations: social,
+            minTileWidth: isCompact
+                ? Tokens.contactCompactTile
+                : Tokens.contactSocialWidth,
+            isTile: isCompact,
+          ),
         ],
       ],
     );
@@ -156,7 +171,11 @@ class _Row extends StatelessWidget {
   const _Row({
     required this.destinations,
     this.minTileWidth = Tokens.contactCardWidth,
+    this.isTile = false,
   });
+
+  /// Drawn as small square tiles, mark over name, as on a phone.
+  final bool isTile;
 
   final List<(String, IconData, Uri)> destinations;
 
@@ -169,7 +188,7 @@ class _Row extends StatelessWidget {
     minTileWidth: minTileWidth,
     children: [
       for (final (name, icon, url) in destinations)
-        _ContactLink(name: name, icon: icon, url: url),
+        _ContactLink(name: name, icon: icon, url: url, isTile: isTile),
     ],
   );
 }
@@ -211,7 +230,11 @@ class _ContactLink extends StatefulWidget {
     required this.icon,
     required this.url,
     this.image,
+    this.isTile = false,
   });
+
+  /// Mark over name, small, instead of mark beside name.
+  final bool isTile;
 
   final String name;
   final IconData icon;
@@ -243,92 +266,109 @@ class _ContactLinkState extends State<_ContactLink> {
           final isHovered = _states.value.contains(WidgetState.hovered);
           return FocusRing(
             isFocused: _states.value.contains(WidgetState.focused),
-            child: InkWell(
-              onTap: () => unawaited(
-                launchUrl(widget.url, mode: LaunchMode.externalApplication),
-              ),
-              statesController: _states,
-              borderRadius: BorderRadius.circular(tokens.controlRadius),
-              hoverColor: Colors.transparent,
-              mouseCursor: context.platform.isPointer
-                  ? SystemMouseCursors.click
-                  : MouseCursor.defer,
-              // A card that lights rather than a word that changes colour.
-              // The owner asked for one per platform with a glow on it; the
-              // glow is the site's own gold, thrown softly behind the card,
-              // so it reads as the same lamp that lights the wall rather than
-              // as a web button with a shadow.
-              child: AnimatedContainer(
-                duration: ReducedMotion.duration(context, Motion.quick),
-                curve: MotionCurves.emphasized,
-                constraints: BoxConstraints(
-                  minHeight: context.platform.minimumTarget,
+            child: _TileTip(
+              name: widget.isTile ? widget.name : null,
+              child: InkWell(
+                onTap: () => unawaited(
+                  launchUrl(widget.url, mode: LaunchMode.externalApplication),
                 ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: tokens.space16,
-                  vertical: tokens.space12,
-                ),
-                decoration: BoxDecoration(
-                  color: isHovered ? tokens.surfaceRaised : tokens.surface,
-                  borderRadius: BorderRadius.circular(tokens.controlRadius),
-                  border: Border.all(
-                    color: isHovered ? tokens.beacon : tokens.hairline,
-                    width: tokens.hairlineWidth,
+                statesController: _states,
+                borderRadius: BorderRadius.circular(tokens.controlRadius),
+                hoverColor: Colors.transparent,
+                mouseCursor: context.platform.isPointer
+                    ? SystemMouseCursors.click
+                    : MouseCursor.defer,
+                // A card that lights rather than a word that changes colour.
+                // The owner asked for one per platform with a glow on it; the
+                // glow is the site's own gold, thrown softly behind the card,
+                // so it reads as the same lamp that lights the wall rather than
+                // as a web button with a shadow.
+                child: AnimatedContainer(
+                  duration: ReducedMotion.duration(context, Motion.quick),
+                  curve: MotionCurves.emphasized,
+                  constraints: BoxConstraints(
+                    minHeight: context.platform.minimumTarget,
                   ),
-                  boxShadow: isHovered
-                      ? [
-                          BoxShadow(
-                            color: tokens.beacon.withValues(
-                              alpha: Tokens.contactGlowAlpha,
+                  padding: widget.isTile
+                      ? EdgeInsets.symmetric(
+                          horizontal: tokens.space4,
+                          vertical: tokens.space8,
+                        )
+                      : EdgeInsets.symmetric(
+                          horizontal: tokens.space16,
+                          vertical: tokens.space12,
+                        ),
+                  decoration: BoxDecoration(
+                    color: isHovered ? tokens.surfaceRaised : tokens.surface,
+                    borderRadius: BorderRadius.circular(tokens.controlRadius),
+                    border: Border.all(
+                      color: isHovered ? tokens.beacon : tokens.hairline,
+                      width: tokens.hairlineWidth,
+                    ),
+                    boxShadow: isHovered
+                        ? [
+                            BoxShadow(
+                              color: tokens.beacon.withValues(
+                                alpha: Tokens.contactGlowAlpha,
+                              ),
+                              blurRadius: Tokens.contactGlowBlur,
                             ),
-                            blurRadius: Tokens.contactGlowBlur,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: ExcludeSemantics(
-                  // The name gives way rather than overflowing. A card in a
-                  // grid is handed its width instead of choosing it, so at a
-                  // narrow measure "Book a call" is wider than the tile it is
-                  // in -- and a row that cannot shrink answers that with a
-                  // striped overflow bar. The mark keeps its size; the word
-                  // takes what is left, and the full name is still on the
-                  // card's own semantics label for anyone who cannot see it.
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (widget.image case final image?)
-                        Image(
-                          image: contentImage(context, image),
-                          width: Tokens.contactIconSize,
-                          height: Tokens.contactIconSize,
-                          errorBuilder: (context, error, stack) => Icon(
+                          ]
+                        : null,
+                  ),
+                  child: ExcludeSemantics(
+                    // The name gives way rather than overflowing. A card in a
+                    // grid is handed its width instead of choosing it, so at a
+                    // narrow measure "Book a call" is wider than the tile it is
+                    // in -- and a row that cannot shrink answers that with a
+                    // striped overflow bar. The mark keeps its size; the word
+                    // takes what is left, and the full name is still on the
+                    // card's own semantics label for anyone who cannot see it.
+                    child: Flex(
+                      direction: widget.isTile
+                          ? Axis.vertical
+                          : Axis.horizontal,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (widget.image case final image?)
+                          Image(
+                            image: contentImage(context, image),
+                            width: Tokens.contactIconSize,
+                            height: Tokens.contactIconSize,
+                            errorBuilder: (context, error, stack) => Icon(
+                              widget.icon,
+                              size: Tokens.contactIconSize,
+                              color: tokens.beacon,
+                            ),
+                          )
+                        else
+                          Icon(
                             widget.icon,
                             size: Tokens.contactIconSize,
-                            color: tokens.beacon,
-                          ),
-                        )
-                      else
-                        Icon(
-                          widget.icon,
-                          size: Tokens.contactIconSize,
-                          color: isHovered ? tokens.beaconGlow : tokens.beacon,
-                        ),
-                      SizedBox(width: tokens.space12),
-                      Flexible(
-                        child: Text(
-                          widget.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                          style: context.type.body.copyWith(
                             color: isHovered
                                 ? tokens.beaconGlow
                                 : tokens.beacon,
                           ),
-                        ),
-                      ),
-                    ],
+                        // On a phone the mark alone: the name is the tooltip
+                        // and the link's accessible name.
+                        if (!widget.isTile) ...[
+                          SizedBox(width: tokens.space12),
+                          Flexible(
+                            child: Text(
+                              widget.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: false,
+                              style: context.type.body.copyWith(
+                                color: isHovered
+                                    ? tokens.beaconGlow
+                                    : tokens.beacon,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -464,7 +504,21 @@ class _BookingCardState extends State<_BookingCard> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _ShadowClock(isLit: isLit),
+                      // A calendar, which is what booking is. The shadow clock
+                      // before it read, as the owner put it, like a scale.
+                      AnimatedSwitcher(
+                        duration: ReducedMotion.duration(context, Motion.quick),
+                        transitionBuilder: (child, animation) =>
+                            ScaleTransition(scale: animation, child: child),
+                        child: Icon(
+                          isLit
+                              ? Icons.event_available_rounded
+                              : Icons.calendar_month_rounded,
+                          key: ValueKey(isLit),
+                          size: Tokens.bookingIconSize,
+                          color: isLit ? tokens.beaconGlow : tokens.beacon,
+                        ),
+                      ),
                       SizedBox(width: tokens.space16),
                       Flexible(
                         child: Column(
@@ -475,15 +529,18 @@ class _BookingCardState extends State<_BookingCard> {
                               l10n.contactBookTitle,
                               style: type.body.copyWith(color: tokens.beacon),
                             ),
-                            SizedBox(height: tokens.space4),
-                            // The body face, not the telemetry one: this is a
-                            // sentence to a person, not a readout.
-                            Text(
-                              l10n.contactBookBody,
-                              style: type.bodyS.copyWith(
-                                color: tokens.textSecondary,
+                            // The sentence under it on a wide card only: on
+                            // a phone it ran to three lines under two words.
+                            if (context.platform.viewport !=
+                                ViewportClass.compact) ...[
+                              SizedBox(height: tokens.space4),
+                              Text(
+                                l10n.contactBookBody,
+                                style: type.bodyS.copyWith(
+                                  color: tokens.textSecondary,
+                                ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),
@@ -512,137 +569,18 @@ class _BookingCardState extends State<_BookingCard> {
   }
 }
 
-/// An Egyptian shadow clock, drawn small: a half dial, its hour lines, and the
-/// shadow the gnomon throws across them.
-///
-/// The booking card's mark, because booking is choosing a time, and this is
-/// how the builders of this site's temples told it. While the card is held
-/// the shadow sweeps the dial -- the hours going by -- and it rests on the
-/// middle hour otherwise. Still under reduced motion.
-class _ShadowClock extends StatefulWidget {
-  const _ShadowClock({required this.isLit});
+/// A phone's icon-only tile names itself on a long press; a labelled card
+/// has its name on it already and gets no tooltip.
+class _TileTip extends StatelessWidget {
+  const _TileTip({required this.name, required this.child});
 
-  final bool isLit;
-
-  @override
-  State<_ShadowClock> createState() => _ShadowClockState();
-}
-
-class _ShadowClockState extends State<_ShadowClock>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _sweep = AnimationController(
-    vsync: this,
-    duration: Tokens.bookingClockSweep,
-    value: 0.5,
-  );
-
-  @override
-  void didUpdateWidget(_ShadowClock oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isLit == oldWidget.isLit) return;
-    if (ReducedMotion.of(context)) return;
-    if (widget.isLit) {
-      _sweep.repeat(reverse: true);
-    } else {
-      _sweep.animateTo(0.5, duration: Motion.standard);
-    }
-  }
-
-  @override
-  void dispose() {
-    _sweep.dispose();
-    super.dispose();
-  }
+  final String? name;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    return ExcludeSemantics(
-      child: SizedBox.square(
-        dimension: Tokens.bookingClockSize,
-        child: AnimatedBuilder(
-          animation: _sweep,
-          builder: (context, _) => CustomPaint(
-            painter: _ShadowClockPainter(
-              hour: Curves.easeInOut.transform(_sweep.value),
-              dial: widget.isLit ? tokens.beacon : tokens.beaconDim,
-              lines: tokens.hairlineStrong,
-              shadow: widget.isLit ? tokens.beaconGlow : tokens.beacon,
-              strokeWidth: tokens.hairlineWidth,
-            ),
-          ),
-        ),
-      ),
-    );
+    final name = this.name;
+    if (name == null) return child;
+    return Tooltip(message: name, excludeFromSemantics: true, child: child);
   }
-}
-
-class _ShadowClockPainter extends CustomPainter {
-  const _ShadowClockPainter({
-    required this.hour,
-    required this.dial,
-    required this.lines,
-    required this.shadow,
-    required this.strokeWidth,
-  });
-
-  /// Where the shadow falls, 0 at dawn to 1 at dusk.
-  final double hour;
-  final Color dial;
-  final Color lines;
-  final Color shadow;
-  final double strokeWidth;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final centre = Offset(size.width / 2, size.height * 0.78);
-    final radius = size.width * 0.44;
-    final rim = Paint()
-      ..color = dial
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth * 1.5
-      ..strokeCap = StrokeCap.round;
-    canvas
-      ..drawArc(
-        Rect.fromCircle(center: centre, radius: radius),
-        math.pi,
-        math.pi,
-        false,
-        rim,
-      )
-      ..drawLine(centre - Offset(radius, 0), centre + Offset(radius, 0), rim);
-    // The hour lines.
-    final tick = Paint()
-      ..color = lines
-      ..strokeWidth = strokeWidth;
-    for (var i = 1; i < 6; i++) {
-      final angle = math.pi + i * math.pi / 6;
-      final direction = Offset(math.cos(angle), math.sin(angle));
-      canvas.drawLine(
-        centre + direction * radius * 0.55,
-        centre + direction * radius * 0.92,
-        tick,
-      );
-    }
-    // The shadow, and the gnomon that throws it.
-    final angle = math.pi + (0.12 + hour * 0.76) * math.pi;
-    canvas
-      ..drawLine(
-        centre,
-        centre + Offset(math.cos(angle), math.sin(angle)) * radius * 0.9,
-        Paint()
-          ..color = shadow
-          ..strokeWidth = strokeWidth * 2
-          ..strokeCap = StrokeCap.round,
-      )
-      ..drawCircle(centre, strokeWidth * 2.2, Paint()..color = shadow);
-  }
-
-  @override
-  bool shouldRepaint(_ShadowClockPainter oldDelegate) =>
-      oldDelegate.hour != hour ||
-      oldDelegate.dial != dial ||
-      oldDelegate.lines != lines ||
-      oldDelegate.shadow != shadow ||
-      oldDelegate.strokeWidth != strokeWidth;
 }

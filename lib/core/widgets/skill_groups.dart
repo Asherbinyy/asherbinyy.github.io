@@ -24,7 +24,10 @@ import 'package:nocturne/core/widgets/focus_ring.dart';
 /// other.
 ///
 /// One group is open at a time, and the first is open on arrival, so the
-/// panel never arrives showing nothing. The tools he works in are the last
+/// panel never arrives showing nothing. Pressing the open title again closes
+/// it -- the owner asked for the titles to toggle. The titles sit in two
+/// lines, each as wide as its words, rather than one long run that left a
+/// single title on a line of its own. The tools he works in are the last
 /// title rather than a separate list.
 class SkillGroups extends StatefulWidget {
   /// Draws [profile]'s groups, falling back to its flat skills.
@@ -44,7 +47,7 @@ class SkillGroups extends StatefulWidget {
 typedef _Group = ({String title, List<String> skills});
 
 class _SkillGroupsState extends State<SkillGroups> {
-  int _open = 0;
+  int? _open = 0;
 
   List<_Group> _groups(BuildContext context) {
     final profile = widget.profile;
@@ -70,13 +73,23 @@ class _SkillGroupsState extends State<SkillGroups> {
     final type = context.type;
     final groups = _groups(context);
     if (groups.isEmpty) return const SizedBox.shrink();
-    final open = _open.clamp(0, groups.length - 1);
+    final open = _open?.clamp(0, groups.length - 1);
     final total = widget.profile.skillGroups.isNotEmpty
         ? widget.profile.skillGroups.fold<int>(
             0,
             (sum, group) => sum + group.skills.length,
           )
         : widget.profile.skills.length;
+
+    final titles = [
+      for (final (index, group) in groups.indexed)
+        _Title(
+          title: group.title,
+          count: group.skills.length,
+          isOpen: index == open,
+          onTap: () => setState(() => _open = index == open ? null : index),
+        ),
+    ];
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -116,26 +129,43 @@ class _SkillGroupsState extends State<SkillGroups> {
               ],
             ),
             SizedBox(height: tokens.space16),
-            Wrap(
-              spacing: tokens.space8,
-              runSpacing: tokens.space8,
-              children: [
-                for (final (index, group) in groups.indexed)
-                  _Title(
-                    title: group.title,
-                    count: group.skills.length,
-                    isOpen: index == open,
-                    onTap: () => setState(() => _open = index),
-                  ),
-              ],
-            ),
-            SizedBox(height: tokens.space16),
-            SizedBox(
-              height: tokens.hairlineWidth,
-              width: double.infinity,
-              child: ColoredBox(color: tokens.hairline),
-            ),
-            SizedBox(height: tokens.space16),
+            // Two even rows: every title the same width, split as evenly as
+            // the count allows, so no title is stranded on a line alone.
+            // On a phone two even rows become ten stacked ones, so there the
+            // titles are one row you swipe along.
+            if (context.platform.viewport == ViewportClass.compact)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final (index, title) in titles.indexed) ...[
+                      if (index > 0) SizedBox(width: tokens.space8),
+                      title,
+                    ],
+                  ],
+                ),
+              )
+            else
+              // Two lines, each title as wide as its own words -- the owner
+              // asked for the titles organised in two rows, and not boxed to
+              // one fixed width.
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final (index, line) in [
+                    titles.take((titles.length / 2).ceil()).toList(),
+                    titles.skip((titles.length / 2).ceil()).toList(),
+                  ].indexed) ...[
+                    if (index > 0) SizedBox(height: tokens.space8),
+                    Wrap(
+                      spacing: tokens.space8,
+                      runSpacing: tokens.space8,
+                      children: line,
+                    ),
+                  ],
+                ],
+              ),
             SettlingSize(
               duration: Motion.standard,
               child: AnimatedSwitcher(
@@ -144,10 +174,23 @@ class _SkillGroupsState extends State<SkillGroups> {
                 switchOutCurve: MotionCurves.exit,
                 layoutBuilder: (current, previous) =>
                     Stack(children: [...previous, ?current]),
-                child: _Skills(
-                  key: ValueKey(groups[open].title),
-                  skills: groups[open].skills,
-                ),
+                child: open == null
+                    ? const SizedBox(width: double.infinity)
+                    : Column(
+                        key: ValueKey(groups[open].title),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(height: tokens.space16),
+                          SizedBox(
+                            height: tokens.hairlineWidth,
+                            width: double.infinity,
+                            child: ColoredBox(color: tokens.hairline),
+                          ),
+                          SizedBox(height: tokens.space16),
+                          _Skills(skills: groups[open].skills),
+                        ],
+                      ),
               ),
             ),
           ],
@@ -267,7 +310,7 @@ class _TitleState extends State<_Title> {
 
 /// The skills under the open title, arriving one after another.
 class _Skills extends StatefulWidget {
-  const _Skills({required this.skills, super.key});
+  const _Skills({required this.skills});
 
   final List<String> skills;
 

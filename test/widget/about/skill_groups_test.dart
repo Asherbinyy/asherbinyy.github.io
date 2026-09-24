@@ -74,6 +74,25 @@ void main() {
     expect(_within(find.text(groups.first.skills.first)), findsNothing);
   });
 
+  testWidgets('pressing the open title again closes it', (tester) async {
+    await pumpStation(
+      tester,
+      breakpoint: ChromeBreakpoint.large,
+      reducedMotion: true,
+    );
+    final first = _groups().first;
+
+    final title = _within(find.text(first.title));
+    await tester.ensureVisible(title);
+    await tester.tap(title);
+    await pumpFrames(tester);
+    expect(_within(find.text(first.skills.first)), findsNothing);
+
+    await tester.tap(title);
+    await pumpFrames(tester);
+    expect(_within(find.text(first.skills.first)), findsOneWidget);
+  });
+
   testWidgets('nothing he is learning is labelled as learning', (tester) async {
     await pumpStation(
       tester,

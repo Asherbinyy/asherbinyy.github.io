@@ -386,7 +386,12 @@ class _CareerEntry extends StatelessWidget {
         if (hasSummary)
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
-            child: Text(summary.resolve(locale), style: type.body),
+            // The first sentence only. The owner found the whole paragraph
+            // too much for Home: the CV and the brief carry the rest.
+            child: Text(
+              _firstSentence(summary.resolve(locale)),
+              style: type.body,
+            ),
           ),
         if (hasSummary && apps.isNotEmpty) SizedBox(height: tokens.space16),
         if (apps.isNotEmpty) _BuiltHere(apps: apps),
@@ -804,4 +809,11 @@ class _AppChipState extends State<_AppChip> {
       ),
     );
   }
+}
+
+/// [text] up to and including its first full stop, or all of it if it has
+/// only one sentence.
+String _firstSentence(String text) {
+  final match = RegExp(r'^.*?[.!?؟](?=\s|$)').firstMatch(text.trim());
+  return match?.group(0) ?? text;
 }

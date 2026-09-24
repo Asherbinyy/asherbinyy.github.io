@@ -12,22 +12,19 @@ import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/content/models/interests.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
-import 'package:nocturne/core/painting/ascent_painter.dart';
 import 'package:nocturne/core/painting/interest_painter.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
-import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
+import 'package:nocturne/features/about/presentation/widgets/live_climb.dart';
 
 /// The way through to `/courtyard` from the foot of the credentials.
 ///
-/// It was a heading, a sentence and a button on a panel the width of the page,
-/// and the owner called it too wide and boring: most of it was empty. It keeps
-/// the page's width -- every section lines up, which he also asked for -- and
-/// fills it with what is through the door: a still of the climb and the
-/// scenes of four of his interests. Under the pointer the scenes play, the way
-/// they do in the courtyard itself. The button is the way in for a keyboard;
-/// the pictures are the same door for a pointer.
+/// The owner found the first two versions of this less appealing than
+/// everything around them: a sentence and a button, then a grid of small
+/// stills. So the door now shows what is through it, moving: the game itself,
+/// climbing on its own, beside the words and his interests as small scenes
+/// that play under the pointer. The button is the way in for a keyboard.
 class CourtyardDoor extends ConsumerStatefulWidget {
   /// Draws the door.
   const CourtyardDoor({super.key});
@@ -83,57 +80,42 @@ class _CourtyardDoorState extends ConsumerState<CourtyardDoor>
         ConstrainedBox(
           constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
           child: Text(
-            l10n.courtyardIntro,
+            l10n.aboutCourtyardInside,
             style: type.body.copyWith(color: tokens.textSecondary),
           ),
         ),
-        SizedBox(height: tokens.space8),
-        ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
-          child: Text(
-            l10n.aboutCourtyardInside,
-            style: type.bodyS.copyWith(color: tokens.textMuted),
-          ),
-        ),
         SizedBox(height: tokens.space24),
-        BeaconButton(label: l10n.aboutOffDuty, onPressed: _enter),
-      ],
-    );
-
-    final view = ExcludeSemantics(
-      child: MouseRegion(
-        cursor: context.platform.isPointer
-            ? SystemMouseCursors.click
-            : MouseCursor.defer,
-        child: GestureDetector(
-          onTap: _enter,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ExcludeSemantics(
+          child: Wrap(
+            spacing: tokens.space12,
+            runSpacing: tokens.space12,
             children: [
-              const _Climb(),
-              SizedBox(width: tokens.space12),
-              // Two by two, the height of the climb beside them.
-              SizedBox(
-                width: Tokens.doorSceneSize * 2 + tokens.space12,
-                child: Wrap(
-                  spacing: tokens.space12,
-                  runSpacing: tokens.space12,
-                  children: [
-                    for (final interest in interests.take(4))
-                      _Scene(interest: interest, play: _play),
-                  ],
-                ),
-              ),
+              for (final interest in interests.take(4))
+                _Scene(interest: interest, play: _play),
             ],
           ),
         ),
+        SizedBox(height: tokens.space24),
+        BeaconButton(
+          label: l10n.aboutOffDuty,
+          emphasis: ButtonEmphasis.primary,
+          onPressed: _enter,
+        ),
+      ],
+    );
+
+    Widget climb(double height) => MouseRegion(
+      cursor: context.platform.isPointer
+          ? SystemMouseCursors.click
+          : MouseCursor.defer,
+      child: GestureDetector(
+        onTap: _enter,
+        child: LiveClimb(height: height),
       ),
     );
 
     return MouseRegion(
       onEnter: (_) => _hover(true),
-      onExit: (_) => _hover(false),
       child: SizedBox(
         width: double.infinity,
         child: InstrumentPanel(
@@ -148,68 +130,22 @@ class _CourtyardDoorState extends ConsumerState<CourtyardDoor>
                   children: [
                     words,
                     SizedBox(height: tokens.space24),
-                    // The pictures keep their proportions and shrink to fit
-                    // a phone's column rather than running off its edge.
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: AlignmentDirectional.centerStart,
-                      child: view,
-                    ),
+                    climb(Tokens.doorClimbCompact),
                   ],
                 );
               }
               return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(child: words),
                   SizedBox(width: tokens.space32),
-                  view,
+                  SizedBox(
+                    width: Tokens.doorClimbWidth,
+                    child: climb(Tokens.doorClimbHeight),
+                  ),
                 ],
               );
             },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The first moment of a climb, drawn by the game's own painter.
-class _Climb extends StatelessWidget {
-  const _Climb();
-
-  /// A fixed seed, so the still is the same climb on every visit.
-  static final AscentWorld _world = AscentWorld.seeded(
-    best: 0,
-    isPractice: true,
-    seed: Tokens.courtyardStillSeed,
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: tokens.hairline, width: tokens.hairlineWidth),
-      ),
-      child: SizedBox(
-        width: Tokens.doorClimbWidth,
-        height:
-            Tokens.doorSceneSize * 2 + tokens.space12 + Tokens.doorLabel * 2,
-        child: ClipRect(
-          child: CustomPaint(
-            painter: AscentPainter(
-              world: _world,
-              entrance: 1,
-              stone: tokens.instrument,
-              cracked: tokens.instrumentDim,
-              gold: tokens.beacon,
-              glow: tokens.beaconGlow,
-              wall: tokens.hairline,
-              chamber: tokens.surfaceRaised,
-              pier: tokens.void_,
-              strokeWidth: tokens.hairlineWidth,
-              isReducedMotion: true,
-            ),
           ),
         ),
       ),

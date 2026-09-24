@@ -1026,7 +1026,7 @@
   "@ascentLegendTitle": {
     "description": "The Ascent game"
   },
-  "ascentLegendBody": "Eight levels of a hundred metres, each its own shaft. Reach 800 m and the climb is won.",
+  "ascentLegendBody": "Climb as high as you can. The shaft changes as you rise.",
   "@ascentLegendBody": {
     "description": "The Ascent game"
   },
@@ -1046,7 +1046,7 @@
   "@ascentWonTitle": {
     "description": "The Ascent game"
   },
-  "ascentWonBody": "All eight levels are behind you. The golden mask is yours, and the board will call you King.",
+  "ascentWonBody": "The golden mask is yours, and the board will call you King.",
   "@ascentWonBody": {
     "description": "The Ascent game"
   },

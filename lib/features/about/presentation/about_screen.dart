@@ -27,6 +27,7 @@ import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
 import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
 import 'package:nocturne/features/about/presentation/widgets/courtyard_door.dart';
+import 'package:nocturne/features/about/presentation/widgets/falcon_courier.dart';
 import 'package:nocturne/features/about/presentation/widgets/education_table.dart';
 import 'package:nocturne/features/about/presentation/widgets/life_flow.dart';
 import 'package:nocturne/features/about/presentation/widgets/portrait_frame.dart';
@@ -155,7 +156,25 @@ class _About extends StatelessWidget {
           child: InstrumentPanel(
             fill: tokens.surface,
             padding: EdgeInsets.all(tokens.space24),
-            child: ContactLinks(contact: profile.contact, links: profile.links),
+            // The falcon beside the links on a wide screen: the panel was
+            // the plainest thing on the page, and the owner asked for a
+            // picture on its right.
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final links = ContactLinks(
+                  contact: profile.contact,
+                  links: profile.links,
+                );
+                if (constraints.maxWidth < Tokens.courierFrom) return links;
+                return Row(
+                  children: [
+                    Expanded(child: links),
+                    SizedBox(width: tokens.space32),
+                    const FalconCourier(),
+                  ],
+                );
+              },
+            ),
           ),
         ),
         SizedBox(height: tokens.space48),

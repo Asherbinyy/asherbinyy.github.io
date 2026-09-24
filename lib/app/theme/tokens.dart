@@ -562,6 +562,13 @@ abstract final class Tokens {
   /// ways to message him, so nine profiles take three rows, not five.
   static const double contactSocialWidth = 148;
 
+  /// On a phone: the narrowest a way to message him may be (two across),
+  /// and a profile tile (four across).
+  static const double contactCompactDirect = 120, contactCompactTile = 64;
+
+  /// The calendar on the booking card.
+  static const double bookingIconSize = 32;
+
   /// One skill chip's width, and every skill chip is this wide.
   ///
   /// Sized to hold the longest of them -- "Adobe Premiere Pro" -- so the block
@@ -582,14 +589,18 @@ abstract final class Tokens {
       revealRiseLift = 28,
       revealRiseShrink = 0.04;
 
-  /// The booking card: the widest it runs, how far its arrow slides on hover
-  /// (a share of the arrow), the shadow clock's size, and one sweep of it.
-  static const double bookingCardMaxWidth = 380,
-      bookingArrowTravel = 0.3,
-      bookingClockSize = 40;
+  /// The booking card: the widest it runs, and how far its arrow slides on
+  /// hover (a share of the arrow).
+  static const double bookingCardMaxWidth = 380, bookingArrowTravel = 0.3;
 
-  /// See [bookingCardMaxWidth].
-  static const Duration bookingClockSweep = Duration(milliseconds: 1800);
+  /// The falcon beside the contact links: one flight, its box, and the panel
+  /// width from which it has room.
+  static const Duration courierFlight = Duration(milliseconds: 4200);
+
+  /// See [courierFlight].
+  static const double courierWidth = 340,
+      courierHeight = 260,
+      courierFrom = 900;
 
   /// A flag in the wind, on hover: one period of the ripple, how long a tap
   /// flies it on a phone, how far the disc lifts and grows, the shadow under
@@ -840,6 +851,9 @@ abstract final class Tokens {
   /// The disc that shows an app's own screen on a career card's chip.
   static const double careerAppThumb = 28;
 
+  /// On a phone, the column the hero's figures sit in before their labels.
+  static const double compactStatFigure = 64;
+
   /// A Work card's artwork height, tall enough for a phone screen to be a
   /// screen.
   static const double workArtHeight = 220;
@@ -914,7 +928,10 @@ abstract final class Tokens {
 
   /// See [doorPlay].
   static const double doorSplitWidth = 720,
-      doorClimbWidth = 110,
+      doorClimbWidth = 300,
+      doorClimbHeight = 340,
+      doorClimbCompact = 240,
+      liveClimbRestart = 90,
       doorSceneSize = 96,
       doorLabel = 24;
 
@@ -955,6 +972,13 @@ abstract final class Tokens {
 
   /// The narrowest a career stop card may be in its grid.
   static const double stopCardMinWidth = 220;
+
+  /// A stop on the Home timeline: the narrowest it may be before the line
+  /// scrolls, its marker's size, and how much the marker grows under the
+  /// pointer.
+  static const double stopItemWidth = 132,
+      stopNodeSize = 40,
+      stopNodeLift = 1.12;
 
   /// The narrowest hero that gets the picture beside it. Below this the copy
   /// needs the width, and the picture would be a postage stamp.
