@@ -267,18 +267,30 @@ final class Joined extends Participation {
     required bool remembered,
     math.Random? random,
   }) {
-    final source = random ?? math.Random.secure();
-    final key = [
-      for (var i = 0; i < 16; i++)
-        source.nextInt(256).toRadixString(16).padLeft(2, '0'),
-    ].join();
     return Joined(
-      playerKey: key,
+      playerKey: newKey(random),
       nickname: nickname,
       submitsAutomatically: submitsAutomatically,
       remembered: remembered,
     );
   }
+
+  /// A fresh random key: 32 hex characters, from nothing but [random].
+  static String newKey([math.Random? random]) {
+    final source = random ?? math.Random.secure();
+    return [
+      for (var i = 0; i < 16; i++)
+        source.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ].join();
+  }
+
+  /// The same participant holding [key] instead.
+  Joined rekeyed(String key) => Joined(
+    playerKey: key,
+    nickname: nickname,
+    submitsAutomatically: submitsAutomatically,
+    remembered: remembered,
+  );
 
   /// The secret that proves an entry is theirs. Never sent anywhere but here.
   final String playerKey;

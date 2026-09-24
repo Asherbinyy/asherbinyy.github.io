@@ -100,6 +100,28 @@ class LeaderboardController extends StateNotifier<LeaderboardState> {
   final PreferenceStore _store;
   Timer? _poll;
 
+  /// A key for this tab only, so the very first climb can be for the record.
+  ///
+  /// The board is offered after a climb, with its height on the screen -- but
+  /// a climb only counts if it was played on a shaft the server chose before
+  /// it began. So the first climb used to be lost to anybody who joined after
+  /// it, which is everybody who joins: the owner played, joined, and found
+  /// nothing on the board.
+  ///
+  /// This is random, held in memory, never written to the device, and derived
+  /// from nothing, so it identifies nothing; the Worker stores nothing when it
+  /// issues a run. Somebody who joins takes this key as theirs, which is what
+  /// lets the climb they have just finished go up.
+  final String _tabKey = Joined.newKey();
+
+  /// A finished climb, played for the record by somebody who had not yet
+  /// said whether they want to be on the board. Sent if they join; dropped
+  /// otherwise.
+  ({RunChallenge challenge, String tape})? _unclaimed;
+
+  /// A run being fetched, so two callers share one request.
+  Future<RunChallenge?>? _fetching;
+
   /// Whether a leaderboard exists to talk to in this build at all.
   bool get isAvailable => _board != null;
 
@@ -124,7 +146,12 @@ class LeaderboardController extends StateNotifier<LeaderboardState> {
   }
 
   /// Records the visitor's answer to the one question this feature asks.
-  Future<void> choose(Participation choice) async {
+  Future<void> choose(Participation answer) async {
+    // Somebody joining now takes the key the climbs in this tab were issued
+    // to, so the one they have just finished is theirs to submit.
+    final choice = answer is Joined && state.participation is! Joined
+        ? answer.rekeyed(_tabKey)
+        : answer;
     state = state._with(participation: choice);
     final stored = choice.persisted();
     if (stored == null) {
@@ -135,6 +162,11 @@ class LeaderboardController extends StateNotifier<LeaderboardState> {
       await _store.remove(PreferenceKey.gameParticipation.storageKey);
     } else {
       await _store.write(PreferenceKey.gameParticipation.storageKey, stored);
+    }
+    final unclaimed = _unclaimed;
+    _unclaimed = null;
+    if (choice is Joined && unclaimed != null) {
+      await submit(challenge: unclaimed.challenge, tape: unclaimed.tape);
     }
   }
 
@@ -166,16 +198,46 @@ class LeaderboardController extends StateNotifier<LeaderboardState> {
   /// Returns null when there is no leaderboard, the visitor has not joined, or
   /// the server did not answer — and the caller then starts an ordinary local
   /// run, which is the escape the contract insists stays open.
-  Future<RunChallenge?> beginRankedRun() async {
+  Future<RunChallenge?> beginRankedRun() {
     final client = _board;
     final participation = state.participation;
-    if (client == null || participation is! Joined) return null;
-    final challenge = await client.beginRun(participation.playerKey);
-    if (!mounted) return null;
-    state = challenge == null
-        ? state._with(clearChallenge: true)
-        : state._with(challenge: challenge, clearRun: true);
-    return challenge;
+    if (client == null) return Future.value();
+    final key = switch (participation) {
+      Joined(:final playerKey) => playerKey,
+      // Not asked yet: the climb may still be claimed. See [_tabKey].
+      Undecided() => _tabKey,
+      PlayingLocally() => null,
+    };
+    if (key == null) return Future.value();
+    return _fetching ??= () async {
+      final challenge = await client.beginRun(key);
+      _fetching = null;
+      if (!mounted) return null;
+      state = challenge == null
+          ? state._with(clearChallenge: true)
+          : state._with(challenge: challenge, clearRun: true);
+      return challenge;
+    }();
+  }
+
+  /// Whether the next climb can be played for the record, once a run is in
+  /// hand: everybody but somebody who chose to play on their own.
+  bool get canTryRanked =>
+      _board != null && state.participation is! PlayingLocally;
+
+  /// Sends a finished climb, or keeps it for somebody not yet asked.
+  Future<void> finish({
+    required RunChallenge challenge,
+    required String tape,
+  }) async {
+    switch (state.participation) {
+      case Joined():
+        await submit(challenge: challenge, tape: tape);
+      case Undecided():
+        _unclaimed = (challenge: challenge, tape: tape);
+      case PlayingLocally():
+        break;
+    }
   }
 
   /// Hands over the challenge in hand, and stops holding it.
@@ -211,6 +273,9 @@ class LeaderboardController extends StateNotifier<LeaderboardState> {
     state = state._with(verdict: first, pendingRunId: challenge.runId);
     if (first is VerdictPending) _watch(challenge.runId);
   }
+
+  /// The longest the first climb of a visit waits for a run from the server.
+  static const Duration firstRunWait = Duration(milliseconds: 1500);
 
   /// How often the verdict is asked for while a run is being checked.
   ///
