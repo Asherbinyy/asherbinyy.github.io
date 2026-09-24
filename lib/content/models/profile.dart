@@ -66,6 +66,13 @@ class Profile with _$Profile {
 
     /// Tools the owner states they use.
     @Default(<String>[]) List<String> tools,
+
+    /// The skills under titles -- Mobile, AI and automation, and so on -- the
+    /// way Home and About show them: a title that opens onto its skills.
+    ///
+    /// Optional. Empty, and the flat [skills] list is shown instead, so a
+    /// profile written before groups existed still reads correctly.
+    @Default(<SkillGroup>[]) List<SkillGroup> skillGroups,
     @Default(<ProfileLink>[]) List<ProfileLink> links,
     NameAudio? nameAudio,
     SiteAppearance? appearance,
@@ -111,6 +118,20 @@ class ProfileStat with _$ProfileStat {
   /// Decodes the documented JSON shape.
   factory ProfileStat.fromJson(Map<String, dynamic> json) =>
       _$ProfileStatFromJson(json);
+}
+
+/// A titled set of skills: "Mobile", and what sits under it.
+@freezed
+class SkillGroup with _$SkillGroup {
+  /// [skills] are names, not translated, like [Profile.skills].
+  const factory SkillGroup({
+    required LocalizedText title,
+    @Default(<String>[]) List<String> skills,
+  }) = _SkillGroup;
+
+  /// Decodes the documented JSON shape.
+  factory SkillGroup.fromJson(Map<String, dynamic> json) =>
+      _$SkillGroupFromJson(json);
 }
 
 /// Contact values supplied by the owner; optional links are omitted if missing.

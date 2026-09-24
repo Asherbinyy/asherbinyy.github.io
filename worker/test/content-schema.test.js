@@ -293,7 +293,7 @@ test('a figure in the profile is a claim even though it reads as a word', async 
   const claims = collectClaims('profile.json', await bundled('profile.json'));
   assert.deepEqual(
     claims.map((claim) => claim.path),
-    ['stats.0.value', 'stats.1.value'],
+    ['stats.0.value', 'stats.1.value', 'stats.2.value'],
   );
 });
 

@@ -402,3 +402,23 @@ The owner asked for the skills to be expanded from his resumes, named Docker him
 The existing six headline skills keep their order, so Home's first chips are unchanged. No proficiency levels, years or project counts were attached to any new skill.
 
 **Conflict noticed, not resolved:** AZ Courses downloads are "15,000+" on **CV2** and on the site, but "Over 8,000" on **LI-X**. The site keeps the CV figure; the owner should reconcile LinkedIn or the CV.
+
+## September 23, second round: work of art
+
+The owner's round of nine screenshots, and his answers in conversation on 2026-09-23 (quoted where they decide something).
+
+| Content | Source / limit |
+|---|---|
+| AZ Courses: 50,000+ downloads on Google Play | **PUB**, the Google Play listing `com.crazyidea.azcourses`, installs band read on 2026-09-23 after the owner said "check google as well bc i think the app exceeded that". Replaces 15,000+ and resolves the CV/LinkedIn conflict noted above. The site's Android link for AZ Courses pointed at AZ Exams; corrected to the AZ Courses listing. |
+| Tripster: "cut maintenance time by 25%" | **CV2**, the Ar++ role ("reducing maintenance time by 25%"), attached to the app it describes. |
+| 30+ apps and projects delivered (Home stat) | **OWN**, 2026-09-23 ("Mention delivering 30+ apps/projects"). |
+| 5+ years experience | **OWN**, 2026-09-23: "5+ bc. ik developement since 2021 worked in Oct 2021". Unchanged. |
+| MSc overall 80% | **OWN**, 2026-09-23: "MSC is 80% overall". Replaces 79; Distinction unchanged. |
+| App descriptions (Tripster, Malboos, Tekrar, Wasset, Mostaqbaly, AZ Exams, Snunu, Tiara Beauty) | **PUB**, each app's App Store / Google Play listing, read 2026-09-23 and rewritten in the owner's voice at his request ("articulate it and tailor it for me"). No figures added from listings. Snunu is no longer listed; its line comes from the indexed store summary. |
+| Store screenshots in `assets/media/apps/<id>/` | **PUB**, the listings' own screenshots, downloaded 2026-09-23; source URLs kept in the session tooling. They are the apps' published marketing images, shown as the apps' own. |
+| Which company each app was built at | **OWN**, 2026-09-23: Hwzn: Wasset, Tekrar, Malboos; CI Company renamed **Techlab** (techlabeg.com): Snunu, Enjoy, AZ Courses/Exams (and Mostaqbaly); Self: Easy Go; Freelance: Tiara Beauty; Guardy (guardyapp.de): Guardy; MiNextStep; **Techlab Solutions** (techlab.solutions): Mokaf; AR++: Tripster. "Techlabs Solutions" corrected to the owner's spelling. |
+| "Currently learning" folded into the skills | **OWN**, 2026-09-23 ("add the learning skills as skills without refering to them that im still learning"). |
+| Skill group titles | Claude's grouping of the owner's existing skills, at his request for skills "under titles". No skill added by the grouping. |
+| Home closing copy ("Got an app in mind?") | Claude, at the owner's request to replace copy he called machine-made. A promise of a reply, no figure. |
+| About life loop on the ankh; "Wake up" | **OWN**, 2026-09-23 ("replace the Life node … Wake up"). Labels only. |
+| The Ascent's levels, relics and summit | Game design at the owner's request; no claim about the owner. The golden mask is the reward art `12-MOTIF-LIBRARY.md` reserves for the top of the game. |

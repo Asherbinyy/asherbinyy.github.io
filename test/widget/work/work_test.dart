@@ -38,8 +38,12 @@ void main() {
       );
 
       expect(find.text('AZ Courses'), findsOneWidget);
-      // The strongest single string on the page.
-      expect(find.text('15,000+ downloads'), findsOneWidget);
+      // The strongest single string on the page, read from the ledger so a
+      // new figure in content cannot leave this asserting the old one.
+      final azCourses = bundledApps().singleWhere(
+        (app) => app['id'] == 'az-courses',
+      );
+      expect(find.text(azCourses['metric'] as String), findsOneWidget);
     });
 
     testWidgets('an application with no listing says nothing at all', (

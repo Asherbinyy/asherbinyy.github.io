@@ -59,6 +59,13 @@
         "en": "in IT, with Distinction",
         "ar": "في تقنية المعلومات، بامتياز"
       }
+    },
+    {
+      "value": "30+",
+      "label": {
+        "en": "apps and projects delivered",
+        "ar": "تطبيقات ومشاريع مُنجزة"
+      }
     }
   ],
   "greeting": {
@@ -83,8 +90,6 @@
     "Dart",
     "Swift",
     "SwiftUI",
-    "CI/CD",
-    "GitHub Actions",
     "UIKit",
     "iOS",
     "Android",
@@ -108,32 +113,33 @@
     "Integration tests",
     "Golden tests",
     "TDD",
+    "CI/CD",
+    "GitHub Actions",
     "Codemagic",
     "Fastlane",
     "Docker",
     "App Store Connect",
     "Play Console",
     "TestFlight",
+    "AI automation",
+    "AI workflows",
+    "AI agents",
+    "RAG",
+    "LangChain",
+    "Python scripting",
     "Google Maps",
     "Apple Pay",
     "STC Pay",
     "TAP SDK",
-    "Python scripting",
-    "Project management",
-    "Cybersecurity",
-    "Power BI",
     "Figma",
     "Adobe XD",
     "Photoshop",
-    "Adobe Premiere Pro"
+    "Adobe Premiere Pro",
+    "Project management",
+    "Power BI",
+    "Cybersecurity"
   ],
-  "learning": [
-    "RAG",
-    "LangChain",
-    "AI automation",
-    "AI workflows",
-    "AI agents"
-  ],
+  "learning": [],
   "tools": [
     "Claude",
     "Codex",
@@ -152,6 +158,132 @@
     "Jira",
     "Trello",
     "Zoho"
+  ],
+  "skillGroups": [
+    {
+      "title": {
+        "en": "Mobile",
+        "ar": "تطوير الجوّال"
+      },
+      "skills": [
+        "Flutter",
+        "Dart",
+        "Swift",
+        "SwiftUI",
+        "UIKit",
+        "iOS",
+        "Android",
+        "Swift Concurrency",
+        "Deep linking",
+        "Bluetooth / BLE"
+      ]
+    },
+    {
+      "title": {
+        "en": "Architecture",
+        "ar": "البنية المعمارية"
+      },
+      "skills": [
+        "Clean Architecture",
+        "SOLID",
+        "Design patterns",
+        "BLoC",
+        "Riverpod",
+        "Provider",
+        "GetX"
+      ]
+    },
+    {
+      "title": {
+        "en": "Backend and data",
+        "ar": "الخوادم والبيانات"
+      },
+      "skills": [
+        "RESTful APIs",
+        "Firebase",
+        "Supabase",
+        "Core Data",
+        "Local persistence"
+      ]
+    },
+    {
+      "title": {
+        "en": "Testing",
+        "ar": "الاختبارات"
+      },
+      "skills": [
+        "Unit tests",
+        "Widget tests",
+        "Integration tests",
+        "Golden tests",
+        "TDD"
+      ]
+    },
+    {
+      "title": {
+        "en": "Release",
+        "ar": "النشر والإصدار"
+      },
+      "skills": [
+        "CI/CD",
+        "GitHub Actions",
+        "Codemagic",
+        "Fastlane",
+        "Docker",
+        "App Store Connect",
+        "Play Console",
+        "TestFlight"
+      ]
+    },
+    {
+      "title": {
+        "en": "AI and automation",
+        "ar": "الذكاء الاصطناعي والأتمتة"
+      },
+      "skills": [
+        "AI automation",
+        "AI workflows",
+        "AI agents",
+        "RAG",
+        "LangChain",
+        "Python scripting"
+      ]
+    },
+    {
+      "title": {
+        "en": "Integrations",
+        "ar": "التكاملات"
+      },
+      "skills": [
+        "Google Maps",
+        "Apple Pay",
+        "STC Pay",
+        "TAP SDK"
+      ]
+    },
+    {
+      "title": {
+        "en": "Design",
+        "ar": "التصميم"
+      },
+      "skills": [
+        "Figma",
+        "Adobe XD",
+        "Photoshop",
+        "Adobe Premiere Pro"
+      ]
+    },
+    {
+      "title": {
+        "en": "Beyond code",
+        "ar": "ما وراء الكود"
+      },
+      "skills": [
+        "Project management",
+        "Power BI",
+        "Cybersecurity"
+      ]
+    }
   ],
   "services": [
     "Mobile apps",
