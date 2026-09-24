@@ -42,6 +42,9 @@ const STAFF_HEIGHT = 4.6;
 /** Bastet sits lower than a standing god, and turns to face the viewer. */
 const BASTET_HEIGHT = 3.4;
 const BASTET_TURN = 0.5;
+/** Anubis lies along the pedestal, facing the doorway at a three-quarter. */
+const ANUBIS_LENGTH = 3.5;
+const ANUBIS_TURN = Math.PI - 0.55;
 
 /** Reads the run once, so a reload replays it but a route change does not. */
 const PLAYED_KEY = 'kemet.threshold.played';
@@ -527,39 +530,29 @@ export class Threshold {
       })
       .catch(() => {});
 
-    loadMesh('intro/models/guardian.kmsh')
+    // Anubis on the right: the recumbent jackal of Tutankhamun's shrine,
+    // lying on his chest the way he guarded the treasury. Sized by his
+    // length, since he lies rather than stands.
+    loadMesh('intro/models/anubis.kmsh')
       .then((geometry) => {
-        // The fetch can outlive the overlay if a visitor presses Escape.
         if (this.disposed) {
           geometry.dispose();
           return;
         }
         const bounds = geometry.boundingBox;
-        // The mesh arrives centred on its own bounds and one unit tall, so it
-        // is placed in scene units without knowing anything about the scan.
-        const scale = STATUE_HEIGHT / (bounds.max.y - bounds.min.y);
-        for (const guard of this.guards.filter((g) => g.userData.side > 0)) {
-          const figure = new THREE.Mesh(geometry, material);
-          figure.scale.setScalar(scale);
-          // Feet on the top of the pedestal. Derived from the pedestal rather
-          // than measured off a screenshot, so moving one moves the other and
-          // the statue cannot end up hovering a hand's width above its base.
-          figure.position.y = PEDESTAL_TOP - bounds.min.y * scale;
-          // Turned to face the viewer, not the door. Colossi at a pylon face
-          // outward, at whoever is walking up to it, and the first pass had
-          // both of them in profile showing a flank and a back pillar. The
-          // quarter turn back inward keeps them addressing the doorway as
-          // well, so they read as flanking it rather than ignoring it.
-          //
-          // The group already carries the mirror, so the sign follows it.
-          figure.rotation.y = guard.userData.side * (Math.PI / 2 - 0.25);
-          guard.add(figure);
-        }
+        const length = Math.max(
+          bounds.max.x - bounds.min.x,
+          bounds.max.z - bounds.min.z,
+        );
+        const scale = ANUBIS_LENGTH / length;
+        const guard = this.guards.find((g) => g.userData.side > 0);
+        const figure = new THREE.Mesh(geometry, basalt);
+        figure.scale.setScalar(scale);
+        figure.position.y = PEDESTAL_TOP - bounds.min.y * scale;
+        figure.rotation.y = ANUBIS_TURN;
+        guard.add(figure);
       })
-      .catch(() => {
-        // Recorded rather than surfaced. A missing statue is a poorer scene;
-        // a thrown error here would take the whole intro down for it.
-      });
+      .catch(() => {});
   }
 
   #dust() {

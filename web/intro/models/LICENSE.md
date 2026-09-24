@@ -59,7 +59,18 @@ at the owner's request for a black cat.
 ## Why this statue
 
 The owner asked for the guardians to be Anubis and Bastet. Bastet is the
-seated cat in the pose of the Gayer-Anderson bronze. No Anubis scan under an
-open licence was found on Wikimedia Commons; the Scan The World scan of
-Tutankhamun's Anubis shrine needs a MyMiniFactory account to download, so until
-one is supplied the right-hand guardian is still Ra-Horakhty.
+seated cat in the pose of the Gayer-Anderson bronze; Anubis is below.
+
+# Anubis
+
+`anubis.kmsh` is reduced from `ah-2.stl`, supplied by the owner on 2026-09-24
+(the recumbent Anubis of Tutankhamun's shrine, exported by netfabb), to be
+used here. It shipped at the owner's instruction. **Its original author and
+licence are not yet recorded**: the file came without them. The owner is to
+name the source (a Scan The World scan of the Anubis shrine, by his account
+of where he found it) so the credit can be added here and in the README.
+
+Reduced by `tool/mesh/decimate_stl.py` (straightening off) from 1,379,930
+triangles to 22,566 on a 120-cell grid, Z-up to Y-up, 238KB. Rendered in the
+same black stone as Bastet. It replaces Ra-Horakhty on the right-hand
+pedestal; `guardian.kmsh` is no longer loaded.
