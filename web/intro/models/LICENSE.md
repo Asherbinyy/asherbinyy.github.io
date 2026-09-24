@@ -34,3 +34,32 @@ door opening onto light, so the god of the sun on the horizon is the one who
 should be standing at it.
 
 Attribution is available through the Artwork credits link on the About page.
+
+# Bastet
+
+`bastet.kmsh` is not covered by this repository's MIT licence either. It is an
+adaptation of a Creative Commons Attribution work.
+
+| | |
+|---|---|
+| **Work** | *Bastet* (STL) |
+| **Creator** | Gargi ([Thingiverse](https://www.thingiverse.com/Gargi)) / Christian Kuhn |
+| **Source** | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Thingiverse_-_Bastet.stl) |
+| **Licence** | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+
+## What was changed
+
+Reduced by `tool/mesh/decimate_stl.py` (with its plumb-line straightening
+turned off: the model is already true, and a seated cat is not symmetric about
+an upright axis) from 16,524 triangles to 9,706 on a 110-cell grid, turned
+from Z-up onto the scene's Y-up, recentred and scaled to
+unit height, and re-encoded as KMSH (104KB). It is rendered in a black stone,
+at the owner's request for a black cat.
+
+## Why this statue
+
+The owner asked for the guardians to be Anubis and Bastet. Bastet is the
+seated cat in the pose of the Gayer-Anderson bronze. No Anubis scan under an
+open licence was found on Wikimedia Commons; the Scan The World scan of
+Tutankhamun's Anubis shrine needs a MyMiniFactory account to download, so until
+one is supplied the right-hand guardian is still Ra-Horakhty.

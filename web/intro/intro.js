@@ -39,6 +39,9 @@ const PEDESTAL_WIDTH = 2.1;
 // under it this stands above the doorway it flanks.
 const STATUE_HEIGHT = 4.3;
 const STAFF_HEIGHT = 4.6;
+/** Bastet sits lower than a standing god, and turns to face the viewer. */
+const BASTET_HEIGHT = 3.4;
+const BASTET_TURN = 0.5;
 
 /** Reads the run once, so a reload replays it but a route change does not. */
 const PLAYED_KEY = 'kemet.threshold.played';
@@ -456,6 +459,23 @@ export class Threshold {
       guard.add(staff);
       this.staves.push(staff);
 
+      // Where the staff meets the ground: a ring of light that goes out
+      // across the sand on the strike, so the blow lands somewhere.
+      const flash = new THREE.Mesh(
+        new THREE.RingGeometry(0.2, 0.34, 40),
+        new THREE.MeshBasicMaterial({
+          color: PALETTE.gold,
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        }),
+      );
+      flash.rotation.x = -Math.PI / 2;
+      flash.position.set(PEDESTAL_WIDTH / 2 + 0.22, 0.02, 0);
+      guard.add(flash);
+      (this.flashes ??= []).push(flash);
+
       // Facing the doorway, so both sentries look at what the viewer is about
       // to walk through. The group's local +X is that direction, on both
       // sides, which is also the direction the scan faces.
@@ -483,6 +503,30 @@ export class Threshold {
    * on a slow connection would say the fix had not landed.
    */
   #carve(material) {
+    // Bastet, the cat, in black stone on the left, the way the owner asked
+    // for her: a seated cat in the pose of the Gayer-Anderson bronze.
+    const basalt = new THREE.MeshStandardMaterial({
+      color: 0x1b1e26,
+      roughness: 0.42,
+      metalness: 0.18,
+    });
+    loadMesh('intro/models/bastet.kmsh')
+      .then((geometry) => {
+        if (this.disposed) {
+          geometry.dispose();
+          return;
+        }
+        const bounds = geometry.boundingBox;
+        const scale = BASTET_HEIGHT / (bounds.max.y - bounds.min.y);
+        const guard = this.guards.find((g) => g.userData.side < 0);
+        const figure = new THREE.Mesh(geometry, basalt);
+        figure.scale.setScalar(scale);
+        figure.position.y = PEDESTAL_TOP - bounds.min.y * scale;
+        figure.rotation.y = BASTET_TURN;
+        guard.add(figure);
+      })
+      .catch(() => {});
+
     loadMesh('intro/models/guardian.kmsh')
       .then((geometry) => {
         // The fetch can outlive the overlay if a visitor presses Escape.
@@ -494,7 +538,7 @@ export class Threshold {
         // The mesh arrives centred on its own bounds and one unit tall, so it
         // is placed in scene units without knowing anything about the scan.
         const scale = STATUE_HEIGHT / (bounds.max.y - bounds.min.y);
-        for (const guard of this.guards) {
+        for (const guard of this.guards.filter((g) => g.userData.side > 0)) {
           const figure = new THREE.Mesh(geometry, material);
           figure.scale.setScalar(scale);
           // Feet on the top of the pedestal. Derived from the pedestal rather
@@ -615,49 +659,71 @@ export class Threshold {
 
   #opening(since) {
     const ease = (t) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
+    const clamp01 = (t) => Math.min(1, Math.max(0, t));
 
-    // Beat one: the staves come down. The strike is what starts everything,
-    // so it lands before anything else moves.
-    const strike = Math.min(1, since / 0.42);
+    // Beat one: the staves strike. Drawn back and lifted first, then brought
+    // down hard, a little past upright, and settled -- a blow with weight in
+    // it rather than a hinge closing. The owner found the old swing too tidy.
+    const IMPACT = 0.28;
     for (const staff of this.staves) {
-      staff.rotation.z = (1 - ease(strike)) * 0.5;
+      let tilt;
+      let lift;
+      if (since < 0.18) {
+        const t = ease(since / 0.18);
+        tilt = 0.5 - t * 0.85; // 0.5 back to -0.35
+        lift = t * 0.35;
+      } else if (since < IMPACT) {
+        const t = clamp01((since - 0.18) / (IMPACT - 0.18));
+        tilt = -0.35 + t * t * 0.41; // accelerating down, to +0.06
+        lift = 0.35 * (1 - t * t);
+      } else {
+        const t = since - IMPACT;
+        tilt = 0.06 * Math.exp(-t * 9) * Math.cos(t * 28);
+        lift = 0;
+      }
+      staff.rotation.z = tilt;
+      staff.position.y = lift;
     }
-    // One material behind every part of both standards, so the gold takes
-    // light in a single assignment.
-    this.gilt.emissiveIntensity = 0.05 + ease(strike) * 0.95;
+    // The gold takes light at the impact, not before.
+    const lit = clamp01((since - IMPACT) / 0.12);
+    this.gilt.emissiveIntensity = 0.05 + ease(lit) * 0.95;
+    for (const flash of this.flashes ?? []) {
+      const t = clamp01((since - IMPACT) / 0.55);
+      flash.scale.setScalar(1 + t * 9);
+      flash.material.opacity = since < IMPACT ? 0 : (1 - t) * 0.85;
+    }
 
     // Beat two: the ground takes it. Shake decays fast; a long shake reads as
     // a bug rather than as an impact.
-    this.shake = Math.max(0, 1 - (since - 0.42) / 0.9);
-    const jolt = since > 0.42 ? this.shake * this.shake * 0.16 : 0;
+    this.shake = Math.max(0, 1 - (since - IMPACT) / 0.6);
+    const jolt = since > IMPACT ? this.shake * this.shake * 0.18 : 0;
     this.rig.position.y = Math.sin(since * 60) * jolt;
     this.rig.position.x = Math.cos(since * 47) * jolt * 0.6;
 
-    // Beat three: the inscription takes light, one bar at a time from the
-    // centre out, so the lintel reads as being read.
-    const litFrom = Math.max(0, since - 0.6) * 9;
+    // Beat three: the inscription takes light from the centre out.
+    const litFrom = Math.max(0, since - 0.32) * 16;
     this.band.children.forEach((bar, index) => {
       const distance = Math.abs(index - 6);
       bar.material.emissiveIntensity = litFrom > distance ? 1.6 : 0.16;
     });
 
-    // Beat four: the slabs part, and the chamber behind them is already lit.
-    const part = ease(Math.max(0, since - 1.15) / 1.5);
+    // Beat four: the slabs part. Faster than it was -- the owner found three
+    // seconds and more of opening a wait -- and the chamber behind is lit.
+    const part = ease(Math.max(0, since - 0.5) / 0.95);
     this.doors.forEach((door) => {
       door.position.x = door.userData.home + door.userData.side * part * 3.7;
     });
     this.chamber.material.opacity = part;
     this.inner.intensity = part * 40;
 
-    // Beat five: the camera goes in. Everything above happens to the scene;
-    // this is the only part that happens to the viewer.
-    const approach = ease(Math.max(0, since - 1.8) / 2.1);
+    // Beat five: the camera goes in.
+    const approach = ease(Math.max(0, since - 0.78) / 1.25);
     this.camera.position.z = 16 - approach * 19.2;
     this.camera.position.y = 3.4 - approach * 0.5;
     this.camera.position.x *= 1 - approach;
     this.camera.lookAt(0, 3.4, -4);
 
-    if (since > 3.7) {
+    if (since > 2.1) {
       this.state = 'done';
       this.onFinished();
     }

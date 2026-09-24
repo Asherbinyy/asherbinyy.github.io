@@ -84,9 +84,9 @@ export async function mountThreshold() {
   // hunting for anything.
   window.setTimeout(() => host.focus({preventScroll: true}), 600);
 
-  // It still opens on its own, for somebody who does nothing. Long enough to
-  // read the button, short enough not to be a wait.
-  window.setTimeout(openDoor, 4200);
+  // It still opens on its own, for somebody who does nothing: long enough to
+  // see the scene, short enough not to be a wait.
+  window.setTimeout(openDoor, 2200);
 
   // Escape still works, deliberately without being advertised. Trapping
   // someone in a non-dismissible overlay is an accessibility failure however

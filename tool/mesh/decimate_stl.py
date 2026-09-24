@@ -250,7 +250,14 @@ def write(path, verts, faces, uvs, span):
 if __name__ == '__main__':
     source, target, grid = sys.argv[1], sys.argv[2], int(sys.argv[3])
     up = sys.argv[4] if len(sys.argv) > 4 else 'y'
-    tris = upright(read_stl(source, up))
+    # `true`: the model is already square to gravity, as a modelled (rather
+    # than scanned) figure is. The plumb-line fit assumes a figure symmetric
+    # about its own axis; a seated cat leans forward by nature, and the fit
+    # "corrected" Bastet into a tilt.
+    keep = len(sys.argv) > 5 and sys.argv[5] == 'true'
+    tris = read_stl(source, up)
+    if not keep:
+        tris = upright(tris)
     verts, faces, span = decimate(tris, grid)
     verts, faces, uvs = wrap(verts, faces)
     write(target, verts, faces, uvs, span)
