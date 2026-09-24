@@ -3,7 +3,9 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
 
+import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/painting/ornament_paths.dart';
+import 'package:nocturne/core/painting/sign_paths.dart';
 import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
 
 /// Draws the shaft of the obelisk, and the climb up it.
@@ -27,7 +29,15 @@ class AscentPainter extends CustomPainter {
     required this.isReducedMotion,
     this.time = 0,
     this.kickAge = 1,
+    this.skin = Tokens.figureSkin,
+    this.skinShade = Tokens.figureSkinShade,
   });
+
+  /// The climber's face, arms and legs: skin, at the owner's request.
+  final Color skin;
+
+  /// See [skin]: the far limbs.
+  final Color skinShade;
 
   // A fresh AscentPainter is built every frame -- `time`, `world` and
   // `entrance` all change -- so an instance field would cache nothing. This
@@ -118,7 +128,7 @@ class AscentPainter extends CustomPainter {
   /// Life proportion reads as a pinhead at the size this figure is actually
   /// painted. Illustration has always solved this the same way, and so does
   /// every readable game sprite.
-  static const double _headScale = 1.28;
+  static const double _headScale = 1.6;
 
   /// Where the chin sits, as a share of the climber's height above the feet.
   ///
@@ -201,6 +211,7 @@ class AscentPainter extends CustomPainter {
     _paintShaftWall(canvas, shaft, camera, metresToPixels, screenY);
     _paintTorches(canvas, size, shaft, camera, metresToPixels, screenY);
     _paintDust(canvas, shaft, camera, metresToPixels);
+    _paintSand(canvas, shaft);
 
     // Depth marks cut into the shaft wall every 24 metres, so height is
     // legible without reading the counter. They used to gate a fact about the
@@ -233,10 +244,12 @@ class AscentPainter extends CustomPainter {
       _paintLedge(canvas, shaft, ledge, y);
     }
 
-    _paintBoons(canvas, shaft, size, screenY, metresToPixels);
+    _paintSummit(canvas, shaft, screenY(AscentWorld.summit));
+    _paintRelics(canvas, shaft, size, screenY, metresToPixels);
     _paintFloor(canvas, shaft, screenY(world.floorY), metresToPixels);
     _paintClimber(canvas, shaft, screenY(world.climberY), metresToPixels);
     _paintKick(canvas, shaft, screenY(world.climberY));
+    _paintDuat(canvas, size, shaft, screenY(world.climberY), metresToPixels);
     _paintDanger(canvas, size);
 
     // The opening: light travels up the shaft as a run begins, so the game
@@ -408,12 +421,55 @@ class AscentPainter extends CustomPainter {
 
     final left = shaft.left + (ledge.x - ledge.width / 2) * shaft.width;
     final width = ledge.width * shaft.width;
+    // The floor a level opens on: the shaft's full width, banded in gold, so
+    // the change of level is a place and not only a number.
+    if (ledge.isLanding) {
+      final band = math.max(strokeWidth * 6, shaft.height * 0.024);
+      final floor = Rect.fromLTWH(left, y - band / 2, width, band);
+      canvas
+        ..drawRect(floor, Paint()..color = stone.withValues(alpha: 0.35))
+        ..drawLine(
+          floor.topLeft,
+          floor.topRight,
+          Paint()
+            ..color = gold
+            ..strokeWidth = strokeWidth * 2,
+        );
+      final tick = Paint()
+        ..color = gold.withValues(alpha: 0.5)
+        ..strokeWidth = strokeWidth;
+      for (var dx = floor.left; dx < floor.right; dx += band * 1.6) {
+        canvas.drawLine(Offset(dx, floor.top), Offset(dx, floor.bottom), tick);
+      }
+      return;
+    }
     // Thick enough to be a thing to land on. The old height was three
     // hairlines, which drew a divider.
     final height = math.max(strokeWidth * 5, shaft.height * 0.019);
     final rect = Rect.fromLTWH(left, y - height / 2, width, height);
 
     final colour = ledge.kind == LedgeKind.cracked ? cracked : stone;
+    // Ice: a pale sheen along the top and a fringe hanging under it, so the
+    // slide is expected before it happens.
+    if (AscentWorld.isIcy(AscentWorld.levelOf(ledge.y)) && !ledge.isLanding) {
+      final sheen = Paint()
+        ..color = stone.withValues(alpha: 0.55)
+        ..strokeWidth = strokeWidth;
+      canvas.drawLine(
+        Offset(left + width * 0.08, y - height / 2 + strokeWidth * 2),
+        Offset(left + width * 0.55, y - height / 2 + strokeWidth * 2),
+        sheen,
+      );
+      final drip = height * 0.9;
+      for (var i = 1; i < 6; i++) {
+        final dx = left + width * i / 6;
+        canvas.drawLine(
+          Offset(dx, y + height / 2),
+          Offset(dx, y + height / 2 + drip * (i.isEven ? 1 : 0.55)),
+          sheen,
+        );
+      }
+    }
     canvas
       ..drawRect(rect, Paint()..color = colour.withValues(alpha: 0.3))
       ..drawRect(
@@ -641,77 +697,164 @@ class AscentPainter extends CustomPainter {
       ..restore();
   }
 
-  /// The gilded ankhs, floating above the ledges that carry them.
+  /// The relics, floating above the ledges that carry them: the ankh, the
+  /// eye of Horus and Ma'at's feather, each the site's own sign for it.
   ///
-  /// An ankh because it is the one motif in this alphabet that everybody
-  /// already reads as *life*, which is what it gives: ten seconds of a taller
-  /// jump. It is drawn as three strokes -- loop, bar, stem -- and no more,
-  /// because at twenty pixels a fourth stroke is a smudge.
-  ///
-  /// A taken one leaves nothing behind. The lift itself is the feedback, and a
-  /// hollow outline where an ankh used to be would be a row of things the
-  /// player can no longer have.
-  void _paintBoons(
+  /// Bobbing and lit from behind: standing still a sign reads as scenery cut
+  /// into the wall; moving, it reads as something to go and get. Each has a
+  /// ring of its own drawn at a different speed, so the three are told apart
+  /// by motion as well as by shape. A taken one leaves nothing behind.
+  void _paintRelics(
     Canvas canvas,
     Rect shaft,
     Size size,
     double Function(double) screenY,
     double metresToPixels,
   ) {
-    // Smaller than the climber, always. He is the thing being watched, and a
-    // collectible that outweighs the character is a collectible the eye goes
-    // to instead of to the jump it is in the middle of.
-    final box = math.min(shaft.width * 0.05, metresToPixels * 0.72);
+    // Smaller than the climber, always. He is the thing being watched.
+    final box = math.min(shaft.width * 0.07, metresToPixels * 0.95);
     if (box < 4) return;
 
     for (final ledge in world.ledges) {
-      if (!ledge.hasBoon || ledge.boonTaken) continue;
+      final relic = ledge.relic;
+      if (relic == null || ledge.relicTaken) continue;
       final centre = Offset(
         shaft.left + ledge.x * shaft.width,
-        screenY(ledge.boonY),
+        screenY(ledge.relicY),
       );
       if (centre.dy < -box || centre.dy > size.height + box) continue;
 
-      // Bobbing, and lit from behind. Standing still it reads as scenery cut
-      // into the wall; moving, it reads as something to go and get.
+      final phase = ledge.id * 1.7;
       final bob = isReducedMotion
           ? 0.0
-          : math.sin(time * 2.1 + ledge.id * 1.7) * box * 0.12;
+          : math.sin(time * 2.1 + phase) * box * 0.12;
       final at = centre.translate(0, bob);
 
       canvas.drawCircle(
         at,
         box * 0.95,
         Paint()
-          ..color = glow.withValues(alpha: isReducedMotion ? 0.12 : 0.18)
+          ..color = glow.withValues(alpha: isReducedMotion ? 0.14 : 0.22)
           ..maskFilter = MaskFilter.blur(BlurStyle.normal, box * 0.6),
       );
-
-      final stroke = Paint()
-        ..color = glow
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = math.max(strokeWidth * 1.8, box * 0.16)
-        ..strokeCap = StrokeCap.round;
+      // A ring that breathes, faster for the rarer sign.
+      final beat = isReducedMotion
+          ? 0.5
+          : (math.sin(
+                      time *
+                              switch (relic) {
+                                Relic.ankh => 4.2,
+                                Relic.eye => 2.6,
+                                Relic.feather => 3.4,
+                              } +
+                          phase,
+                    ) +
+                    1) /
+                2;
+      canvas.drawCircle(
+        at,
+        box * (0.62 + beat * 0.12),
+        Paint()
+          ..color = gold.withValues(alpha: 0.35 + beat * 0.3)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth * 1.4,
+      );
+      final sign = switch (relic) {
+        Relic.ankh => Sign.ankh,
+        Relic.eye => Sign.eye,
+        Relic.feather => Sign.feather,
+      };
+      final size_ = box * 0.9;
+      // The feather sways; the others hold still inside their ring.
+      final sway = relic == Relic.feather && !isReducedMotion
+          ? math.sin(time * 3 + phase) * 0.18
+          : 0.0;
       canvas
-        ..drawOval(
-          Rect.fromCenter(
-            center: at.translate(0, -box * 0.44),
-            width: box * 0.52,
-            height: box * 0.62,
-          ),
-          stroke,
-        )
-        ..drawLine(
-          at.translate(-box * 0.42, -box * 0.06),
-          at.translate(box * 0.42, -box * 0.06),
-          stroke,
-        )
-        ..drawLine(
-          at.translate(0, -box * 0.06),
-          at.translate(0, box * 0.62),
-          stroke,
-        );
+        ..save()
+        ..translate(at.dx, at.dy)
+        ..rotate(sway)
+        ..translate(-size_ / 2, -size_ / 2)
+        ..drawPath(SignPaths.of(sign, size_), Paint()..color = glow)
+        ..restore();
     }
+  }
+
+  /// The top of the shaft: a gold line across it with the summit's light
+  /// above, where the eighth level ends and the climb is won.
+  void _paintSummit(Canvas canvas, Rect shaft, double y) {
+    if (y < -shaft.height || y > shaft.bottom) return;
+    canvas
+      ..drawRect(
+        Rect.fromLTRB(shaft.left, y - shaft.height * 0.3, shaft.right, y),
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(0, y),
+            Offset(0, y - shaft.height * 0.3),
+            [glow.withValues(alpha: 0.3), glow.withValues(alpha: 0)],
+          ),
+      )
+      ..drawLine(
+        Offset(shaft.left, y),
+        Offset(shaft.right, y),
+        Paint()
+          ..color = gold
+          ..strokeWidth = strokeWidth * 3,
+      );
+  }
+
+  /// The sands: grains blown across the shaft the way the wind is pushing,
+  /// thicker as the gust peaks. Only in the windy levels, and never under
+  /// reduced motion, which keeps the wind and loses only its picture.
+  void _paintSand(Canvas canvas, Rect shaft) {
+    if (isReducedMotion) return;
+    if (!AscentWorld.isWindy(AscentWorld.levelOf(world.climberY))) return;
+    final wind = AscentWorld.windAt(world.time) / AscentWorld.windMax;
+    final paint = Paint()
+      ..color = glow.withValues(alpha: 0.22)
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    const grains = 70;
+    for (var i = 0; i < grains; i++) {
+      final seedX = _scatter(i * 3 + 11);
+      final seedY = _scatter(i * 3 + 12);
+      final pace = 0.25 + _scatter(i * 3 + 13) * 0.5;
+      final across = (seedX + time * pace * wind.sign) % 1;
+      final x = shaft.left + (across < 0 ? across + 1 : across) * shaft.width;
+      final y = shaft.top + seedY * shaft.height;
+      final streak = shaft.width * 0.02 * wind.abs() + strokeWidth;
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(x - streak * wind.sign, y + streak * 0.2),
+        paint,
+      );
+    }
+  }
+
+  /// The Duat: the underworld is dark, and the climber carries the only
+  /// light. Everything beyond a lamp's reach is shadow.
+  void _paintDuat(
+    Canvas canvas,
+    Size size,
+    Rect shaft,
+    double climberY,
+    double metresToPixels,
+  ) {
+    if (AscentWorld.levelOf(world.climberY) != 3 || world.isOver) return;
+    final centre = Offset(
+      shaft.left + world.climberX * shaft.width,
+      climberY - metresToPixels,
+    );
+    final reach = metresToPixels * 7;
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          centre,
+          reach,
+          [pier.withValues(alpha: 0), pier.withValues(alpha: 0.94)],
+          const [0.45, 1],
+        ),
+    );
   }
 
   /// The shaft closing in, drawn as the floor's own light rising to meet you.
@@ -794,12 +937,22 @@ class AscentPainter extends CustomPainter {
       ..scale(1 + spring, 1 - spring);
     Offset p(double dx, double dy) => Offset(dx * height, dy * height);
 
-    // A burning boon shows on the climber, not in a meter. He is already the
-    // thing being watched, and a bar in the corner is a number to check rather
-    // than something to feel. It fades with the last two seconds, so the effect
-    // running out is visible before it has run out.
-    if (world.hasBoon) {
-      final fading = (world.boonFor / 2).clamp(0.0, 1.0);
+    // A relic burning shows on the climber, not only in a meter. The eye is
+    // a slow ring of protection; the feather, a lighter glow that pulses
+    // with each jump it still has. Both fade in their last two seconds.
+    if (world.hasEye) {
+      final fading = (world.eyeFor / 2).clamp(0.0, 1.0);
+      canvas.drawCircle(
+        p(0, -0.45),
+        height * 0.7,
+        Paint()
+          ..color = glow.withValues(alpha: 0.5 * fading)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth * 1.6,
+      );
+    }
+    if (world.hasFeather) {
+      final fading = (world.featherFor / 2).clamp(0.0, 1.0);
       canvas.drawCircle(
         p(0, -0.45),
         height * 0.62,
@@ -809,22 +962,15 @@ class AscentPainter extends CustomPainter {
       );
     }
 
-    // Gold, not stone. The climber used to be painted in the same colour as
-    // the wall he is climbing, which is most of why he read as a stick figure
-    // rather than a person: a stone-coloured outline against stone-coloured
-    // masonry. Section 2 of the design system reserves gold for the person and
-    // for what is live, and on this screen that is him.
-    //
-    // He is about fifty pixels tall in play, which is sprite scale, and the
-    // first pass at this learned the lesson the hard way: a profile face, a
-    // wesekh collar and flared nemes lappets all at once turned to mush, and
-    // what read back was a chunky cartoon with blonde pigtails. At this size
-    // only the silhouette survives, so that is all this draws -- lean limbs,
-    // a real neck, a headdress that hugs the skull rather than flaring off
-    // it, and nothing else competing with them.
-    final limb = Paint()
-      ..color = gold
-      ..strokeWidth = math.max(strokeWidth * 1.6, height * 0.044)
+    // The person, not a gold silhouette. The owner asked for his face and
+    // legs in a skin tone, and for a head big enough to be a head: in gold
+    // throughout, at sprite size, he read as a lizard. Gold stays on what he
+    // wears -- the nemes, the collar and the kilt -- because gold is the
+    // person on this site and the clothes are what say who he is.
+    final width = math.max(strokeWidth * 1.6, height * 0.05);
+    Paint limb(Color colour) => Paint()
+      ..color = colour
+      ..strokeWidth = width
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
@@ -838,12 +984,14 @@ class AscentPainter extends CustomPainter {
     final armY = world.velocity > 0 ? -0.66 : -0.44;
 
     canvas
-      // Neck, short and real, so the head never floats free of the body.
-      ..drawLine(p(0, -0.775), p(0, -0.70), limb)
-      // The torso, as mass rather than as a line. This is the whole
-      // difference between a person and a stick figure at this size: broad at
-      // the shoulder, drawn in at the waist, and wide enough to carry the
-      // kilt beneath it.
+      // Legs, hip to ankle, then a short foot forward.
+      ..drawLine(p(-0.05, -0.31), p(-spread, -0.035), limb(skinShade))
+      ..drawLine(p(0.05, -0.31), p(spread, -0.035), limb(skin))
+      ..drawLine(p(-spread, -0.035), p(-spread - 0.06, -0.035), limb(skinShade))
+      ..drawLine(p(spread, -0.035), p(spread + 0.06, -0.035), limb(skin))
+      // Neck.
+      ..drawLine(p(0, -0.775), p(0, -0.70), limb(skin))
+      // The torso: broad at the shoulder, drawn in at the waist.
       ..drawPath(
         Path()
           ..moveTo(-height * 0.105, -height * 0.680)
@@ -856,6 +1004,25 @@ class AscentPainter extends CustomPainter {
           ..lineTo(height * 0.072, -height * 0.395)
           ..lineTo(-height * 0.072, -height * 0.395)
           ..close(),
+        Paint()..color = skin,
+      )
+      // The broad collar across the shoulders.
+      ..drawPath(
+        Path()
+          ..moveTo(-height * 0.105, -height * 0.680)
+          ..quadraticBezierTo(
+            0,
+            -height * 0.715,
+            height * 0.105,
+            -height * 0.680,
+          )
+          ..quadraticBezierTo(
+            0,
+            -height * 0.58,
+            -height * 0.105,
+            -height * 0.680,
+          )
+          ..close(),
         solid,
       )
       // Arms, shoulder to elbow to hand.
@@ -864,23 +1031,16 @@ class AscentPainter extends CustomPainter {
           ..moveTo(0, -height * 0.655)
           ..lineTo(-height * 0.145, height * armY)
           ..lineTo(-height * 0.225, height * (armY - 0.075)),
-        limb,
+        limb(skinShade),
       )
       ..drawPath(
         Path()
           ..moveTo(0, -height * 0.655)
           ..lineTo(height * 0.145, height * armY)
           ..lineTo(height * 0.225, height * (armY - 0.075)),
-        limb,
+        limb(skin),
       )
-      // Legs, hip to ankle, then a short foot forward -- the foot is what
-      // stops the leg reading as a dropped line.
-      ..drawLine(p(-0.05, -0.31), p(-spread, -0.035), limb)
-      ..drawLine(p(0.05, -0.31), p(spread, -0.035), limb)
-      ..drawLine(p(-spread, -0.035), p(-spread - 0.06, -0.035), limb)
-      ..drawLine(p(spread, -0.035), p(spread + 0.06, -0.035), limb)
-      // The shendyt: a filled kilt, wider at the hem. One shape, and it is
-      // the only thing on him that says which century he is from.
+      // The shendyt: a gold kilt, wider at the hem.
       ..drawPath(
         Path()
           ..moveTo(-height * 0.075, -height * 0.395)
@@ -890,17 +1050,8 @@ class AscentPainter extends CustomPainter {
           ..close(),
         solid,
       )
-      // The head, drawn larger than its own coordinates say.
-      //
-      // The owner's note was that it looked too small against the body, and
-      // the figures agree: the skull was 0.145 of the climber's height against
-      // a 0.21 shoulder, which is roughly life proportion and reads as a
-      // pinhead at fifty pixels. A drawn figure this small needs a head nearer
-      // a fifth of it to register as a person at all.
-      //
-      // Scaled about the chin rather than retyped. Every coordinate below was
-      // measured against the neck it sits on, and nudging twelve of them by
-      // hand is how a jaw ends up floating a pixel clear of a throat.
+      // The head, drawn larger than its own coordinates say, scaled about the
+      // chin so the jaw stays on the neck.
       ..transform(
         (Matrix4.identity()
               ..translateByDouble(0, p(0, _chinY).dy, 0, 1)
@@ -908,18 +1059,19 @@ class AscentPainter extends CustomPainter {
               ..translateByDouble(0, -p(0, _chinY).dy, 0, 1))
             .storage,
       )
-      // The head: an oval on the neck, not a disc floating above it.
       ..drawOval(
         Rect.fromCenter(
           center: p(0, -0.815),
           width: height * 0.145,
           height: height * 0.175,
         ),
-        solid,
+        Paint()..color = skin,
       )
+      // Two eyes, so a face is a face at fifty pixels.
+      ..drawCircle(p(-0.028, -0.815), height * 0.012, Paint()..color = pier)
+      ..drawCircle(p(0.028, -0.815), height * 0.012, Paint()..color = pier)
       // The nemes, tight to the skull: a brow band and two short lappets that
-      // fall beside the jaw rather than flaring past the shoulders. Wider than
-      // this and it reads as hair.
+      // fall beside the jaw.
       ..drawPath(
         Path()
           ..moveTo(-height * 0.082, -height * 0.845)
@@ -930,16 +1082,16 @@ class AscentPainter extends CustomPainter {
             -height * 0.845,
           )
           ..lineTo(height * 0.098, -height * 0.735)
-          ..lineTo(height * 0.055, -height * 0.745)
-          ..lineTo(height * 0.048, -height * 0.830)
-          ..lineTo(-height * 0.048, -height * 0.830)
-          ..lineTo(-height * 0.055, -height * 0.745)
+          ..lineTo(height * 0.068, -height * 0.745)
+          ..lineTo(height * 0.060, -height * 0.838)
+          ..lineTo(-height * 0.060, -height * 0.838)
+          ..lineTo(-height * 0.068, -height * 0.745)
           ..lineTo(-height * 0.098, -height * 0.735)
           ..close(),
-        Paint()..color = glow,
+        solid,
       )
       // The uraeus, on the brow band.
-      ..drawCircle(p(0, -0.885), height * 0.022, Paint()..color = gold)
+      ..drawCircle(p(0, -0.885), height * 0.02, Paint()..color = glow)
       ..restore();
   }
 
@@ -954,5 +1106,7 @@ class AscentPainter extends CustomPainter {
       oldDelegate.wall != wall ||
       oldDelegate.chamber != chamber ||
       oldDelegate.pier != pier ||
+      oldDelegate.skin != skin ||
+      oldDelegate.skinShade != skinShade ||
       oldDelegate.isReducedMotion != isReducedMotion;
 }

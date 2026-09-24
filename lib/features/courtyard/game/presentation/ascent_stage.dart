@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
+import 'package:nocturne/core/painting/sign_paths.dart';
+import 'package:nocturne/app/l10n/generated/app_localizations.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
@@ -78,6 +80,24 @@ class _AscentStageState extends ConsumerState<AscentStage>
   double _kickedAt = double.negativeInfinity;
   int _best = 0;
 
+  /// Whether the legend has been seen since the site was opened.
+  ///
+  /// Kept in memory, not on the device: the site writes nothing a player has
+  /// not asked it to keep, and seeing the legend once a visit is a small
+  /// price for that. The info button brings it back whenever it is wanted.
+  static bool _legendSeen = false;
+
+  /// Whether the legend is showing, which holds the climb.
+  bool _showsLegend = false;
+
+  /// The last relic taken or life spent, and when, for the line that names
+  /// it over the shaft.
+  String? Function(BuildContext)? _news;
+  double _newsAt = double.negativeInfinity;
+
+  /// The level the climber was in on the last frame, for the sands' sound.
+  int _level = 0;
+
   @override
   void initState() {
     super.initState();
@@ -95,7 +115,13 @@ class _AscentStageState extends ConsumerState<AscentStage>
       // retry, and at no other time: a scoreboard that polls a server for as
       // long as a tab is open is a beacon with a table drawn over it.
       unawaited(ref.read(leaderboardControllerProvider.notifier).refresh());
-      unawaited(_start());
+      // The first time, the legend before the climb: what the three signs
+      // do, and that there is a summit to reach.
+      if (_legendSeen) {
+        unawaited(_start());
+      } else {
+        setState(() => _showsLegend = true);
+      }
     });
   }
 
@@ -141,7 +167,8 @@ class _AscentStageState extends ConsumerState<AscentStage>
     var leapt = false;
     var broke = false;
     var kicked = false;
-    var tookBoon = false;
+    Relic? took;
+    var lostLife = false;
     var previous = before;
     for (final state in run.advance(
       dt.clamp(0.0, 0.25),
@@ -150,7 +177,8 @@ class _AscentStageState extends ConsumerState<AscentStage>
       leapt |= state.velocity > 0 && previous.velocity <= 0;
       broke |= state.brokeLedge;
       kicked |= state.kickedWall;
-      tookBoon |= state.tookBoon;
+      took ??= state.tookRelic;
+      lostLife |= state.lostLife;
       previous = state;
     }
     final next = run.world;
@@ -162,9 +190,31 @@ class _AscentStageState extends ConsumerState<AscentStage>
       _kickedAt = _elapsed;
       _audio.play(AscentSound.collect);
     }
-    // The struck bar, which is the one sound in the set that already means
-    // "you have picked something up".
-    if (tookBoon) _audio.play(AscentSound.collect);
+    // Each relic has a voice of its own, and a line over the shaft that says
+    // what it just did.
+    if (took != null) {
+      _audio.play(switch (took) {
+        Relic.ankh => AscentSound.ankh,
+        Relic.eye => AscentSound.eye,
+        Relic.feather => AscentSound.feather,
+      });
+      _news = switch (took) {
+        Relic.ankh => (context) => context.l10n.ascentGotAnkh,
+        Relic.eye => (context) => context.l10n.ascentGotEye,
+        Relic.feather => (context) => context.l10n.ascentGotFeather,
+      };
+      _newsAt = _elapsed;
+    }
+    if (lostLife) {
+      _audio.play(AscentSound.life);
+      _news = (context) => context.l10n.ascentLifeLost;
+      _newsAt = _elapsed;
+    }
+    final level = AscentWorld.levelOf(next.climberY);
+    if (level != _level && AscentWorld.isWindy(level)) {
+      _audio.play(AscentSound.sand);
+    }
+    _level = level;
     if (next.registersPassed > _bands) _audio.play(AscentSound.level);
     _bands = next.registersPassed;
 
@@ -179,7 +229,13 @@ class _AscentStageState extends ConsumerState<AscentStage>
     }
 
     if (next.isOver && !before.isOver) {
-      _audio.play(next.metres > _best ? AscentSound.record : AscentSound.fall);
+      _audio.play(
+        next.won
+            ? AscentSound.win
+            : next.metres > _best
+            ? AscentSound.record
+            : AscentSound.fall,
+      );
       if (next.metres > _best) _best = next.metres;
       _ticker.stop();
       // The tape goes up, not the score. What the server ranks is what it
@@ -272,6 +328,9 @@ class _AscentStageState extends ConsumerState<AscentStage>
     _rewards = 0;
     _rewardAt = double.negativeInfinity;
     _kickedAt = double.negativeInfinity;
+    _news = null;
+    _newsAt = double.negativeInfinity;
+    _level = 0;
     _steer = 0;
     _leap = false;
     if (!mounted) return;
@@ -294,9 +353,42 @@ class _AscentStageState extends ConsumerState<AscentStage>
       ..start();
   }
 
+  /// Shows the legend, holding the climb while it is open.
+  void _openLegend() {
+    _ticker.stop();
+    _steer = 0;
+    _leap = false;
+    setState(() => _showsLegend = true);
+  }
+
+  /// Closes the legend: the first time into a new climb, afterwards back
+  /// into the one that was held.
+  void _closeLegend() {
+    final isFirst = !_legendSeen;
+    _legendSeen = true;
+    setState(() => _showsLegend = false);
+    _focus.requestFocus();
+    if (isFirst || _run == null) {
+      unawaited(_start());
+    } else if (!(_world?.isOver ?? true)) {
+      _last = Duration.zero;
+      _ticker.start();
+    }
+  }
+
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     final key = event.logicalKey;
     final isDown = event is! KeyUpEvent;
+
+    if (_showsLegend) {
+      if (isDown &&
+          (key == LogicalKeyboardKey.space ||
+              key == LogicalKeyboardKey.enter ||
+              key == LogicalKeyboardKey.escape)) {
+        _closeLegend();
+      }
+      return KeyEventResult.handled;
+    }
 
     if (key == LogicalKeyboardKey.escape) {
       if (isDown) Navigator.of(context).maybePop();
@@ -391,6 +483,7 @@ class _AscentStageState extends ConsumerState<AscentStage>
                 isMuted: _audio.isMuted,
                 onRestart: _start,
                 onMute: () => setState(_audio.toggleMute),
+                onInfo: _openLegend,
                 onClose: () => Navigator.of(context).maybePop(),
               ),
               // The board, kept on the left for the length of the climb.
@@ -418,8 +511,19 @@ class _AscentStageState extends ConsumerState<AscentStage>
                   metres: _rewards * Tokens.ascentRewardStep,
                   age: (_elapsed - _rewardAt) / Tokens.ascentRewardHold,
                 ),
+              if (world != null && !world.isOver && _news != null)
+                _News(
+                  text: _news!(context) ?? '',
+                  age: (_elapsed - _newsAt) / Tokens.ascentNewsHold,
+                ),
               if (world != null && world.isOver)
-                _Over(metres: world.metres, best: _best, onRestart: _start),
+                _Over(
+                  metres: world.metres,
+                  best: _best,
+                  won: world.won,
+                  onRestart: _start,
+                ),
+              if (_showsLegend) _Legend(onClose: _closeLegend),
               // The pad sits over the shaft on touch, where a thumb can reach
               // it, rather than under a canvas that now fills the window.
               Positioned(
@@ -449,6 +553,7 @@ class _Hud extends StatelessWidget {
     required this.isMuted,
     required this.onRestart,
     required this.onMute,
+    required this.onInfo,
     required this.onClose,
   });
 
@@ -457,6 +562,7 @@ class _Hud extends StatelessWidget {
   final bool isMuted;
   final VoidCallback onRestart;
   final VoidCallback onMute;
+  final VoidCallback onInfo;
   final VoidCallback onClose;
 
   @override
@@ -484,7 +590,8 @@ class _Hud extends StatelessWidget {
                     // The level, because the floor rising underneath is the
                     // one thing a player needs warning about.
                     Text(
-                      l10n.ascentLevel((world?.level ?? 0) + 1),
+                      '${l10n.ascentLevel((world?.level ?? 0) + 1)}  '
+                      '${levelName(l10n, world?.level ?? 0)}',
                       style: type.telemetryS.copyWith(
                         color: tokens.instrumentMid,
                       ),
@@ -500,9 +607,19 @@ class _Hud extends StatelessWidget {
                     ],
                   ],
                 ),
+                if (world case final world?) ...[
+                  SizedBox(height: tokens.space8),
+                  _Relics(world: world),
+                ],
               ],
             ),
             const Spacer(),
+            GameControl.icon(
+              glyph: 'i',
+              semanticLabel: l10n.ascentHowToPlay,
+              onPressed: onInfo,
+            ),
+            SizedBox(width: tokens.space4),
             // Glyphs rather than words. Three labelled buttons ran across the
             // top of the playfield, which is where the climber is heading.
             GameControl.icon(
@@ -534,11 +651,13 @@ class _Over extends ConsumerWidget {
   const _Over({
     required this.metres,
     required this.best,
+    required this.won,
     required this.onRestart,
   });
 
   final int metres;
   final int best;
+  final bool won;
   final VoidCallback onRestart;
 
   @override
@@ -552,7 +671,7 @@ class _Over extends ConsumerWidget {
       child: SingleChildScrollView(
         padding: EdgeInsets.all(tokens.space16),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
+          constraints: const BoxConstraints(maxWidth: Tokens.boardDialogWidth),
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: tokens.surface.withValues(alpha: 0.94),
@@ -566,6 +685,27 @@ class _Over extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // The reward at the top of the climb: the golden mask, the
+                  // one place the site shows it, earned rather than hung up.
+                  if (won) ...[
+                    const SizedBox.square(
+                      dimension: Tokens.ascentMaskSize,
+                      child: CustomPaint(painter: _MaskPainter()),
+                    ),
+                    SizedBox(height: tokens.space16),
+                    Text(
+                      l10n.ascentWonTitle,
+                      textAlign: TextAlign.center,
+                      style: type.heading.copyWith(color: tokens.beacon),
+                    ),
+                    SizedBox(height: tokens.space8),
+                    Text(
+                      l10n.ascentWonBody,
+                      textAlign: TextAlign.center,
+                      style: type.body.copyWith(color: tokens.textSecondary),
+                    ),
+                    SizedBox(height: tokens.space16),
+                  ],
                   Text(
                     l10n.ascentAltitude(metres),
                     style: type.displayL.copyWith(color: tokens.beacon),
@@ -732,7 +872,8 @@ class _RewardMark extends StatelessWidget {
     if (metres % AscentWorld.levelHeight == 0) {
       // Levels are counted from one on screen and from zero in the world, the
       // same way the HUD counts them.
-      return l10n.ascentMarkLevel(metres ~/ AscentWorld.levelHeight + 1);
+      final level = metres ~/ AscentWorld.levelHeight;
+      return '${levelName(l10n, level)}\n${levelHint(l10n, level)}';
     }
     return l10n.ascentMarkHeight(metres);
   }
@@ -791,4 +932,446 @@ class _RewardMark extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The name of level [level], 0 to 7.
+String levelName(AppLocalizations l10n, int level) => switch (level) {
+  0 => l10n.ascentLevelTemple,
+  1 => l10n.ascentLevelSands,
+  2 => l10n.ascentLevelFrozen,
+  3 => l10n.ascentLevelDuat,
+  4 => l10n.ascentLevelMaat,
+  5 => l10n.ascentLevelApep,
+  6 => l10n.ascentLevelFire,
+  _ => l10n.ascentLevelReeds,
+};
+
+/// What changes in level [level], in a line.
+String levelHint(AppLocalizations l10n, int level) => switch (level) {
+  0 => l10n.ascentLevelTempleHint,
+  1 => l10n.ascentLevelSandsHint,
+  2 => l10n.ascentLevelFrozenHint,
+  3 => l10n.ascentLevelDuatHint,
+  4 => l10n.ascentLevelMaatHint,
+  5 => l10n.ascentLevelApepHint,
+  6 => l10n.ascentLevelFireHint,
+  _ => l10n.ascentLevelReedsHint,
+};
+
+/// A relic's sign, drawn small, for the HUD and the legend.
+class RelicMark extends StatelessWidget {
+  /// Draws [relic] at [size].
+  const RelicMark({
+    required this.relic,
+    required this.size,
+    this.dim = false,
+    super.key,
+  });
+
+  /// Which sign.
+  final Relic relic;
+
+  /// Its square.
+  final double size;
+
+  /// Drawn at rest rather than lit.
+  final bool dim;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return SizedBox.square(
+      dimension: size,
+      child: CustomPaint(
+        painter: _SignPainter(
+          sign: switch (relic) {
+            Relic.ankh => Sign.ankh,
+            Relic.eye => Sign.eye,
+            Relic.feather => Sign.feather,
+          },
+          colour: dim ? tokens.beaconDim : tokens.beaconGlow,
+        ),
+      ),
+    );
+  }
+}
+
+class _SignPainter extends CustomPainter {
+  const _SignPainter({required this.sign, required this.colour});
+
+  final Sign sign;
+  final Color colour;
+
+  @override
+  void paint(Canvas canvas, Size size) => canvas.drawPath(
+    SignPaths.of(sign, size.shortestSide),
+    Paint()..color = colour,
+  );
+
+  @override
+  bool shouldRepaint(_SignPainter oldDelegate) =>
+      oldDelegate.sign != sign || oldDelegate.colour != colour;
+}
+
+/// Lives in hand and the relics burning, under the height.
+///
+/// An ankh for each life, and a bar for the eye or the feather that empties
+/// as it runs out -- the owner asked for the effect to be shown clearly, and
+/// a number of seconds is something to read while a bar is something to see.
+class _Relics extends StatelessWidget {
+  const _Relics({required this.world});
+
+  final AscentWorld world;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          label: l10n.ascentHudLives(world.lives),
+          child: ExcludeSemantics(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < AscentWorld.maxLives; i++)
+                  Padding(
+                    padding: EdgeInsetsDirectional.only(end: tokens.space4),
+                    child: Opacity(
+                      opacity: i < world.lives ? 1 : Tokens.ascentEmptyLife,
+                      child: const RelicMark(
+                        relic: Relic.ankh,
+                        size: Tokens.ascentHudMark,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (world.hasEye)
+          _Meter(
+            relic: Relic.eye,
+            label: l10n.ascentHudEye,
+            left: world.eyeFor / AscentWorld.eyeSeconds,
+          ),
+        if (world.hasFeather)
+          _Meter(
+            relic: Relic.feather,
+            label: l10n.ascentHudFeather,
+            left: world.featherFor / AscentWorld.featherSeconds,
+          ),
+      ],
+    );
+  }
+}
+
+class _Meter extends StatelessWidget {
+  const _Meter({required this.relic, required this.label, required this.left});
+
+  final Relic relic;
+  final String label;
+  final double left;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Padding(
+      padding: EdgeInsets.only(top: tokens.space4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          RelicMark(relic: relic, size: Tokens.ascentHudMark),
+          SizedBox(width: tokens.space8),
+          SizedBox(
+            width: Tokens.ascentMeterWidth,
+            height: tokens.hairlineWidth * 4,
+            child: Stack(
+              children: [
+                Positioned.fill(child: ColoredBox(color: tokens.hairline)),
+                FractionallySizedBox(
+                  widthFactor: left.clamp(0.0, 1.0),
+                  child: ColoredBox(color: tokens.beacon),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: tokens.space8),
+          Text(
+            label,
+            style: context.type.telemetryS.copyWith(color: tokens.beacon),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// What just happened -- a relic taken, a life spent -- said once over the
+/// shaft and gone.
+class _News extends StatelessWidget {
+  const _News({required this.text, required this.age});
+
+  final String text;
+  final double age;
+
+  @override
+  Widget build(BuildContext context) {
+    if (age < 0 || age > 1 || text.isEmpty) return const SizedBox.shrink();
+    final fade = (1 - (age - 0.5) / 0.5).clamp(0.0, 1.0);
+    return IgnorePointer(
+      child: Align(
+        alignment: const Alignment(0, -0.6),
+        child: Opacity(
+          opacity: fade,
+          child: Transform.translate(
+            offset: Offset(0, -age * Tokens.space24),
+            child: Text(
+              text,
+              style: context.type.heading.copyWith(
+                color: context.tokens.beaconGlow,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The legend: the climb in a sentence, and what each sign does.
+///
+/// Shown before the first climb of a visit and whenever the info button is
+/// pressed, and it holds the climb while it is open.
+class _Legend extends StatelessWidget {
+  const _Legend({required this.onClose});
+
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final type = context.type;
+    final l10n = context.l10n;
+    Widget row(Relic relic, String name, String help) => Padding(
+      padding: EdgeInsets.only(top: tokens.space16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: Tokens.ascentLegendMark,
+            height: Tokens.ascentLegendMark,
+            padding: EdgeInsets.all(tokens.space8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: tokens.beaconDim,
+                width: tokens.hairlineWidth,
+              ),
+            ),
+            child: RelicMark(relic: relic, size: Tokens.ascentLegendMark),
+          ),
+          SizedBox(width: tokens.space16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(name, style: type.body.copyWith(color: tokens.beacon)),
+                SizedBox(height: tokens.space4),
+                Text(
+                  help,
+                  style: type.bodyS.copyWith(color: tokens.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    return ColoredBox(
+      color: tokens.void_.withValues(alpha: Tokens.boardBarrierAlpha),
+      child: Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(tokens.space16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: Tokens.boardDialogWidth,
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: tokens.surface,
+                border: Border.all(
+                  color: tokens.hairlineStrong,
+                  width: tokens.hairlineWidth,
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(tokens.space32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(l10n.ascentLegendTitle, style: type.heading),
+                    SizedBox(height: tokens.space8),
+                    Text(
+                      l10n.ascentLegendBody,
+                      style: type.body.copyWith(color: tokens.textSecondary),
+                    ),
+                    SizedBox(height: tokens.space8),
+                    Text(
+                      l10n.ascentKeys,
+                      style: type.bodyS.copyWith(color: tokens.textMuted),
+                    ),
+                    SizedBox(height: tokens.space24),
+                    Text(
+                      l10n.ascentLegendRelics,
+                      style: type.meta.copyWith(color: tokens.textMuted),
+                    ),
+                    row(
+                      Relic.ankh,
+                      l10n.ascentRelicAnkh,
+                      l10n.ascentRelicAnkhHelp,
+                    ),
+                    row(
+                      Relic.eye,
+                      l10n.ascentRelicEye,
+                      l10n.ascentRelicEyeHelp,
+                    ),
+                    row(
+                      Relic.feather,
+                      l10n.ascentRelicFeather,
+                      l10n.ascentRelicFeatherHelp,
+                    ),
+                    SizedBox(height: tokens.space32),
+                    Center(
+                      child: GameControl(
+                        label: l10n.ascentLegendGo,
+                        isPrimary: true,
+                        onPressed: onClose,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The golden mask: the reward at the top of the climb.
+///
+/// `12-MOTIF-LIBRARY.md` keeps it out of the site for exactly this: it
+/// appears in one place, as the reward at the top of the game, earned rather
+/// than decorative. Drawn in the site's golds: the striped nemes, the face,
+/// the eyes lined in kohl, the beard.
+class _MaskPainter extends CustomPainter {
+  const _MaskPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    const gold = Tokens.ascentMaskGold;
+    const deep = Tokens.ascentMaskDeep;
+    const ink = Tokens.ascentMaskInk;
+    Offset p(double x, double y) => Offset(w * x, h * y);
+    // The nemes, flaring to the shoulders.
+    final nemes = Path()
+      ..moveTo(p(0.5, 0.04).dx, p(0.5, 0.04).dy)
+      ..quadraticBezierTo(
+        p(0.2, 0.06).dx,
+        p(0.2, 0.06).dy,
+        p(0.18, 0.32).dx,
+        p(0.18, 0.32).dy,
+      )
+      ..lineTo(p(0.06, 0.92).dx, p(0.06, 0.92).dy)
+      ..lineTo(p(0.94, 0.92).dx, p(0.94, 0.92).dy)
+      ..lineTo(p(0.82, 0.32).dx, p(0.82, 0.32).dy)
+      ..quadraticBezierTo(
+        p(0.8, 0.06).dx,
+        p(0.8, 0.06).dy,
+        p(0.5, 0.04).dx,
+        p(0.5, 0.04).dy,
+      )
+      ..close();
+    canvas
+      ..drawPath(nemes, Paint()..color = gold)
+      ..save()
+      ..clipPath(nemes);
+    final stripe = Paint()..color = deep;
+    for (var y = 0.1; y < 0.95; y += 0.075) {
+      canvas.drawRect(Rect.fromLTRB(0, h * y, w, h * (y + 0.035)), stripe);
+    }
+    canvas.restore();
+    // The face.
+    final face = Path()
+      ..moveTo(p(0.3, 0.24).dx, p(0.3, 0.24).dy)
+      ..lineTo(p(0.7, 0.24).dx, p(0.7, 0.24).dy)
+      ..quadraticBezierTo(
+        p(0.72, 0.62).dx,
+        p(0.72, 0.62).dy,
+        p(0.5, 0.74).dx,
+        p(0.5, 0.74).dy,
+      )
+      ..quadraticBezierTo(
+        p(0.28, 0.62).dx,
+        p(0.28, 0.62).dy,
+        p(0.3, 0.24).dx,
+        p(0.3, 0.24).dy,
+      )
+      ..close();
+    canvas
+      ..drawPath(face, Paint()..color = gold)
+      // The brow band, and the uraeus on it.
+      ..drawRect(
+        Rect.fromLTRB(w * 0.29, h * 0.22, w * 0.71, h * 0.27),
+        Paint()..color = deep,
+      )
+      ..drawCircle(p(0.5, 0.2), w * 0.035, Paint()..color = gold);
+    // Eyes and kohl.
+    final kohl = Paint()
+      ..color = ink
+      ..strokeWidth = w * 0.018
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    for (final side in const [-1.0, 1.0]) {
+      final c = p(0.5 + side * 0.1, 0.4);
+      canvas
+        ..drawOval(
+          Rect.fromCenter(center: c, width: w * 0.1, height: h * 0.04),
+          Paint()..color = ink,
+        )
+        ..drawLine(
+          c + Offset(side * w * 0.05, 0),
+          c + Offset(side * w * 0.11, h * 0.012),
+          kohl,
+        )
+        ..drawLine(
+          c - Offset(w * 0.05, h * 0.035),
+          c + Offset(w * 0.05, -h * 0.035),
+          kohl,
+        );
+    }
+    // Nose, mouth, beard.
+    canvas
+      ..drawLine(p(0.5, 0.44), p(0.49, 0.54), kohl)
+      ..drawLine(p(0.45, 0.62), p(0.55, 0.62), kohl)
+      ..drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTRB(w * 0.46, h * 0.74, w * 0.54, h * 0.9),
+          Radius.circular(w * 0.03),
+        ),
+        Paint()..color = deep,
+      );
+  }
+
+  @override
+  bool shouldRepaint(_MaskPainter oldDelegate) => false;
 }

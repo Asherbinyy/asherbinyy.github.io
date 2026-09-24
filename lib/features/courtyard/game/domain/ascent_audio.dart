@@ -26,7 +26,25 @@ enum AscentSound {
   record('audio/record.wav'),
 
   /// A band passed: one low strike, felt more than heard.
-  level('audio/level.wav');
+  level('audio/level.wav'),
+
+  /// An ankh: a bright chord, rising.
+  ankh('audio/ankh.wav'),
+
+  /// The eye of Horus: a long tone bending down, time stretching.
+  eye('audio/eye.wav'),
+
+  /// Ma'at's feather: three quick notes, airy.
+  feather('audio/feather.wav'),
+
+  /// A life spent: a low gong.
+  life('audio/life.wav'),
+
+  /// The summit.
+  win('audio/win.wav'),
+
+  /// The sands: wind and a thin whistle, as the level begins.
+  sand('audio/sand.wav');
 
   const AscentSound(this.asset);
 

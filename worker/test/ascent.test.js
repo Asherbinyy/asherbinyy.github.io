@@ -11,6 +11,7 @@ import {
   VERSION,
   decodeTape,
   generateLedge,
+  relicAt,
   isValidCode,
   mix,
   replay,
@@ -101,7 +102,8 @@ function assertLedge(got, want, where) {
   assert.equal(bits(got.y), want.y, `${where} y`);
   assert.equal(bits(got.width), want.width, `${where} width`);
   assert.equal(bits(got.drift), want.drift, `${where} drift`);
-  assert.equal(got.hasBoon, want.hasBoon, `${where} boon`);
+  assert.equal(got.isLanding, want.isLanding, `${where} landing`);
+  assert.equal(got.relic, want.relic, `${where} relic`);
 }
 
 test('a shaft is built bit for bit the way Dart builds it', () => {
@@ -120,30 +122,39 @@ test('a shaft is built bit for bit the way Dart builds it', () => {
 
 test('every level builds the shaft its mode calls for', () => {
   // Sampled at height rather than climbed to. No recorded run reaches the
-  // third or fourth level, so without these two hundred metres of shaft would
-  // be ground neither implementation had ever been checked on.
+  // top levels, so without these the upper shaft would be ground neither
+  // implementation had ever been checked on.
   const levels = new Set();
-  let withBoon = 0;
-  let withoutBoon = 0;
+  let landings = 0;
   for (const vector of fixture.levels) {
     for (let i = 0; i < vector.ledges.length; i++) {
       const want = vector.ledges[i];
       const y = unbits(want.y);
       assertLedge(
-        generateLedge(want.id, y, Rng.forLedge(vector.seed, want.id)),
+        generateLedge(want.id, y, Rng.forLedge(vector.seed, want.id), vector.seed),
         want,
         `seed ${vector.seed}, sample ${i}`,
       );
-      levels.add(Math.floor(y / 100));
-      if (want.hasBoon) withBoon++;
-      else withoutBoon++;
+      levels.add(Math.min(Math.floor(y / 100), 7));
+      if (want.isLanding) landings++;
     }
   }
-  for (const level of [0, 1, 2, 3]) {
+  for (const level of [0, 1, 2, 3, 4, 5, 6, 7]) {
     assert.ok(levels.has(level), `no sample in level ${level}`);
   }
-  assert.ok(withBoon > 0, 'no sampled ledge carries a boon');
-  assert.ok(withoutBoon > 0);
+  assert.ok(landings > 0, 'no sample opens a level');
+});
+
+test('every relic is placed where Dart places it', () => {
+  const kinds = new Set();
+  for (const vector of fixture.relics) {
+    for (let i = 0; i < vector.relics.length; i++) {
+      const got = relicAt(vector.seed, (i + 1) * 2.6);
+      assert.equal(got, vector.relics[i], `seed ${vector.seed}, ledge ${i + 1}`);
+      kinds.add(got);
+    }
+  }
+  for (const kind of [0, 1, 2]) assert.ok(kinds.has(kind), `relic ${kind} never placed`);
 });
 
 test('a tape decodes to the runs Dart encoded', () => {
@@ -182,7 +193,9 @@ test('every recorded run replays to the same metre and the same tick', () => {
         metres: vector.metres,
         ticks: vector.ticks,
         endedInFall: vector.endedInFall,
-        boonsTaken: vector.boonsTaken,
+        won: vector.won,
+        relicsTaken: vector.relicsTaken,
+        livesLost: vector.livesLost,
       },
       `${vector.script} on seed ${vector.seed}`,
     );
@@ -205,7 +218,11 @@ test('the vectors reach far enough up the shaft to mean something', () => {
     'no vector ends in a fall',
   );
   assert.ok(
-    fixture.runs.reduce((sum, run) => sum + run.boonsTaken, 0) > 0,
-    'no vector ever takes a boon, so the lift is untested',
+    fixture.runs.reduce((sum, run) => sum + run.relicsTaken, 0) > 0,
+    'no vector ever takes a relic, so their effects are untested',
+  );
+  assert.ok(
+    fixture.runs.reduce((sum, run) => sum + run.livesLost, 0) > 0,
+    'no vector ever spends a life, so the respawn is untested',
   );
 });

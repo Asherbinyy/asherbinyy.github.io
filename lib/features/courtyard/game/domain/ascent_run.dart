@@ -12,7 +12,9 @@ class AscentOutcome {
     required this.metres,
     required this.ticks,
     required this.endedInFall,
-    this.boonsTaken = 0,
+    this.won = false,
+    this.relicsTaken = 0,
+    this.livesLost = 0,
   });
 
   /// The height reached, in whole metres. The score.
@@ -24,13 +26,19 @@ class AscentOutcome {
   /// Whether the climber fell, rather than the tape simply stopping.
   final bool endedInFall;
 
-  /// How many boons the run took.
+  /// Whether the climber reached the summit.
+  final bool won;
+
+  /// How many relics the run took.
   ///
   /// Checked across the two implementations rather than reported to anybody. A
-  /// disagreement about whether the climber passed near enough to an ankh only
-  /// shows up in the height once the extra lift has changed a landing, which
-  /// might be a hundred metres later or not on this run at all.
-  final int boonsTaken;
+  /// disagreement about whether the climber passed near enough to a relic only
+  /// shows up in the height once its effect has changed a landing, which might
+  /// be a hundred metres later or not on this run at all.
+  final int relicsTaken;
+
+  /// How many lives the run spent. Checked for the same reason.
+  final int livesLost;
 
   @override
   bool operator ==(Object other) =>
@@ -38,15 +46,18 @@ class AscentOutcome {
       other.metres == metres &&
       other.ticks == ticks &&
       other.endedInFall == endedInFall &&
-      other.boonsTaken == boonsTaken;
+      other.won == won &&
+      other.relicsTaken == relicsTaken &&
+      other.livesLost == livesLost;
 
   @override
-  int get hashCode => Object.hash(metres, ticks, endedInFall, boonsTaken);
+  int get hashCode =>
+      Object.hash(metres, ticks, endedInFall, won, relicsTaken, livesLost);
 
   @override
   String toString() =>
       'AscentOutcome(metres: $metres, ticks: $ticks, fell: $endedInFall, '
-      'boons: $boonsTaken)';
+      'won: $won, relics: $relicsTaken, lives lost: $livesLost)';
 }
 
 /// The climb, driven at a fixed rate.
@@ -157,8 +168,10 @@ class AscentSimulation {
     return AscentOutcome(
       metres: world.metres,
       ticks: ticks,
-      endedInFall: world.isOver,
-      boonsTaken: world.boonsTaken,
+      endedInFall: world.isOver && !world.won,
+      won: world.won,
+      relicsTaken: world.relicsTaken,
+      livesLost: world.livesLost,
     );
   }
 }
