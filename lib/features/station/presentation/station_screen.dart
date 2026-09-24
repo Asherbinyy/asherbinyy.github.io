@@ -32,7 +32,6 @@ import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/core/widgets/skill_groups.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_content.dart';
 import 'package:nocturne/features/station/presentation/widgets/hero_scene.dart';
-import 'package:nocturne/features/trace/presentation/telemetry_trace.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
 
 /// The ground station: the acquisition sequence, then the settled hero.
@@ -49,19 +48,15 @@ class StationScreen extends ConsumerWidget {
     final locale = ref.watch(localeControllerProvider);
     final profile = ref.watch(profileProvider);
 
-    // The wall runs down the trailing edge behind this page. On a desk the
-    // copy is measure-limited and clears it on its own; on a phone it fills
-    // the width, so it has to be told to stop where the wall starts.
-    final isCompact = context.platform.viewport == ViewportClass.compact;
-
+    // The wall is the faint pattern behind the whole page at every size. On
+    // a phone it used to keep a strip of the trailing edge, and the page
+    // stopped short of it -- a quarter of a 390px screen, so everything sat
+    // against the left. The owner asked for the phone to be centred.
     return LayoutBuilder(
       builder: (context, constraints) => Padding(
         padding: EdgeInsetsDirectional.only(
           start: context.platform.gutter,
-          end: isCompact
-              ? TelemetryTrace.compactFootprint(constraints.maxWidth) +
-                    context.tokens.space12
-              : context.platform.gutter,
+          end: context.platform.gutter,
           top: context.tokens.space64,
           bottom: context.tokens.space64,
         ),

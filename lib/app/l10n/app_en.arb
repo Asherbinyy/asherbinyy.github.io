@@ -1071,6 +1071,32 @@
   "@ascentHudFeather": {
     "description": "The Ascent game"
   },
+  "careerNow": "Now",
+  "@careerNow": {
+    "description": "Home: badge on a career stop that is still going"
+  },
+  "careerYears": "{count, plural, =1{1 yr} other{{count} yrs}}",
+  "@careerYears": {
+    "description": "Home: whole years a career stop lasted",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "careerMonths": "{count, plural, =1{1 mo} other{{count} mos}}",
+  "@careerMonths": {
+    "description": "Home: months a career stop lasted, after the years",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "courtyardShoutout": "Shout-out to Icy Tower, the tower that started it all.",
+  "@courtyardShoutout": {
+    "description": "Courtyard: the line crediting Icy Tower on the game's panel"
+  },
   "stationStops": "Stops",
   "@stationStops": {
     "description": "Home: heading over the list that jumps to a career stop"
@@ -1202,10 +1228,6 @@
   "aboutFlowGym": "Gym",
   "@aboutFlowGym": {
     "description": "About life loop: a step"
-  },
-  "aboutFlowCaption": "The ankh was the ancient Egyptian sign for life. This is mine, running on it.",
-  "@aboutFlowCaption": {
-    "description": "About: the line under the life loop, saying what the ankh it is drawn on means"
   },
   "aboutFlowLabel": "My day on the ankh, the sign for life: wake up, study, code, build apps, automate, gym, and round again.",
   "@aboutFlowLabel": {

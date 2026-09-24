@@ -422,16 +422,10 @@ abstract final class Tokens {
 
   /// Fraction of the content column the trace occupies, from the trailing edge.
   ///
-  /// Two values, because one was wrong on a phone. At 66% of a desktop the
-  /// trace runs down the space beside a measure-limited text column and never
-  /// touches it. At 66% of a 360px phone, where the text fills the full width,
-  /// it runs straight across the copy — which is what the owner reported, along
-  /// with the burst labels colliding with the same text.
-  ///
-  /// On compact the trace keeps to a narrow strip at the trailing edge. It is
-  /// still legible as a waveform and it no longer competes with the words.
-  static const double traceColumnFraction = 0.38,
-      traceColumnFractionCompact = 0.28;
+  /// At 66% of a desktop the trace runs down the space beside a
+  /// measure-limited text column and never touches it. Phones used to keep a
+  /// narrower strip of their own; the wall is behind the whole page there now.
+  static const double traceColumnFraction = 0.38;
 
   /// Jitter added to the carrier when coherence is entirely lost.
   static const double traceNoiseAmplitude = 0.55;
@@ -543,7 +537,9 @@ abstract final class Tokens {
   static const int courtyardStillSeed = 7;
 
   /// One service card, and the mark on it.
-  static const double serviceCardWidth = 220, serviceIconSize = 26;
+  static const double serviceCardWidth = 220,
+      serviceCardCompactWidth = 140,
+      serviceIconSize = 26;
 
   /// An icon standing in for a word in the header.
   static const double chromeIconSize = 20;
@@ -782,12 +778,11 @@ abstract final class Tokens {
   /// so it is on for the whole page — and the wall's strip runs close enough to
   /// the text that a flame at full strength sits behind the ends of lines.
   ///
-  /// Just short of full, so the signs light properly and the pool never reaches
-  /// the white of the copy. 0.42 was tried first and is far too little: the
-  /// wall's gilded signs already breathe on their own, so a weak torch is
-  /// indistinguishable from no torch — which is exactly how the first broken
-  /// version of this went unnoticed.
-  static const double wallTorchTouchPeak = 0.85;
+  /// It was 0.85 while the wall kept a strip of its own on a phone. The wall
+  /// is behind the whole page there now (the owner asked for the content
+  /// centred, not squeezed left of a strip), so a strong light sits behind
+  /// the words themselves. Low enough to read as a glow behind the copy.
+  static const double wallTorchTouchPeak = 0.3;
 
   /// The picture beside the hero: its shape (width over height), how long
   /// the sun takes to rise or set when the theme changes, and how quickly the
@@ -921,19 +916,16 @@ abstract final class Tokens {
   /// The pause between one Work card arriving and the next along its row.
   static const Duration workStagger = Duration(milliseconds: 90);
 
-  /// The door to the courtyard on /about: how long its scenes take to play
-  /// under the pointer, the width below which the pictures go under the
-  /// words, the climb's width, a scene's size and the line under it.
-  static const Duration doorPlay = Duration(milliseconds: 1400);
-
-  /// See [doorPlay].
+  /// The door to the courtyard on /about: the width below which the climb
+  /// goes under the words, the climb's size (and on a phone), how far it
+  /// stands in from the panel's edge, and how high it climbs before starting
+  /// again.
   static const double doorSplitWidth = 720,
-      doorClimbWidth = 300,
-      doorClimbHeight = 340,
-      doorClimbCompact = 240,
-      liveClimbRestart = 90,
-      doorSceneSize = 96,
-      doorLabel = 24;
+      doorClimbWidth = 240,
+      doorClimbHeight = 220,
+      doorClimbCompact = 200,
+      doorClimbInset = 48,
+      liveClimbRestart = 90;
 
   /// The scoreboard opened from the courtyard: its width, and how dark the
   /// page goes behind it.
@@ -951,18 +943,14 @@ abstract final class Tokens {
   /// from this width.
   static const double closingIllustrationFrom = 1000;
 
+  /// The beat between one Off duty tile rising in and the next.
+  static const Duration interestStagger = Duration(milliseconds: 70);
+
+  /// One lap of the light round the game's panel.
+  static const Duration goldEdgeLap = Duration(milliseconds: 5200);
+
   /// The mark beside each service named in Home's closing panel.
   static const double serviceTagIconSize = 16;
-
-  /// The career card's register: the band's height, the stroke of the stop's
-  /// own stretch on it, and the height of a year's tick.
-  static const double careerRegisterHeight = 14,
-      careerRegisterSpan = 3,
-      careerRegisterTick = 6;
-
-  /// How far into the card's arrival its stretch of the register starts
-  /// drawing, so the band finishes after the card has landed.
-  static const double careerRegisterDelay = 0.35;
 
   /// The stop's sign cut large into its card: its size, how faint, and how
   /// much of it runs off the card's edge.

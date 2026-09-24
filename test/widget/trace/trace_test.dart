@@ -37,32 +37,27 @@ void main() {
     expect(find.byType(StationTrace), findsNothing);
   });
 
-  testWidgets('the trace keeps to a narrow strip on a phone', (tester) async {
+  testWidgets('on a phone the wall is behind the whole page, faint', (
+    tester,
+  ) async {
     await pumpStation(
       tester,
       breakpoint: ChromeBreakpoint.compact,
       capabilities: touchBrowser,
     );
 
-    // The owner reported the waveform and its titles running across the copy
-    // on a phone. One fraction was used at every breakpoint: 66% leaves a
-    // measure-limited desktop text column alone, and covers a 360px phone
-    // whose text fills the width.
-    //
-    // Zero overlap is not achievable at this width -- the text spans the
-    // whole viewport -- so what is asserted is that the trace is confined to
-    // a trailing strip rather than crossing the column. Geometry, not the
-    // token value, so milestone 5 can replace the painter without quietly
-    // inheriting the overlap.
+    // It used to keep a trailing strip that the page stopped short of, which
+    // put everything against the left of a phone. The owner asked for the
+    // phone centred, so the wall is the faint pattern behind the page there
+    // too, and the copy has the whole width.
     final frame = tester.getRect(find.byType(ChromeScaffold));
     final painted = tester.getRect(_tracePaint);
+    expect(painted.left, 0);
+    expect(painted.width, frame.width);
 
-    expect(painted.width, lessThan(frame.width / 2));
-    expect(
-      painted.left,
-      greaterThan(frame.width / 2),
-      reason: 'the strip should sit in the trailing half',
-    );
+    final wall = tester.widget<CustomPaint>(_tracePaint).painter;
+    if (wall is! WallPainter) fail('Expected the wall painter');
+    expect(wall.restAlpha, Tokens.wallPatternOpacity);
   });
 
   testWidgets('the trace drops its titles on a phone', (tester) async {

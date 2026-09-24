@@ -421,6 +421,10 @@
   "ascentHudLives": "{count} حياة إضافية",
   "ascentHudEye": "الأرضية أبطأ",
   "ascentHudFeather": "قفزة ثلاثية",
+  "careerNow": "الآن",
+  "careerYears": "{count, plural, =1{سنة} =2{سنتان} few{{count} سنوات} other{{count} سنة}}",
+  "careerMonths": "{count, plural, =1{شهر} =2{شهران} few{{count} أشهر} other{{count} شهرًا}}",
+  "courtyardShoutout": "تحية إلى Icy Tower، البرج الذي بدأ كل شيء.",
   "stationStops": "المحطات",
   "@stationStops": {
     "description": "Home: heading over the list that jumps to a career stop"
@@ -520,7 +524,6 @@
   "aboutFlowApps": "بناء التطبيقات",
   "aboutFlowAutomate": "أتمتة",
   "aboutFlowGym": "تمرين",
-  "aboutFlowCaption": "كان العنخ عند المصريين القدماء رمزًا للحياة. وهذه حياتي، تدور عليه.",
   "aboutFlowLabel": "يومي على العنخ، رمز الحياة: استيقاظ، ثم دراسة، ثم برمجة، ثم بناء التطبيقات، ثم أتمتة، ثم تمرين، ومن جديد.",
   "skillsGroupLabel": "{title}، عدد المهارات {count}"
 }
