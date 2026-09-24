@@ -348,9 +348,17 @@ class _CareerEntry extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          formatPeriod(context.l10n, role.start, role.end),
-          style: type.telemetryS.copyWith(color: tokens.textMuted),
+        Wrap(
+          spacing: tokens.space8,
+          runSpacing: tokens.space4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              formatPeriod(context.l10n, role.start, role.end),
+              style: type.telemetryS.copyWith(color: tokens.textMuted),
+            ),
+            _Length(role: role),
+          ],
         ),
         SizedBox(height: tokens.space8),
         if (company != null)
@@ -465,11 +473,7 @@ class _Card extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  _Register(role: role, span: span),
-                  SizedBox(height: tokens.space16),
-                  child,
-                ],
+                children: [child],
               ),
             ),
           ],
@@ -501,168 +505,6 @@ class _Rising extends StatelessWidget {
       child: child,
     );
   }
-}
-
-/// The career as a band with this stop's stretch inked in.
-class _Register extends StatelessWidget {
-  const _Register({required this.role, required this.span});
-
-  final CareerRole role;
-  final _Span span;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final type = context.type;
-    final reveal = RevealOnScroll.of(context);
-    final year = type.telemetryS.copyWith(color: tokens.instrumentDim);
-    // The period is printed in words just below; this is the picture of it.
-    return ExcludeSemantics(
-      child: Row(
-        children: [
-          Text('${span.from.floor()}', style: year),
-          SizedBox(width: tokens.space8),
-          Expanded(
-            child: SizedBox(
-              height: Tokens.careerRegisterHeight,
-              child: AnimatedBuilder(
-                animation: reveal,
-                builder: (context, _) => CustomPaint(
-                  painter: _RegisterPainter(
-                    from: span.from,
-                    to: span.to,
-                    start: _yearOf(role.start),
-                    end: switch (role.end) {
-                      final end? => _yearOf(end),
-                      null => span.to,
-                    },
-                    isOngoing: role.end == null,
-                    drawn: const Interval(
-                      Tokens.careerRegisterDelay,
-                      1,
-                      curve: MotionCurves.emphasized,
-                    ).transform(reveal.value),
-                    rule: tokens.hairline,
-                    tick: tokens.hairlineStrong,
-                    ink: tokens.beaconDim,
-                    mark: tokens.beacon,
-                    strokeWidth: tokens.hairlineWidth,
-                    textDirection: Directionality.of(context),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(width: tokens.space8),
-          Text('${span.to.floor()}', style: year),
-        ],
-      ),
-    );
-  }
-}
-
-class _RegisterPainter extends CustomPainter {
-  const _RegisterPainter({
-    required this.from,
-    required this.to,
-    required this.start,
-    required this.end,
-    required this.isOngoing,
-    required this.drawn,
-    required this.rule,
-    required this.tick,
-    required this.ink,
-    required this.mark,
-    required this.strokeWidth,
-    required this.textDirection,
-  });
-
-  final double from;
-  final double to;
-  final double start;
-  final double end;
-  final bool isOngoing;
-
-  /// How much of the stop's stretch is inked, 0 to 1.
-  final double drawn;
-
-  final Color rule;
-  final Color tick;
-  final Color ink;
-  final Color mark;
-  final double strokeWidth;
-  final TextDirection textDirection;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.isEmpty || to <= from) return;
-    final y = size.height / 2;
-    // Time runs the way the page reads: rightward in English, leftward in
-    // Arabic.
-    double x(double year) {
-      final along = ((year - from) / (to - from)).clamp(0.0, 1.0);
-      return textDirection == TextDirection.rtl
-          ? size.width * (1 - along)
-          : size.width * along;
-    }
-
-    final line = Paint()
-      ..color = rule
-      ..strokeWidth = strokeWidth;
-    canvas.drawLine(Offset(x(from), y), Offset(x(to), y), line);
-    line.color = tick;
-    const half = Tokens.careerRegisterTick / 2;
-    for (var year = from.ceil(); year <= to.floor(); year++) {
-      canvas.drawLine(
-        Offset(x(year.toDouble()), y - half),
-        Offset(x(year.toDouble()), y + half),
-        line,
-      );
-    }
-    if (drawn <= 0) return;
-
-    final reached = start + (end - start) * drawn;
-    canvas
-      ..drawLine(
-        Offset(x(start), y),
-        Offset(x(reached), y),
-        Paint()
-          ..color = ink
-          ..strokeWidth = Tokens.careerRegisterSpan
-          ..strokeCap = StrokeCap.round,
-      )
-      ..drawCircle(
-        Offset(x(start), y),
-        Tokens.careerRegisterSpan,
-        Paint()..color = mark,
-      );
-    // Still going: the far end is open, a ring rather than a stop.
-    if (isOngoing && drawn >= 1) {
-      canvas.drawCircle(
-        Offset(x(end), y),
-        Tokens.careerRegisterSpan * 1.6,
-        Paint()
-          ..color = mark
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = strokeWidth,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_RegisterPainter oldDelegate) =>
-      oldDelegate.from != from ||
-      oldDelegate.to != to ||
-      oldDelegate.start != start ||
-      oldDelegate.end != end ||
-      oldDelegate.isOngoing != isOngoing ||
-      oldDelegate.drawn != drawn ||
-      oldDelegate.rule != rule ||
-      oldDelegate.tick != tick ||
-      oldDelegate.ink != ink ||
-      oldDelegate.mark != mark ||
-      oldDelegate.strokeWidth != strokeWidth ||
-      oldDelegate.textDirection != textDirection;
 }
 
 /// The apps built at a stop, each a way into its page on /work.
@@ -816,4 +658,61 @@ class _AppChipState extends State<_AppChip> {
 String _firstSentence(String text) {
   final match = RegExp(r'^.*?[.!?؟](?=\s|$)').firstMatch(text.trim());
   return match?.group(0) ?? text;
+}
+
+/// How long a stop lasted, as a small gold-edged badge beside its dates --
+/// or "Now" while it is still going. It replaced a band that drew the stop
+/// against the whole career, which the owner found odd rather than useful:
+/// the one thing that band said was how long, so this says it in words.
+class _Length extends StatelessWidget {
+  const _Length({required this.role});
+
+  final CareerRole role;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final l10n = context.l10n;
+    final end = role.end;
+    final String text;
+    if (end == null) {
+      text = l10n.careerNow;
+    } else {
+      int months(String date) {
+        final parts = date.split('-');
+        final year = int.tryParse(parts.first) ?? 0;
+        final month = parts.length > 1 ? int.tryParse(parts[1]) ?? 1 : 1;
+        return year * 12 + month;
+      }
+
+      final total = months(end) - months(role.start) + 1;
+      final years = total ~/ 12;
+      final rest = total % 12;
+      text = [
+        if (years > 0) l10n.careerYears(years),
+        if (rest > 0) l10n.careerMonths(rest),
+      ].join(' ');
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(tokens.controlRadius),
+        border: Border.all(
+          color: tokens.beaconDim,
+          width: tokens.hairlineWidth,
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: tokens.space8,
+          vertical: tokens.space4 / 2,
+        ),
+        child: Text(
+          text,
+          style: context.type.telemetryS.copyWith(
+            color: end == null ? tokens.beacon : tokens.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
 }
