@@ -14,10 +14,17 @@ import 'package:nocturne/core/motion/reduced_motion.dart';
 /// is live. Still, and simply a gold hairline, under reduced motion.
 class GoldEdge extends StatefulWidget {
   /// Runs the light round [child].
-  const GoldEdge({required this.child, super.key});
+  const GoldEdge({required this.child, this.radius = 0, this.inset, super.key});
 
   /// The panel.
   final Widget child;
+
+  /// The corner radius of [child], so the light follows a rounded card.
+  final double radius;
+
+  /// How far inside [child]'s edge the light runs. Defaults to the corner
+  /// ticks' offset, which is where an instrument panel's edge is drawn.
+  final double? inset;
 
   @override
   State<GoldEdge> createState() => _GoldEdgeState();
@@ -56,10 +63,12 @@ class _GoldEdgeState extends State<GoldEdge>
         gold: tokens.beacon,
         glow: tokens.beaconGlow,
         strokeWidth: tokens.hairlineWidth * 1.5,
-        inset: tokens.cornerTickOffset,
+        inset: widget.inset ?? tokens.cornerTickOffset,
+        radius: widget.radius,
         isStill: isReduced,
       ),
-      child: widget.child,
+      // Its own layer, so the light going round does not repaint the panel.
+      child: RepaintBoundary(child: widget.child),
     );
   }
 }
@@ -71,6 +80,7 @@ class _EdgePainter extends CustomPainter {
     required this.glow,
     required this.strokeWidth,
     required this.inset,
+    required this.radius,
     required this.isStill,
   }) : super(repaint: run);
 
@@ -79,15 +89,17 @@ class _EdgePainter extends CustomPainter {
   final Color glow;
   final double strokeWidth;
   final double inset;
+  final double radius;
   final bool isStill;
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = (Offset.zero & size).deflate(inset);
     if (rect.isEmpty) return;
+    final edge = RRect.fromRectAndRadius(rect, Radius.circular(radius));
     if (isStill) {
-      canvas.drawRect(
-        rect,
+      canvas.drawRRect(
+        edge,
         Paint()
           ..color = gold.withValues(alpha: 0.35)
           ..style = PaintingStyle.stroke
@@ -107,16 +119,16 @@ class _EdgePainter extends CustomPainter {
       transform: GradientRotation(turn),
     ).createShader(rect);
     canvas
-      ..drawRect(
-        rect,
+      ..drawRRect(
+        edge,
         Paint()
           ..shader = shader
           ..style = PaintingStyle.stroke
           ..strokeWidth = strokeWidth * 4
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
       )
-      ..drawRect(
-        rect,
+      ..drawRRect(
+        edge,
         Paint()
           ..shader = shader
           ..style = PaintingStyle.stroke
@@ -129,5 +141,7 @@ class _EdgePainter extends CustomPainter {
       oldDelegate.gold != gold ||
       oldDelegate.glow != glow ||
       oldDelegate.isStill != isStill ||
+      oldDelegate.radius != radius ||
+      oldDelegate.inset != inset ||
       oldDelegate.strokeWidth != strokeWidth;
 }

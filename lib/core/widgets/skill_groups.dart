@@ -148,23 +148,34 @@ class _SkillGroupsState extends State<SkillGroups> {
             else
               // Two lines, each title as wide as its own words -- the owner
               // asked for the titles organised in two rows, and not boxed to
-              // one fixed width.
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (final (index, line) in [
-                    titles.take((titles.length / 2).ceil()).toList(),
-                    titles.skip((titles.length / 2).ceil()).toList(),
-                  ].indexed) ...[
-                    if (index > 0) SizedBox(height: tokens.space8),
-                    Wrap(
-                      spacing: tokens.space8,
-                      runSpacing: tokens.space8,
-                      children: line,
-                    ),
-                  ],
-                ],
+              // one fixed width. In a column too narrow for half of them on a
+              // line (About's, beside the portrait) the halves each broke in
+              // two; there they are one wrap, filling each line in order.
+              LayoutBuilder(
+                builder: (context, constraints) =>
+                    constraints.maxWidth < Tokens.skillsTwoLinesFrom
+                    ? Wrap(
+                        spacing: tokens.space8,
+                        runSpacing: tokens.space8,
+                        children: titles,
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final (index, line) in [
+                            titles.take((titles.length / 2).ceil()).toList(),
+                            titles.skip((titles.length / 2).ceil()).toList(),
+                          ].indexed) ...[
+                            if (index > 0) SizedBox(height: tokens.space8),
+                            Wrap(
+                              spacing: tokens.space8,
+                              runSpacing: tokens.space8,
+                              children: line,
+                            ),
+                          ],
+                        ],
+                      ),
               ),
             SettlingSize(
               duration: Motion.standard,

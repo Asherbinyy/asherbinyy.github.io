@@ -61,7 +61,9 @@ void main() {
     expect(_still, findsOneWidget);
     expect(
       tester.getRect(_still).top,
-      greaterThan(tester.getRect(find.text(l10n.courtyardShoutout)).bottom),
+      greaterThan(
+        tester.getRect(find.text(l10n.courtyardGameInspiration)).bottom,
+      ),
     );
   });
 }

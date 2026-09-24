@@ -433,5 +433,5 @@ The owner's round of nine screenshots, and his answers in conversation on 2026-0
 | Anubis guardian in the intro | **OWN**-supplied file, 2026-09-24; author and licence to be named (see `web/intro/models/LICENSE.md`). |
 | Career card duration ("2 yrs 3 mos", "Now") | Computed from each role's own `start`/`end` in `career.json`, counting both end months; "Now" where `end` is empty. No figure entered by hand. Replaces the timeline band the owner could not read. |
 | Fiverr removed from the contact links | **OWN**, 2026-09-24 ("remove fiverr"). The URL stays in `profile.json`; the site no longer shows it. |
-| Courtyard: "Shout-out to Icy Tower, the tower that started it all." | **OWN**, 2026-09-24 ("add here smth like shoutout to Icy tower"); Claude's wording. No claim about the owner beyond the existing credit. |
+| Courtyard: "A shout-out to Icy Tower, the first game I ever played." | **OWN**, 2026-09-24: replaces the two-sentence credit and the separate shout-out ("make it simple sentence"). The fact (first game he played) is the owner's own, from the earlier credit. |
 | About: the ankh caption removed | **OWN**, 2026-09-24 ("remove the Ankh description"). |

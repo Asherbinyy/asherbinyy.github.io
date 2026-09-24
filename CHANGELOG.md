@@ -5,6 +5,15 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### Merged to `main`, 2026-09-24 (third review)
+
+- **Scoreboard:** the first climb of a visit now counts. It was never played on a server-issued run, so somebody who joined after it found nothing on the board. The run is fetched with a random key held only in the tab, and joining claims the climb just finished.
+- **Game on a phone:** the left of the screen is a floating stick, the right a big jump button; the legend says so.
+- **Intro on a phone:** the camera stands back and widens on a narrow screen, so the gate and both statues are in frame.
+- **Home:** on a phone the stops run down beside the career cards; the closing panel's left side is centred against Contact.
+- **About:** the ankh is level with the text; the skills sit under the buttons; the "or" line stops at the profiles; Book a call has the running gold edge (Home too).
+- **Courtyard:** the Icy Tower credit is one sentence.
+
 ### Merged to `main`, 2026-09-24 (owner-approved after localhost review)
 
 - **Home hero:** the picture blends into the page; a pyramid going up, with a tower crane setting its top courses in step with the automation on a second curved screen; the owner at two screens, one mirroring his phone; skin tone, a real shoulder, the nemes redrawn. Hover a flag and it flies. A third stat: 30+ apps and projects delivered.

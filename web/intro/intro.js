@@ -40,6 +40,12 @@ const PEDESTAL_WIDTH = 2.1;
 const STATUE_HEIGHT = 4.3;
 /** Bastet sits lower than a standing god, and turns to face the viewer. */
 const BASTET_HEIGHT = 3.4;
+/** Half the width that must be in frame (both pedestals and braziers), how
+ *  far forward the statues stand, and where the camera ends up, past the
+ *  door. */
+const FRAME_HALF_WIDTH = 7.0;
+const GUARD_DEPTH = 4.8;
+const APPROACH_END = 3.2;
 /** How tall the braziers' stands are, and how bright the light they throw. */
 const BRAZIER_HEIGHT = 1.05;
 const LAMP_LIGHT = 26;
@@ -109,7 +115,8 @@ export class Threshold {
     this.scene.fog = new THREE.FogExp2(PALETTE.night, 0.026);
 
     this.camera = new THREE.PerspectiveCamera(52, width / height, 0.1, 200);
-    this.camera.position.set(0, 3.4, 16);
+    this.#fit(width / height);
+    this.camera.position.set(0, 3.4, this.baseZ);
     this.camera.lookAt(0, 4, 0);
 
     this.rig = new THREE.Group();
@@ -697,11 +704,33 @@ export class Threshold {
     this.host.dispatchEvent(new CustomEvent('threshold:opening'));
   }
 
+  /**
+   * Frames the gate for the screen's shape.
+   *
+   * Composed for a wide screen: on a phone held upright the same camera saw
+   * the doorway and nothing either side of it, and the owner said the scene
+   * looked cut. A narrow screen gets a slightly wider lens and stands further
+   * back, far enough that both statues and their braziers are in the frame,
+   * with the fog thinned to match so the gate is not lost in it.
+   */
+  #fit(aspect) {
+    const fov = aspect >= 1 ? 52 : 52 + (1 - aspect) * 22;
+    const halfFov = (fov / 2) * (Math.PI / 180);
+    const needed = FRAME_HALF_WIDTH / (Math.tan(halfFov) * aspect);
+    this.baseZ = Math.max(16, GUARD_DEPTH + needed);
+    this.camera.fov = fov;
+    if (this.scene?.fog) this.scene.fog.density = 0.026 * (16 / this.baseZ);
+    if (this.state === 'waiting' || this.state === undefined) {
+      this.camera.position.z = this.baseZ;
+    }
+  }
+
   resize() {
     if (this.disposed || !this.renderer) return;
     const width = this.host.clientWidth;
     const height = this.host.clientHeight;
     this.camera.aspect = width / height;
+    this.#fit(width / height);
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
   }
@@ -766,7 +795,8 @@ export class Threshold {
 
     // Beat five: the camera goes in.
     const approach = ease(Math.max(0, since - 0.78) / 1.25);
-    this.camera.position.z = 16 - approach * 19.2;
+    this.camera.position.z =
+      this.baseZ - approach * (this.baseZ + APPROACH_END);
     this.camera.position.y = 3.4 - approach * 0.5;
     this.camera.position.x *= 1 - approach;
     this.camera.lookAt(0, 3.4, -4);

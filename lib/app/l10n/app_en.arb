@@ -487,7 +487,7 @@
   "@courtyardGamePitch": {
     "description": "The line offering the climb before it is started"
   },
-  "courtyardGameInspiration": "Icy Tower was the first game I ever played.\nThis is my tribute to it, rebuilt inside an obelisk.",
+  "courtyardGameInspiration": "A shout-out to Icy Tower, the first game I ever played.",
   "@courtyardGameInspiration": {
     "description": "Courtyard: where the climb comes from, in the owner's words"
   },
@@ -535,6 +535,10 @@
   "ascentKeys": "Arrows or A and D to steer. Space to jump. Kick off a wall for height.",
   "@ascentKeys": {
     "description": "Keyboard controls, shown on a pointer browser"
+  },
+  "ascentTouch": "Slide a thumb on the left to steer. Touch the right to jump. Kick off a wall for height.",
+  "@ascentTouch": {
+    "description": "Touch controls, shown on a phone or tablet"
   },
   "ascentLeave": "Leave",
   "contactOr": "or",
@@ -1092,10 +1096,6 @@
         "type": "int"
       }
     }
-  },
-  "courtyardShoutout": "Shout-out to Icy Tower, the tower that started it all.",
-  "@courtyardShoutout": {
-    "description": "Courtyard: the line crediting Icy Tower on the game's panel"
   },
   "stationStops": "Stops",
   "@stationStops": {

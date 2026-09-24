@@ -230,7 +230,7 @@
   "courtyardHeading": "الفناء",
   "courtyardIntro": "الجانب الذي لا علاقة له بالعمل.",
   "courtyardGamePitch": "صعود داخل مسلّة.\nاصعد أعلى ما تستطيع قبل أن تخطئ حافة.",
-  "courtyardGameInspiration": "كانت Icy Tower أول لعبة لعبتها في حياتي.\nوهذه تحيّتي لها، أعدت بناءها داخل مسلّة.",
+  "courtyardGameInspiration": "تحية إلى Icy Tower، أول لعبة لعبتها في حياتي.",
   "courtyardPlay": "العب",
   "ascentRestart": "إعادة",
   "ascentSoundOn": "تشغيل الصوت",
@@ -241,6 +241,7 @@
   "ascentLeap": "قفزة",
   "ascentDive": "انقضاض",
   "ascentKeys": "الأسهم أو A و D للتوجيه. المسافة للقفز. ارتد عن الجدار لمزيد من الارتفاع.",
+  "ascentTouch": "حرّك إبهامك على اليسار للتوجيه. المس اليمين للقفز. ارتد عن الجدار لمزيد من الارتفاع.",
   "ascentLeave": "خروج",
   "contactOr": "أو",
   "contactBookTitle": "احجز مكالمة",
@@ -424,7 +425,6 @@
   "careerNow": "الآن",
   "careerYears": "{count, plural, =1{سنة} =2{سنتان} few{{count} سنوات} other{{count} سنة}}",
   "careerMonths": "{count, plural, =1{شهر} =2{شهران} few{{count} أشهر} other{{count} شهرًا}}",
-  "courtyardShoutout": "تحية إلى Icy Tower، البرج الذي بدأ كل شيء.",
   "stationStops": "المحطات",
   "@stationStops": {
     "description": "Home: heading over the list that jumps to a career stop"

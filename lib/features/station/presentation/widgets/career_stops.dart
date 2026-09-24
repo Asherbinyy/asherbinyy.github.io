@@ -30,6 +30,17 @@ class CareerStops extends StatelessWidget {
     super.key,
   });
 
+  /// What kind of stop [role] was, as a mark anyone reads: a cap for study,
+  /// a briefcase for a job, a laptop for freelance. Shared with the phone's
+  /// stops beside the career cards.
+  static IconData markFor(CareerRole role) {
+    if (role.id == 'freelance') return Icons.laptop_mac_rounded;
+    return switch (role.kind) {
+      StopKind.study => Icons.school_rounded,
+      StopKind.role => Icons.work_rounded,
+    };
+  }
+
   /// The stops, in the order the career sequence prints them.
   ///
   /// No locale: a stop is named by its company, or by where it was, and the
@@ -154,13 +165,7 @@ class _StopState extends State<_Stop> {
 
   /// What kind of stop this was, as a mark anyone reads: a cap for study, a
   /// briefcase for a job, a laptop for freelance.
-  IconData get _mark {
-    if (widget.role.id == 'freelance') return Icons.laptop_mac_rounded;
-    return switch (widget.role.kind) {
-      StopKind.study => Icons.school_rounded,
-      StopKind.role => Icons.work_rounded,
-    };
-  }
+  IconData get _mark => CareerStops.markFor(widget.role);
 
   void _goThere() {
     final target = widget.anchorRegistry.keyFor(widget.role.id).currentContext;

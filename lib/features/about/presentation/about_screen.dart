@@ -136,14 +136,6 @@ class _About extends StatelessWidget {
           ),
         ],
         SizedBox(height: tokens.space48),
-        // The whole width, as on Home: squeezed into the column beside the
-        // portrait, the group titles broke into ragged lines the owner
-        // called odd.
-        SizedBox(
-          width: double.infinity,
-          child: SkillGroups(profile: profile, locale: locale),
-        ),
-        SizedBox(height: tokens.space48),
         Text(l10n.aboutEducation, style: context.type.heading),
         SizedBox(height: tokens.space16),
         EducationTable(education: education),
@@ -275,6 +267,13 @@ class _Identity extends StatelessWidget {
               isPrimary: true,
             ),
           ],
+        ),
+        SizedBox(height: tokens.space32),
+        // Under the buttons, filling the space the owner pointed at beside
+        // the portrait and the ankh, rather than a row of its own below.
+        SizedBox(
+          width: double.infinity,
+          child: SkillGroups(profile: profile, locale: locale),
         ),
       ],
     );

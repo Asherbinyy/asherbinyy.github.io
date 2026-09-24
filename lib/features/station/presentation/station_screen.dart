@@ -198,8 +198,10 @@ class _Closing extends ConsumerWidget {
               }
               final hasRoom =
                   constraints.maxWidth >= Tokens.closingIllustrationFrom;
+              // Centred against the contact column, which is the taller: at
+              // the top, the ask left an empty band under it the owner
+              // pointed at.
               return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (hasRoom) ...[
                     const AppBeingBuilt(),
@@ -296,8 +298,11 @@ class _Career extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          CareerStops(roles: ordered, anchorRegistry: anchorRegistry),
-          SizedBox(height: context.tokens.space48),
+          // On a phone the stops run down beside the cards instead.
+          if (context.platform.viewport != ViewportClass.compact) ...[
+            CareerStops(roles: ordered, anchorRegistry: anchorRegistry),
+            SizedBox(height: context.tokens.space48),
+          ],
           CareerSequence(
             roles: ordered,
             locale: locale,

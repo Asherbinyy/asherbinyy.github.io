@@ -247,7 +247,7 @@ class _AscentStageState extends ConsumerState<AscentStage>
         unawaited(
           ref
               .read(leaderboardControllerProvider.notifier)
-              .submit(challenge: challenge, tape: run.tape.encode()),
+              .finish(challenge: challenge, tape: run.tape.encode()),
         );
       }
       unawaited(_afterRun());
@@ -304,16 +304,26 @@ class _AscentStageState extends ConsumerState<AscentStage>
       if (!mounted) return;
     }
 
-    if (ref.read(leaderboardControllerProvider).canPlayRanked) {
-      await leaderboard.beginRankedRun();
-    }
+    if (leaderboard.canTryRanked) await leaderboard.beginRankedRun();
   }
 
   Future<void> _start() async {
     // Whatever challenge is in hand, if any. Never fetched here: the run starts
     // now, and a climb with no challenge is an ordinary local one.
     final leaderboard = ref.read(leaderboardControllerProvider.notifier);
-    final challenge = leaderboard.takeChallenge();
+    var challenge = leaderboard.takeChallenge();
+    // None in hand -- the first climb of a visit. Worth a short wait for one,
+    // or that climb can never go on the board; not worth a long one, or a
+    // slow network is a game that will not start. One that arrives late is
+    // kept for the next climb.
+    if (challenge == null && leaderboard.canTryRanked) {
+      await leaderboard.beginRankedRun().timeout(
+        LeaderboardController.firstRunWait,
+        onTimeout: () => null,
+      );
+      if (!mounted) return;
+      challenge = leaderboard.takeChallenge();
+    }
     _runChallenge =
         challenge != null && challenge.expiresAt.isAfter(DateTime.now())
         ? challenge
@@ -477,6 +487,19 @@ class _AscentStageState extends ConsumerState<AscentStage>
                     ),
                   ),
                 ),
+              // Under everything but the picture: the whole screen below the
+              // top bar is the controls on touch, and the bar, the results
+              // and the legend sit above them and take their own taps.
+              if (world != null && !world.isOver && !_showsLegend)
+                Positioned.fill(
+                  top: tokens.space64 + tokens.space24,
+                  child: AscentControls(
+                    onChanged: (input) {
+                      _steer = input.steer;
+                      _leap = input.isLeaping;
+                    },
+                  ),
+                ),
               _Hud(
                 world: world,
                 best: _best,
@@ -524,19 +547,6 @@ class _AscentStageState extends ConsumerState<AscentStage>
                   onRestart: _start,
                 ),
               if (_showsLegend) _Legend(onClose: _closeLegend),
-              // The pad sits over the shaft on touch, where a thumb can reach
-              // it, rather than under a canvas that now fills the window.
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: tokens.space24,
-                child: AscentControls(
-                  onChanged: (input) {
-                    _steer = input.steer;
-                    _leap = input.isLeaping;
-                  },
-                ),
-              ),
             ],
           ),
         ),
@@ -1223,7 +1233,10 @@ class _Legend extends StatelessWidget {
                     ),
                     SizedBox(height: tokens.space8),
                     Text(
-                      l10n.ascentKeys,
+                      // What the hand in front of the screen actually has.
+                      context.platform.isPointer
+                          ? l10n.ascentKeys
+                          : l10n.ascentTouch,
                       style: type.bodyS.copyWith(color: tokens.textMuted),
                     ),
                     SizedBox(height: tokens.space24),

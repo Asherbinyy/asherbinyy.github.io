@@ -234,6 +234,77 @@ void main() {
       },
     );
 
+    test('a climb finished before joining goes up once they join', () async {
+      // The owner played, joined, and found nothing on the board: the first
+      // climb was never played for the record. Now it is, under a key that
+      // lives only in the tab, and joining claims it.
+      final server = _Server((method, path) {
+        if (path == '/v1/game/runs' && method == 'POST') {
+          return (
+            200,
+            jsonEncode({
+              'runId': 'run-1',
+              'seed': 7,
+              'token': 'signed',
+              'expiresAt': 1758000600000,
+            }),
+          );
+        }
+        if (path == '/v1/game/leaderboard' && method == 'POST') {
+          return (202, '{"status":"pending","ticksChecked":0}');
+        }
+        return (200, '{"status":"pending","ticksChecked":1}');
+      });
+      final store = InMemoryPreferenceStore();
+      final controller = LeaderboardController(
+        client: _clientFor(server),
+        store: store,
+      );
+      addTearDown(controller.dispose);
+
+      expect(controller.canTryRanked, isTrue);
+      final challenge = (await controller.beginRankedRun())!;
+      expect(controller.takeChallenge(), same(challenge));
+      await controller.finish(challenge: challenge, tape: 'AAAA');
+      expect(
+        server.seen.where((call) => call == 'POST /v1/game/leaderboard'),
+        isEmpty,
+        reason: 'nothing goes up before they say they want to be on it',
+      );
+      expect(store.read(PreferenceKey.gameParticipation.storageKey), isNull);
+
+      await controller.choose(
+        Joined.fresh(
+          nickname: 'Ahmed',
+          submitsAutomatically: true,
+          remembered: true,
+        ),
+      );
+      expect(server.seen.last, 'POST /v1/game/leaderboard');
+      final issuedTo = jsonDecode(server.bodies.first) as Map;
+      final submitted = jsonDecode(server.bodies.last) as Map;
+      expect(
+        submitted['playerKey'],
+        issuedTo['playerKey'],
+        reason: 'the run must be submitted by the key it was issued to',
+      );
+      expect(controller.state.verdict, isA<VerdictPending>());
+    });
+
+    test('somebody playing on their own is never issued a run', () async {
+      final server = _Server((_, _) => (200, '{}'));
+      final controller = LeaderboardController(
+        client: _clientFor(server),
+        store: InMemoryPreferenceStore(),
+      );
+      addTearDown(controller.dispose);
+
+      await controller.choose(const PlayingLocally(remembered: false));
+      expect(controller.canTryRanked, isFalse);
+      expect(await controller.beginRankedRun(), isNull);
+      expect(server.seen, isEmpty);
+    });
+
     test('a whole ranked run, from challenge to board', () async {
       var verdictCalls = 0;
       final server = _Server((method, path) {
