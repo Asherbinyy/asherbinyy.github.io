@@ -221,3 +221,15 @@ That is content, not ambience.
 ## September 13 selective restoration
 
 The game character is the owner-requested small Egyptian humanoid with a gold nemes, replacing the scarab avatar only. The football scene is a literal interest illustration. Education uses existing surface, border, type and radius tokens; it does not introduce papyrus across the education cards. No new background motif or fixed image is included.
+
+## September 23, second round: exceptions the owner asked for by name
+
+Each of these is outside the rules above, and each is here because the owner asked for it in so many words. None is a licence for the next page.
+
+- **A pyramid, under construction** (hero picture on `/`). "In the background the pyramid is being built, maybe a crane is placing some big rocks." The silhouette stays excluded everywhere else. This one earns its place by being unfinished: its top courses are laid a block at a time by a tower crane, in step with the automation on the right-hand screen, so it is a thing being built rather than a postcard. The crane is the owner's tool, not a motif.
+- **The wedjat (#14) in the game.** The eye of Horus leaves `/console` for one job: a relic in The Ascent that slows the rising floor. Protection is what it means, and that is what it does.
+- **Ma'at's feather (#12) and the ankh (#4) as relics** in the game: lightness (two jumps in the air) and life (an extra life).
+- **Sand, in the game only.** "A new level … sand (sand whistle, particles, slightly inaccurate jumps)". The Sands level draws blown grains across the shaft while the wind pushes. The exclusion of sand as page decoration is unchanged.
+- **The golden mask** appears where §1 always reserved it: as the reward at the top of the game, drawn in the site's golds, when a climber reaches the summit at 800 m.
+- **Bastet** joins the intro's guardians: a black seated cat on the left pedestal, from a CC BY 4.0 model (credited in `web/intro/models/LICENSE.md`). Anubis was also asked for; no openly licensed scan could be obtained, so Ra-Horakhty still stands on the right.
+- **Skin** is drawn on the one person the site draws — the climber, and the same man at his desk — at the owner's request. It is illustration, not an interface colour (`Tokens.figureSkin`).

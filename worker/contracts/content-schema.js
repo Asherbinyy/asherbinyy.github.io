@@ -300,6 +300,23 @@ export const documents = [
         ],
       },
       ...['skills', 'learning', 'tools', 'services'].map((key) => ({key, kind: 'list', label: {skills: 'Skills', learning: 'Learning', tools: 'Tools', services: 'Services'}[key], addLabel: 'Add item', of: {kind: 'text'}, consumer: 'live'})),
+      {
+        key: 'skillGroups',
+        kind: 'list',
+        label: 'Skill groups',
+        addLabel: 'Add a group',
+        consumer: 'live',
+        help: 'Skills under titles, as Home and About show them: a title opens onto its skills. When empty, the flat Skills list is shown instead.',
+        of: {
+          kind: 'object',
+          expand: 'inline',
+          titleFrom: 'title',
+          fields: [
+            localised('title', 'Title', {required: true}),
+            {key: 'skills', kind: 'list', label: 'Skills', addLabel: 'Add a skill', of: {kind: 'text'}},
+          ],
+        },
+      },
       {key: 'appearance', kind: 'object', label: 'Site appearance', consumer: 'live', fields: [
         {key: 'theme', kind: 'choice', label: 'Default theme', options: [{value: 'kemet', label: 'Kemet — dark'}, {value: 'deshret', label: 'Deshret — light'}], help: 'Visitors can still choose their own theme.'},
         ...['headingFont', 'bodyFont'].map((key) => ({key, kind: 'choice', label: key === 'headingFont' ? 'Heading font' : 'Body font', options: [{value: 'spaceGrotesk', label: 'Space Grotesk'}, {value: 'ibmPlexSans', label: 'IBM Plex Sans'}], help: 'Uses bundled fonts. Arabic keeps IBM Plex Sans Arabic.'})),
@@ -390,7 +407,16 @@ export const documents = [
               options: [
                 {value: 'freelance', label: 'Freelance, direct with the client'},
                 {value: 'contract', label: 'Fixed-term contract through a company'},
+                {value: 'personal', label: 'My own project'},
               ],
+            },
+            {
+              key: 'client',
+              kind: 'text',
+              label: 'Built for',
+              claim: true,
+              consumer: 'live',
+              help: 'The company the app was built for, when no stop on the Journey lists it. Shown under the name on the Work card.',
             },
             {
               key: 'screenshot',

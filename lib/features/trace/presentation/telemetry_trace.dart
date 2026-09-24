@@ -49,16 +49,6 @@ class TelemetryTrace extends ConsumerStatefulWidget {
   /// Resolves the provisional burst geometry against rendered career entries.
   final TraceAnchorRegistry anchorRegistry;
 
-  /// How much of a compact page's trailing edge the wall occupies.
-  ///
-  /// On a phone the copy fills the width, so unlike the desk layout it does not
-  /// clear the wall by being measure-limited. Without this the trailing
-  /// quarter of every line -- the name, the flags, the CV button -- ran under
-  /// the carved signs. The page reserves exactly this much, from this one
-  /// definition, so the two cannot drift apart.
-  static double compactFootprint(double available) =>
-      available * Tokens.traceColumnFractionCompact;
-
   @override
   ConsumerState<TelemetryTrace> createState() => _TelemetryTraceState();
 }
@@ -270,27 +260,21 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace>
 
   /// How wide the wall is.
   ///
-  /// On a phone, a strip down the trailing edge that the page reserves. On
-  /// anything wider, all of it: the owner asked for the wall to stop filling
+  /// All of it, at every size: the owner asked for the wall to stop filling
   /// the right-hand side of a desk screen and to become the pattern behind the
   /// whole page instead, less visible, with the right of the hero given to a
   /// picture. The copy sits on cards, so it no longer needs a column of its
-  /// own to stay legible.
-  double _columnWidth(double available, {required bool isCompact}) =>
-      isCompact ? TelemetryTrace.compactFootprint(available) : available;
+  /// own to stay legible. A phone used to keep a strip of it down the
+  /// trailing edge, which pushed the page to the left; it no longer does.
+  double _columnWidth(double available) => available;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final isSettled = ReducedMotion.of(context);
-    final isCompact = context.platform.viewport == ViewportClass.compact;
-
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columnWidth = _columnWidth(
-          constraints.maxWidth,
-          isCompact: isCompact,
-        );
+        final columnWidth = _columnWidth(constraints.maxWidth);
 
         return Align(
           // A strip down the trailing edge on a phone; the whole page behind
@@ -335,10 +319,8 @@ class _TelemetryTraceState extends ConsumerState<TelemetryTrace>
                           carveLight: tokens.ornamentField,
                           torch: _torchAt.value,
                           torchStrength: _torchFade.value,
-                          // Faint behind the page on a wide screen, full
-                          // under the torch; full everywhere on a phone,
-                          // where the wall keeps a strip of its own.
-                          restAlpha: isCompact ? 1 : Tokens.wallPatternOpacity,
+                          // Faint behind the page, full under the torch.
+                          restAlpha: Tokens.wallPatternOpacity,
                         ),
                       ),
                     ),

@@ -7,13 +7,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
-import 'package:nocturne/core/painting/ascent_painter.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/features/about/presentation/widgets/interests_grid.dart';
-import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
+import 'package:nocturne/features/about/presentation/widgets/live_climb.dart';
+import 'package:nocturne/core/widgets/gold_edge.dart';
 import 'package:nocturne/features/courtyard/game/presentation/ascent_stage.dart';
+import 'package:nocturne/features/courtyard/game/presentation/leaderboard_controller.dart';
 import 'package:nocturne/features/courtyard/game/presentation/widgets/leaderboard_panel.dart';
 
 /// `/courtyard` — everything that is not work.
@@ -80,16 +81,18 @@ class _CourtyardScreenState extends ConsumerState<CourtyardScreen> {
 }
 
 /// The panel that offers the climb, before anyone has asked for it.
-class _GameInvitation extends StatelessWidget {
+class _GameInvitation extends ConsumerWidget {
   const _GameInvitation({required this.onPlay});
 
   final VoidCallback onPlay;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
     final type = context.type;
     final l10n = context.l10n;
+    // No board in this build, no button for one: it opened an empty box.
+    final hasBoard = ref.watch(leaderboardClientProvider) != null;
 
     final invitation = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,6 +123,11 @@ class _GameInvitation extends StatelessWidget {
             style: type.bodyS.copyWith(color: tokens.textMuted),
           ),
         ),
+        SizedBox(height: tokens.space8),
+        Text(
+          l10n.courtyardShoutout,
+          style: type.bodyS.copyWith(color: tokens.beacon),
+        ),
         SizedBox(height: tokens.space24),
         Wrap(
           spacing: tokens.space8,
@@ -130,33 +138,48 @@ class _GameInvitation extends StatelessWidget {
               emphasis: ButtonEmphasis.primary,
               onPressed: onPlay,
             ),
-            BeaconButton(
-              label: l10n.courtyardScoreboard,
-              onPressed: () => _showBoard(context),
-            ),
+            if (hasBoard)
+              BeaconButton(
+                label: l10n.courtyardScoreboard,
+                onPressed: () => _showBoard(context, ref),
+              ),
           ],
         ),
       ],
     );
 
-    return InstrumentPanel(
-      fill: tokens.surface,
-      padding: EdgeInsets.all(tokens.space24),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Below this the still would squeeze the copy into a column too
-          // narrow for a sentence, so a phone gets the words and the buttons.
-          if (constraints.maxWidth < Tokens.mediumBreakpoint) {
-            return invitation;
-          }
-          return Row(
-            children: [
-              Expanded(flex: 3, child: invitation),
-              SizedBox(width: tokens.space32),
-              const Expanded(flex: 2, child: _ClimbStill()),
-            ],
-          );
-        },
+    return GoldEdge(
+      child: InstrumentPanel(
+        fill: tokens.surface,
+        padding: EdgeInsets.all(tokens.space24),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Below this the climb would squeeze the copy into a column too
+            // narrow for a sentence, so on a phone it goes under the words.
+            if (constraints.maxWidth < Tokens.mediumBreakpoint) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  invitation,
+                  SizedBox(height: tokens.space24),
+                  const LiveClimb(height: Tokens.doorClimbCompact),
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(flex: 3, child: invitation),
+                SizedBox(width: tokens.space32),
+                // The game itself, climbing, rather than one still frame of it.
+                const Expanded(
+                  flex: 2,
+                  child: LiveClimb(height: Tokens.courtyardStillHeight),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -167,66 +190,82 @@ class _GameInvitation extends StatelessWidget {
   /// It is the same panel the climb's results screen uses, so there is one
   /// place that knows how to say "nobody has climbed yet" and one place that
   /// knows how to say the board is unreachable.
-  void _showBoard(BuildContext context) {
+  ///
+  /// It asks for the board as it opens. It used to open without asking, and
+  /// a board nobody had fetched is indistinguishable from one that could not
+  /// be reached -- so the button said the board was away, every time.
+  void _showBoard(BuildContext context, WidgetRef ref) {
+    unawaited(ref.read(leaderboardControllerProvider.notifier).refresh());
     unawaited(
       showDialog<void>(
         context: context,
-        builder: (context) => Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.all(context.tokens.space24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: DecoratedBox(
-              decoration: BoxDecoration(color: context.tokens.surface),
-              child: Padding(
-                padding: EdgeInsets.all(context.tokens.space16),
-                child: const LeaderboardPanel(),
-              ),
-            ),
-          ),
+        barrierColor: context.tokens.void_.withValues(
+          alpha: Tokens.boardBarrierAlpha,
         ),
+        // The climb opens from the page, not from the dialog, which is gone
+        // by the time it does.
+        builder: (context) => _BoardDialog(onPlay: onPlay),
       ),
     );
   }
 }
 
-/// The first moment of a climb, drawn by the game's own painter.
-///
-/// It shows what the Play button leads to -- the shaft, the ledges, the
-/// climber on the floor -- without starting anything: one frame of a fresh
-/// run, painted once and never animated, so it costs nothing while a visitor
-/// reads. Decorative; the panel's heading and buttons carry the meaning.
-class _ClimbStill extends StatelessWidget {
-  const _ClimbStill();
+/// The scoreboard on its own: a title, a way out, the board, and a way in to
+/// the climb.
+class _BoardDialog extends StatelessWidget {
+  const _BoardDialog({required this.onPlay});
 
-  /// A fixed seed, so the still is the same climb on every visit.
-  static final AscentWorld _world = AscentWorld.seeded(
-    best: 0,
-    isPractice: true,
-    seed: Tokens.courtyardStillSeed,
-  );
+  final VoidCallback onPlay;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    return ExcludeSemantics(
-      child: SizedBox(
-        height: Tokens.courtyardStillHeight,
-        child: ClipRect(
-          child: CustomPaint(
-            painter: AscentPainter(
-              world: _world,
-              entrance: 1,
-              stone: tokens.instrument,
-              cracked: tokens.instrumentDim,
-              gold: tokens.beacon,
-              glow: tokens.beaconGlow,
-              wall: tokens.hairline,
-              chamber: tokens.surfaceRaised,
-              pier: tokens.void_,
-              strokeWidth: tokens.hairlineWidth,
-              isReducedMotion: true,
-            ),
+    final l10n = context.l10n;
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.all(tokens.space24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: Tokens.boardDialogWidth),
+        child: InstrumentPanel(
+          fill: tokens.surface,
+          padding: EdgeInsets.all(tokens.space24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.courtyardScoreboard,
+                      style: context.type.heading,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: l10n.courtyardBoardClose,
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: tokens.instrumentMid,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: tokens.space16),
+              const LeaderboardPanel(),
+              SizedBox(height: tokens.space24),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: BeaconButton(
+                  label: l10n.courtyardPlay,
+                  emphasis: ButtonEmphasis.primary,
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onPlay();
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),

@@ -38,7 +38,15 @@ const PEDESTAL_WIDTH = 2.1;
 // Tall enough to be a colossus rather than an ornament: with the pedestal
 // under it this stands above the doorway it flanks.
 const STATUE_HEIGHT = 4.3;
-const STAFF_HEIGHT = 4.6;
+/** Bastet sits lower than a standing god, and turns to face the viewer. */
+const BASTET_HEIGHT = 3.4;
+/** How tall the braziers' stands are, and how bright the light they throw. */
+const BRAZIER_HEIGHT = 1.05;
+const LAMP_LIGHT = 26;
+const BASTET_TURN = 0.5;
+/** Anubis lies along the pedestal, facing the doorway at a three-quarter. */
+const ANUBIS_LENGTH = 3.5;
+const ANUBIS_TURN = Math.PI - 0.55;
 
 /** Reads the run once, so a reload replays it but a route change does not. */
 const PLAYED_KEY = 'kemet.threshold.played';
@@ -49,7 +57,6 @@ export class Threshold {
     this.clock = new THREE.Clock();
     this.state = 'waiting';
     this.openedAt = 0;
-    this.shake = 0;
     this.disposed = false;
     this.onFinished = () => {};
   }
@@ -383,14 +390,14 @@ export class Threshold {
       normalScale: new THREE.Vector2(0.55, 0.55),
     });
     // Held on the instance because the opening sequence brightens it, and it
-    // is shared by every part of both standards, so the strike is one
-    // assignment rather than one per piece.
+    // is shared by both braziers, so the flare is one assignment rather than
+    // one per piece.
     this.gilt = new THREE.MeshStandardMaterial({
       color: PALETTE.gold,
       emissive: PALETTE.gold,
       // Low at rest. The gold is the one saturated thing in a night scene, and
       // at the first value it pulled the eye off the statues entirely; it has
-      // nine tenths of its range still to travel when the staves come down.
+      // nine tenths of its range still to travel when the door is opened.
       emissiveIntensity: 0.05,
       roughness: 0.52,
       metalness: 0.7,
@@ -403,7 +410,7 @@ export class Threshold {
       ...this.stoneMaps,
       normalScale: new THREE.Vector2(0.7, 0.7),
     });
-    this.staves = [];
+    this.lamps = [];
     this.guards = [];
 
     for (const side of [-1, 1]) {
@@ -424,37 +431,6 @@ export class Threshold {
       plinth.position.y = BASE_HEIGHT + PLINTH_HEIGHT / 2;
       guard.add(plinth);
 
-      // The standard planted beside the pedestal, which is what strikes the
-      // ground and starts the sequence. Clear of the base rather than through
-      // it: at the first offset it stood inside the stone.
-      //
-      // A group rather than one cylinder. Six sides and a flat gold gave a
-      // bright yellow stick with no shading on it; a tapered ten-sided shaft
-      // with a collar and a finial reads as a carried object, which is what
-      // makes it belong to the figure behind it.
-      const staff = new THREE.Group();
-      const shaft = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.055, 0.085, STAFF_HEIGHT, 10),
-        gilt,
-      );
-      shaft.position.y = STAFF_HEIGHT / 2;
-      staff.add(shaft);
-      const finial = new THREE.Mesh(
-        new THREE.SphereGeometry(0.15, 12, 10),
-        gilt,
-      );
-      finial.position.y = STAFF_HEIGHT;
-      staff.add(finial);
-      const collar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.11, 0.11, 0.1, 10),
-        gilt,
-      );
-      collar.position.y = STAFF_HEIGHT - 0.34;
-      staff.add(collar);
-
-      staff.position.set(PEDESTAL_WIDTH / 2 + 0.22, 0, 0);
-      guard.add(staff);
-      this.staves.push(staff);
 
       // Facing the doorway, so both sentries look at what the viewer is about
       // to walk through. The group's local +X is that direction, on both
@@ -467,7 +443,139 @@ export class Threshold {
       this.guards.push(guard);
     }
 
+    // A brazier at the front of each pedestal, on the doorway's side. The
+    // black stone figures read as holes in the night under the moon alone;
+    // the owner asked for gold light on them. Placed in the rig rather than
+    // in each guard, because the right guard is turned half round and its
+    // local "front" is behind it.
+    for (const side of [-1, 1]) {
+      this.#brazier(gilt, side * 3.35, 5.45);
+    }
+
     this.#carve(statue);
+  }
+
+  /**
+   * A bronze bowl on three legs, a flame and a soft halo, and the warm light
+   * it throws on the statue beside it. The flame flickers while the door
+   * waits and flares when it opens: the opening's first beat now that the
+   * staves are gone.
+   */
+  #brazier(gilt, x, z) {
+    const lamp = new THREE.Group();
+    const bronze = new THREE.MeshStandardMaterial({
+      color: 0x4a3a22,
+      roughness: 0.55,
+      metalness: 0.8,
+    });
+    for (let i = 0; i < 3; i += 1) {
+      const leg = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.035, 0.05, BRAZIER_HEIGHT, 6),
+        bronze,
+      );
+      const angle = (i / 3) * Math.PI * 2;
+      leg.position.set(
+        Math.cos(angle) * 0.16,
+        BRAZIER_HEIGHT / 2,
+        Math.sin(angle) * 0.16,
+      );
+      leg.rotation.set(Math.sin(angle) * 0.14, 0, -Math.cos(angle) * 0.14);
+      lamp.add(leg);
+    }
+    const bowl = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.36, 0.16, 0.24, 16, 1, true),
+      gilt,
+    );
+    bowl.material.side = THREE.DoubleSide;
+    bowl.position.y = BRAZIER_HEIGHT + 0.12;
+    lamp.add(bowl);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.03, 6, 20), gilt);
+    rim.rotation.x = Math.PI / 2;
+    rim.position.y = BRAZIER_HEIGHT + 0.24;
+    lamp.add(rim);
+
+    const flameMaterial = new THREE.MeshBasicMaterial({
+      color: PALETTE.glow,
+      transparent: true,
+      opacity: 0.45,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.55, 12), flameMaterial);
+    flame.position.y = BRAZIER_HEIGHT + 0.5;
+    lamp.add(flame);
+    const core = new THREE.Mesh(
+      new THREE.ConeGeometry(0.1, 0.36, 10),
+      new THREE.MeshBasicMaterial({
+        color: 0xfff3d6,
+        transparent: true,
+        opacity: 0.7,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    core.position.y = BRAZIER_HEIGHT + 0.4;
+    lamp.add(core);
+
+    const halo = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: this.#haloTexture(),
+        color: PALETTE.gold,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    halo.position.y = BRAZIER_HEIGHT + 0.5;
+    halo.scale.setScalar(1.6);
+    lamp.add(halo);
+
+    // The light itself, above the flame so it reaches the figure's head.
+    const light = new THREE.PointLight(PALETTE.glow, LAMP_LIGHT, 11, 1.4);
+    light.position.y = BRAZIER_HEIGHT + 1.1;
+    lamp.add(light);
+
+    lamp.position.set(x, 0, z);
+    lamp.userData = { flame, core, halo, light, seed: x };
+    this.rig.add(lamp);
+    this.lamps.push(lamp);
+  }
+
+  /** A soft round glow, drawn once and shared by both halos. */
+  #haloTexture() {
+    if (this.halo) return this.halo;
+    const size = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d');
+    const gradient = context.createRadialGradient(
+      size / 2, size / 2, 0, size / 2, size / 2, size / 2,
+    );
+    gradient.addColorStop(0, 'rgba(255,255,255,1)');
+    gradient.addColorStop(0.25, 'rgba(255,255,255,0.45)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, size, size);
+    this.halo = new THREE.CanvasTexture(canvas);
+    return this.halo;
+  }
+
+  /** Flickers each flame; [flare] 0 to 1 is the opening's surge. */
+  #flicker(time, flare) {
+    for (const lamp of this.lamps) {
+      const { flame, core, halo, light, seed } = lamp.userData;
+      const flick =
+        Math.sin(time * 11 + seed) * 0.5 +
+        Math.sin(time * 17.3 + seed * 2) * 0.3 +
+        Math.sin(time * 5.1 + seed * 3) * 0.2;
+      const grow = 1 + flare * 0.7;
+      flame.scale.set(grow, grow * (1 + flick * 0.12), grow);
+      core.scale.set(grow, grow * (1 + flick * 0.18), grow);
+      halo.scale.setScalar(1.6 * grow * (1 + flick * 0.05));
+      light.intensity = LAMP_LIGHT * (1 + flick * 0.08) * (1 + flare * 0.8);
+    }
   }
 
   /**
@@ -477,45 +585,61 @@ export class Threshold {
    * to paint on the first frame. The doors do not move for 1500ms, so a
    * same-origin fetch of 190KB is in place long before anything happens.
    *
-   * A failure leaves two lit pedestals with staves standing on them, which
+   * A failure leaves two lit pedestals with braziers beside them, which
    * reads as a composition rather than as a fault. The boxes are deliberately
    * not kept as a fallback: they were the thing being fixed, and showing them
    * on a slow connection would say the fix had not landed.
    */
   #carve(material) {
-    loadMesh('intro/models/guardian.kmsh')
+    // Bastet, the cat, in black stone on the left, the way the owner asked
+    // for her: a seated cat in the pose of the Gayer-Anderson bronze.
+    // Polished, so the braziers' light runs along the carving as a sheen:
+    // matte black took no light at all and the figures were silhouettes.
+    const basalt = new THREE.MeshStandardMaterial({
+      color: 0x2a2e38,
+      roughness: 0.4,
+      metalness: 0.15,
+    });
+    loadMesh('intro/models/bastet.kmsh')
       .then((geometry) => {
-        // The fetch can outlive the overlay if a visitor presses Escape.
         if (this.disposed) {
           geometry.dispose();
           return;
         }
         const bounds = geometry.boundingBox;
-        // The mesh arrives centred on its own bounds and one unit tall, so it
-        // is placed in scene units without knowing anything about the scan.
-        const scale = STATUE_HEIGHT / (bounds.max.y - bounds.min.y);
-        for (const guard of this.guards) {
-          const figure = new THREE.Mesh(geometry, material);
-          figure.scale.setScalar(scale);
-          // Feet on the top of the pedestal. Derived from the pedestal rather
-          // than measured off a screenshot, so moving one moves the other and
-          // the statue cannot end up hovering a hand's width above its base.
-          figure.position.y = PEDESTAL_TOP - bounds.min.y * scale;
-          // Turned to face the viewer, not the door. Colossi at a pylon face
-          // outward, at whoever is walking up to it, and the first pass had
-          // both of them in profile showing a flank and a back pillar. The
-          // quarter turn back inward keeps them addressing the doorway as
-          // well, so they read as flanking it rather than ignoring it.
-          //
-          // The group already carries the mirror, so the sign follows it.
-          figure.rotation.y = guard.userData.side * (Math.PI / 2 - 0.25);
-          guard.add(figure);
-        }
+        const scale = BASTET_HEIGHT / (bounds.max.y - bounds.min.y);
+        const guard = this.guards.find((g) => g.userData.side < 0);
+        const figure = new THREE.Mesh(geometry, basalt);
+        figure.scale.setScalar(scale);
+        figure.position.y = PEDESTAL_TOP - bounds.min.y * scale;
+        figure.rotation.y = BASTET_TURN;
+        guard.add(figure);
       })
-      .catch(() => {
-        // Recorded rather than surfaced. A missing statue is a poorer scene;
-        // a thrown error here would take the whole intro down for it.
-      });
+      .catch(() => {});
+
+    // Anubis on the right: the recumbent jackal of Tutankhamun's shrine,
+    // lying on his chest the way he guarded the treasury. Sized by his
+    // length, since he lies rather than stands.
+    loadMesh('intro/models/anubis.kmsh')
+      .then((geometry) => {
+        if (this.disposed) {
+          geometry.dispose();
+          return;
+        }
+        const bounds = geometry.boundingBox;
+        const length = Math.max(
+          bounds.max.x - bounds.min.x,
+          bounds.max.z - bounds.min.z,
+        );
+        const scale = ANUBIS_LENGTH / length;
+        const guard = this.guards.find((g) => g.userData.side > 0);
+        const figure = new THREE.Mesh(geometry, basalt);
+        figure.scale.setScalar(scale);
+        figure.position.y = PEDESTAL_TOP - bounds.min.y * scale;
+        figure.rotation.y = ANUBIS_TURN;
+        guard.add(figure);
+      })
+      .catch(() => {});
   }
 
   #dust() {
@@ -570,7 +694,6 @@ export class Threshold {
     if (this.state !== 'waiting') return;
     this.state = 'opening';
     this.openedAt = this.clock.getElapsedTime();
-    this.shake = 1;
     this.host.dispatchEvent(new CustomEvent('threshold:opening'));
   }
 
@@ -588,7 +711,7 @@ export class Threshold {
     const time = this.clock.getElapsedTime();
     const since = this.state === 'waiting' ? 0 : time - this.openedAt;
 
-    // Dust drifts always, and lifts hard on the impact.
+    // Dust drifts always, and lifts hard as the door opens.
     const positions = this.dust.geometry.attributes.position;
     const lift = this.state === 'waiting' ? 0.12 : 0.12 + Math.max(0, 2.4 - since) * 1.5;
     for (let i = 0; i < this.dustSeed.length; i += 1) {
@@ -600,6 +723,7 @@ export class Threshold {
     positions.needsUpdate = true;
 
     if (this.state === 'waiting') {
+      this.#flicker(time, 0);
       // The band breathes, which is the only invitation the scene gives.
       const pulse = 0.16 + Math.sin(time * 1.6) * 0.1;
       for (const bar of this.band.children) bar.material.emissiveIntensity = pulse;
@@ -615,49 +739,39 @@ export class Threshold {
 
   #opening(since) {
     const ease = (t) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
+    const clamp01 = (t) => Math.min(1, Math.max(0, t));
 
-    // Beat one: the staves come down. The strike is what starts everything,
-    // so it lands before anything else moves.
-    const strike = Math.min(1, since / 0.42);
-    for (const staff of this.staves) {
-      staff.rotation.z = (1 - ease(strike)) * 0.5;
-    }
-    // One material behind every part of both standards, so the gold takes
-    // light in a single assignment.
-    this.gilt.emissiveIntensity = 0.05 + ease(strike) * 0.95;
+    // Beat one: the braziers flare and the gold takes light. The owner cut
+    // the staves striking the floor; the fire answering the knock is the
+    // opening's first beat now.
+    const flare = clamp01(since / 0.3) * (1 - clamp01((since - 0.9) / 1.2) * 0.5);
+    this.#flicker(this.clock.getElapsedTime(), flare);
+    this.gilt.emissiveIntensity = 0.05 + ease(since / 0.3) * 0.95;
 
-    // Beat two: the ground takes it. Shake decays fast; a long shake reads as
-    // a bug rather than as an impact.
-    this.shake = Math.max(0, 1 - (since - 0.42) / 0.9);
-    const jolt = since > 0.42 ? this.shake * this.shake * 0.16 : 0;
-    this.rig.position.y = Math.sin(since * 60) * jolt;
-    this.rig.position.x = Math.cos(since * 47) * jolt * 0.6;
-
-    // Beat three: the inscription takes light, one bar at a time from the
-    // centre out, so the lintel reads as being read.
-    const litFrom = Math.max(0, since - 0.6) * 9;
+    // Beat three: the inscription takes light from the centre out.
+    const litFrom = Math.max(0, since - 0.32) * 16;
     this.band.children.forEach((bar, index) => {
       const distance = Math.abs(index - 6);
       bar.material.emissiveIntensity = litFrom > distance ? 1.6 : 0.16;
     });
 
-    // Beat four: the slabs part, and the chamber behind them is already lit.
-    const part = ease(Math.max(0, since - 1.15) / 1.5);
+    // Beat four: the slabs part. Faster than it was -- the owner found three
+    // seconds and more of opening a wait -- and the chamber behind is lit.
+    const part = ease(Math.max(0, since - 0.5) / 0.95);
     this.doors.forEach((door) => {
       door.position.x = door.userData.home + door.userData.side * part * 3.7;
     });
     this.chamber.material.opacity = part;
     this.inner.intensity = part * 40;
 
-    // Beat five: the camera goes in. Everything above happens to the scene;
-    // this is the only part that happens to the viewer.
-    const approach = ease(Math.max(0, since - 1.8) / 2.1);
+    // Beat five: the camera goes in.
+    const approach = ease(Math.max(0, since - 0.78) / 1.25);
     this.camera.position.z = 16 - approach * 19.2;
     this.camera.position.y = 3.4 - approach * 0.5;
     this.camera.position.x *= 1 - approach;
     this.camera.lookAt(0, 3.4, -4);
 
-    if (since > 3.7) {
+    if (since > 2.1) {
       this.state = 'done';
       this.onFinished();
     }

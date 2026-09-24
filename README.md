@@ -47,5 +47,10 @@ used under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The
 adapted mesh carries the same licence; what was changed, and why, is recorded in
 [`web/intro/models/LICENSE.md`](web/intro/models/LICENSE.md).
 
+The cat guardian is an adaptation of *Bastet* by Gargi / Christian Kuhn, from
+[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Thingiverse_-_Bastet.stl),
+used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); the same
+file records what was changed.
+
 Everything else — the type, the ornament, the signs, the sounds and the code —
 is original to this repository and is MIT licensed.

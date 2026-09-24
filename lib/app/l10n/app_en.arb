@@ -483,11 +483,11 @@
   "@courtyardIntro": {
     "description": "Courtyard standfirst"
   },
-  "courtyardGamePitch": "A climb up the inside of an obelisk. Get as high as you can before you miss a ledge.",
+  "courtyardGamePitch": "A climb up the inside of an obelisk.\nGet as high as you can before you miss a ledge.",
   "@courtyardGamePitch": {
     "description": "The line offering the climb before it is started"
   },
-  "courtyardGameInspiration": "Icy Tower was the first game I ever played. This is my tribute to it, rebuilt inside an obelisk.",
+  "courtyardGameInspiration": "Icy Tower was the first game I ever played.\nThis is my tribute to it, rebuilt inside an obelisk.",
   "@courtyardGameInspiration": {
     "description": "Courtyard: where the climb comes from, in the owner's words"
   },
@@ -545,7 +545,7 @@
   "@contactBookTitle": {
     "description": "Title of the booking card"
   },
-  "contactBookBody": "Pick a time that suits you. No form to fill in first.",
+  "contactBookBody": "Choose a time on my calendar.",
   "@contactBookBody": {
     "description": "One line under the booking card"
   },
@@ -819,7 +819,7 @@
   "@aboutBookService": {
     "description": "About: button to the services page"
   },
-  "homeServices": "Need something built?",
+  "homeServices": "Got an app in mind?",
   "@homeServices": {
     "description": "Home: heading over the link to the services page"
   },
@@ -851,6 +851,251 @@
   "contactSocial": "Social links",
   "@contactSocial": {
     "description": "Contact: heading over the profiles, as opposed to the ways to message him"
+  },
+  "careerBuiltHere": "Built here",
+  "@careerBuiltHere": {
+    "description": "Home: label over the apps the owner built at one career stop"
+  },
+  "careerOpenApp": "Open {app}",
+  "@careerOpenApp": {
+    "description": "Home: accessible name for an app chip on a career card, which opens its Work page",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "homeServicesBody": "Send me the idea, however rough it is. I will reply with how I would build it and an honest estimate of the time and cost.",
+  "@homeServicesBody": {
+    "description": "Home: the sentence under the closing question, saying what to send and what comes back"
+  },
+  "homeServicesList": "What I build",
+  "@homeServicesList": {
+    "description": "Home: label over the list of services in the closing panel"
+  },
+  "careerFreelance": "Freelance",
+  "@careerFreelance": {
+    "description": "The freelance career stop, named where a company would be"
+  },
+  "careerRemote": "Remote",
+  "@careerRemote": {
+    "description": "Home: where the freelance stop is, in place of a city"
+  },
+  "workPersonalProject": "Personal project",
+  "@workPersonalProject": {
+    "description": "Work: under an app's name, for the owner's own project"
+  },
+  "workScreens": "Screens",
+  "@workScreens": {
+    "description": "An app's page: heading over its screenshots, and the fact counting them"
+  },
+  "workMoreFrom": "More from {maker}",
+  "@workMoreFrom": {
+    "description": "An app's page: heading over the other apps built at the same company",
+    "placeholders": {
+      "maker": {
+        "type": "String"
+      }
+    }
+  },
+  "workFactMaker": "Where it was built",
+  "@workFactMaker": {
+    "description": "An app's page: label on the fact naming the company or client"
+  },
+  "workFactPlatforms": "Where to get it",
+  "@workFactPlatforms": {
+    "description": "An app's page: label on the fact listing its stores"
+  },
+  "workFactField": "Field",
+  "@workFactField": {
+    "description": "An app's page: label on the fact naming its domain"
+  },
+  "courtyardBoardClose": "Close the scoreboard",
+  "@courtyardBoardClose": {
+    "description": "Courtyard: the close button on the scoreboard dialog"
+  },
+  "aboutCourtyardInside": "A game you can play, and what I do when I am not working.",
+  "@aboutCourtyardInside": {
+    "description": "About: the line on the door to the courtyard saying what is inside"
+  },
+  "ascentLevelTemple": "The Temple",
+  "@ascentLevelTemple": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelSands": "The Sands",
+  "@ascentLevelSands": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelFrozen": "The Frozen Nile",
+  "@ascentLevelFrozen": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelDuat": "The Duat",
+  "@ascentLevelDuat": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelMaat": "The Hall of Ma'at",
+  "@ascentLevelMaat": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelApep": "Apep's Coils",
+  "@ascentLevelApep": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelFire": "The Lake of Fire",
+  "@ascentLevelFire": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelReeds": "The Field of Reeds",
+  "@ascentLevelReeds": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelTempleHint": "Dressed stone. Learn the jump.",
+  "@ascentLevelTempleHint": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelSandsHint": "The wind carries your jumps off their line.",
+  "@ascentLevelSandsHint": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelFrozenHint": "Ice underfoot. You slide before you stop.",
+  "@ascentLevelFrozenHint": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelDuatHint": "The underworld is dark. Your light is all there is.",
+  "@ascentLevelDuatHint": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelMaatHint": "Most ledges crack. Every step is weighed.",
+  "@ascentLevelMaatHint": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelApepHint": "The serpent's coils move faster.",
+  "@ascentLevelApepHint": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelFireHint": "Narrow ledges, and the floor at full pace.",
+  "@ascentLevelFireHint": {
+    "description": "The Ascent game"
+  },
+  "ascentLevelReedsHint": "Wind and ice together. The summit is above.",
+  "@ascentLevelReedsHint": {
+    "description": "The Ascent game"
+  },
+  "ascentRelicAnkh": "Ankh",
+  "@ascentRelicAnkh": {
+    "description": "The Ascent game"
+  },
+  "ascentRelicAnkhHelp": "The sign for life. An extra life, kept at the top of the screen.",
+  "@ascentRelicAnkhHelp": {
+    "description": "The Ascent game"
+  },
+  "ascentRelicEye": "Eye of Horus",
+  "@ascentRelicEye": {
+    "description": "The Ascent game"
+  },
+  "ascentRelicEyeHelp": "Protection. The rising floor slows for ten seconds.",
+  "@ascentRelicEyeHelp": {
+    "description": "The Ascent game"
+  },
+  "ascentRelicFeather": "Ma'at's feather",
+  "@ascentRelicFeather": {
+    "description": "The Ascent game"
+  },
+  "ascentRelicFeatherHelp": "Lightness. For five seconds, jump twice more in mid-air.",
+  "@ascentRelicFeatherHelp": {
+    "description": "The Ascent game"
+  },
+  "ascentGotAnkh": "An extra life",
+  "@ascentGotAnkh": {
+    "description": "The Ascent game"
+  },
+  "ascentGotEye": "The floor slows",
+  "@ascentGotEye": {
+    "description": "The Ascent game"
+  },
+  "ascentGotFeather": "Triple jump",
+  "@ascentGotFeather": {
+    "description": "The Ascent game"
+  },
+  "ascentLifeLost": "A life spent. Keep climbing.",
+  "@ascentLifeLost": {
+    "description": "The Ascent game"
+  },
+  "ascentLegendTitle": "Before you climb",
+  "@ascentLegendTitle": {
+    "description": "The Ascent game"
+  },
+  "ascentLegendBody": "Climb as high as you can. The shaft changes as you rise.",
+  "@ascentLegendBody": {
+    "description": "The Ascent game"
+  },
+  "ascentLegendRelics": "Take these on the way up",
+  "@ascentLegendRelics": {
+    "description": "The Ascent game"
+  },
+  "ascentLegendGo": "Climb",
+  "@ascentLegendGo": {
+    "description": "The Ascent game"
+  },
+  "ascentHowToPlay": "How to play",
+  "@ascentHowToPlay": {
+    "description": "The Ascent game"
+  },
+  "ascentWonTitle": "You reached the summit",
+  "@ascentWonTitle": {
+    "description": "The Ascent game"
+  },
+  "ascentWonBody": "The golden mask is yours, and the board will call you King.",
+  "@ascentWonBody": {
+    "description": "The Ascent game"
+  },
+  "ascentKing": "King",
+  "@ascentKing": {
+    "description": "The Ascent game"
+  },
+  "ascentHudLives": "{count} extra lives",
+  "@ascentHudLives": {
+    "description": "Game HUD: accessible name for the extra lives in hand",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ascentHudEye": "Floor slowed",
+  "@ascentHudEye": {
+    "description": "The Ascent game"
+  },
+  "ascentHudFeather": "Triple jump",
+  "@ascentHudFeather": {
+    "description": "The Ascent game"
+  },
+  "careerNow": "Now",
+  "@careerNow": {
+    "description": "Home: badge on a career stop that is still going"
+  },
+  "careerYears": "{count, plural, =1{1 yr} other{{count} yrs}}",
+  "@careerYears": {
+    "description": "Home: whole years a career stop lasted",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "careerMonths": "{count, plural, =1{1 mo} other{{count} mos}}",
+  "@careerMonths": {
+    "description": "Home: months a career stop lasted, after the years",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "courtyardShoutout": "Shout-out to Icy Tower, the tower that started it all.",
+  "@courtyardShoutout": {
+    "description": "Courtyard: the line crediting Icy Tower on the game's panel"
   },
   "stationStops": "Stops",
   "@stationStops": {
@@ -960,9 +1205,9 @@
   "@heroSceneSunrise": {
     "description": "The moon in the hero picture, as a control: switches to the light theme"
   },
-  "aboutFlowLife": "Life",
-  "@aboutFlowLife": {
-    "description": "About life loop: the trigger node, drawn with the ankh"
+  "aboutFlowWake": "Wake up",
+  "@aboutFlowWake": {
+    "description": "About life loop: the trigger node at the foot of the ankh, where the day starts"
   },
   "aboutFlowStudy": "Study",
   "@aboutFlowStudy": {
@@ -984,8 +1229,20 @@
   "@aboutFlowGym": {
     "description": "About life loop: a step"
   },
-  "aboutFlowLabel": "My loop: life, study, code, build apps, automate, gym, and round again.",
+  "aboutFlowLabel": "My day on the ankh, the sign for life: wake up, study, code, build apps, automate, gym, and round again.",
   "@aboutFlowLabel": {
     "description": "About life loop: what a screen reader hears for the whole animation"
+  },
+  "skillsGroupLabel": "{title}, {count} skills",
+  "@skillsGroupLabel": {
+    "description": "Skills panel: a title a screen reader hears, with how many skills it opens onto",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

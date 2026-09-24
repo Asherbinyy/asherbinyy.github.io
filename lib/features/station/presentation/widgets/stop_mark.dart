@@ -57,6 +57,43 @@ class StopMark extends StatelessWidget {
   }
 }
 
+/// The stop's sign again, large and faint, cut into the card it belongs to.
+///
+/// The owner found the career cards plain, and the sparse ones emptier. This
+/// is the same carving as the mark beside the card at the size of a relief on
+/// a wall rather than a label -- and on a phone, where the mark beside the
+/// card is dropped for room, it is where the sign still appears.
+class StopRelief extends StatelessWidget {
+  /// Draws [role]'s sign as a relief.
+  const StopRelief({required this.role, super.key});
+
+  /// The stop whose sign this is.
+  final CareerRole role;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return ExcludeSemantics(
+      child: SizedBox.square(
+        dimension: Tokens.careerReliefSize,
+        child: CustomPaint(
+          painter: _StopMarkPainter(
+            sign: StopMark.signFor(role),
+            colour: tokens.textPrimary.withValues(
+              alpha: Tokens.careerReliefAlpha,
+            ),
+            shadow: tokens.void_,
+            light: tokens.ornamentField,
+            glow: tokens.beaconGlow,
+            lit: 0,
+            reliefAlpha: Tokens.careerReliefAlpha,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// The sign itself, at a given amount of lit.
 class _Sign extends StatelessWidget {
   const _Sign({required this.sign, required this.lit, required this.tokens});
@@ -167,7 +204,11 @@ class _StopMarkPainter extends CustomPainter {
     required this.light,
     required this.glow,
     required this.lit,
+    this.reliefAlpha = Tokens.stopMarkReliefAlpha,
   });
+
+  /// How strong the cut's shadow and lip are.
+  final double reliefAlpha;
 
   final Sign sign;
   final Color colour;
@@ -191,11 +232,11 @@ class _StopMarkPainter extends CustomPainter {
       ..translate((size.width - box) / 2, (size.height - box) / 2)
       ..drawPath(
         path.shift(Offset(0, relief)),
-        Paint()..color = shadow.withValues(alpha: Tokens.stopMarkReliefAlpha),
+        Paint()..color = shadow.withValues(alpha: reliefAlpha),
       )
       ..drawPath(
         path.shift(Offset(0, -relief)),
-        Paint()..color = light.withValues(alpha: Tokens.stopMarkReliefAlpha),
+        Paint()..color = light.withValues(alpha: reliefAlpha),
       )
       ..drawPath(path, Paint()..color = colour);
     // A halo under the sign, not a brighter sign. The relief pass above is
@@ -219,5 +260,6 @@ class _StopMarkPainter extends CustomPainter {
       oldDelegate.shadow != shadow ||
       oldDelegate.light != light ||
       oldDelegate.glow != glow ||
-      oldDelegate.lit != lit;
+      oldDelegate.lit != lit ||
+      oldDelegate.reliefAlpha != reliefAlpha;
 }

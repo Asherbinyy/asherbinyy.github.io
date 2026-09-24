@@ -161,15 +161,20 @@ void main() {
 
     test('has experience section with career roles', () {
       expect(cvHtml, contains('Experience'));
-      expect(cvHtml, contains('CI Company'));
+      expect(cvHtml, contains('Techlab'));
       expect(cvHtml, contains('MiNextStep'));
     });
 
     test('career roles are in reverse chronological order', () {
-      // The most recent role should appear before the earliest.
-      final evriIndex = cvHtml.indexOf('evri');
-      final ciIndex = cvHtml.indexOf('CI Company');
-      expect(evriIndex, lessThan(ciIndex));
+      // The most recent role should appear before the earliest. Both are
+      // looked for, not assumed: the old version compared against a company
+      // that was not on the page, and -1 is less than every real position.
+      final experience = cvHtml.substring(cvHtml.indexOf('Experience'));
+      final recent = experience.indexOf('Ar++ tech');
+      final earliest = experience.indexOf('Hwzn Tech');
+      expect(recent, isNonNegative);
+      expect(earliest, isNonNegative);
+      expect(recent, lessThan(earliest));
     });
 
     test('has shipped applications section with all apps', () {
@@ -194,7 +199,7 @@ void main() {
     });
 
     test('has metrics where available', () {
-      expect(cvHtml, contains('15,000+ downloads'));
+      expect(cvHtml, contains('50,000+ downloads'));
     });
 
     test('has education section', () {

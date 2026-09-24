@@ -96,7 +96,10 @@ Map<String, Object?> _ledgeVector(Ledge ledge) => {
   'y': bits(ledge.y),
   'width': bits(ledge.width),
   'drift': bits(ledge.drift),
-  'hasBoon': ledge.hasBoon,
+  'isLanding': ledge.isLanding,
+  // The relic's index in the enum, or -1: the same numbers the JavaScript
+  // side uses, so the two can be compared without a lookup table.
+  'relic': ledge.relic?.index ?? -1,
 };
 
 List<Map<String, Object?>> _shaftVectors() => [
@@ -116,8 +119,8 @@ List<Map<String, Object?>> _shaftVectors() => [
 
 /// Heights that sit either side of every boundary the generator keys on.
 ///
-/// The boon floor at fifty, each level change at a hundred, and one sample well
-/// inside every level so the mode itself is checked rather than only the seam.
+/// Each level change at a hundred, one sample well inside every level so the
+/// mode itself is checked rather than only the seam, and the summit.
 const List<double> _levelSamples = [
   0,
   2.6,
@@ -135,8 +138,43 @@ const List<double> _levelSamples = [
   299.9,
   300,
   300.1,
+  399.9,
+  400,
+  400.1,
   420,
+  499.9,
+  500,
+  500.1,
+  560,
+  599.9,
+  600,
+  600.1,
+  650,
+  699.9,
+  700,
+  700.1,
+  760,
+  799.9,
+  800,
   999,
+];
+
+/// Every relic the shaft places, for every seed: the relic (or -1) on a ledge
+/// at each height the shaft's ledges stand at, up to the summit.
+///
+/// The recorded runs take a handful of relics at best, and the level samples
+/// almost never land on one, so without these the placement -- three schedules
+/// drawing from streams of their own -- would be checked on both sides only
+/// where a bot happened to pass.
+List<Map<String, Object?>> _relicVectors() => [
+  for (final seed in _seeds)
+    {
+      'seed': seed,
+      'relics': [
+        for (var i = 1; i * AscentWorld.ledgeGap < AscentWorld.summit; i++)
+          AscentWorld.relicAt(seed, i * AscentWorld.ledgeGap)?.index ?? -1,
+      ],
+    },
 ];
 
 /// Ledges sampled across the whole shaft, level by level.
@@ -335,7 +373,9 @@ List<Map<String, Object?>> _runVectors() {
       'metres': outcome.metres,
       'ticks': outcome.ticks,
       'endedInFall': outcome.endedInFall,
-      'boonsTaken': outcome.boonsTaken,
+      'won': outcome.won,
+      'relicsTaken': outcome.relicsTaken,
+      'livesLost': outcome.livesLost,
     });
   }
 
@@ -349,7 +389,7 @@ List<Map<String, Object?>> _runVectors() {
       }
       record(name, seed, tape);
     }
-    record('a climber that watches the shaft', seed, _climb(seed, 24000));
+    record('a climber that watches the shaft', seed, _climb(seed, 90000));
   }
   return vectors;
 }
@@ -367,6 +407,7 @@ void main() {
     'rng': _rngVectors(),
     'shafts': _shaftVectors(),
     'levels': _levelVectors(),
+    'relics': _relicVectors(),
     'tapes': _tapeVectors(),
     'rejectedTapes': _rejectedTapes(),
     'runs': _runVectors(),
@@ -385,13 +426,17 @@ void main() {
       '${run['ticks']} ticks  ${run['script']}',
     );
   }
-  final boons = runs.fold<int>(
+  final relics = runs.fold<int>(
     0,
-    (sum, run) => sum + (run['boonsTaken']! as int),
+    (sum, run) => sum + (run['relicsTaken']! as int),
+  );
+  final lives = runs.fold<int>(
+    0,
+    (sum, run) => sum + (run['livesLost']! as int),
   );
   final deepest = runs.fold<int>(0, (top, run) {
     final metres = run['metres']! as int;
     return metres > top ? metres : top;
   });
-  print('  highest: ${deepest}m, boons taken across all runs: $boons');
+  print('  highest: ${deepest}m, relics taken: $relics, lives spent: $lives');
 }

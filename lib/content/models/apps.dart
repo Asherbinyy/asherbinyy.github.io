@@ -79,6 +79,10 @@ enum Engagement {
   /// Fixed-term engagement through a company.
   @JsonValue('contract')
   contract,
+
+  /// The owner's own project, for nobody but himself.
+  @JsonValue('personal')
+  personal,
 }
 
 /// Applications in source order; featured membership drives Recruiter Mode.
@@ -117,6 +121,7 @@ class ShippedApp with _$ShippedApp {
     String? metric,
     String? country,
     Engagement? engagement,
+    String? client,
     String? screenshot,
     @Default(<String>[]) List<String> shots,
     @Default(false) bool featured,

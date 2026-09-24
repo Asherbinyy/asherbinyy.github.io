@@ -41,7 +41,7 @@ void main() {
     final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
     for (final label in [
-      l10n.aboutFlowLife,
+      l10n.aboutFlowWake,
       l10n.aboutFlowStudy,
       l10n.aboutFlowCode,
       l10n.aboutFlowApps,
@@ -84,6 +84,29 @@ void main() {
       ),
       findsNWidgets(painter.count),
       reason: 'every node ticked',
+    );
+  });
+
+  testWidgets('carries no caption on the ankh (the owner cut it)', (
+    tester,
+  ) async {
+    await pumpStation(
+      tester,
+      breakpoint: ChromeBreakpoint.large,
+      initialRoute: AppRoute.about,
+      reducedMotion: true,
+    );
+
+    expect(
+      find.descendant(
+        of: find.byType(LifeFlow),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              (widget.data ?? '').toLowerCase().contains('ankh'),
+        ),
+      ),
+      findsNothing,
     );
   });
 

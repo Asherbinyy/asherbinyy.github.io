@@ -10,12 +10,17 @@
         "ios": "https://apps.apple.com/ru/app/id1479200934"
       },
       "role": {
-        "en": "Legacy Android to Flutter migration",
-        "ar": "نقل تطبيق أندرويد قديم إلى Flutter"
+        "en": "A marketplace where locals become guides. Moved from native Android to Flutter, with the Android parts integrated rather than rewritten, which cut maintenance time by 25%.",
+        "ar": "سوق يصبح فيه السكان المحليون مرشدين. نُقل من أندرويد الأصلي إلى Flutter مع دمج مكوّنات أندرويد بدل إعادة كتابتها، ما خفّض وقت الصيانة بنسبة 25%."
       },
       "domain": "Travel",
       "featured": true,
-      "country": "RU"
+      "country": "RU",
+      "shots": [
+        "assets/media/apps/tripster/01.jpg",
+        "assets/media/apps/tripster/02.jpg",
+        "assets/media/apps/tripster/03.jpg"
+      ]
     },
     {
       "id": "minextstep",
@@ -55,7 +60,12 @@
       },
       "domain": "Mobility",
       "featured": true,
-      "country": "QA"
+      "country": "QA",
+      "shots": [
+        "assets/media/apps/mokaf/01.jpg",
+        "assets/media/apps/mokaf/02.jpg",
+        "assets/media/apps/mokaf/03.jpg"
+      ]
     },
     {
       "id": "az-courses",
@@ -66,15 +76,20 @@
       ],
       "store": {
         "ios": "https://apps.apple.com/us/app/azcourses/id1592327429",
-        "android": "https://play.google.com/store/apps/details?id=com.crazyidea.coursesexams"
+        "android": "https://play.google.com/store/apps/details?id=com.crazyidea.azcourses"
       },
       "role": {
         "en": "Redesigned and rebuilt around video, PDF and audio delivery",
         "ar": "إعادة تصميم وبناء حول بثّ الفيديو وملفات PDF والتسجيلات الصوتية"
       },
-      "metric": "15,000+ downloads",
+      "metric": "50,000+ downloads on Google Play",
       "domain": "Education",
-      "featured": true
+      "featured": true,
+      "shots": [
+        "assets/media/apps/az-courses/01.jpg",
+        "assets/media/apps/az-courses/02.jpg",
+        "assets/media/apps/az-courses/03.jpg"
+      ]
     },
     {
       "id": "guardy",
@@ -93,7 +108,13 @@
       "domain": "Safety",
       "country": "DE",
       "engagement": "freelance",
-      "featured": true
+      "featured": true,
+      "shots": [
+        "assets/media/apps/guardy/01.jpg",
+        "assets/media/apps/guardy/02.jpg",
+        "assets/media/apps/guardy/03.jpg"
+      ],
+      "client": "Guardy"
     },
     {
       "id": "enjoy",
@@ -109,7 +130,12 @@
         "ar": "تأجير السكوتر الكهربائي بفتح عبر BLE ورمز QR وملاحة داخل التطبيق"
       },
       "domain": "Mobility",
-      "featured": true
+      "featured": true,
+      "shots": [
+        "assets/media/apps/enjoy/01.jpg",
+        "assets/media/apps/enjoy/02.jpg",
+        "assets/media/apps/enjoy/03.jpg"
+      ]
     },
     {
       "id": "malboos",
@@ -121,7 +147,16 @@
         "ios": "https://apps.apple.com/us/app/malboos/id6736588728"
       },
       "domain": "Retail",
-      "featured": false
+      "featured": false,
+      "role": {
+        "en": "A resale marketplace for pre-loved clothes and personal items, built at Hwzn for Saudi Arabia.",
+        "ar": "سوق لإعادة بيع الملابس والأغراض الشخصية المستعملة، طُوّر في هوزن للسوق السعودي."
+      },
+      "shots": [
+        "assets/media/apps/malboos/01.jpg",
+        "assets/media/apps/malboos/02.jpg",
+        "assets/media/apps/malboos/03.jpg"
+      ]
     },
     {
       "id": "tiara-beauty",
@@ -135,11 +170,16 @@
       "domain": "Services",
       "featured": false,
       "role": {
-        "en": "Freelance build with one other developer",
-        "ar": "عمل حرّ بالتعاون مع مطوّر آخر"
+        "en": "Salon booking for beauty services in Saudi Arabia. A freelance build with one other developer.",
+        "ar": "حجز صالونات التجميل وخدماتها في السعودية. عمل حرّ بالشراكة مع مطوّر آخر."
       },
       "engagement": "freelance",
-      "country": "SA"
+      "country": "SA",
+      "shots": [
+        "assets/media/apps/tiara-beauty/01.jpg",
+        "assets/media/apps/tiara-beauty/02.jpg",
+        "assets/media/apps/tiara-beauty/03.jpg"
+      ]
     },
     {
       "id": "tekrar",
@@ -150,7 +190,16 @@
       "store": {
         "ios": "https://apps.apple.com/us/app/tekrar/id6499494802"
       },
-      "domain": "Education"
+      "domain": "Education",
+      "role": {
+        "en": "Learn a language by repetition: choose ten words and ten sentences, the app brings them back at the interval you set, then tests you on them.",
+        "ar": "تعلّم لغة بالتكرار: تختار عشر كلمات وعشر جمل، فيعيدها التطبيق عليك في الوقت الذي تحدده، ثم يختبرك فيها."
+      },
+      "shots": [
+        "assets/media/apps/tekrar/01.jpg",
+        "assets/media/apps/tekrar/02.jpg",
+        "assets/media/apps/tekrar/03.jpg"
+      ]
     },
     {
       "id": "wasset",
@@ -161,7 +210,16 @@
       "store": {
         "ios": "https://apps.apple.com/sa/app/wasset/id6474965574"
       },
-      "domain": "Marketplace"
+      "domain": "Marketplace",
+      "role": {
+        "en": "Real-estate listings you browse by your own criteria, with photos, specs and location, and a direct line to the agent to ask or book a viewing.",
+        "ar": "عقارات تتصفحها بحسب متطلباتك، بالصور والمواصفات والموقع، مع تواصل مباشر مع الوكيل للاستفسار أو حجز معاينة."
+      },
+      "shots": [
+        "assets/media/apps/wasset/01.jpg",
+        "assets/media/apps/wasset/02.jpg",
+        "assets/media/apps/wasset/03.jpg"
+      ]
     },
     {
       "id": "snunu",
@@ -170,7 +228,32 @@
         "ios"
       ],
       "store": {},
-      "domain": "Consumer"
+      "domain": "Consumer",
+      "role": {
+        "en": "A booking platform for local and international tour programmes in Iraq.",
+        "ar": "منصة لحجز البرامج السياحية الداخلية والخارجية في العراق."
+      },
+      "shots": [
+        "assets/media/apps/snunu/01.jpg",
+        "assets/media/apps/snunu/02.jpg",
+        "assets/media/apps/snunu/03.jpg",
+        "assets/media/apps/snunu/04.jpg"
+      ],
+      "media": [
+        {
+          "id": "snunu-recording",
+          "kind": "video",
+          "alt": {
+            "en": "A screen recording of Snunu, the travel booking app",
+            "ar": "تسجيل شاشة لتطبيق سنونو لحجز الرحلات"
+          },
+          "url": "https://drive.google.com/file/d/1t4YEtyp9LpPiBTVLk68GXMiYgcgZJXQj/view",
+          "caption": {
+            "en": "Watch the app in use",
+            "ar": "شاهد التطبيق أثناء الاستخدام"
+          }
+        }
+      ]
     },
     {
       "id": "mostaqbaly",
@@ -181,7 +264,16 @@
       "store": {
         "ios": "https://apps.apple.com/us/app/mostaqbaly/id6444834706"
       },
-      "domain": "Education"
+      "domain": "Education",
+      "role": {
+        "en": "An education platform of specialist teachers, with lessons delivered as video, images, PDF books and audio.",
+        "ar": "منصة تعليمية لمدرسين متخصصين، تُقدَّم دروسها فيديو وصورًا وكتبًا بصيغة PDF وتسجيلات صوتية."
+      },
+      "shots": [
+        "assets/media/apps/mostaqbaly/01.jpg",
+        "assets/media/apps/mostaqbaly/02.jpg",
+        "assets/media/apps/mostaqbaly/03.jpg"
+      ]
     },
     {
       "id": "az-exams",
@@ -189,8 +281,19 @@
       "platforms": [
         "android"
       ],
-      "store": {},
-      "domain": "Education"
+      "store": {
+        "android": "https://play.google.com/store/apps/details?id=com.crazyidea.coursesexams"
+      },
+      "domain": "Education",
+      "role": {
+        "en": "The exam app of the AZ Courses platform: timed exams, question by question, with results at the end.",
+        "ar": "تطبيق الامتحانات لمنصة AZ Courses: امتحانات بوقت محدد، سؤالًا بسؤال، مع النتيجة في النهاية."
+      },
+      "shots": [
+        "assets/media/apps/az-exams/01.jpg",
+        "assets/media/apps/az-exams/02.jpg",
+        "assets/media/apps/az-exams/03.jpg"
+      ]
     },
     {
       "id": "easy-go",
@@ -206,8 +309,8 @@
         "ar": "حزمة Flutter مفتوحة المصدر للتنقّل بين الصفحات، بانتقالات مخصّصة ومسارات مُسمّاة وتمرير البيانات"
       },
       "domain": "Open source",
-      "engagement": "freelance",
-      "featured": false
+      "featured": false,
+      "engagement": "personal"
     }
   ]
 }

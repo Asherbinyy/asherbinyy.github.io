@@ -127,11 +127,21 @@ class _BrazierPainter extends CustomPainter {
   /// centred icons; this had to be nudged to agree with them.
   static const double _opticalLift = 0.06;
 
+  /// The same, with the fire out.
+  ///
+  /// Unlit there is no flame above the bowl -- only a faint thread of smoke
+  /// -- so what the eye weighs is the bowl, the stem and the foot, which sit
+  /// in the lower third of the box. At the lit value the dark-theme brazier
+  /// sat five pixels below the glyph and the "EN" beside it, which is what
+  /// the owner saw as the header's controls not being on one line.
+  static const double _unlitLift = 0.2;
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    canvas.translate(0, -h * _opticalLift);
+    final lift = _unlitLift + (_opticalLift - _unlitLift) * lit;
+    canvas.translate(0, -h * lift);
     final ink = Paint()
       ..color = bowl
       ..style = PaintingStyle.stroke

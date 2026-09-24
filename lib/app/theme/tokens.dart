@@ -422,16 +422,10 @@ abstract final class Tokens {
 
   /// Fraction of the content column the trace occupies, from the trailing edge.
   ///
-  /// Two values, because one was wrong on a phone. At 66% of a desktop the
-  /// trace runs down the space beside a measure-limited text column and never
-  /// touches it. At 66% of a 360px phone, where the text fills the full width,
-  /// it runs straight across the copy — which is what the owner reported, along
-  /// with the burst labels colliding with the same text.
-  ///
-  /// On compact the trace keeps to a narrow strip at the trailing edge. It is
-  /// still legible as a waveform and it no longer competes with the words.
-  static const double traceColumnFraction = 0.38,
-      traceColumnFractionCompact = 0.28;
+  /// At 66% of a desktop the trace runs down the space beside a
+  /// measure-limited text column and never touches it. Phones used to keep a
+  /// narrower strip of their own; the wall is behind the whole page there now.
+  static const double traceColumnFraction = 0.38;
 
   /// Jitter added to the carrier when coherence is entirely lost.
   static const double traceNoiseAmplitude = 0.55;
@@ -464,6 +458,25 @@ abstract final class Tokens {
 
   /// How long the mark stays up afterwards, in seconds.
   static const double ascentRewardHold = 1.6;
+
+  /// How long, in seconds, the line naming a relic or a spent life stays up.
+  static const double ascentNewsHold = 1.6;
+
+  /// The climb's HUD: a relic's sign, an empty life's strength, the width of
+  /// a relic's draining bar, and a sign in the legend.
+  static const double ascentHudMark = 18,
+      ascentEmptyLife = 0.25,
+      ascentMeterWidth = 72,
+      ascentLegendMark = 44;
+
+  /// The golden mask at the summit: its size, and its golds and kohl -- the
+  /// night palette's own, fixed, since the reward is the same by day.
+  static const double ascentMaskSize = 128;
+
+  /// See [ascentMaskSize].
+  static const Color ascentMaskGold = Color(0xFFE3A93F),
+      ascentMaskDeep = Color(0xFF92702E),
+      ascentMaskInk = Color(0xFF121826);
 
   /// How heavy the kicking figure's limbs are, against the scene's own ink.
   ///
@@ -524,7 +537,9 @@ abstract final class Tokens {
   static const int courtyardStillSeed = 7;
 
   /// One service card, and the mark on it.
-  static const double serviceCardWidth = 220, serviceIconSize = 26;
+  static const double serviceCardWidth = 220,
+      serviceCardCompactWidth = 140,
+      serviceIconSize = 26;
 
   /// An icon standing in for a word in the header.
   static const double chromeIconSize = 20;
@@ -539,6 +554,17 @@ abstract final class Tokens {
   /// divided into, which gave "GitHub" a box twice the size of its word.
   static const double contactCardWidth = 152;
 
+  /// The narrowest a social profile's tile may be: narrower than the two
+  /// ways to message him, so nine profiles take three rows, not five.
+  static const double contactSocialWidth = 148;
+
+  /// On a phone: the narrowest a way to message him may be (two across),
+  /// and a profile tile (four across).
+  static const double contactCompactDirect = 120, contactCompactTile = 64;
+
+  /// The calendar on the booking card.
+  static const double bookingIconSize = 32;
+
   /// One skill chip's width, and every skill chip is this wide.
   ///
   /// Sized to hold the longest of them -- "Adobe Premiere Pro" -- so the block
@@ -549,6 +575,59 @@ abstract final class Tokens {
 
   /// How many chips an open skills group shows before "N more".
   static const int skillsPreviewCount = 15;
+
+  /// A card rising into view: how long it takes, how far it travels in from
+  /// the side and from below, and how much smaller it starts.
+  static const Duration revealRise = Duration(milliseconds: 640);
+
+  /// See [revealRise].
+  static const double revealRiseSlide = 36,
+      revealRiseLift = 28,
+      revealRiseShrink = 0.04;
+
+  /// The booking card: the widest it runs, and how far its arrow slides on
+  /// hover (a share of the arrow).
+  static const double bookingCardMaxWidth = 380, bookingArrowTravel = 0.3;
+
+  /// The falcon beside the contact links: one flight, its box, and the panel
+  /// width from which it has room.
+  static const Duration courierFlight = Duration(milliseconds: 4200);
+
+  /// See [courierFlight].
+  static const double courierWidth = 340,
+      courierHeight = 260,
+      courierFrom = 900;
+
+  /// A flag in the wind, on hover: one period of the ripple, how long a tap
+  /// flies it on a phone, how far the disc lifts and grows, the shadow under
+  /// it, how many strips the cloth is cut into, how far apart the strips sit
+  /// on the wave, how high the wave runs, and the light and shade of a fold.
+  static const Duration flagWavePeriod = Duration(milliseconds: 1100),
+      flagTapFlight = Duration(milliseconds: 1600);
+
+  /// See [flagWavePeriod].
+  static const double flagLift = 4,
+      flagLiftScale = 0.18,
+      flagShadowAlpha = 0.45,
+      flagShadowBlur = 10,
+      flagWaveStep = 0.7,
+      flagWaveHeight = 2.2,
+      flagFoldLight = 0.18,
+      flagFoldShade = 0.22;
+
+  /// See [flagWavePeriod].
+  static const int flagStrips = 10;
+
+  /// The skills panel: how long an opened group takes to fill in, how far a
+  /// chip rises as it arrives, how many chips' length each one's arrival
+  /// overlaps the next, and how strongly the count shows on an open title.
+  static const Duration skillsArrive = Duration(milliseconds: 420);
+
+  /// See [skillsArrive].
+  static const double skillsRise = 8, skillsStaggerTail = 4;
+
+  /// See [skillsArrive].
+  static const double skillsCountAlpha = 0.7;
 
   /// How the gold glow behind a hovered contact card is thrown.
   static const double contactGlowAlpha = 0.35, contactGlowBlur = 18;
@@ -699,12 +778,11 @@ abstract final class Tokens {
   /// so it is on for the whole page — and the wall's strip runs close enough to
   /// the text that a flame at full strength sits behind the ends of lines.
   ///
-  /// Just short of full, so the signs light properly and the pool never reaches
-  /// the white of the copy. 0.42 was tried first and is far too little: the
-  /// wall's gilded signs already breathe on their own, so a weak torch is
-  /// indistinguishable from no torch — which is exactly how the first broken
-  /// version of this went unnoticed.
-  static const double wallTorchTouchPeak = 0.85;
+  /// It was 0.85 while the wall kept a strip of its own on a phone. The wall
+  /// is behind the whole page there now (the owner asked for the content
+  /// centred, not squeezed left of a strip), so a strong light sits behind
+  /// the words themselves. Low enough to read as a glow behind the copy.
+  static const double wallTorchTouchPeak = 0.3;
 
   /// The picture beside the hero: its shape (width over height), how long
   /// the sun takes to rise or set when the theme changes, and how quickly the
@@ -713,6 +791,23 @@ abstract final class Tokens {
 
   /// See [heroSceneAspect].
   static const Duration heroSunTravel = Duration(milliseconds: 2400);
+
+  /// How much of the picture fades into the page at each edge, as a share of
+  /// its width or height: the sides, the top (where the sky already matches
+  /// the page) and the foot of the desk.
+  static const double heroSceneFadeSides = 0.12,
+      heroSceneFadeTop = 0.1,
+      heroSceneFadeBottom = 0.16;
+
+  /// Skin, for the one person the site draws: the climber in the game, and
+  /// the same man at his desk in the hero picture. The owner asked for his
+  /// face and limbs in a human skin tone rather than gold. It is
+  /// illustration, not a fifth pigment for the interface: nothing but that
+  /// figure may use it.
+  static const Color figureSkin = Color(0xFFB98159);
+
+  /// See [figureSkin]: the far arm, the shadowed side.
+  static const Color figureSkinShade = Color(0xFF93613F);
 
   /// The sun's button: its hit area as a multiple of the disc's radius, the
   /// focus ring's radius, and the faience wash of a press.
@@ -748,8 +843,130 @@ abstract final class Tokens {
   /// See [careerCardSplitWidth].
   static const int careerFactsFlex = 2, careerStoryFlex = 3;
 
+  /// The disc that shows an app's own screen on a career card's chip.
+  static const double careerAppThumb = 28;
+
+  /// On a phone, the column the hero's figures sit in before their labels.
+  static const double compactStatFigure = 64;
+
+  /// A Work card's artwork height, tall enough for a phone screen to be a
+  /// screen.
+  static const double workArtHeight = 220;
+
+  /// How long the front screen comes forward before an app's page opens,
+  /// and how far a card gives under a press.
+  static const Duration workOpenLead = Duration(milliseconds: 200);
+
+  /// See [workOpenLead].
+  static const double workPressScale = 0.97;
+
+  /// A Work card's fan of screens: the seed's ground behind it, how tall a
+  /// screen is against the artwork, its shape (width to height, and corner
+  /// as a share of its width), and its shadow.
+  static const double workFanGroundAlpha = 0.45,
+      workShotHeight = 0.8,
+      workShotAspect = 0.47,
+      workShotRadius = 0.12,
+      workShotShadowAlpha = 0.35,
+      workShotShadowBlur = 16,
+      workShotShadowDrop = 6;
+
+  /// How the fan sits closed and how far it opens: the side screens' offset
+  /// as a share of a screen's width, their turn in radians, how far the
+  /// front one rises in pixels and the sides drop as a share of the height,
+  /// and how much smaller the sides are and how much larger the front grows
+  /// as it is picked up.
+  static const double workFanOffset = 0.62,
+      workFanOpen = 0.3,
+      workFanTurn = 0.14,
+      workFanTurnOpen = 0.08,
+      workFanRise = 6,
+      workFanDrop = 0.04,
+      workFanBackScale = 0.9,
+      workFanForwardScale = 0.08;
+
+  /// An app's page arriving: the whole sequence, how far apart its parts
+  /// start (as a share of it) and how long each takes to rise.
+  static const Duration appPageArrive = Duration(milliseconds: 1400);
+
+  /// See [appPageArrive].
+  static const double appPageStep = 0.08, appPageRise = 0.4;
+
+  /// An app's page: the fan of screens beside the name, how the width is
+  /// shared between the words and the screens, and how far the fan stands
+  /// open at rest.
+  static const double appPageArtHeight = 380, appPageFanRest = 0.6;
+
+  /// See [appPageArtHeight].
+  static const int appPageTextFlex = 5, appPageArtFlex = 4;
+
+  /// The rule beside an app's headline result.
+  static const double appPageHeadlineRule = 28;
+
+  /// A fact card on an app's page: its narrowest, and its ringed mark.
+  static const double appFactWidth = 220, appFactMark = 36;
+
+  /// A card for another app from the same place: its narrowest, its screen's
+  /// width, and how far the screen lifts under the pointer, as a share of
+  /// its height.
+  static const double appSiblingWidth = 220,
+      appSiblingThumb = 40,
+      appSiblingLift = 0.08;
+
+  /// The pause between one Work card arriving and the next along its row.
+  static const Duration workStagger = Duration(milliseconds: 90);
+
+  /// The door to the courtyard on /about: the width below which the climb
+  /// goes under the words, the climb's size (and on a phone), how far it
+  /// stands in from the panel's edge, and how high it climbs before starting
+  /// again.
+  static const double doorSplitWidth = 720,
+      doorClimbWidth = 240,
+      doorClimbHeight = 220,
+      doorClimbCompact = 200,
+      doorClimbInset = 48,
+      liveClimbRestart = 90;
+
+  /// The scoreboard opened from the courtyard: its width, and how dark the
+  /// page goes behind it.
+  static const double boardDialogWidth = 440, boardBarrierAlpha = 0.8;
+
+  /// The phone at the end of Home whose app is put together a part at a
+  /// time: one build, lit, held and cleared; its width; its height as a
+  /// multiple of the width.
+  static const Duration appBuildCycle = Duration(milliseconds: 7000);
+
+  /// See [appBuildCycle].
+  static const double appBuildWidth = 150, appBuildAspect = 1.9;
+
+  /// The closing panel is wide enough for the phone beside its two halves
+  /// from this width.
+  static const double closingIllustrationFrom = 1000;
+
+  /// The beat between one Off duty tile rising in and the next.
+  static const Duration interestStagger = Duration(milliseconds: 70);
+
+  /// One lap of the light round the game's panel.
+  static const Duration goldEdgeLap = Duration(milliseconds: 5200);
+
+  /// The mark beside each service named in Home's closing panel.
+  static const double serviceTagIconSize = 16;
+
+  /// The stop's sign cut large into its card: its size, how faint, and how
+  /// much of it runs off the card's edge.
+  static const double careerReliefSize = 148,
+      careerReliefAlpha = 0.07,
+      careerReliefBleed = 0.28;
+
   /// The narrowest a career stop card may be in its grid.
   static const double stopCardMinWidth = 220;
+
+  /// A stop on the Home timeline: the narrowest it may be before the line
+  /// scrolls, its marker's size, and how much the marker grows under the
+  /// pointer.
+  static const double stopItemWidth = 132,
+      stopNodeSize = 40,
+      stopNodeLift = 1.12;
 
   /// The narrowest hero that gets the picture beside it. Below this the copy
   /// needs the width, and the picture would be a postage stamp.

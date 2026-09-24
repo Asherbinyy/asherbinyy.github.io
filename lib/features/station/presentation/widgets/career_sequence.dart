@@ -16,6 +16,14 @@ import 'package:nocturne/content/country_names.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/features/station/presentation/widgets/stop_mark.dart';
 import 'package:nocturne/features/trace/presentation/trace_anchor_registry.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nocturne/app/app_route.dart';
+import 'package:nocturne/content/content_media.dart';
+import 'package:nocturne/content/models/apps.dart';
+import 'package:nocturne/core/motion/curves.dart';
+import 'package:nocturne/core/motion/durations.dart';
+import 'package:nocturne/core/widgets/focus_ring.dart';
+import 'package:nocturne/features/station/presentation/widgets/reach_row.dart';
 
 /// The career, top to bottom, as the trace's burst anchors.
 ///
@@ -29,8 +37,12 @@ class CareerSequence extends StatelessWidget {
     required this.roles,
     required this.locale,
     required this.anchorRegistry,
+    this.apps = const {},
     super.key,
   });
+
+  /// The applications, by id, so a stop can show what was built there.
+  final Map<String, ShippedApp> apps;
 
   /// Career stations.
   final List<CareerRole> roles;
@@ -51,25 +63,64 @@ class CareerSequence extends StatelessWidget {
   List<CareerRole> get _mostRecentFirst =>
       [...roles]..sort((a, b) => b.start.compareTo(a.start));
 
+  /// The whole career, from the first date the content gives to the last,
+  /// which every card's register is drawn against.
+  _Span get _span {
+    var from = double.infinity;
+    var to = double.negativeInfinity;
+    for (final role in roles) {
+      final start = _yearOf(role.start);
+      final end = _yearOf(role.end ?? role.start);
+      if (start < from) from = start;
+      if (end > to) to = end;
+    }
+    return (from: from, to: to);
+  }
+
   @override
-  Widget build(BuildContext context) => _Threaded(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final role in _mostRecentFirst)
-          KeyedSubtree(
-            key: anchorRegistry.keyFor(role.id),
-            // Each stop unrolls as the reader reaches it. The career is a
-            // sequence and the page should read as one, rather than as six
-            // entries that were all already there.
-            child: RevealOnScroll(
-              child: _CareerEntry(role: role, locale: locale),
+  Widget build(BuildContext context) {
+    final span = _span;
+    return _Threaded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final role in _mostRecentFirst)
+            KeyedSubtree(
+              key: anchorRegistry.keyFor(role.id),
+              // Each stop rises in as the reader reaches it. The career is a
+              // sequence and the page should read as one, rather than as six
+              // entries that were all already there. Risen rather than
+              // unrolled: these are cards now, and the owner found the quiet
+              // unroll read as no motion at all.
+              child: RevealOnScroll(
+                style: RevealStyle.rise,
+                child: _CareerEntry(
+                  role: role,
+                  locale: locale,
+                  span: span,
+                  apps: [
+                    for (final id in role.appIds)
+                      if (apps[id] case final app?) app,
+                  ],
+                ),
+              ),
             ),
-          ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
+}
+
+/// The first and last dates of a career, as fractional years.
+typedef _Span = ({double from, double to});
+
+/// A content date, "YYYY-MM", as a fractional year: 2021-10 is 2021.75.
+double _yearOf(String date) {
+  final parts = date.split('-');
+  final year = int.tryParse(parts.first) ?? 0;
+  final month = parts.length > 1 ? int.tryParse(parts[1]) ?? 1 : 1;
+  return year + (month - 1) / 12;
 }
 
 /// The frieze running down the career, drawn as far as the reader has got.
@@ -197,10 +248,21 @@ class _ThreadedState extends State<_Threaded> {
 }
 
 class _CareerEntry extends StatelessWidget {
-  const _CareerEntry({required this.role, required this.locale});
+  const _CareerEntry({
+    required this.role,
+    required this.locale,
+    required this.span,
+    this.apps = const [],
+  });
 
   final CareerRole role;
   final AppLocale locale;
+
+  /// The whole career, which this stop's register is drawn against.
+  final _Span span;
+
+  /// What was built at this stop, in the order the content lists it.
+  final List<ShippedApp> apps;
 
   @override
   Widget build(BuildContext context) {
@@ -219,9 +281,10 @@ class _CareerEntry extends StatelessWidget {
         // the freelance stop does not shrink to its own words.
         child: SizedBox(
           width: double.infinity,
-          child: InstrumentPanel(
-            fill: tokens.surface,
-            padding: EdgeInsets.all(tokens.space16),
+          child: _Card(
+            role: role,
+            span: span,
+            padding: tokens.space16,
             child: _entry(context, tokens, type),
           ),
         ),
@@ -246,9 +309,10 @@ class _CareerEntry extends StatelessWidget {
           // them to have a ground of their own -- and for them to run the
           // full width, lined up with every other section.
           Expanded(
-            child: InstrumentPanel(
-              fill: tokens.surface,
-              padding: EdgeInsets.all(tokens.space24),
+            child: _Card(
+              role: role,
+              span: span,
+              padding: tokens.space24,
               child: _entry(context, tokens, type),
             ),
           ),
@@ -260,6 +324,9 @@ class _CareerEntry extends StatelessWidget {
   /// Where it was, with the country named rather than coded. The content
   /// stores "EG" because the atlas keys on it; a reader is owed "Egypt".
   String get _place => '${role.city}, ${CountryNames.of(role.country, locale)}';
+
+  /// The stop's flag, the same disc-less emoji the Home flags use.
+  String get _flag => ReachRow.flagOf(role.country) ?? '';
 
   /// Only what the content actually carries. Five of the six roles have no
   /// company or summary, and inventing either would be a claim about the
@@ -281,13 +348,24 @@ class _CareerEntry extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          formatPeriod(context.l10n, role.start, role.end),
-          style: type.telemetryS.copyWith(color: tokens.textMuted),
+        Wrap(
+          spacing: tokens.space8,
+          runSpacing: tokens.space4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              formatPeriod(context.l10n, role.start, role.end),
+              style: type.telemetryS.copyWith(color: tokens.textMuted),
+            ),
+            _Length(role: role),
+          ],
         ),
         SizedBox(height: tokens.space8),
         if (company != null)
-          Text(company, style: type.heading)
+          Text(
+            role.id == 'freelance' ? context.l10n.careerFreelance : company,
+            style: type.heading,
+          )
         else
           Text(_place, style: type.heading),
         if (title != null && role.id != 'freelance')
@@ -296,14 +374,36 @@ class _CareerEntry extends StatelessWidget {
             style: type.body.copyWith(color: tokens.textSecondary),
           ),
         if (company != null)
-          Text(role.id == 'freelance' ? 'Remote' : _place, style: type.meta),
+          Text(
+            role.id == 'freelance'
+                ? context.l10n.careerRemote
+                : '$_flag  $_place'.trim(),
+            style: type.meta,
+          ),
       ],
     );
-    if (!hasSummary) return facts;
+    if (!hasSummary && apps.isEmpty) return facts;
 
-    final story = ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
-      child: Text(summary.resolve(locale), style: type.body),
+    // What happened, and what was built: the second half of the card. A stop
+    // with no sentence of its own -- freelance -- still has its apps, so its
+    // card is no longer half empty.
+    final story = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (hasSummary)
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
+            // The first sentence only. The owner found the whole paragraph
+            // too much for Home: the CV and the brief carry the rest.
+            child: Text(
+              _firstSentence(summary.resolve(locale)),
+              style: type.body,
+            ),
+          ),
+        if (hasSummary && apps.isNotEmpty) SizedBox(height: tokens.space16),
+        if (apps.isNotEmpty) _BuiltHere(apps: apps),
+      ],
     );
 
     return LayoutBuilder(
@@ -328,6 +428,291 @@ class _CareerEntry extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// A stop's card: the panel, the stop's sign cut into its trailing corner,
+/// and across its head the register -- the whole career as a band, a tick a
+/// year, with this stop's stretch of it inked in as the card arrives.
+///
+/// The owner found the plain cards boring and the sparse ones empty. Both
+/// additions carry something: the register says where in the career this
+/// stop sits and how long it lasted, which a date range makes the reader
+/// work out; the relief says what kind of stop it was, and on a phone, where
+/// the mark beside the card is dropped, it is the only place that still does.
+class _Card extends StatelessWidget {
+  const _Card({
+    required this.role,
+    required this.span,
+    required this.padding,
+    required this.child,
+  });
+
+  final CareerRole role;
+  final _Span span;
+  final double padding;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    const bleed = Tokens.careerReliefSize * Tokens.careerReliefBleed;
+    return InstrumentPanel(
+      fill: tokens.surface,
+      child: ClipRect(
+        child: Stack(
+          children: [
+            PositionedDirectional(
+              end: -bleed,
+              bottom: -bleed,
+              child: _Rising(child: StopRelief(role: role)),
+            ),
+            Padding(
+              padding: EdgeInsets.all(padding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [child],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The relief, rising a little further than the card around it as the card
+/// arrives, so the two settle as layers rather than as one flat sheet.
+class _Rising extends StatelessWidget {
+  const _Rising({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final reveal = RevealOnScroll.of(context);
+    return AnimatedBuilder(
+      animation: reveal,
+      builder: (context, child) {
+        final away = 1 - MotionCurves.emphasized.transform(reveal.value);
+        return Transform.translate(
+          offset: Offset(0, away * Tokens.revealRiseLift),
+          child: child,
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+/// The apps built at a stop, each a way into its page on /work.
+class _BuiltHere extends StatelessWidget {
+  const _BuiltHere({required this.apps});
+
+  final List<ShippedApp> apps;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final type = context.type;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          context.l10n.careerBuiltHere,
+          style: type.telemetryS.copyWith(color: tokens.textMuted),
+        ),
+        SizedBox(height: tokens.space8),
+        Wrap(
+          spacing: tokens.space8,
+          runSpacing: tokens.space8,
+          children: [for (final app in apps) _AppChip(app: app)],
+        ),
+      ],
+    );
+  }
+}
+
+/// One app: its own screen in a disc, its name, and a way to its page.
+class _AppChip extends StatefulWidget {
+  const _AppChip({required this.app});
+
+  final ShippedApp app;
+
+  @override
+  State<_AppChip> createState() => _AppChipState();
+}
+
+class _AppChipState extends State<_AppChip> {
+  final WidgetStatesController _states = WidgetStatesController();
+
+  @override
+  void dispose() {
+    _states.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final type = context.type;
+    final shot = widget.app.shots.isEmpty ? null : widget.app.shots.first;
+    return Semantics(
+      link: true,
+      label: context.l10n.careerOpenApp(widget.app.name),
+      excludeSemantics: true,
+      child: ListenableBuilder(
+        listenable: _states,
+        builder: (context, _) {
+          final isLit =
+              _states.value.contains(WidgetState.hovered) ||
+              _states.value.contains(WidgetState.focused);
+          return FocusRing(
+            isFocused: _states.value.contains(WidgetState.focused),
+            child: InkWell(
+              onTap: () => context.goNamed(
+                AppRoute.caseStudy.name,
+                pathParameters: {'slug': widget.app.id},
+              ),
+              statesController: _states,
+              borderRadius: BorderRadius.circular(tokens.controlRadius),
+              hoverColor: Colors.transparent,
+              mouseCursor: context.platform.isPointer
+                  ? SystemMouseCursors.click
+                  : MouseCursor.defer,
+              child: AnimatedContainer(
+                duration: ReducedMotion.duration(context, Motion.quick),
+                curve: MotionCurves.emphasized,
+                constraints: BoxConstraints(
+                  minHeight: context.platform.minimumTarget,
+                ),
+                padding: EdgeInsetsDirectional.only(
+                  start: tokens.space8,
+                  end: tokens.space12,
+                  top: tokens.space4,
+                  bottom: tokens.space4,
+                ),
+                decoration: BoxDecoration(
+                  color: tokens.surfaceRaised,
+                  borderRadius: BorderRadius.circular(tokens.controlRadius),
+                  border: Border.all(
+                    color: isLit ? tokens.beacon : tokens.hairline,
+                    width: tokens.hairlineWidth,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: Tokens.careerAppThumb,
+                      height: Tokens.careerAppThumb,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: tokens.surface,
+                        border: Border.all(
+                          color: tokens.hairlineStrong,
+                          width: tokens.hairlineWidth,
+                        ),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: shot == null
+                          ? Center(
+                              child: Text(
+                                widget.app.name.characters.first,
+                                style: type.bodyS.copyWith(
+                                  color: tokens.beacon,
+                                ),
+                              ),
+                            )
+                          : Image(
+                              image: contentImage(context, shot),
+                              fit: BoxFit.cover,
+                              alignment: Alignment.topCenter,
+                            ),
+                    ),
+                    SizedBox(width: tokens.space8),
+                    Text(
+                      widget.app.name,
+                      style: type.bodyS.copyWith(
+                        color: isLit
+                            ? tokens.textPrimary
+                            : tokens.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// [text] up to and including its first full stop, or all of it if it has
+/// only one sentence.
+String _firstSentence(String text) {
+  final match = RegExp(r'^.*?[.!?؟](?=\s|$)').firstMatch(text.trim());
+  return match?.group(0) ?? text;
+}
+
+/// How long a stop lasted, as a small gold-edged badge beside its dates --
+/// or "Now" while it is still going. It replaced a band that drew the stop
+/// against the whole career, which the owner found odd rather than useful:
+/// the one thing that band said was how long, so this says it in words.
+class _Length extends StatelessWidget {
+  const _Length({required this.role});
+
+  final CareerRole role;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final l10n = context.l10n;
+    final end = role.end;
+    final String text;
+    if (end == null) {
+      text = l10n.careerNow;
+    } else {
+      int months(String date) {
+        final parts = date.split('-');
+        final year = int.tryParse(parts.first) ?? 0;
+        final month = parts.length > 1 ? int.tryParse(parts[1]) ?? 1 : 1;
+        return year * 12 + month;
+      }
+
+      final total = months(end) - months(role.start) + 1;
+      final years = total ~/ 12;
+      final rest = total % 12;
+      text = [
+        if (years > 0) l10n.careerYears(years),
+        if (rest > 0) l10n.careerMonths(rest),
+      ].join(' ');
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(tokens.controlRadius),
+        border: Border.all(
+          color: tokens.beaconDim,
+          width: tokens.hairlineWidth,
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: tokens.space8,
+          vertical: tokens.space4 / 2,
+        ),
+        child: Text(
+          text,
+          style: context.type.telemetryS.copyWith(
+            color: end == null ? tokens.beacon : tokens.textSecondary,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -147,10 +147,11 @@ export class AscentVerifier {
 
     const outcome = outcomeOf(next);
 
-    // A tape that stops before the climber falls is a run that was cut short
-    // rather than played out, and a tape that carries on after the fall is
-    // padded. Either way it is not the run it claims to be.
-    if (!outcome.endedInFall || outcome.ticks !== tape.ticks) {
+    // A tape that stops before the climb ends -- in a fall, or at the summit
+    // -- is a run that was cut short rather than played out, and a tape that
+    // carries on after the end is padded. Either way it is not the run it
+    // claims to be.
+    if (!(outcome.endedInFall || outcome.won) || outcome.ticks !== tape.ticks) {
       await this.#settle({ status: 'rejected', reason: 'incomplete-run' });
       return;
     }

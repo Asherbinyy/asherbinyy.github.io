@@ -1,12 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'package:nocturne/features/about/presentation/widgets/skills_panel.dart';
+import 'package:nocturne/core/widgets/skill_groups.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:nocturne/app/app_route.dart';
-import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/locale_controller.dart';
@@ -27,6 +26,8 @@ import 'package:nocturne/core/widgets/loading/skeleton_panel.dart';
 import 'package:nocturne/core/widgets/loading/skeleton_text.dart';
 import 'package:nocturne/core/widgets/loading/sweep_scope.dart';
 import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
+import 'package:nocturne/features/about/presentation/widgets/courtyard_door.dart';
+import 'package:nocturne/features/about/presentation/widgets/falcon_courier.dart';
 import 'package:nocturne/features/about/presentation/widgets/education_table.dart';
 import 'package:nocturne/features/about/presentation/widgets/life_flow.dart';
 import 'package:nocturne/features/about/presentation/widgets/portrait_frame.dart';
@@ -122,7 +123,8 @@ class _About extends StatelessWidget {
             ],
           )
         else ...[
-          portrait,
+          // Centred on a phone; against the left edge it looked dropped.
+          const Center(child: portrait),
           SizedBox(height: tokens.space24),
           identity,
           SizedBox(height: tokens.space32),
@@ -134,6 +136,14 @@ class _About extends StatelessWidget {
           ),
         ],
         SizedBox(height: tokens.space48),
+        // The whole width, as on Home: squeezed into the column beside the
+        // portrait, the group titles broke into ragged lines the owner
+        // called odd.
+        SizedBox(
+          width: double.infinity,
+          child: SkillGroups(profile: profile, locale: locale),
+        ),
+        SizedBox(height: tokens.space48),
         Text(l10n.aboutEducation, style: context.type.heading),
         SizedBox(height: tokens.space16),
         EducationTable(education: education),
@@ -143,7 +153,7 @@ class _About extends StatelessWidget {
         // CV page. What stays here is the door to them: someone who has read
         // this far has the evidence and is deciding whether they want to work
         // with him, and that is the question the courtyard answers.
-        const _CourtyardDoor(),
+        const CourtyardDoor(),
         SizedBox(height: tokens.space48),
         Text(l10n.aboutContact, style: context.type.heading),
         SizedBox(height: tokens.space16),
@@ -155,7 +165,34 @@ class _About extends StatelessWidget {
           child: InstrumentPanel(
             fill: tokens.surface,
             padding: EdgeInsets.all(tokens.space24),
-            child: ContactLinks(contact: profile.contact, links: profile.links),
+            // The falcon beside the links on a wide screen: the panel was
+            // the plainest thing on the page, and the owner asked for a
+            // picture on its right.
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final links = ContactLinks(
+                  contact: profile.contact,
+                  links: profile.links,
+                );
+                if (constraints.maxWidth < Tokens.courierFrom) return links;
+                // Two thirds to the links, the last third to the falcon,
+                // centred in it both ways.
+                return Row(
+                  children: [
+                    Expanded(flex: 2, child: links),
+                    SizedBox(width: tokens.space32),
+                    const Expanded(
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: FalconCourier(),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
         SizedBox(height: tokens.space48),
@@ -213,13 +250,15 @@ class _Identity extends StatelessWidget {
             style: type.telemetryS.copyWith(color: tokens.textMuted),
           ),
         ],
-        SizedBox(height: tokens.space24),
-        SkillsPanel(profile: profile),
         SizedBox(height: tokens.space32),
         // Two ways out of this page, because a page about a person should end
         // in something to do. The column beside the portrait ran out of
         // content half way down the frame and the owner said so.
         Wrap(
+          // Centred on a phone, under the centred portrait.
+          alignment: context.platform.viewport == ViewportClass.compact
+              ? WrapAlignment.center
+              : WrapAlignment.start,
           spacing: tokens.space12,
           runSpacing: tokens.space12,
           children: [
@@ -367,47 +406,4 @@ class _Unavailable extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       CarrierEmptyState(direction: context.l10n.heroContentUnavailable);
-}
-
-/// The way through to `/courtyard` from the foot of the credentials.
-class _CourtyardDoor extends StatelessWidget {
-  const _CourtyardDoor();
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final type = context.type;
-    final l10n = context.l10n;
-
-    // The width of the sections around it. It sat as a card the width of its
-    // own sentence between two full-width sections, which was one of the
-    // edges the owner asked every page to line up.
-    return SizedBox(
-      width: double.infinity,
-      child: InstrumentPanel(
-        fill: tokens.surface,
-        padding: EdgeInsets.all(tokens.space24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.courtyardHeading, style: type.heading),
-            SizedBox(height: tokens.space8),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
-              child: Text(
-                l10n.courtyardIntro,
-                style: type.body.copyWith(color: tokens.textSecondary),
-              ),
-            ),
-            SizedBox(height: tokens.space16),
-            BeaconButton(
-              label: l10n.aboutOffDuty,
-              onPressed: () => context.goNamed(AppRoute.courtyard.name),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

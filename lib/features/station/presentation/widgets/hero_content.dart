@@ -9,6 +9,8 @@ import 'package:nocturne/features/station/presentation/widgets/reach_row.dart';
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
+import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/widgets/even_grid.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/models/profile.dart';
@@ -34,9 +36,13 @@ class HeroContent extends StatelessWidget {
 
   /// How many of the figures are drawn on papyrus.
   ///
-  /// Two: the years and the degree. Named rather than written as a bare 2 at
-  /// the call site so the reason survives the next person to read it.
-  static const int rollingStats = 2;
+  /// Three: the years, the degree, and what he has delivered. It was two, and
+  /// the owner then asked for his thirty-plus apps and projects to be said on
+  /// Home; a third figure drawn as a plain panel beside two sheets of papyrus
+  /// read as a mistake, so the treatment covers the hero's figures -- still
+  /// nowhere else on the site. Named rather than written as a bare 3 at the
+  /// call site so the reason survives the next person to read it.
+  static const int rollingStats = 3;
 
   /// Identity and positioning.
   final Profile profile;
@@ -91,25 +97,27 @@ class HeroContent extends StatelessWidget {
         ],
         if (profile.stats.isNotEmpty) ...[
           SizedBox(height: tokens.space32),
-          // A grid rather than a wrap: on a phone these two 200px panels sat
-          // in a 350px column with every spare pixel on the right, which is
-          // the "cards are on the left" the owner reported. They share the
-          // width now and a single column fills it.
-          EvenGrid(
-            minTileWidth: PapyrusStatPanel.width,
-            spacing: tokens.space16,
-            children: [
-              // The first two figures are drawn on papyrus and roll up when
-              // they are clicked, by the owner's instruction. Anything he adds
-              // after them is an ordinary panel: the treatment is for these
-              // two, not for every number on the site.
-              for (final (index, stat) in profile.stats.indexed)
-                if (index < HeroContent.rollingStats)
-                  PapyrusStatPanel(stat: stat, locale: locale)
-                else
-                  StatPanel(stat: stat, locale: locale),
-            ],
-          ),
+          // A grid rather than a wrap, so the panels share the width. A phone
+          // gets one quiet row of three. The papyrus sheets took a
+          // screen of their own there, one above the other, and the owner
+          // called them too big.
+          if (context.platform.viewport == ViewportClass.compact)
+            _CompactStats(profile: profile, locale: locale)
+          else
+            EvenGrid(
+              minTileWidth: PapyrusStatPanel.width,
+              spacing: tokens.space16,
+              children: [
+                // The figures are drawn on papyrus and roll up when they are
+                // clicked, by the owner's instruction. Anything past
+                // [HeroContent.rollingStats] is an ordinary panel.
+                for (final (index, stat) in profile.stats.indexed)
+                  if (index < HeroContent.rollingStats)
+                    PapyrusStatPanel(stat: stat, locale: locale)
+                  else
+                    StatPanel(stat: stat, locale: locale),
+              ],
+            ),
         ],
         SizedBox(height: tokens.space32),
         Wrap(
@@ -157,6 +165,71 @@ class _AcquiredName extends StatelessWidget {
               ),
             ),
       child: Text(name, style: style),
+    );
+  }
+}
+
+/// The figures for a phone: one small card, a row each, the figure then
+/// what it counts. Side by side they had fifty pixels each beside the wall's
+/// strip and broke their words in half.
+class _CompactStats extends StatelessWidget {
+  const _CompactStats({required this.profile, required this.locale});
+
+  final Profile profile;
+  final AppLocale locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final type = context.type;
+    final stats = profile.stats.take(3).toList();
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: tokens.surface,
+        borderRadius: BorderRadius.circular(tokens.controlRadius),
+        border: Border.all(color: tokens.hairline, width: tokens.hairlineWidth),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: tokens.space16,
+          vertical: tokens.space8,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (index, stat) in stats.indexed) ...[
+              if (index > 0)
+                SizedBox(
+                  height: tokens.hairlineWidth,
+                  width: double.infinity,
+                  child: ColoredBox(color: tokens.hairline),
+                ),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: tokens.space8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    SizedBox(
+                      width: Tokens.compactStatFigure,
+                      child: Text(
+                        stat.value,
+                        style: type.heading.copyWith(color: tokens.beacon),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        stat.label.resolve(locale),
+                        style: type.bodyS.copyWith(color: tokens.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

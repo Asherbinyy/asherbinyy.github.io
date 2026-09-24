@@ -457,10 +457,11 @@ void main() {
       await _pumpSignal(tester);
       await tester.tap(find.byType(PropagationMap));
 
-      // Walk to CI Company by its position in the content. Selection starts at
-      // -1, so reaching index i takes i + 1 presses. This pressed once and
-      // assumed CI Company sat first, which stopped being true when the
-      // journey gained a study stop ahead of the first job.
+      // Walk to Techlab (once "CI Company") by its position in the
+      // content. Selection starts at -1, so reaching index i takes i + 1
+      // presses. This pressed once and assumed Techlab sat first, which
+      // stopped being true when the journey gained a study stop ahead of
+      // the first job.
       final index = bundledStops().indexWhere((s) => s['id'] == 'ci-company');
       expect(index, isNonNegative);
       for (var i = 0; i <= index; i++) {
@@ -468,8 +469,8 @@ void main() {
         await pumpFrames(tester);
       }
 
-      // CI Company is the one role with a company, a summary and applications.
-      expect(find.text('CI Company'), findsWidgets);
+      // Techlab is the one role with a company, a summary and applications.
+      expect(find.text('Techlab'), findsWidgets);
       expect(find.text('Mansoura, EG'), findsWidgets);
 
       // The stack chips are gone on the owner's instruction: naming a

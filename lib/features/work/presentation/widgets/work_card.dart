@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -5,6 +7,7 @@ import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/content/app_maker.dart';
 import 'package:nocturne/content/app_origin.dart';
 import 'package:nocturne/content/content_media.dart';
 import 'package:nocturne/content/models/apps.dart';
@@ -15,7 +18,7 @@ import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/content_gallery.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/core/widgets/loading/station_card.dart';
-import 'package:nocturne/core/widgets/loading/three_stage_image.dart';
+import 'package:nocturne/features/station/presentation/widgets/reach_row.dart';
 import 'package:nocturne/features/work/presentation/widgets/store_links.dart';
 
 /// One shipped application, as a visual card.
@@ -25,24 +28,22 @@ import 'package:nocturne/features/work/presentation/widgets/store_links.dart';
 /// and lose the fact that these are shipped products with store links.
 ///
 /// Both halves of that objection are answered here rather than ignored. The
-/// artwork is `StationCard`, which is seeded from the application id and draws
-/// the propagation map's own node vocabulary — so no two cards are alike, and
-/// an application with a recorded country places its node where the country
-/// is. And the store links stay as their own explicit, separately focusable
-/// controls rather than being folded into the card's tap target, so what the
-/// page is *for* is still the most actionable thing on it.
+/// artwork is the application's own screens, fanned like a hand of cards --
+/// or, for the few with none to show, `StationCard`, seeded from the id so no
+/// two are alike. And the store links stay as their own explicit, separately
+/// focusable controls rather than being folded into the card's tap target, so
+/// what the page is *for* is still the most actionable thing on it.
 ///
-/// There is deliberately no decorative hover on the card body. The design
-/// system says motion answers actions, and a card that lights up without
-/// offering anything to press is motion answering nothing. The interaction
-/// lives where the actions are: each store link hovers, takes focus and shows
-/// a focus ring.
+/// The owner asked for the cards to answer the pointer, the press and the
+/// open: the fan spreads under the pointer, gives under the press, and the
+/// front screen comes forward as the page opens.
 class WorkCard extends StatelessWidget {
   /// [origin] carries the country and coordinates when the content records one.
   const WorkCard({
     required this.app,
     required this.domainLabel,
     required this.origin,
+    this.maker,
     super.key,
   });
 
@@ -55,6 +56,9 @@ class WorkCard extends StatelessWidget {
   /// Where the work happened, when the content records it.
   final AppOrigin? origin;
 
+  /// Who it was built at or for, when the content records it.
+  final AppMaker? maker;
+
   /// The narrowest this card is worth drawing, and what the grid sizes
   /// columns from.
   ///
@@ -64,10 +68,8 @@ class WorkCard extends StatelessWidget {
   /// given and this only decides how many fit.
   static const double width = 280;
 
-  /// The artwork's height. Above `StationCard`'s derived labelling threshold,
-  /// so the card carries the application's name itself at display-m rather
-  /// than repeating it underneath.
-  static const double artHeight = 160;
+  /// The artwork's height: tall enough for a phone screen to be a screen.
+  static const double artHeight = Tokens.workArtHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +77,7 @@ class WorkCard extends StatelessWidget {
     final type = context.type;
     final metric = app.metric;
     final role = app.role?.resolve(context.channel);
-    final screenshot = app.screenshot;
+    final maker = this.maker;
 
     // No LayoutBuilder here on purpose: the grid wraps each row in an
     // IntrinsicHeight so every card in it shares a baseline, and a
@@ -91,37 +93,12 @@ class WorkCard extends StatelessWidget {
       // be pushed to a common baseline instead of floating wherever the
       // role text happens to end.
       children: [
-        _OpenDetail(
-          app: app,
-          child: screenshot != null
-              ? ThreeStageImage(
-                  image: contentImage(context, screenshot),
-                  width: double.infinity,
-                  height: artHeight,
-                  semanticLabel: app.name,
-                  fallback: StationCard(
-                    seedId: app.id,
-                    name: app.name,
-                    height: artHeight,
-                    domainLabel: domainLabel,
-                    country: origin?.country,
-                    latitude: origin?.latitude,
-                    longitude: origin?.longitude,
-                  ),
-                )
-              : StationCard(
-                  seedId: app.id,
-                  name: app.name,
-                  height: artHeight,
-                  domainLabel: domainLabel,
-                  country: origin?.country,
-                  latitude: origin?.latitude,
-                  longitude: origin?.longitude,
-                ),
-        ),
-        if (screenshot != null) ...[
-          SizedBox(height: tokens.space12),
-          Text(app.name, style: type.heading),
+        _OpenDetail(app: app, domainLabel: domainLabel, origin: origin),
+        SizedBox(height: tokens.space16),
+        Text(app.name, style: type.heading),
+        if (maker != null) ...[
+          SizedBox(height: tokens.space4),
+          MakerLine(maker: maker),
         ],
         ContentGallery(entries: app.media, label: app.name),
         if (role != null) ...[
@@ -147,18 +124,52 @@ class WorkCard extends StatelessWidget {
   }
 }
 
+/// Where an application was made: the country's flag and the company's
+/// name, or "Personal project".
+class MakerLine extends StatelessWidget {
+  /// Draws [maker].
+  const MakerLine({required this.maker, this.style, super.key});
+
+  /// Who made it.
+  final AppMaker maker;
+
+  /// The text style; the meta style when null.
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = switch (maker) {
+      MadeAt(:final name, :final country, :final isFreelance) => [
+        if (country != null) ?ReachRow.flagOf(country),
+        if (isFreelance) l10n.careerFreelance else name,
+      ].join('  '),
+      MadeForSelf() => l10n.workPersonalProject,
+    };
+    return Text(
+      text,
+      style:
+          style ?? context.type.meta.copyWith(color: context.tokens.textMuted),
+    );
+  }
+}
+
 /// The artwork, turned into the door to `/work/<id>`.
 ///
-/// It lifts a little under the pointer, which is the only motion here: the
-/// owner asked for a transition, and the one worth having is the one that says
-/// "this is a thing you can open" *before* it is clicked. The route change
-/// itself is the app's own, so a shared page transition would fight the router
-/// rather than help it.
+/// Under the pointer the fan spreads, under a press it gives, and on the
+/// click the front screen comes forward for a moment before the page opens,
+/// so the open reads as that screen being picked up rather than as a cut.
+/// Under reduced motion it simply opens.
 class _OpenDetail extends StatefulWidget {
-  const _OpenDetail({required this.app, required this.child});
+  const _OpenDetail({
+    required this.app,
+    required this.domainLabel,
+    required this.origin,
+  });
 
   final ShippedApp app;
-  final Widget child;
+  final String domainLabel;
+  final AppOrigin? origin;
 
   @override
   State<_OpenDetail> createState() => _OpenDetailState();
@@ -166,6 +177,7 @@ class _OpenDetail extends StatefulWidget {
 
 class _OpenDetailState extends State<_OpenDetail> {
   final WidgetStatesController _states = WidgetStatesController();
+  bool _isOpening = false;
 
   @override
   void dispose() {
@@ -173,29 +185,50 @@ class _OpenDetailState extends State<_OpenDetail> {
     super.dispose();
   }
 
+  void _open() {
+    void go() => context.goNamed(
+      AppRoute.caseStudy.name,
+      pathParameters: {'slug': widget.app.id},
+    );
+    if (ReducedMotion.of(context)) {
+      go();
+      return;
+    }
+    setState(() => _isOpening = true);
+    unawaited(
+      Future<void>.delayed(Tokens.workOpenLead, () {
+        if (mounted) go();
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final app = widget.app;
     return Semantics(
       button: true,
-      label: context.l10n.workOpenApp(widget.app.name),
+      label: context.l10n.workOpenApp(app.name),
       child: ListenableBuilder(
         listenable: _states,
-        builder: (context, child) {
+        builder: (context, _) {
+          final states = _states.value;
           final isRaised =
-              _states.value.contains(WidgetState.hovered) ||
-              _states.value.contains(WidgetState.focused);
+              states.contains(WidgetState.hovered) ||
+              states.contains(WidgetState.focused);
+          final isPressed = states.contains(WidgetState.pressed);
+          final quick = ReducedMotion.duration(context, Motion.quick);
           return FocusRing(
-            isFocused: _states.value.contains(WidgetState.focused),
-            child: AnimatedSlide(
-              offset: isRaised ? const Offset(0, -0.012) : Offset.zero,
-              duration: ReducedMotion.duration(context, Motion.quick),
+            isFocused: states.contains(WidgetState.focused),
+            child: AnimatedScale(
+              scale: isPressed ? Tokens.workPressScale : 1,
+              duration: quick,
               curve: MotionCurves.emphasized,
               child: AnimatedContainer(
-                duration: ReducedMotion.duration(context, Motion.quick),
+                duration: quick,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(Tokens.cardRadius),
-                  boxShadow: isRaised
+                  boxShadow: isRaised || _isOpening
                       ? [
                           BoxShadow(
                             color: tokens.beacon.withValues(
@@ -207,23 +240,208 @@ class _OpenDetailState extends State<_OpenDetail> {
                       : null,
                 ),
                 child: InkWell(
-                  onTap: () => context.goNamed(
-                    AppRoute.caseStudy.name,
-                    pathParameters: {'slug': widget.app.id},
-                  ),
+                  onTap: _open,
                   statesController: _states,
                   borderRadius: BorderRadius.circular(Tokens.cardRadius),
                   hoverColor: Colors.transparent,
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
                   mouseCursor: context.platform.isPointer
                       ? SystemMouseCursors.click
                       : MouseCursor.defer,
-                  child: ExcludeSemantics(child: child),
+                  child: ExcludeSemantics(
+                    child: app.shots.isEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                              Tokens.cardRadius,
+                            ),
+                            child: StationCard(
+                              seedId: app.id,
+                              name: '',
+                              height: WorkCard.artHeight,
+                              domainLabel: widget.domainLabel,
+                              country: widget.origin?.country,
+                              latitude: widget.origin?.latitude,
+                              longitude: widget.origin?.longitude,
+                            ),
+                          )
+                        : ShotFan(
+                            app: app,
+                            height: WorkCard.artHeight,
+                            spread: isRaised ? 1 : 0,
+                            lift: _isOpening ? 1 : 0,
+                          ),
+                  ),
                 ),
               ),
             ),
           );
         },
-        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// An application's screens, fanned like a hand of cards over the ground its
+/// seed draws.
+///
+/// Three at most: the first in front, the next two either side of it and a
+/// little behind. [spread] opens the hand -- the pointer over it -- and
+/// [lift] brings the front screen forward, which is the card being opened.
+class ShotFan extends StatelessWidget {
+  /// Fans [app]'s first screens in a box [height] tall.
+  const ShotFan({
+    required this.app,
+    required this.height,
+    this.spread = 0,
+    this.lift = 0,
+    super.key,
+  });
+
+  /// The application whose screens these are.
+  final ShippedApp app;
+
+  /// The artwork's height.
+  final double height;
+
+  /// How far the hand is open, 0 to 1.
+  final double spread;
+
+  /// How far the front screen has come forward, 0 to 1.
+  final double lift;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final shots = app.shots.take(3).toList();
+    final duration = ReducedMotion.duration(context, Motion.standard);
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(Tokens.cardRadius),
+      child: SizedBox(
+        height: height,
+        width: double.infinity,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // The seed's own drawing, dimmed, so each app's ground is still
+            // its own even when its screens are in front of it.
+            Positioned.fill(
+              child: Opacity(
+                opacity: Tokens.workFanGroundAlpha,
+                child: StationCard(seedId: app.id, name: '', height: height),
+              ),
+            ),
+            TweenAnimationBuilder<double>(
+              tween: Tween(end: spread),
+              duration: duration,
+              curve: MotionCurves.emphasized,
+              builder: (context, open, _) => TweenAnimationBuilder<double>(
+                tween: Tween(end: lift),
+                duration: duration,
+                curve: MotionCurves.emphasized,
+                builder: (context, forward, _) => Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Back to front: the sides first, the first screen last.
+                    for (final index in [
+                      for (var i = shots.length - 1; i >= 0; i--) i,
+                    ])
+                      _FannedShot(
+                        path: shots[index],
+                        height: height * Tokens.workShotHeight,
+                        // -1, 1, 0: left, right, front. Mirrored in Arabic
+                        // so the second screen is on the reading side.
+                        side: switch (index) {
+                          0 => 0,
+                          1 => isRtl ? 1 : -1,
+                          _ => isRtl ? -1 : 1,
+                        },
+                        open: open,
+                        forward: index == 0 ? forward : 0,
+                        edge: tokens.hairlineStrong,
+                        shadow: tokens.void_,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One screen in the fan: a phone-shaped frame, turned and placed by [side].
+class _FannedShot extends StatelessWidget {
+  const _FannedShot({
+    required this.path,
+    required this.height,
+    required this.side,
+    required this.open,
+    required this.forward,
+    required this.edge,
+    required this.shadow,
+  });
+
+  final String path;
+  final double height;
+
+  /// -1 left, 0 front, 1 right.
+  final int side;
+  final double open;
+  final double forward;
+  final Color edge;
+  final Color shadow;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = height * Tokens.workShotAspect;
+    final radius = BorderRadius.circular(width * Tokens.workShotRadius);
+    final offset =
+        side * width * (Tokens.workFanOffset + open * Tokens.workFanOpen);
+    final turn = side * (Tokens.workFanTurn + open * Tokens.workFanTurnOpen);
+    final rise = side == 0
+        ? -open * Tokens.workFanRise - forward * Tokens.workFanRise * 2
+        : open * Tokens.workFanRise * 0.5 + height * Tokens.workFanDrop;
+    return Transform.translate(
+      offset: Offset(offset, rise),
+      child: Transform.rotate(
+        angle: turn,
+        child: Transform.scale(
+          scale:
+              (side == 0 ? 1 : Tokens.workFanBackScale) +
+              forward * Tokens.workFanForwardScale,
+          child: Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              border: Border.all(color: edge),
+              boxShadow: [
+                BoxShadow(
+                  color: shadow.withValues(alpha: Tokens.workShotShadowAlpha),
+                  blurRadius: Tokens.workShotShadowBlur,
+                  offset: const Offset(0, Tokens.workShotShadowDrop),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: radius,
+              child: Image(
+                image: contentImage(context, path),
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+                // A missing file is a content mistake, not a crash: the frame
+                // stays, empty, and the rest of the fan still reads.
+                errorBuilder: (context, error, stack) =>
+                    const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

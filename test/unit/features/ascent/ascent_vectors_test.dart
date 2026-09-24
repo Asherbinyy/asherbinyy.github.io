@@ -125,7 +125,8 @@ void main() {
     expect(bits(got.y), want['y'], reason: '$where y');
     expect(bits(got.width), want['width'], reason: '$where width');
     expect(bits(got.drift), want['drift'], reason: '$where drift');
-    expect(got.hasBoon, want['hasBoon'], reason: '$where boon');
+    expect(got.isLanding, want['isLanding'], reason: '$where landing');
+    expect(got.relic?.index ?? -1, want['relic'], reason: '$where relic');
   }
 
   test('a shaft is a pure function of its seed', () {
@@ -146,10 +147,8 @@ void main() {
   });
 
   test('every level builds the shaft its mode calls for', () {
-    // Sampled at height rather than climbed to. No recorded run reaches the
-    // third or fourth level -- the bot in the generator is not that good -- so
-    // without these two hundred metres of shaft would be ground that neither
-    // implementation had ever been checked on.
+    // Sampled at height rather than climbed to, so every level's shaft is
+    // checked whether or not a recorded run happened to reach it.
     for (final vector in fixture['levels'] as List<dynamic>) {
       final entry = vector as Map<String, dynamic>;
       final seed = entry['seed'] as int;
@@ -174,13 +173,12 @@ void main() {
     }
   });
 
-  test('the samples cover every level and both sides of the boon floor', () {
+  test('the samples cover every level and the floor each one opens on', () {
     // The fixture is only as good as the heights it was taken at. This is the
     // guard that notices if somebody trims the sample list back to the part of
     // the shaft a player usually sees.
     final levels = <int>{};
-    var withBoon = 0;
-    var withoutBoon = 0;
+    var landings = 0;
     for (final vector in fixture['levels'] as List<dynamic>) {
       for (final row
           in (vector as Map<String, dynamic>)['ledges'] as List<dynamic>) {
@@ -194,17 +192,29 @@ void main() {
             4,
             int.parse((want['y'] as String).substring(8), radix: 16),
           );
-        levels.add((data.getFloat64(0) / AscentWorld.levelHeight).floor());
-        if (want['hasBoon'] == true) {
-          withBoon++;
-        } else {
-          withoutBoon++;
-        }
+        levels.add(AscentWorld.levelOf(data.getFloat64(0)));
+        if (want['isLanding'] == true) landings++;
       }
     }
-    expect(levels, containsAll([0, 1, 2, 3]));
-    expect(withBoon, greaterThan(0), reason: 'no sampled ledge carries a boon');
-    expect(withoutBoon, greaterThan(0));
+    expect(levels, containsAll([0, 1, 2, 3, 4, 5, 6, 7]));
+    expect(landings, greaterThan(0), reason: 'no sample opens a level');
+  });
+
+  test('places every relic where the fixture recorded it', () {
+    final kinds = <int>{};
+    for (final vector in fixture['relics'] as List<dynamic>) {
+      final entry = vector as Map<String, dynamic>;
+      final seed = entry['seed'] as int;
+      final relics = entry['relics'] as List<dynamic>;
+      for (var i = 0; i < relics.length; i++) {
+        final got =
+            AscentWorld.relicAt(seed, (i + 1) * AscentWorld.ledgeGap)?.index ??
+            -1;
+        expect(got, relics[i], reason: 'seed $seed, ledge ${i + 1}');
+        kinds.add(got);
+      }
+    }
+    expect(kinds, containsAll([0, 1, 2]), reason: 'a relic is never placed');
   });
 
   group('the tape', () {
@@ -270,7 +280,9 @@ void main() {
             metres: entry['metres'] as int,
             ticks: entry['ticks'] as int,
             endedInFall: entry['endedInFall'] as bool,
-            boonsTaken: entry['boonsTaken'] as int,
+            won: entry['won'] as bool,
+            relicsTaken: entry['relicsTaken'] as int,
+            livesLost: entry['livesLost'] as int,
           ),
           reason: '${entry['script']} on seed ${entry['seed']}',
         );
@@ -314,10 +326,26 @@ void main() {
       expect(
         [
           for (final vector in fixture['runs'] as List<dynamic>)
-            (vector as Map<String, dynamic>)['boonsTaken']! as int,
+            (vector as Map<String, dynamic>)['relicsTaken']! as int,
         ].reduce((a, b) => a + b),
         greaterThan(0),
-        reason: 'no vector ever takes a boon, so the lift is untested',
+        reason: 'no vector ever takes a relic, so their effects are untested',
+      );
+      expect(
+        [
+          for (final vector in fixture['runs'] as List<dynamic>)
+            (vector as Map<String, dynamic>)['livesLost']! as int,
+        ].reduce((a, b) => a + b),
+        greaterThan(0),
+        reason: 'no vector spends a life, so the respawn is untested',
+      );
+      expect(
+        [
+          for (final vector in fixture['runs'] as List<dynamic>)
+            (vector as Map<String, dynamic>)['won'],
+        ],
+        contains(true),
+        reason: 'no vector reaches the summit, so winning is untested',
       );
     });
   });

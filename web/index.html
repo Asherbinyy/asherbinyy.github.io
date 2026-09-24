@@ -130,12 +130,36 @@
       outline: 1px solid rgba(227, 169, 63, 0.55);
       outline-offset: -3px;
     }
+    /* Gold, not white, and it says what to do. "The door is sealed." was a
+       plain white statement the owner found boring; this is an instruction,
+       set in the gold of the braziers beside the statues, with the light passing
+       across it the way it passes the lintel. */
     .threshold__title {
-      margin: 0 0 6px;
-      font-size: clamp(26px, 5vw, 44px);
+      margin: 0;
+      font-size: clamp(18px, 2.6vw, 26px);
       font-weight: 500;
-      letter-spacing: -0.01em;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      background: linear-gradient(100deg, #92702E 0%, #92702E 38%, #FFD98A 50%, #92702E 62%, #92702E 100%);
+      background-size: 260% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: threshold-shine 3.2s ease-in-out infinite;
     }
+    .threshold__rule {
+      display: block;
+      width: 0;
+      height: 1px;
+      margin: 14px auto 0;
+      background: linear-gradient(90deg, transparent, #E3A93F, transparent);
+      animation: threshold-rule 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
+    }
+    @keyframes threshold-shine {
+      from { background-position: 100% 0; }
+      to { background-position: 0% 0; }
+    }
+    @keyframes threshold-rule { to { width: min(260px, 60vw); } }
     /* The title leaves before the doors do, so the frame is clear for the
        camera move rather than competing with it. */
     .threshold--opening .threshold__frame { opacity: 0; transition-duration: 320ms; }
@@ -166,7 +190,8 @@
        aria-label="Enter the site">
     <!-- Decorative staging. Artwork attribution is linked from About. -->
     <div class="threshold__frame">
-      <h1 class="threshold__title" aria-hidden="true">The door is sealed.</h1>
+      <p class="threshold__title" aria-hidden="true">Knock to enter</p>
+      <span class="threshold__rule" aria-hidden="true"></span>
     </div>
   </div>
 

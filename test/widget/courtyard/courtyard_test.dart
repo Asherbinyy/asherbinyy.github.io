@@ -37,26 +37,31 @@ void main() {
     expect(find.text(l10n.courtyardGameInspiration), findsOneWidget);
   });
 
-  testWidgets('a wide courtyard shows a still of the climb', (tester) async {
+  testWidgets('a wide courtyard shows the climb', (tester) async {
     await pumpStation(
       tester,
       breakpoint: ChromeBreakpoint.large,
       initialRoute: AppRoute.courtyard,
     );
 
-    // One frame of a fresh run beside the offer, drawn by the game's own
-    // painter -- nothing is started by visiting the page.
+    // The game's own painter beside the offer, climbing by itself while it
+    // is on screen (still under reduced motion).
     expect(_still, findsOneWidget);
   });
 
-  testWidgets('a phone gets the words and the buttons', (tester) async {
+  testWidgets('a phone gets the climb under the words', (tester) async {
     await pumpStation(
       tester,
       breakpoint: ChromeBreakpoint.compact,
       capabilities: touchBrowser,
       initialRoute: AppRoute.courtyard,
     );
+    final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
-    expect(_still, findsNothing);
+    expect(_still, findsOneWidget);
+    expect(
+      tester.getRect(_still).top,
+      greaterThan(tester.getRect(find.text(l10n.courtyardShoutout)).bottom),
+    );
   });
 }

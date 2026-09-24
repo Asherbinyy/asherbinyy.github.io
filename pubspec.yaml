@@ -62,6 +62,18 @@ flutter:
     - assets/media/interests/
     - assets/media/apps/
     - assets/media/apps/minextstep/
+    - assets/media/apps/tripster/
+    - assets/media/apps/snunu/
+    - assets/media/apps/mokaf/
+    - assets/media/apps/az-courses/
+    - assets/media/apps/az-exams/
+    - assets/media/apps/guardy/
+    - assets/media/apps/enjoy/
+    - assets/media/apps/malboos/
+    - assets/media/apps/tiara-beauty/
+    - assets/media/apps/tekrar/
+    - assets/media/apps/wasset/
+    - assets/media/apps/mostaqbaly/
     - assets/docs/
     - assets/audio/
   fonts:

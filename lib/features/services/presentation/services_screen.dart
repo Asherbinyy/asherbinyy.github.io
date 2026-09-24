@@ -19,6 +19,7 @@ import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
+import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
 import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
 
@@ -87,6 +88,10 @@ class ServicesScreen extends ConsumerWidget {
   }
 }
 
+/// The mark for [service], as the Services page draws it: shared so Home can
+/// list the same services with the same marks.
+IconData serviceIcon(String service) => _Offer.iconFor(service);
+
 /// The grid of what he does.
 class _Offer extends StatelessWidget {
   const _Offer({required this.services});
@@ -127,19 +132,30 @@ class _Offer extends StatelessWidget {
     // Balanced rather than wrapped: eight services in a row that fits five
     // used to read five-then-three, which looks like the last row ran out
     // rather than like a set. Four and four is a set.
+    // Two to a row on a phone, each centred on its card: one to a row, the
+    // marks and names ran down the left edge of a page of empty cards.
+    final isCompact = context.platform.viewport == ViewportClass.compact;
     return EvenGrid(
-      minTileWidth: Tokens.serviceCardWidth,
-      spacing: tokens.space16,
+      minTileWidth: isCompact
+          ? Tokens.serviceCardCompactWidth
+          : Tokens.serviceCardWidth,
+      spacing: isCompact ? tokens.space12 : tokens.space16,
       stretch: true,
-      children: [for (final service in services) _ServiceCard(name: service)],
+      children: [
+        for (final service in services)
+          _ServiceCard(name: service, isCompact: isCompact),
+      ],
     );
   }
 }
 
 class _ServiceCard extends StatefulWidget {
-  const _ServiceCard({required this.name});
+  const _ServiceCard({required this.name, required this.isCompact});
 
   final String name;
+
+  /// On a phone: narrower, and centred.
+  final bool isCompact;
 
   @override
   State<_ServiceCard> createState() => _ServiceCardState();
@@ -157,8 +173,12 @@ class _ServiceCardState extends State<_ServiceCard> {
       child: AnimatedContainer(
         duration: ReducedMotion.duration(context, Motion.quick),
         curve: MotionCurves.emphasized,
-        width: Tokens.serviceCardWidth,
-        padding: EdgeInsets.all(tokens.space24),
+        width: widget.isCompact
+            ? Tokens.serviceCardCompactWidth
+            : Tokens.serviceCardWidth,
+        padding: EdgeInsets.all(
+          widget.isCompact ? tokens.space16 : tokens.space24,
+        ),
         decoration: BoxDecoration(
           color: _isLit ? tokens.surfaceRaised : tokens.surface,
           borderRadius: BorderRadius.circular(tokens.controlRadius),
@@ -178,7 +198,9 @@ class _ServiceCardState extends State<_ServiceCard> {
               : null,
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: widget.isCompact
+              ? CrossAxisAlignment.center
+              : CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
@@ -189,6 +211,7 @@ class _ServiceCardState extends State<_ServiceCard> {
             SizedBox(height: tokens.space16),
             Text(
               widget.name,
+              textAlign: widget.isCompact ? TextAlign.center : null,
               style: context.type.body.copyWith(color: tokens.textPrimary),
             ),
           ],

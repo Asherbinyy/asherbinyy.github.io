@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
+import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
 import 'package:nocturne/features/courtyard/game/domain/leaderboard.dart';
 import 'package:nocturne/features/courtyard/game/presentation/game_control.dart';
 import 'package:nocturne/features/courtyard/game/presentation/leaderboard_controller.dart';
@@ -133,12 +134,15 @@ class _Row extends StatelessWidget {
     final type = context.type;
     final isTop = entry.rank <= _medals.length;
     final medal = isTop ? _medals[entry.rank - 1] : null;
+    final isKing = entry.metres >= AscentWorld.summit;
 
     // One string for the whole row. A screen reader reading "3", "Nour", "140"
     // as three unrelated stops is a table read aloud as a pile of numbers. The
     // medal is not announced: it says the same thing the rank already did.
     return Semantics(
-      label: '${entry.rank}. ${entry.nickname}, ${entry.metres} m',
+      label:
+          '${entry.rank}. ${entry.nickname}, ${entry.metres} m'
+          '${isKing ? ', ${context.l10n.ascentKing}' : ''}',
       excludeSemantics: true,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: tokens.space4),
@@ -163,6 +167,16 @@ class _Row extends StatelessWidget {
                 ),
               ),
             ),
+            // A climber who reached the summit is crowned on the board. The
+            // height says it already; the title is the reward the owner asked
+            // for, and it is earned from the verified height, not claimed.
+            if (isKing) ...[
+              SizedBox(width: tokens.space8),
+              Text(
+                '👑 ${context.l10n.ascentKing}',
+                style: type.telemetryS.copyWith(color: tokens.beacon),
+              ),
+            ],
             SizedBox(width: tokens.space8),
             Text(
               '${entry.metres} m',

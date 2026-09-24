@@ -24,7 +24,13 @@ abstract final class AscentContract {
   /// fifty metres and lift the jump for ten seconds when taken. A score earned
   /// under version 1 was earned on a different climb and does not belong on the
   /// same board.
-  static const int version = 2;
+  ///
+  /// **3** — eight named levels and a summit at 800 metres that wins the
+  /// climb. Relics replace the lifting ankh: the ankh is an extra life, the eye
+  /// of Horus slows the floor for ten seconds, Ma'at's feather gives two jumps
+  /// in the air for five. The sands blow a jump off its line, the ice slides,
+  /// every level opens on a full-width ledge, and the floor's pace is capped.
+  static const int version = 3;
 
   /// How many simulation steps make a second.
   ///
