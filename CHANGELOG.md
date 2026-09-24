@@ -17,6 +17,7 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 - **Brief (in-app):** section spacing, two columns of shipped apps. **Header:** the three controls on one line.
 - **Arabic:** every remaining English string translated.
 - **After review:** skill titles toggle and sit in two lines; the stops are a timeline; one sentence per career card; a compact phone hero and contact; a calendar for booking; the Courtyard door shows the game playing, the contact panel a falcon; Anubis joins Bastet at the door; Mokaf and Snunu screens.
+- **Second review:** the intro's staves and floor strike are gone; gold braziers light Bastet and Anubis. Career cards say how long each stop lasted instead of the timeline band. The Courtyard panel plays the climb, has a gold light running round its edge and a shout-out to Icy Tower; the Off duty tiles rise in. About: skills full width as on Home, no ankh caption, a smaller Courtyard card, contact two thirds to one third with the falcon centred, no Fiverr. Phone: the page has the full width (the wall is behind it, not a strip beside it), the portrait and buttons are centred, services two to a row.
 - **Content (owner-supplied):** Techlab and Techlab Solutions names, which app was built where, AZ Courses 50,000+ on Google Play, MSc 80% overall, app descriptions from the stores, learning folded into skills.
 
 ### Merged to `main`, 2026-09-23 (second; owner-approved after localhost review)

@@ -431,3 +431,7 @@ The owner's round of nine screenshots, and his answers in conversation on 2026-0
 | Snunu screens (`assets/media/apps/snunu/`) and recording link | **OWN**, a screen recording in the owner's Google Drive folder "Snunu", shared on 2026-09-24; four frames (home, hotel list, an Umrah trip, discount coupons), status bar cropped. The gallery links to the recording itself. A login screen with redacted fields was deliberately not used. |
 | Career cards show one sentence | Presentation only: the first sentence of each existing summary. No wording changed; the full text stays on the CV and the brief. |
 | Anubis guardian in the intro | **OWN**-supplied file, 2026-09-24; author and licence to be named (see `web/intro/models/LICENSE.md`). |
+| Career card duration ("2 yrs 3 mos", "Now") | Computed from each role's own `start`/`end` in `career.json`, counting both end months; "Now" where `end` is empty. No figure entered by hand. Replaces the timeline band the owner could not read. |
+| Fiverr removed from the contact links | **OWN**, 2026-09-24 ("remove fiverr"). The URL stays in `profile.json`; the site no longer shows it. |
+| Courtyard: "Shout-out to Icy Tower, the tower that started it all." | **OWN**, 2026-09-24 ("add here smth like shoutout to Icy tower"); Claude's wording. No claim about the owner beyond the existing credit. |
+| About: the ankh caption removed | **OWN**, 2026-09-24 ("remove the Ankh description"). |
