@@ -5,6 +5,19 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### On `feat/work-of-art`, 2026-09-24 (awaiting the owner's localhost review; not merged)
+
+- **Home hero:** the picture blends into the page; a pyramid going up, with a tower crane setting its top courses in step with the automation on a second curved screen; the owner at two screens, one mirroring his phone; skin tone, a real shoulder, the nemes redrawn. Hover a flag and it flies. A third stat: 30+ apps and projects delivered.
+- **Home:** skills under titles, one open at a time; career cards rise in, carry a timeline band, a relief of the stop's sign, the country's flag and the apps built there; the closing panel has new copy, the services, and a phone whose app is built in front of you; back-to-top is centred.
+- **Work:** each card fans the app's own store screenshots and names the company it was built at; rows fill in order; cards rise in, give under a press and lift on open; every app page is rebuilt (screens fanned open, fact cards, a screens strip, "More from").
+- **About:** the life loop runs on an ankh, from "Wake up", with a line saying the ankh means life; the Courtyard door shows the climb and four interests; a smaller, livelier booking card.
+- **Courtyard:** the scoreboard fetches the board when opened, in a proper dialog; sentences no longer strand a word.
+- **The Ascent (contract v3):** eight named levels to a summit at 800 m that wins the climb and crowns you King on the board; the ankh is an extra life, the eye of Horus slows the floor, Ma'at's feather gives a triple jump; wind in the Sands, ice on the Frozen Nile, darkness in the Duat; a full-width ledge opens every level; a legend and an info button; a sound for each relic. The Worker's replay is updated to match and **must be deployed with the merge**.
+- **Intro:** faster (2.2 s), Bastet in black stone on the left, a strike with weight and a ring of light, and "Knock to enter" in gold.
+- **Brief (in-app):** section spacing, two columns of shipped apps. **Header:** the three controls on one line.
+- **Arabic:** every remaining English string translated.
+- **Content (owner-supplied):** Techlab and Techlab Solutions names, which app was built where, AZ Courses 50,000+ on Google Play, MSc 80% overall, app descriptions from the stores, learning folded into skills.
+
 ### Merged to `main`, 2026-09-23 (second; owner-approved after localhost review)
 
 - **Home:** the wall is a faint pattern behind the whole page on a desk, lit gold by the pointer; a painted picture beside the hero follows the theme (a dawn or dusk between them) and its sun or moon switches the theme; career entries sit on cards; every section shares one width; the page closes on one panel.
