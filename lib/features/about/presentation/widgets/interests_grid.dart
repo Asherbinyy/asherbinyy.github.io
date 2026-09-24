@@ -9,6 +9,7 @@ import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/widgets/even_grid.dart';
+import 'package:nocturne/core/widgets/reveal_on_scroll.dart';
 import 'package:nocturne/app/theme/typography.dart';
 import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
@@ -58,16 +59,23 @@ class InterestsGrid extends ConsumerWidget {
           spacing: tokens.space16,
           stretch: true,
           children: [
-            for (final interest in interests)
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _Tile(interest: interest),
-                  ContentGallery(
-                    entries: interest.gallery,
-                    label: interest.label.resolve(context.channel),
-                  ),
-                ],
+            for (final (index, interest) in interests.indexed)
+              // The tiles rise in one after another as the reader reaches
+              // them, quicker than the career cards: they are small, and a
+              // row of six should be there before the reader is past it.
+              RevealOnScroll(
+                style: RevealStyle.rise,
+                delay: Tokens.interestStagger * index,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _Tile(interest: interest),
+                    ContentGallery(
+                      entries: interest.gallery,
+                      label: interest.label.resolve(context.channel),
+                    ),
+                  ],
+                ),
               ),
           ],
         ),

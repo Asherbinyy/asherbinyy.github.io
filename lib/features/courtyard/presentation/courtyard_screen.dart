@@ -7,12 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
-import 'package:nocturne/core/painting/ascent_painter.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/widgets/beacon_button.dart';
 import 'package:nocturne/core/widgets/instrument_panel.dart';
 import 'package:nocturne/features/about/presentation/widgets/interests_grid.dart';
-import 'package:nocturne/features/courtyard/game/domain/ascent_world.dart';
+import 'package:nocturne/features/about/presentation/widgets/live_climb.dart';
+import 'package:nocturne/core/widgets/gold_edge.dart';
 import 'package:nocturne/features/courtyard/game/presentation/ascent_stage.dart';
 import 'package:nocturne/features/courtyard/game/presentation/leaderboard_controller.dart';
 import 'package:nocturne/features/courtyard/game/presentation/widgets/leaderboard_panel.dart';
@@ -123,6 +123,11 @@ class _GameInvitation extends ConsumerWidget {
             style: type.bodyS.copyWith(color: tokens.textMuted),
           ),
         ),
+        SizedBox(height: tokens.space8),
+        Text(
+          l10n.courtyardShoutout,
+          style: type.bodyS.copyWith(color: tokens.beacon),
+        ),
         SizedBox(height: tokens.space24),
         Wrap(
           spacing: tokens.space8,
@@ -143,24 +148,38 @@ class _GameInvitation extends ConsumerWidget {
       ],
     );
 
-    return InstrumentPanel(
-      fill: tokens.surface,
-      padding: EdgeInsets.all(tokens.space24),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Below this the still would squeeze the copy into a column too
-          // narrow for a sentence, so a phone gets the words and the buttons.
-          if (constraints.maxWidth < Tokens.mediumBreakpoint) {
-            return invitation;
-          }
-          return Row(
-            children: [
-              Expanded(flex: 3, child: invitation),
-              SizedBox(width: tokens.space32),
-              const Expanded(flex: 2, child: _ClimbStill()),
-            ],
-          );
-        },
+    return GoldEdge(
+      child: InstrumentPanel(
+        fill: tokens.surface,
+        padding: EdgeInsets.all(tokens.space24),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Below this the climb would squeeze the copy into a column too
+            // narrow for a sentence, so on a phone it goes under the words.
+            if (constraints.maxWidth < Tokens.mediumBreakpoint) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  invitation,
+                  SizedBox(height: tokens.space24),
+                  const LiveClimb(height: Tokens.doorClimbCompact),
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(flex: 3, child: invitation),
+                SizedBox(width: tokens.space32),
+                // The game itself, climbing, rather than one still frame of it.
+                const Expanded(
+                  flex: 2,
+                  child: LiveClimb(height: Tokens.courtyardStillHeight),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -247,50 +266,6 @@ class _BoardDialog extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The first moment of a climb, drawn by the game's own painter.
-///
-/// It shows what the Play button leads to -- the shaft, the ledges, the
-/// climber on the floor -- without starting anything: one frame of a fresh
-/// run, painted once and never animated, so it costs nothing while a visitor
-/// reads. Decorative; the panel's heading and buttons carry the meaning.
-class _ClimbStill extends StatelessWidget {
-  const _ClimbStill();
-
-  /// A fixed seed, so the still is the same climb on every visit.
-  static final AscentWorld _world = AscentWorld.seeded(
-    best: 0,
-    isPractice: true,
-    seed: Tokens.courtyardStillSeed,
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    return ExcludeSemantics(
-      child: SizedBox(
-        height: Tokens.courtyardStillHeight,
-        child: ClipRect(
-          child: CustomPaint(
-            painter: AscentPainter(
-              world: _world,
-              entrance: 1,
-              stone: tokens.instrument,
-              cracked: tokens.instrumentDim,
-              gold: tokens.beacon,
-              glow: tokens.beaconGlow,
-              wall: tokens.hairline,
-              chamber: tokens.surfaceRaised,
-              pier: tokens.void_,
-              strokeWidth: tokens.hairlineWidth,
-              isReducedMotion: true,
-            ),
           ),
         ),
       ),
