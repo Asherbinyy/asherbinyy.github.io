@@ -114,19 +114,11 @@ class _GameInvitation extends ConsumerWidget {
           ),
         ),
         SizedBox(height: tokens.space8),
-        // Where the climb comes from, in the owner's words. Muted: it is
-        // the story behind the game, not the offer to play it.
-        ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: type.measureFor(type.body)),
-          child: Text(
-            l10n.courtyardGameInspiration,
-            style: type.bodyS.copyWith(color: tokens.textMuted),
-          ),
-        ),
-        SizedBox(height: tokens.space8),
+        // Where the climb comes from, in one sentence: the owner cut the
+        // three it used to take.
         Text(
-          l10n.courtyardShoutout,
-          style: type.bodyS.copyWith(color: tokens.beacon),
+          l10n.courtyardGameInspiration,
+          style: type.bodyS.copyWith(color: tokens.textMuted),
         ),
         SizedBox(height: tokens.space24),
         Wrap(

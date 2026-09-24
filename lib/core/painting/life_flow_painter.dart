@@ -73,7 +73,10 @@ class LifeFlowPainter extends CustomPainter {
   ankhIn(Size size) {
     final width = math.min(size.width, size.height * 0.74);
     final x0 = (size.width - width) / 2;
-    final bar = size.height * 0.52;
+    // High enough that the top node's edge meets the top of the box, level
+    // with the first line of the words beside it: the owner asked for the
+    // two to line up.
+    final bar = size.height * 0.46;
     final ry = size.height * 0.2;
     return (
       loop: Offset(x0 + width * 0.5, bar - ry),
@@ -82,7 +85,7 @@ class LifeFlowPainter extends CustomPainter {
       bar: bar,
       left: x0 + width * 0.14,
       right: x0 + width * 0.86,
-      foot: size.height * 0.87,
+      foot: size.height * 0.81,
     );
   }
 

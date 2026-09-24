@@ -23,6 +23,7 @@ import 'package:nocturne/content/models/apps.dart';
 import 'package:nocturne/core/motion/curves.dart';
 import 'package:nocturne/core/motion/durations.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
+import 'package:nocturne/features/station/presentation/widgets/career_stops.dart';
 import 'package:nocturne/features/station/presentation/widgets/reach_row.dart';
 
 /// The career, top to bottom, as the trace's burst anchors.
@@ -207,6 +208,9 @@ class _ThreadedState extends State<_Threaded> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final isReduced = ReducedMotion.of(context);
+    // On a phone each entry draws its own stop on a line down the leading
+    // edge (see [_PhoneStop]), which takes the frieze's place.
+    if (context.platform.viewport == ViewportClass.compact) return widget.child;
     return Stack(
       children: [
         PositionedDirectional(
@@ -269,25 +273,39 @@ class _CareerEntry extends StatelessWidget {
     final tokens = context.tokens;
     final type = context.type;
 
-    // On a phone the column is what is left beside the wall's strip, and the
-    // stop's sign beside the card took a third of it: the card's text was
-    // down to a hundred pixels and names broke mid-word. There the card has
-    // the column to itself -- the index above already carries each stop's
-    // mark -- and a tighter inset.
+    // On a phone the stops run down the leading edge, one beside each card:
+    // the owner found the sideways strip of stops above the cards awkward on
+    // a phone and asked for them to go vertical, next to the experience.
     if (context.platform.viewport == ViewportClass.compact) {
-      return Padding(
-        padding: EdgeInsets.symmetric(vertical: tokens.space8),
-        // The column's width whatever the entry holds, so a short one like
-        // the freelance stop does not shrink to its own words.
-        child: SizedBox(
-          width: double.infinity,
-          child: _Card(
-            role: role,
-            span: span,
-            padding: tokens.space16,
-            child: _entry(context, tokens, type),
+      return Stack(
+        children: [
+          // The line joining the stops, through the gaps between cards.
+          PositionedDirectional(
+            start: (Tokens.careerRailCompact - tokens.hairlineWidth * 2) / 2,
+            top: 0,
+            bottom: 0,
+            width: tokens.hairlineWidth * 2,
+            child: ColoredBox(color: tokens.hairlineStrong),
           ),
-        ),
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: tokens.space8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _PhoneStop(role: role),
+                SizedBox(width: tokens.space8),
+                Expanded(
+                  child: _Card(
+                    role: role,
+                    span: span,
+                    padding: tokens.space16,
+                    child: _entry(context, tokens, type),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     }
 
@@ -711,6 +729,59 @@ class _Length extends StatelessWidget {
           style: context.type.telemetryS.copyWith(
             color: end == null ? tokens.beacon : tokens.textSecondary,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One stop on a phone: its year, and a mark for what it was, on the line
+/// down the leading edge of the career.
+class _PhoneStop extends StatelessWidget {
+  const _PhoneStop({required this.role});
+
+  final CareerRole role;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return ExcludeSemantics(
+      child: SizedBox(
+        width: Tokens.careerRailCompact,
+        child: Column(
+          children: [
+            SizedBox(height: tokens.space12),
+            DecoratedBox(
+              // The page behind the year, so the line does not run through it.
+              decoration: BoxDecoration(color: tokens.void_),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: tokens.space4),
+                child: Text(
+                  role.start.split('-').first,
+                  style: context.type.telemetryS.copyWith(
+                    color: tokens.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+            Container(
+              width: Tokens.careerRailNode,
+              height: Tokens.careerRailNode,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: tokens.surfaceRaised,
+                border: Border.all(
+                  color: tokens.hairlineStrong,
+                  width: tokens.hairlineWidth * 1.5,
+                ),
+              ),
+              child: Icon(
+                CareerStops.markFor(role),
+                size: Tokens.careerRailNode / 2,
+                color: tokens.beacon,
+              ),
+            ),
+          ],
         ),
       ),
     );

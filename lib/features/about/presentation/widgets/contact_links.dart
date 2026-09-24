@@ -18,6 +18,7 @@ import 'package:nocturne/core/motion/reduced_motion.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/widgets/focus_ring.dart';
+import 'package:nocturne/core/widgets/gold_edge.dart';
 
 /// The owner's public destinations, in the order a recruiter uses them.
 ///
@@ -393,18 +394,23 @@ class _Or extends StatelessWidget {
         child: ColoredBox(color: tokens.hairline),
       ),
     );
-    return Row(
-      children: [
-        line,
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: tokens.space12),
-          child: Text(
-            text,
-            style: context.type.meta.copyWith(color: tokens.textMuted),
+    // No wider than the profiles under it. Across a whole panel the line ran
+    // on past everything it was separating, and the owner asked for it cut.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: Tokens.contactOrMaxWidth),
+      child: Row(
+        children: [
+          line,
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: tokens.space12),
+            child: Text(
+              text,
+              style: context.type.meta.copyWith(color: tokens.textMuted),
+            ),
           ),
-        ),
-        line,
-      ],
+          line,
+        ],
+      ),
     );
   }
 }
@@ -465,97 +471,110 @@ class _BookingCardState extends State<_BookingCard> {
               mouseCursor: context.platform.isPointer
                   ? SystemMouseCursors.click
                   : MouseCursor.defer,
+              // The light running round its edge, as on the game's panel:
+              // the owner asked for the booking card to have it too.
               child: ExcludeSemantics(
-                child: AnimatedContainer(
-                  duration: ReducedMotion.duration(context, Motion.quick),
-                  curve: MotionCurves.emphasized,
-                  // Its own size, not the panel's. Stretched across a whole
-                  // panel it read as a banner rather than a thing to press --
-                  // the owner called it wide and odd.
-                  constraints: const BoxConstraints(
-                    maxWidth: Tokens.bookingCardMaxWidth,
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: tokens.space16,
-                    vertical: tokens.space12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isLit
-                        ? tokens.beacon.withValues(alpha: 0.10)
-                        : tokens.surface,
-                    borderRadius: BorderRadius.circular(tokens.controlRadius),
-                    border: Border.all(
-                      color: tokens.beacon,
-                      width: tokens.hairlineWidth,
+                child: GoldEdge(
+                  radius: tokens.controlRadius,
+                  inset: 0,
+                  child: AnimatedContainer(
+                    duration: ReducedMotion.duration(context, Motion.quick),
+                    curve: MotionCurves.emphasized,
+                    // Its own size, not the panel's. Stretched across a whole
+                    // panel it read as a banner rather than a thing to press --
+                    // the owner called it wide and odd.
+                    constraints: const BoxConstraints(
+                      maxWidth: Tokens.bookingCardMaxWidth,
                     ),
-                    boxShadow: isLit
-                        ? [
-                            BoxShadow(
-                              color: tokens.beacon.withValues(
-                                alpha: Tokens.contactGlowAlpha,
-                              ),
-                              blurRadius: Tokens.contactGlowBlur,
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // A calendar, which is what booking is. The shadow clock
-                      // before it read, as the owner put it, like a scale.
-                      AnimatedSwitcher(
-                        duration: ReducedMotion.duration(context, Motion.quick),
-                        transitionBuilder: (child, animation) =>
-                            ScaleTransition(scale: animation, child: child),
-                        child: Icon(
-                          isLit
-                              ? Icons.event_available_rounded
-                              : Icons.calendar_month_rounded,
-                          key: ValueKey(isLit),
-                          size: Tokens.bookingIconSize,
-                          color: isLit ? tokens.beaconGlow : tokens.beacon,
-                        ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: tokens.space16,
+                      vertical: tokens.space12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isLit
+                          ? tokens.beacon.withValues(alpha: 0.10)
+                          : tokens.surface,
+                      borderRadius: BorderRadius.circular(tokens.controlRadius),
+                      border: Border.all(
+                        color: tokens.beacon,
+                        width: tokens.hairlineWidth,
                       ),
-                      SizedBox(width: tokens.space16),
-                      Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              l10n.contactBookTitle,
-                              style: type.body.copyWith(color: tokens.beacon),
-                            ),
-                            // The sentence under it on a wide card only: on
-                            // a phone it ran to three lines under two words.
-                            if (context.platform.viewport !=
-                                ViewportClass.compact) ...[
-                              SizedBox(height: tokens.space4),
-                              Text(
-                                l10n.contactBookBody,
-                                style: type.bodyS.copyWith(
-                                  color: tokens.textSecondary,
+                      boxShadow: isLit
+                          ? [
+                              BoxShadow(
+                                color: tokens.beacon.withValues(
+                                  alpha: Tokens.contactGlowAlpha,
                                 ),
+                                blurRadius: Tokens.contactGlowBlur,
                               ),
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // A calendar, which is what booking is. The shadow
+                        // clock before it read, as the owner put it, like a
+                        // scale.
+                        AnimatedSwitcher(
+                          duration: ReducedMotion.duration(
+                            context,
+                            Motion.quick,
+                          ),
+                          transitionBuilder: (child, animation) =>
+                              ScaleTransition(scale: animation, child: child),
+                          child: Icon(
+                            isLit
+                                ? Icons.event_available_rounded
+                                : Icons.calendar_month_rounded,
+                            key: ValueKey(isLit),
+                            size: Tokens.bookingIconSize,
+                            color: isLit ? tokens.beaconGlow : tokens.beacon,
+                          ),
+                        ),
+                        SizedBox(width: tokens.space16),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                l10n.contactBookTitle,
+                                style: type.body.copyWith(color: tokens.beacon),
+                              ),
+                              // The sentence under it on a wide card only: on
+                              // a phone it ran to three lines under two words.
+                              if (context.platform.viewport !=
+                                  ViewportClass.compact) ...[
+                                SizedBox(height: tokens.space4),
+                                Text(
+                                  l10n.contactBookBody,
+                                  style: type.bodyS.copyWith(
+                                    color: tokens.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
-                      SizedBox(width: tokens.space16),
-                      AnimatedSlide(
-                        offset: isLit
-                            ? const Offset(Tokens.bookingArrowTravel, 0)
-                            : Offset.zero,
-                        duration: ReducedMotion.duration(context, Motion.quick),
-                        curve: MotionCurves.emphasized,
-                        child: Icon(
-                          Icons.arrow_forward_rounded,
-                          size: Tokens.contactIconSize,
-                          color: isLit ? tokens.beaconGlow : tokens.beacon,
+                        SizedBox(width: tokens.space16),
+                        AnimatedSlide(
+                          offset: isLit
+                              ? const Offset(Tokens.bookingArrowTravel, 0)
+                              : Offset.zero,
+                          duration: ReducedMotion.duration(
+                            context,
+                            Motion.quick,
+                          ),
+                          curve: MotionCurves.emphasized,
+                          child: Icon(
+                            Icons.arrow_forward_rounded,
+                            size: Tokens.contactIconSize,
+                            color: isLit ? tokens.beaconGlow : tokens.beacon,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
