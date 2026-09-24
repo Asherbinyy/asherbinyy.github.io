@@ -181,12 +181,6 @@ class _LifeFlowState extends State<LifeFlow>
                 },
               ),
             ),
-            SizedBox(height: tokens.space16),
-            Text(
-              l10n.aboutFlowCaption,
-              textAlign: TextAlign.center,
-              style: context.type.bodyS.copyWith(color: tokens.textSecondary),
-            ),
           ],
         ),
       ),

@@ -123,7 +123,8 @@ class _About extends StatelessWidget {
             ],
           )
         else ...[
-          portrait,
+          // Centred on a phone; against the left edge it looked dropped.
+          const Center(child: portrait),
           SizedBox(height: tokens.space24),
           identity,
           SizedBox(height: tokens.space32),
@@ -134,6 +135,14 @@ class _About extends StatelessWidget {
             child: const LifeFlow(),
           ),
         ],
+        SizedBox(height: tokens.space48),
+        // The whole width, as on Home: squeezed into the column beside the
+        // portrait, the group titles broke into ragged lines the owner
+        // called odd.
+        SizedBox(
+          width: double.infinity,
+          child: SkillGroups(profile: profile, locale: locale),
+        ),
         SizedBox(height: tokens.space48),
         Text(l10n.aboutEducation, style: context.type.heading),
         SizedBox(height: tokens.space16),
@@ -166,11 +175,20 @@ class _About extends StatelessWidget {
                   links: profile.links,
                 );
                 if (constraints.maxWidth < Tokens.courierFrom) return links;
+                // Two thirds to the links, the last third to the falcon,
+                // centred in it both ways.
                 return Row(
                   children: [
-                    Expanded(child: links),
+                    Expanded(flex: 2, child: links),
                     SizedBox(width: tokens.space32),
-                    const FalconCourier(),
+                    const Expanded(
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: FalconCourier(),
+                        ),
+                      ),
+                    ),
                   ],
                 );
               },
@@ -232,16 +250,15 @@ class _Identity extends StatelessWidget {
             style: type.telemetryS.copyWith(color: tokens.textMuted),
           ),
         ],
-        SizedBox(height: tokens.space24),
-        SizedBox(
-          width: double.infinity,
-          child: SkillGroups(profile: profile, locale: locale),
-        ),
         SizedBox(height: tokens.space32),
         // Two ways out of this page, because a page about a person should end
         // in something to do. The column beside the portrait ran out of
         // content half way down the frame and the owner said so.
         Wrap(
+          // Centred on a phone, under the centred portrait.
+          alignment: context.platform.viewport == ViewportClass.compact
+              ? WrapAlignment.center
+              : WrapAlignment.start,
           spacing: tokens.space12,
           runSpacing: tokens.space12,
           children: [

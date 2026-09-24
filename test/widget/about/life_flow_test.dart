@@ -87,21 +87,26 @@ void main() {
     );
   });
 
-  testWidgets('says what the ankh it runs on means', (tester) async {
+  testWidgets('carries no caption on the ankh (the owner cut it)', (
+    tester,
+  ) async {
     await pumpStation(
       tester,
       breakpoint: ChromeBreakpoint.large,
       initialRoute: AppRoute.about,
       reducedMotion: true,
     );
-    final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
     expect(
       find.descendant(
         of: find.byType(LifeFlow),
-        matching: find.text(l10n.aboutFlowCaption),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              (widget.data ?? '').toLowerCase().contains('ankh'),
+        ),
       ),
-      findsOneWidget,
+      findsNothing,
     );
   });
 

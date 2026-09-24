@@ -101,9 +101,7 @@ class ContactLinks extends StatelessWidget {
         ('Instagram', SimpleIcons.instagram, url),
       if (contact.facebook case final url?)
         ('Facebook', SimpleIcons.facebook, url),
-      // Fiverr is where somebody can actually hire him, so it sits with the
-      // profiles rather than pretending to be a social account.
-      if (contact.fiverr case final url?) ('Fiverr', SimpleIcons.fiverr, url),
+      // No Fiverr: the owner asked for it off the site (2026-09-24).
     ];
 
     // A phone had every destination as a full-width bar, fourteen of them
