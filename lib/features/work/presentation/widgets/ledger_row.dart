@@ -4,7 +4,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
-import 'package:url_launcher/url_launcher.dart';
+import 'package:nocturne/core/analytics/tracked_link.dart';
 
 import 'package:nocturne/app/l10n/generated/app_localizations.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
@@ -283,7 +283,11 @@ class _StoreLinkState extends State<_StoreLink> {
           isFocused: _states.value.contains(WidgetState.focused),
           child: InkWell(
             onTap: () => unawaited(
-              launchUrl(widget.url, mode: LaunchMode.externalApplication),
+              launchTrackedUrl(
+                context,
+                widget.url,
+                target: 'app:${widget.app.id}:${widget.platform.name}',
+              ),
             ),
             statesController: _states,
             borderRadius: BorderRadius.circular(tokens.controlRadius),

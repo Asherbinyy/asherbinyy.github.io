@@ -43,7 +43,7 @@ These are specified in `06-ANALYTICS-AND-PRIVACY.md` §9 and are restated here b
 
 1. Zero network calls occur before consent resolves.
 2. `analytics_client` no-ops entirely in the ungranted state — it does not buffer.
-3. The Tier 0 Worker never writes or logs an IP address.
+3. The Worker never writes or logs a raw IP address or user-agent string.
 4. Consent withdrawal halts collection within the same session.
 5. No session identifier is ever written to `localStorage`.
 6. The consent panel's live readout matches actual collection state.

@@ -385,7 +385,7 @@ test('the relay refuses to run without a configured feed', async () => {
   assert.equal(result.status, 503);
 });
 
-test('a Tier 1 event may carry a session identifier', async () => {
+test('a consented interaction may carry a session identifier', async () => {
   const env = environment();
   const sessionId = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
 
@@ -402,7 +402,7 @@ test('a Tier 1 event may carry a session identifier', async () => {
   assert.ok(!stored.includes(sessionId));
 });
 
-test('a Tier 0 route view may not carry a session identifier', async () => {
+test('a route view may not carry a session identifier', async () => {
   const env = environment();
 
   const result = await handleRequest(

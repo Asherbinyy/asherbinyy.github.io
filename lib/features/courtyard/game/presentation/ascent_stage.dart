@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:nocturne/core/analytics/tracked_link.dart';
+import 'package:nocturne/core/analytics/events.dart';
+
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -229,6 +232,11 @@ class _AscentStageState extends ConsumerState<AscentStage>
     }
 
     if (next.isOver && !before.isOver) {
+      recordAnalytics(
+        context,
+        AnalyticsEvent.gameFinished,
+        target: 'game:ascent',
+      );
       _audio.play(
         next.won
             ? AscentSound.win
@@ -361,6 +369,7 @@ class _AscentStageState extends ConsumerState<AscentStage>
     _ticker
       ..stop()
       ..start();
+    recordAnalytics(context, AnalyticsEvent.gameStarted, target: 'game:ascent');
   }
 
   /// Shows the legend, holding the climb while it is open.

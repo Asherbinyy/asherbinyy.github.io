@@ -1,4 +1,15 @@
 {
+  "consentAcceptAll": "Allow analytics",
+  "consentReject": "Reject",
+  "privacyBody": "This site counts page views so I know what people read. Country is worked out on the server from your request and the address is discarded immediately; it is never stored. No cookies, no third-party trackers, no profile of you, and nothing about your gender, age or identity, under any setting.",
+  "privacyCurrentRejected": "Currently: nothing collected",
+  "footerConsent": "Consent",
+  "privacyFieldRoute": "Route",
+  "privacyFieldCountry": "Country",
+  "privacyFieldDevice": "Device class",
+  "privacyFieldReferrer": "Referrer host",
+  "privacyFieldDwell": "Time per section",
+  "privacyFieldClicks": "Clicks",
   "heroStatRollHint": "Roll the sheet up, or open it again",
   "@heroStatRollHint": {
     "description": "Accessible hint for the two home figures drawn on papyrus, which roll closed when activated."

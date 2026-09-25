@@ -90,6 +90,41 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 .figure strong { display: block; font-size: var(--display); line-height: 1.1; font-variant-numeric: tabular-nums; }
 .figure .k { display: block; margin-top: var(--s4); font-size: var(--small); }
 .figure .note { display: block; margin-top: var(--s2); }
+body[data-view="home"] #editorPane { background: var(--void); }
+.dashboard .panelHead { margin-bottom: var(--s6); }
+.reportTabs { display: flex; gap: var(--s4); border-bottom: var(--hairline) solid var(--line); margin-bottom: var(--s6); overflow-x: auto; }
+.srOnly { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+.reportTabs button { white-space: nowrap; border-radius: 0; border: 0; border-bottom: var(--focus) solid transparent; color: var(--muted); }
+.reportTabs button[aria-pressed="true"] { border-bottom-color: var(--gold); color: var(--text); }
+.dashboard .dashboardFigures { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-block: var(--hairline) solid var(--line); }
+.dashboardFigures .figure { background: none; border: 0; border-inline-end: var(--hairline) solid var(--line-soft); padding: var(--s6) var(--s4); }
+.dashboardFigures .figure:last-child { border-inline-end: 0; }
+.dashboardFigures .figure strong { font-size: var(--compact-display); }
+.collectionHealth { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); font-size: var(--small); }
+.collectionHealth button { margin-inline-start: auto; }
+.reportSection { margin: var(--s8) 0; min-width: 0; }
+.reportSection > .chartCard { border: 0; padding: var(--s4) 0 0; margin: 0; background: none; }
+.reportSection > .chartCard > h3 { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+.reportHeading { display: flex; flex-wrap: wrap; gap: var(--s4); justify-content: space-between; align-items: center; margin-bottom: var(--s4); }
+.reportHeading h3 { margin: 0; }
+.reportHeading .reportSearch { max-width: calc(var(--s16) * 4); font-size: var(--small); }
+.reportColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s8); }
+.tableScroll { overflow-x: auto; }
+.reportTable th button { font-size: inherit; color: var(--muted); padding-inline: 0; text-align: start; }
+.reportTable th[aria-sort="ascending"] button::after { content: ' ↑'; }
+.reportTable th[aria-sort="descending"] button::after { content: ' ↓'; }
+.reportTable td { vertical-align: top; overflow-wrap: anywhere; padding-block: var(--s4); }
+.reportTable .numeric { text-align: end; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.reportEmpty { padding: var(--s6) 0; }
+.reportFootnote { border-top: var(--hairline) solid var(--line-soft); margin-top: var(--s6); font-size: var(--small); }
+.reportFootnote summary { color: var(--muted); }
+.reportHeading button[aria-pressed="true"] { border-color: var(--gold); }
+@media (max-width: 900px) {
+  .reportTabs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0; overflow: visible; }
+  .reportTabs button { width: 100%; }
+  .dashboard .dashboardFigures { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .reportColumns { grid-template-columns: 1fr; gap: 0; }
+}
 .chartGrid, .pageGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s6); }
 .chartGrid .group, .chartGrid .chartCard { margin: 0; }
 .chartCard svg { width: 100%; display: block; overflow: visible; }

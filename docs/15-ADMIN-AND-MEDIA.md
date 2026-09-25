@@ -1,11 +1,10 @@
 # Admin and media
 
-Release state: September 17. The real Flutter preview, collapsible panels,
+Release state: September 25. The real Flutter preview, collapsible panels,
 current-content schema, uploaded-media consumers and base theme/font defaults
-are integrated in `phase/codex-admin-ui` for the production release. See
-[review](31-CODEX-ADMIN-UI-REVIEW.md). The site build and Worker must be
-deployed from the same merged revision so their exact-origin preview contract
-stays compatible.
+are in production. The analytics home is now the four-report dashboard
+described in [the analytics runbook](32-ANALYTICS-DASHBOARD-RUNBOOK.md). See the
+[UI review](31-CODEX-ADMIN-UI-REVIEW.md) for the wider admin workspace.
 
 Backend delivery baseline: 2026-09-12, after admin phases **A1-A4 and A6**, plus the
 preview channel, the release contract and the fields Codex accepted in
@@ -88,12 +87,13 @@ with a per-record salt, and changing it ends every other session. A session
 ending mid-edit asks for the password over the panel and keeps every draft. The
 hourly lockout no longer takes the owner down with the attacker.
 
-**A6, home.** A dashboard over the counters that already exist, with ranges in
-UTC days. No weekly or monthly unique-visitor figure, and the reason is on the
-page: the visitor hash is salted daily, so adding days counts returning people
-again. The honest multi-day figure is the busiest single day. Averages carry
-their unit. An empty dashboard says nothing is being counted rather than
-implying nobody visited.
+**A6, home.** Four reports cover overview, links and apps, pages and audience.
+They show observed daily series, equal-length previous-period comparisons,
+public destinations, source pages, named interactions, page engagement,
+referrers, countries, input devices and campaigns. Search, sorting and CSV are
+built in. No weekly or monthly unique-visitor figure is invented: the visitor
+hash is salted daily, so adding days would count returning people again. Empty,
+disabled and failed states remain distinct.
 
 **The preview channel — the admin half only.** The editor's side of protocol v1
 is built: the frame, the session, the handshake, the validated draft, selection
@@ -202,7 +202,10 @@ A typed component contract should drive the editor and consumers. Arbitrary fiel
 
 Keep credentials separate from public previews and out of source/logs. Password management must not expose a Cloudflare account token to the browser. Test unauthorized writes, session behavior, rotation and lockout in isolated data.
 
-The public build has analytics disabled. Rebuilding the admin does not authorize silently enabling collection. The requested analytics home must show available/disabled/empty states accurately; a graph must never imply invented visitors. Existing consent requirements remain binding.
+The public build enables first-party analytics only after an explicit grant.
+Rejected and unresolved visits send nothing, admin previews are excluded, and
+a graph must never imply invented visitors. The binding collection contract is
+[`06-ANALYTICS-AND-PRIVACY.md`](06-ANALYTICS-AND-PRIVACY.md).
 
 Subscriptions were cancelled. The separate daily digest remains dormant because the original cancellation and handover differ in scope.
 

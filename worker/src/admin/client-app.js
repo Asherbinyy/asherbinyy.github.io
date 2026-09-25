@@ -93,6 +93,7 @@ function render() {
   }
 
   document.body.dataset.view = state.view;
+  el('editor').classList.toggle('dashboard', state.view === 'home');
   renderRail();
   // The preview follows whatever is being edited, but only once it has
   // answered. Sent before the redraw so a slow frame does not hold it up.

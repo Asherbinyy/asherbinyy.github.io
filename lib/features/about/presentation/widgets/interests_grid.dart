@@ -73,6 +73,7 @@ class InterestsGrid extends ConsumerWidget {
                     ContentGallery(
                       entries: interest.gallery,
                       label: interest.label.resolve(context.channel),
+                      analyticsTarget: 'gallery:interest:${interest.id}',
                     ),
                   ],
                 ),

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:url_launcher/url_launcher.dart';
+import 'package:nocturne/core/analytics/tracked_link.dart';
 import 'package:nocturne/content/models/career.dart';
 import 'package:nocturne/features/about/presentation/widgets/contact_links.dart';
 import 'package:nocturne/features/about/presentation/widgets/education_table.dart';
@@ -395,8 +395,7 @@ class _Link extends StatelessWidget {
     return Semantics(
       link: true,
       child: InkWell(
-        onTap: () =>
-            unawaited(launchUrl(url, mode: LaunchMode.externalApplication)),
+        onTap: () => unawaited(launchTrackedUrl(context, url)),
         hoverColor: Colors.transparent,
         child: Text(
           label,

@@ -15,7 +15,7 @@ import 'package:nocturne/app/theme/theme_controller.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/analytics/events.dart';
-import 'package:nocturne/core/analytics/interactions.dart';
+import 'package:nocturne/core/analytics/tracked_link.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 
 /// The 64px header: mark, route links, and the three controls.
@@ -107,10 +107,12 @@ class AppHeader extends ConsumerWidget {
                     isActive: false,
                     onPressed: () {
                       ref.read(localeControllerProvider.notifier).toggle();
-                      ref.recordInteraction(
+                      recordAnalytics(
+                        context,
                         AnalyticsEvent.languageChanged,
-                        route: current?.path ?? AppRoute.home.path,
-                        inputMode: context.platform.inputMode,
+                        target: locale == AppLocale.english
+                            ? 'language:ar'
+                            : 'language:en',
                       );
                     },
                   ),
@@ -129,10 +131,12 @@ class AppHeader extends ConsumerWidget {
                     ),
                     onPressed: () {
                       ref.read(themeControllerProvider.notifier).toggle();
-                      ref.recordInteraction(
+                      recordAnalytics(
+                        context,
                         AnalyticsEvent.themeChanged,
-                        route: current?.path ?? AppRoute.home.path,
-                        inputMode: context.platform.inputMode,
+                        target: theme == AppTheme.nocturne
+                            ? 'theme:daybreak'
+                            : 'theme:nocturne',
                       );
                     },
                   ),

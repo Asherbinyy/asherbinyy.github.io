@@ -1,226 +1,136 @@
-# Analytics and Privacy — NOCTURNE
+# Analytics and privacy — NOCTURNE
 
-> Status clarification, 2026-09-11: the release still disables visitor analytics. The sentence below saying nothing is written to a visitor's device is too broad: display preferences and intro session state exist. No new collection or storage behavior is authorized by the audit. The proposed admin analytics home must show disabled/no-data states honestly; any collection change requires the explicit design and consent checks in [F7](19-FLUTTER-ENHANCEMENT-PLAN.md#f7--appearance-and-dashboard). Historical legal conclusions below have not been revalidated by this audit.
+This document is the binding collection contract when analytics is enabled.
+Implementation and operations are recorded in
+[`32-ANALYTICS-DASHBOARD-RUNBOOK.md`](32-ANALYTICS-DASHBOARD-RUNBOOK.md).
 
-> **Status as shipped: this site collects nothing, and has no privacy page.**
->
-> The release build supplies no analytics endpoint, so there is no sender, no
-> client, and no collection of any kind — no beacon, no cookie, no identifier,
-> and nothing written to a visitor's device. There is consequently no consent
-> banner and no `/privacy` route: both were removed in Milestone 3 on the
-> owner's instruction, because a prompt asking permission for collection that
-> cannot happen implies tracking the site is not doing.
->
-> **Everything below describes the design that is dormant, not live.** The
-> tiers, the client, the Worker and their tests all remain in the repository
-> and still pass. Restoring collection means adding
-> `--dart-define=ANALYTICS_ENDPOINT=...` to the release build in
-> `.github/workflows/ci.yml` — and, because the sections below are the
-> obligations that come with collecting, restoring the consent interface and a
-> privacy notice along with it.
+## Current release contract
 
-This document is binding whenever collection is on. Where it conflicts with a
-feature request, this wins.
+Analytics is first party and opt in. The public build has a single endpoint,
+`https://nocturne-analytics.asherbinyy.workers.dev/v1/beacon`. Nothing is
+measured or sent until the visitor chooses **Allow analytics**. Rejecting sends
+nothing. The choice can be changed from **Consent** in the footer.
 
----
+The CV and brief are standalone HTML pages, but follow the same rule, storage
+key and Worker contract as the Flutter site. Admin previews never collect.
 
-## 1. Position
+The owner is the data controller. The service runs on Cloudflare. There is no
+Google Analytics, Firebase Analytics, advertising pixel or third-party tag.
 
-The owner is the data controller for this site, personally. UK GDPR and PECR apply. PECR requires consent **before** storing or reading anything on a visitor's device that is not strictly necessary. UK GDPR makes IP addresses personal data.
+## Never collect
 
-Beyond compliance there is a credibility argument. The owner's dissertation examines the gap between what organisations claim about AI governance and what they actually do. A portfolio that displays a privacy posture while covertly profiling visitors would be a live example of that gap, on the wrong side of it. Any reviewer with governance literacy will notice.
+- Form contents, search terms, contact addresses or phone numbers.
+- URL query strings or fragments, except a public Google Play application ID.
+- Referrer paths or referrer query strings. Only the host may be counted.
+- Raw IP addresses or user-agent strings in storage or logs.
+- Session replay, pointer paths, keystrokes or continuous scroll positions.
+- Demographic inference, fingerprinting or cross-site identifiers.
+- Any analytics from a visitor who has not accepted or has rejected.
 
-So the privacy design is not overhead. It is the most defensible thing on the site, and it is treated as a feature.
+If a future request needs one of these, it needs a new explicit owner decision
+and a privacy review. It must not be added as an ordinary dashboard field.
 
----
+## What consent permits
 
-## 2. What is never collected
+After a grant, the site may send:
 
-Not behind consent. Not at all.
+- route views;
+- outbound public app and link activations, with a stable target name and a
+  redacted public destination;
+- CV opens;
+- gallery opens and external media activations;
+- name-audio plays;
+- game starts and completed results;
+- journey stops, case studies, language changes, theme changes and visible
+  errors;
+- active time on a route, as whole seconds from 2 to 3,600;
+- deepest scroll quartile, from 1 to 4;
+- input class (`touch` or `pointer`);
+- referrer host, coarse Cloudflare country and an owner-defined campaign slug.
 
-- Inferred gender, age, ethnicity or any demographic attribute
-- Session replay or full input recording
-- Raw IP addresses in any stored record
-- Cross-site identifiers or third-party cookies
-- Fingerprinting: canvas, audio, font enumeration, WebGL
-- Anything from a viewer who has declined
+Page activity begins at the grant. Earlier navigation, reading time and clicks
+are not buffered and are never sent later.
 
-If a future request asks for one of these, refuse and cite this section.
+`section_dwell` and `scroll_depth` are sent once when a route is left. Hidden
+tab time is excluded. This is aggregate engagement, not a reconstruction of a
+visit.
 
----
+## Identifiers and storage
 
-## 3. Tier 0 — no consent required
+The consent decision is stored at `nocturne.analyticsConsent.v2`. The version
+change deliberately asks visitors who previously accepted the narrower scope
+to decide again. A previous rejection remains rejected.
 
-Aggregate, anonymous, cookieless. No identifier of any kind is stored or set. Nothing is written to the device.
+Interaction beacons may contain a random tab ID held in `sessionStorage`. It
+dies with the tab, is cleared on withdrawal and is never stored by the Worker.
+It is not derived from the visitor.
 
-Collected:
-- Route path viewed
-- Coarse country, resolved **server-side** from the request, IP discarded in the same function invocation and never written to any store
-- Device class only: `touch` or `pointer`
-- Referrer host only, path stripped
-- Campaign slug if the entry was `/r/:campaign`
-- A daily visitor hash — see below
+For a daily unique estimate and abuse control, the Worker briefly receives the
+request IP address and user-agent string from Cloudflare. It computes:
 
-Implementation:
-- A single **Cloudflare Worker** receives the beacon, resolves country, discards IP, increments a counter in Workers KV. No per-visitor row exists.
-- Cloudflare rather than Firebase Functions: the site is hosted on GitHub Pages, which is static-only, so the endpoint needs a separate host. Workers' free tier covers 100k requests a day and needs no billing account. Cloudflare also exposes `request.cf.country` directly, so country resolution needs no IP lookup at all — the IP is never even read.
-- Storage is counters, not events. `{ date, route, country, deviceClass, referrerHost, count }`.
-- Because no per-person record is created and nothing is stored on the device, this sits outside PECR consent and does not constitute personal data processing.
-
-**The IP must never be written, logged, or forwarded.** Verify this in the function's tests.
-
-### Unique visitors without cookies
-
-Unique-visitor counts are achievable without consent, using the rotating-salt approach Plausible and Fathom use.
-
-```
-salt        = random 32 bytes, regenerated every 24h, never persisted after rotation
-visitorHash = sha256(salt + ipAddress + userAgent + siteId)
+```text
+visitorHash = sha256(dailyRandomSalt + IP + userAgent)
 ```
 
-- Computed **server-side inside the function**. The IP is never written anywhere.
-- Only the resulting hash is stored, and only for the current day.
-- **The salt rotates every 24 hours and the old salt is destroyed.** Once it rotates, yesterday's hashes cannot be linked to today's — the identifier is mathematically unlinkable across days.
-- No cookie, no `localStorage`, no `sessionStorage`. Nothing is written to the device, so PECR consent is not engaged.
+The raw inputs are discarded in the same invocation. The hash is not a report
+dimension. It is retained for at most two days and cannot be linked across UTC
+days because the 32-byte salt changes daily. Daily unique counts must never be
+summed and labelled as monthly people.
 
-This yields: unique visitors per day, new versus returning **within a day**, and views-per-visitor. It does not yield a person followed across weeks — which is the trade, and it is the right one. These are the numbers Linktree-style dashboards actually show.
+Aggregate counter rows are retained for 24 months. They hold only:
 
-Cross-day returning-visitor identification requires consent and lives in Tier 1.
+```text
+date, event, route, country, input class, referrer host,
+campaign, target, redacted destination, count, numeric total where applicable
+```
 
-Rotation must be automated (Cloudflare Cron Trigger, daily). A salt that fails to rotate silently turns this into persistent tracking. Add a test asserting the salt's age is under 24 hours, and alert if rotation fails.
+The store contains no event log and no row per visit. Numeric totals exist only
+to compute mean active seconds and mean scroll quartile.
 
----
+## Consent interface
 
-## 4. Tier 1 — explicit opt-in only
+- Accept and reject have equal visual weight.
+- Dismissing a privacy explanation is not consent.
+- The site stays usable if the visitor rejects.
+- The footer exposes the current choice on every public Flutter route and on
+  both standalone HTML pages.
+- Withdrawal stops future collection immediately and clears the tab ID.
+- If transport or storage fails, navigation and visible content continue.
 
-Requires an affirmative action. No pre-ticked boxes, no implied consent from scrolling, no cookie wall.
+The notice must state the operator, fields, exclusions, retention and how to
+change the choice. It must not claim that every visit is counted: only
+consented activity can appear in the dashboard.
 
-Collected once granted:
-- Session-scoped random ID, held in `sessionStorage`, dies with the tab, never linked across visits
-- Time per section
-- Scroll depth
-- Interaction events: map node opened, case study opened, CV downloaded, language changed, theme changed
-- Error reports
+## Reporting rules
 
-Rules:
-- `analytics_client.dart` is a **hard no-op** until consent resolves to granted. Not a queue that flushes later — no data is captured at all before the grant.
-- Withdrawal is as easy as granting, reachable from the footer on every page, and takes effect immediately.
-- The session ID is regenerated per tab. It is never persisted to `localStorage`.
+- Page, country, source, device and campaign shares use page views as their
+  denominator.
+- Clicks count activations. They do not prove that an app was installed, a CV
+  was read, a message was sent or a booking completed.
+- Clicks per 100 views is a frequency, not a conversion rate, and may exceed
+  100 because one view can produce several clicks.
+- Missing days remain missing in graphs; the dashboard must not invent zeros.
+- Old counters without targets are labelled as legacy data, not guessed.
+- Direct navigation and unavailable referrers cannot be distinguished.
+- Daily uniques are estimates per UTC day. There is no weekly or monthly unique
+  visitor total.
+- Empty states, disabled collection and backend errors are visibly different.
 
-### How the two measurements are actually taken
+## Required checks
 
-"Time per section" and "scroll depth" are both reported **once, when the viewer
-leaves a route** — never continuously. A stream of scroll offsets would
-describe reading motion frame by frame, which is much nearer the session replay
-§2 bans outright than it is to a depth metric.
-
-| Field | Shape | Why |
-|---|---|---|
-| Scroll depth | A quartile, 1–4 | Answers "did they reach the work" and nothing else. A pixel offset answers far more than that. |
-| Time on a route | Whole seconds, only if ≥ 2s and ≤ 1h | A glance is not a reading, and a tab left open overnight is not either. Millisecond precision would be a sharper and more distinguishing number than the question deserves. |
-
-The Worker stores a running **total** beside the plain counter, so the console
-divides one by the other for a mean. No per-visit row is ever written.
-
-**The session identifier is never stored server-side.** It exists to
-deduplicate within a tab and is discarded in the same invocation, so no counter
-carries it as a dimension and none can be traced back to one viewer's tab. The
-Worker rejects a `route_view` that carries one at all, because Tier 0 must
-create no per-person record.
-
----
-
-## 5. Consent
-
-**A standard consent banner, shown on first visit.** Not a bespoke data-readout
-panel: a visitor arriving at a portfolio should meet the pattern they already
-know, and an unfamiliar interface asking about data reads as stranger than a
-familiar one, not more trustworthy.
-
-Three options, presented with equal weight:
-
-| Control | Effect |
-|---|---|
-| **Accept all** | Tier 0 counters plus Tier 1 session events |
-| **Essential only** | Tier 0 counters alone. The default posture. |
-| **Reject** | Nothing at all, Tier 0 included |
-
-Rules:
-- Shown once, on first visit, until the viewer chooses. The choice persists so
-  they are never asked twice.
-- No pre-selected option, no pre-ticked boxes, no cookie wall, and no visual
-  weighting of "accept" over the other two. Making accept the amber one would
-  be a dark pattern.
-- Dismissing without choosing is not consent: the banner returns, and until a
-  choice is made only Tier 0 runs.
-
-**`/privacy` is a plain-language notice**, not a dashboard. It states what is
-collected at each tier, what is never collected, who the controller is, the
-lawful basis, retention, and the erasure route — and it carries the same three
-controls so a decision can be changed at any time. Withdrawal is as easy as
-granting and reachable from the footer on every page.
-
-Copy is plain. No legalese, and decline carries the same visual weight as
-accept.
-
-**The detailed field-by-field readout belongs on `/how-it-was-built`** (see
-section 7), where a live table of every field, its tier and its current value
-demonstrates the pipeline to an engineer who came to read about it. On the
-consent path it is a wall of information nobody asked for.
-
-## 6. Campaign links
-
-`/r/:campaign` sets the campaign slug for the session and redirects to `/`.
-
-Used when applying: `/r/deloitte-tech-grad`, `/r/kpmg-cyber`, `/r/bjss-mobile`. The owner then knows which application produced which visit and when.
-
-No personal data. The slug identifies an *application*, not a person. This is first-party, purpose-limited, and needs no consent — it is functionally a UTM parameter the owner controls end to end.
-
-Practically this is the highest-value analytics feature on the site: knowing that the traffic at 16:20 on Tuesday came from a specific application is directly actionable, in a way that no demographic estimate ever would be.
-
----
-
-## 7. Alerts and digest
-
-**Real-time alert.** When a Tier 0 CV download or a session over 90 seconds occurs, the Worker pushes a notification to the owner. Contains: campaign slug, route, country, timestamp. Nothing identifying.
-
-**`/console` — the dashboard.** Gated by a single long random token held in a Worker secret and supplied by the owner at `/console`; not linked from anywhere public, `noindex` in `robots.txt`. Layout in `02-SCREEN-SPECS.md`.
-
-Shows: views and unique visitors over 7/30/90 days with a sparkline, top routes, median session duration, CV downloads, referrer breakdown, country breakdown, consent grant rate, and the campaign table.
-
-The campaign table is the operationally useful part — views and CV downloads per application, with a last-seen timestamp.
-
-Aggregates are read through an authenticated Worker route, never by direct client access to KV. The dashboard route is code-split so its bundle is not shipped to public visitors.
-
-Building this rather than installing Google Analytics is a deliberate choice with two returns: fewer data flows and a cleaner privacy claim, and a genuine interview artifact. "I built a cookieless analytics pipeline with rotating-salt visitor hashing" is a substantially better answer than "I added a tracking script."
-
-**Daily digest, 12:00 Europe/London.** Cloudflare Cron Trigger → Worker → n8n → HTML email via Resend.
-
-Contents: visits by day with a 7-day sparkline, top routes, dwell time on `/work` and case studies, CV downloads by campaign, referrer breakdown, new-versus-returning ratio (aggregate only), consent grant rate, any errors.
-
-**Not a video.** Video rendering is slow, costly, and worse than a well-set HTML table for scanning eight numbers. An email that can be read in fifteen seconds on a phone is the correct format.
-
-**Build the pipeline in n8n.** Scheduler triggers an n8n workflow that queries the counters, formats the digest, and sends it. This is deliberate: it turns "learning n8n" into a running production system the owner can point at, rather than a line on a skills list. It also becomes a legitimate item for `/how-it-was-built`.
-
----
-
-## 8. No third-party analytics
-
-There is no Google Analytics, no Firebase Analytics, no Plausible script, no third-party tag of any kind. Tier 0 counters plus Tier 1 events cover everything the owner actually needs, with fewer data flows and a claim that survives scrutiny.
-
-This is also the point. A portfolio that says "I understand data governance" while loading a third-party tracker is making a claim its own network tab contradicts.
-
-## 9. Test requirements
-
-These are not optional tests.
-
-- Assert zero network calls before consent resolves
-- Assert `analytics_client` no-ops in the ungranted state
-- Assert the Tier 0 Worker never writes an IP to any store or log
-- Assert withdrawal stops collection within the same session
-- Assert the session ID is absent from `localStorage`
-- Assert the consent panel's live readout matches actual current collection state
-- Assert the visitor-hash salt is under 24 hours old
-- Assert the salt is absent from any persisted record after rotation
-- Assert `/console` rejects unauthenticated aggregate reads
-- Assert the `/console` bundle is not served to public routes
+- Zero network calls before consent resolves.
+- No pre-consent buffering.
+- Rejection and withdrawal stop every event in the same session.
+- A broadened scope does not inherit an older grant.
+- Raw IP and user-agent values never enter storage.
+- Concurrent requests cannot lose counter increments or double count one daily
+  visitor.
+- Storage failure rolls back the whole event.
+- Rate limiting does not change accepted counters.
+- Salt rotation breaks cross-day linkage; retention alarms delete expired
+  hashes and counters.
+- Destinations remove private queries, fragments, credentials and contact
+  values.
+- Admin insights require authentication and show exact stored aggregates.
+- Empty charts contain no fabricated points.
+- The public preview and `/console` never report analytics.

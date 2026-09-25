@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simple_icons/simple_icons.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:nocturne/core/analytics/tracked_link.dart';
 
 import 'package:nocturne/app/l10n/app_locale.dart';
 import 'package:nocturne/app/l10n/locale_controller.dart';
@@ -354,7 +354,7 @@ class _BookButtonState extends State<_BookButton> {
             isFocused: _states.value.contains(WidgetState.focused),
             child: InkWell(
               onTap: () => unawaited(
-                launchUrl(widget.url, mode: LaunchMode.externalApplication),
+                launchTrackedUrl(context, widget.url, target: 'booking'),
               ),
               statesController: _states,
               borderRadius: BorderRadius.circular(tokens.controlRadius),

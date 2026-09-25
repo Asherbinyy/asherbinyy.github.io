@@ -35,7 +35,6 @@ class _AnalyticsRouteViewState extends ConsumerState<AnalyticsRouteView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_recordedRoute == widget.route) return;
-    _recordedRoute = widget.route;
     unawaited(_record());
   }
 
@@ -43,13 +42,19 @@ class _AnalyticsRouteViewState extends ConsumerState<AnalyticsRouteView> {
   void didUpdateWidget(AnalyticsRouteView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_recordedRoute == widget.route) return;
-    _recordedRoute = widget.route;
     unawaited(_record());
   }
 
   Future<void> _record() async {
     final client = ref.read(analyticsClientProvider);
-    if (client == null || !mounted) return;
+    if (client == null ||
+        !mounted ||
+        !client.tier.allowsAggregate ||
+        widget.route == '/console' ||
+        _recordedRoute == widget.route) {
+      return;
+    }
+    _recordedRoute = widget.route;
     final mode = context.platform.inputMode;
     try {
       await client.record(
@@ -67,5 +72,10 @@ class _AnalyticsRouteViewState extends ConsumerState<AnalyticsRouteView> {
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) {
+    ref.listen(analyticsClientProvider, (previous, next) {
+      if (next?.tier.allowsAggregate ?? false) unawaited(_record());
+    });
+    return widget.child;
+  }
 }

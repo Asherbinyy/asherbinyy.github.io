@@ -11,10 +11,6 @@ typedef BeaconSender = Future<void> Function(AnalyticsBeacon beacon);
 /// flushes later — no data is captured at all before the grant. That
 /// distinction matters, because a buffer that flushes on consent has still
 /// collected from someone who had not agreed.
-///
-/// Tier 0 is the exception the regulation itself makes: aggregate, cookieless
-/// counters that create no per-person record and write nothing to the device.
-/// An explicit "collect nothing" switches even those off.
 class AnalyticsClient {
   /// The transport is positional so it can stay private: a named parameter
   /// cannot be, and a public transport would let a caller send around the
@@ -41,10 +37,10 @@ class AnalyticsClient {
     return true;
   }
 
-  /// Attaches the tab's session identifier to Tier 1 events, and only those.
+  /// Attaches the tab's session identifier to interactions, and only those.
   ///
   /// Minting it here rather than at the call site is what guarantees no
-  /// identifier can exist for a viewer who has not granted Tier 1: the only
+  /// identifier can exist for a viewer who has not granted analytics: the only
   /// path to `sessionId()` runs through a tier check one line above.
   AnalyticsBeacon _identified(AnalyticsBeacon event) {
     if (!tier.allowsSessionEvents || event.event == AnalyticsEvent.routeView) {
@@ -58,6 +54,8 @@ class AnalyticsClient {
       campaign: event.campaign,
       sessionId: event.sessionId ?? _sessionId(),
       value: event.value,
+      target: event.target,
+      destination: event.destination,
     );
   }
 
@@ -67,8 +65,7 @@ class AnalyticsClient {
   /// Whether [event] may be collected under the current tier.
   bool _permits(AnalyticsEvent event) {
     if (!tier.allowsAggregate) return false;
-    // Route views are the Tier 0 counter. Everything else is a session event
-    // and needs an affirmative grant.
+    // Route views never carry a tab id. Every event still needs a grant.
     if (event == AnalyticsEvent.routeView) return true;
     return tier.allowsSessionEvents;
   }

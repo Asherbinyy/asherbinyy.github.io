@@ -9,7 +9,6 @@ import 'package:nocturne/app/route_title.dart';
 import 'package:nocturne/core/analytics/analytics_route_view.dart';
 import 'package:nocturne/core/analytics/analytics_providers.dart';
 import 'package:nocturne/core/analytics/browser_analytics_context.dart';
-import 'package:nocturne/core/analytics/engagement_reporter.dart';
 import 'package:nocturne/core/platform/app_messenger_host.dart';
 import 'package:nocturne/core/widgets/placeholder_screen.dart';
 import 'package:nocturne/features/console/presentation/console_screen.dart';
@@ -29,6 +28,16 @@ abstract final class AppRouter {
   /// The app state owns and disposes this framework navigation service.
   /// Message hosts live inside route focus scopes so Tab can reach them.
   static GoRouter create({bool preview = false}) => GoRouter(
+    redirect: (context, state) {
+      if (!preview &&
+          ProviderScope.containerOf(
+            context,
+            listen: false,
+          ).read(analyticsIsCollectingProvider)) {
+        captureCampaign(state.uri.queryParameters['utm_campaign']);
+      }
+      return null;
+    },
     routes: [
       for (final route in AppRoute.values)
         GoRoute(
@@ -36,11 +45,7 @@ abstract final class AppRouter {
           name: route.name,
           redirect: route == AppRoute.campaign
               ? (context, state) {
-                  // The campaign slug is only worth capturing if something
-                  // will report it, and capturing it writes to sessionStorage
-                  // — which `/privacy` promises this build does not do. So the
-                  // link keeps working and lands on the station either way,
-                  // and nothing is written while collection is off.
+                  // Keep the public campaign slug in memory for this tab.
                   if (ProviderScope.containerOf(
                     context,
                     listen: false,
@@ -52,18 +57,15 @@ abstract final class AppRouter {
               : null,
           pageBuilder: (context, state) => NoTransitionPage<void>(
             key: state.pageKey,
-            child: EngagementReporter(
+            child: AnalyticsRouteView(
               route: state.uri.path,
-              child: AnalyticsRouteView(
-                route: state.uri.path,
-                child: RouteTitle(
-                  route: route,
-                  child: AppMessengerHost(
-                    child: _sequenced(
-                      route,
-                      slug: state.pathParameters['slug'],
-                      preview: preview,
-                    ),
+              child: RouteTitle(
+                route: route,
+                child: AppMessengerHost(
+                  child: _sequenced(
+                    route,
+                    slug: state.pathParameters['slug'],
+                    preview: preview,
                   ),
                 ),
               ),

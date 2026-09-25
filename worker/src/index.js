@@ -7,7 +7,10 @@ import {
 } from '../contracts/validate.js';
 import {adminPage} from './admin.js';
 import {buildSnapshot, compareRelease} from '../contracts/snapshot.js';
-import {defaultRange, summarise, validDay} from './insights.js';
+import {defaultRange, validDay} from './insights.js';
+import {dashboardReport, previousRange, publicDestination} from './analytics-report.js';
+import {analyticsOperation} from './analytics-store.js';
+export {AnalyticsStore} from './analytics-store.js';
 import {ContentStore, contentBackend} from './store.js';
 
 // The Durable Object has to be reachable from the entry module for the
@@ -40,6 +43,11 @@ const allowedEvents = new Set([
   'scroll_depth',
   'section_dwell',
   'error_reported',
+  'outbound_click',
+  'media_opened',
+  'name_played',
+  'game_started',
+  'game_finished',
 ]);
 
 /// Events that carry a numeric `value`, and the range each one accepts.
@@ -1526,6 +1534,7 @@ function measureImage(bytes) {
 }
 
 async function receiveBeacon(request, env, now, headers) {
+  if (env.ANALYTICS_ENABLED === 'false') return response({error: 'Collection is disabled'}, 503, headers);
   const declared = Number(request.headers.get('content-length') ?? 0);
   if (declared > maximumBodyBytes) {
     return response({error: 'Payload too large'}, 413, headers);
@@ -1544,6 +1553,17 @@ async function receiveBeacon(request, env, now, headers) {
 
   const date = isoDate(now);
   const country = validCountry(request.cf?.country) ?? 'XX';
+  if (env.ANALYTICS_STORE) {
+    if (beacon.consent !== 'granted') return response({error: 'Consent is required'}, 400, headers);
+    try {
+      const recorded = await analyticsOperation(env, {op: 'record', beacon, country,
+        address: request.headers.get('cf-connecting-ip') ?? '',
+        agent: request.headers.get('user-agent') ?? '', now: now.getTime()});
+      return response(recorded, recorded.limited ? 429 : 202, headers);
+    } catch {
+      return response({error: 'Analytics storage is unavailable'}, 503, headers);
+    }
+  }
   const dimensions = [
     date,
     beacon.event,
@@ -1731,11 +1751,15 @@ export function validateBeacon(input) {
     'campaign',
     'sessionId',
     'value',
+    'target',
+    'destination',
+    'consent',
   ]);
   if (Object.keys(input).some((field) => !expected.has(field))) {
     throw new TypeError('Unexpected beacon field');
   }
   if (!allowedEvents.has(input.event)) throw new TypeError('Invalid event');
+  if (input.consent !== undefined && input.consent !== 'granted') throw new TypeError('Invalid consent');
   if (!/^\/[A-Za-z0-9/_-]{0,160}$/.test(input.route)) {
     throw new TypeError('Invalid route');
   }
@@ -1748,28 +1772,34 @@ export function validateBeacon(input) {
   );
   const campaign = optionalMatch(
     input.campaign,
-    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    /^(?=.{1,100}$)[a-z0-9]+(?:-[a-z0-9]+)*$/,
   );
+  const target = optionalMatch(input.target, /^[a-zA-Z0-9:_./-]{1,160}$/);
+  const destination = publicDestination(input.destination);
+  if (input.event === 'outbound_click' && (!target || !destination)) throw new TypeError('Click target is required');
   return {
     event: input.event,
     route: input.route,
     deviceClass: input.deviceClass,
     referrerHost,
     campaign,
+    ...(input.target !== undefined ? {target} : {}),
+    ...(input.destination !== undefined ? {destination} : {}),
+    ...(input.consent !== undefined ? {consent: input.consent} : {}),
     sessionId: validSessionId(input.event, input.sessionId),
     value: validValue(input.event, input.value),
   };
 }
 
-/// A Tier 1 session identifier: 32 hex characters, minted in the browser tab.
+/// A consented session identifier: 32 hex characters, minted in the tab.
 ///
-/// Rejected outright on `route_view`, which is Tier 0 and must never carry an
-/// identifier. A malformed one is an error rather than a silent drop, because
-/// a client sending the wrong shape is a bug worth surfacing.
+/// Rejected outright on `route_view`, which never needs a tab identifier. A
+/// malformed one is an error rather than a silent drop, because a client
+/// sending the wrong shape is a bug worth surfacing.
 function validSessionId(event, value) {
   if (value === null || value === undefined) return null;
   if (event === 'route_view') {
-    throw new TypeError('Tier 0 events carry no session identifier');
+    throw new TypeError('Route views carry no session identifier');
   }
   if (typeof value !== 'string' || !/^[0-9a-f]{32}$/.test(value)) {
     throw new TypeError('Invalid session identifier');
@@ -1954,18 +1984,27 @@ async function readInsights(url, env, now, headers) {
     return response({error: 'That range ends before it starts'}, 400, headers);
   }
 
-  const snapshot = await aggregateSnapshot(env);
+  if (Date.parse(to) - Date.parse(from) >= 366 * 86400000) {
+    return response({error: 'Choose a range of at most 366 days'}, 400, headers);
+  }
+
+  let snapshot;
+  try {
+    snapshot = await aggregateSnapshot(env, {from: previousRange({from, to}).from, to});
+  } catch {
+    return response({error: 'Analytics could not be read. Try again.'}, 503, headers);
+  }
   return response(
     {
-      ...summarise(snapshot.counters, snapshot.totals, {from, to}),
+      ...dashboardReport(snapshot, {from, to}),
       // Stated rather than inferred: this Worker cannot see how the public
       // build was configured, and guessing would be worse than citing.
       configuration: {
-        knownDisabled: true,
-        note:
-          'The published site is built without an analytics endpoint, so it ' +
-          'sends nothing. Until that changes these counters can only grow ' +
-          'from a consented session or a test.',
+        knownDisabled: env.ANALYTICS_ENABLED !== 'true',
+        atomic: Boolean(env.ANALYTICS_STORE),
+        note: env.ANALYTICS_ENABLED === 'true'
+          ? 'Records visits and interactions after visitor consent. Rejected visits and admin previews are excluded.'
+          : 'Collection is disabled. Historical records may still be available.',
         reference: 'docs/06-ANALYTICS-AND-PRIVACY.md',
       },
     },
@@ -1974,22 +2013,26 @@ async function readInsights(url, env, now, headers) {
   );
 }
 
-export async function aggregateSnapshot(env) {
+export async function aggregateSnapshot(env, range = {}) {
+  const recent = env.ANALYTICS_STORE ? await analyticsOperation(env, {op: 'snapshot', ...range}) : {counters: [], totals: []};
   return {
-    counters: await readRows(env, counterPrefix, 'count'),
+    counters: [...await readRows(env, counterPrefix, 'count', range), ...recent.counters],
     // Running sums for the events that carry a number, so the console can
     // divide totals by counts for a mean without any per-visit row existing.
-    totals: await readRows(env, totalPrefix, 'total'),
+    totals: [...await readRows(env, totalPrefix, 'total', range), ...recent.totals],
+    ...(recent.metadata ? {metadata: recent.metadata} : {}),
   };
 }
 
 /// Reads every key under [prefix], splitting its dimensions back out.
-async function readRows(env, prefix, field) {
+async function readRows(env, prefix, field, {from, to} = {}) {
   const rows = [];
   let cursor;
   do {
     const page = await env.ANALYTICS.list({prefix, cursor});
     for (const entry of page.keys) {
+      const date = entry.name.slice(prefix.length, prefix.length + 10);
+      if ((from && date < from) || (to && date > to)) continue;
       rows.push({
         dimensions: entry.name
           .slice(prefix.length)

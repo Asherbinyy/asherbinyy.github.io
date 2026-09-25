@@ -5,6 +5,9 @@ import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nocturne/core/analytics/analytics_consent.dart';
+import 'package:nocturne/core/analytics/engagement_reporter.dart';
 
 import 'package:nocturne/app/app_route.dart';
 import 'package:nocturne/app/chrome/app_footer.dart';
@@ -166,9 +169,18 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
                             child: ChromeScrollScope(
                               progress: _progress,
                               controller: _scroll,
-                              child: isRecruiterMode
-                                  ? const RecruiterView()
-                                  : widget.child,
+                              child: EngagementReporter(
+                                route:
+                                    GoRouter.maybeOf(context)
+                                        ?.routeInformationProvider
+                                        .value
+                                        .uri
+                                        .path ??
+                                    widget.route.path,
+                                child: isRecruiterMode
+                                    ? const RecruiterView()
+                                    : widget.child,
+                              ),
                             ),
                           ),
                         ),
@@ -176,6 +188,7 @@ class _ChromeScaffoldState extends ConsumerState<ChromeScaffold> {
                     ],
                   ),
                 ),
+                if (widget.route != AppRoute.console) const AnalyticsConsent(),
               ],
             ),
           ),

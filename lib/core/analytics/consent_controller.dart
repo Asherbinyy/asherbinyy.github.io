@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:nocturne/app/theme/theme_controller.dart';
 import 'package:nocturne/core/analytics/consent.dart';
+import 'package:nocturne/core/analytics/browser_analytics_context.dart';
 import 'package:nocturne/core/platform/preference_store.dart';
 
 part 'consent_controller.g.dart';
@@ -17,21 +18,25 @@ part 'consent_controller.g.dart';
 @Riverpod(keepAlive: true)
 class ConsentController extends _$ConsentController {
   @override
-  ConsentTier build() => ConsentTier.fromStorage(
-    ref.watch(preferenceStoreProvider).read(PreferenceKey.consent.storageKey),
-  );
+  ConsentTier build() {
+    final store = ref.watch(preferenceStoreProvider);
+    final decision = store.read(PreferenceKey.consent.storageKey);
+    // Broader collection needs a fresh grant. An earlier rejection still holds.
+    if (decision == null && store.read('nocturne.consent') == 'none') {
+      return ConsentTier.none;
+    }
+    return ConsentTier.fromStorage(decision);
+  }
 
   /// Grants session-scoped analytics.
   void grantSession() => _set(ConsentTier.session);
 
-  /// Returns to aggregate-only counting.
-  void withdrawToAggregate() => _set(ConsentTier.aggregate);
-
-  /// Switches everything off for this viewer, Tier 0 included.
+  /// Switches everything off for this viewer.
   void collectNothing() => _set(ConsentTier.none);
 
   void _set(ConsentTier value) {
     state = value;
+    if (!value.allowsSessionEvents) clearAnalyticsSession();
     unawaited(
       ref
           .read(preferenceStoreProvider)

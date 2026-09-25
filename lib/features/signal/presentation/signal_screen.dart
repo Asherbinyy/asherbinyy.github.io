@@ -54,6 +54,7 @@ class _SignalScreenState extends ConsumerState<SignalScreen> {
       AnalyticsEvent.mapNodeOpened,
       route: AppRoute.journey.path,
       inputMode: context.platform.inputMode,
+      target: 'journey:${roles[index].id}',
     );
     // Inline details need a wide pointer layout. Other layouts use the
     // platform's secondary surface so a narrow desktop never loses details.

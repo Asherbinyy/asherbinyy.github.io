@@ -9,12 +9,13 @@ import 'package:nocturne/core/analytics/analytics_client.dart';
 import 'package:nocturne/core/analytics/analytics_providers.dart';
 import 'package:nocturne/core/analytics/browser_analytics_context.dart';
 import 'package:nocturne/core/analytics/events.dart';
+import 'package:nocturne/core/analytics/consent_controller.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 
 /// Reports how far down a route the viewer read, and how long they stayed.
 ///
-/// Both are Tier 1 fields from `06-ANALYTICS-AND-PRIVACY.md` §4 — "scroll
+/// Both are consented fields from `06-ANALYTICS-AND-PRIVACY.md` — "scroll
 /// depth" and "time per section", where a section on this site is a route.
 ///
 /// Both are reported **once, on leaving**, not continuously:
@@ -27,7 +28,7 @@ import 'package:nocturne/core/platform/platform_service.dart';
 ///   sharper number than the question deserves and a more distinguishing one
 ///   than a viewer should have to carry.
 ///
-/// Nothing is captured at all until consent reaches Tier 1: `recordInteraction`
+/// Nothing is captured at all until consent is granted: `recordInteraction`
 /// resolves the client, and the client is a hard no-op below that tier.
 class EngagementReporter extends ConsumerStatefulWidget {
   /// [route] is the path this reporter is measuring.
@@ -47,12 +48,15 @@ class EngagementReporter extends ConsumerStatefulWidget {
   ConsumerState<EngagementReporter> createState() => _EngagementReporterState();
 }
 
-class _EngagementReporterState extends ConsumerState<EngagementReporter> {
+class _EngagementReporterState extends ConsumerState<EngagementReporter>
+    with WidgetsBindingObserver {
   /// Deepest quartile reached, 0 to 4.
   int _deepest = 0;
 
   /// When this route became visible.
-  DateTime? _arrived;
+  final Stopwatch _active = Stopwatch();
+  bool _consented = false;
+  bool _foreground = true;
 
   ValueNotifier<double>? _progress;
   InputMode? _inputMode;
@@ -65,7 +69,40 @@ class _EngagementReporterState extends ConsumerState<EngagementReporter> {
   @override
   void initState() {
     super.initState();
-    _arrived = DateTime.now();
+    WidgetsBinding.instance.addObserver(this);
+    ref.listenManual(consentControllerProvider, (previous, next) {
+      _consented = next.allowsSessionEvents;
+      if (!_consented) {
+        _active
+          ..stop()
+          ..reset();
+        _deepest = 0;
+      } else if (_foreground) {
+        _active.start();
+      }
+    }, fireImmediately: true);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _foreground = state == AppLifecycleState.resumed;
+    if (_foreground && _consented) {
+      _active.start();
+    } else {
+      _active.stop();
+    }
+  }
+
+  @override
+  void didUpdateWidget(EngagementReporter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.route == widget.route) return;
+    _report(oldWidget.route);
+    _active
+      ..stop()
+      ..reset();
+    _deepest = 0;
+    if (_consented && _foreground) _active.start();
   }
 
   @override
@@ -84,23 +121,25 @@ class _EngagementReporterState extends ConsumerState<EngagementReporter> {
   }
 
   void _onScroll() {
+    if (!_consented || !_foreground) return;
     final progress = _progress?.value ?? 0;
-    final quartile = (progress.clamp(0.0, 1.0) * 4).round();
+    final quartile = (progress.clamp(0.0, 1.0) * 4).floor();
     if (quartile > _deepest) _deepest = quartile;
   }
 
   @override
   void dispose() {
     _progress?.removeListener(_onScroll);
-    _report();
+    WidgetsBinding.instance.removeObserver(this);
+    _active.stop();
+    _report(widget.route);
     super.dispose();
   }
 
   /// Emits both measurements as the route goes away.
-  void _report() {
-    final arrived = _arrived;
+  void _report(String route) {
     final inputMode = _inputMode;
-    if (arrived == null || inputMode == null) return;
+    if (!_consented || inputMode == null || route == '/console') return;
 
     // The container can already be gone: when the whole app is torn down it
     // disposes before its widgets do, and reading a disposed container throws.
@@ -114,14 +153,14 @@ class _EngagementReporterState extends ConsumerState<EngagementReporter> {
     }
     if (client == null) return;
 
-    final seconds = DateTime.now().difference(arrived).inSeconds;
+    final seconds = _active.elapsed.inSeconds.clamp(0, 3600);
     // A glance is not a reading. Under two seconds says nothing worth storing,
     // and storing it anyway would make brief visits individually distinctive.
     if (seconds >= 2) {
-      _send(client, AnalyticsEvent.sectionDwell, inputMode, seconds);
+      _send(client, AnalyticsEvent.sectionDwell, inputMode, seconds, route);
     }
     if (_deepest > 0) {
-      _send(client, AnalyticsEvent.scrollDepth, inputMode, _deepest);
+      _send(client, AnalyticsEvent.scrollDepth, inputMode, _deepest, route);
     }
   }
 
@@ -132,13 +171,14 @@ class _EngagementReporterState extends ConsumerState<EngagementReporter> {
     AnalyticsEvent event,
     InputMode inputMode,
     int value,
+    String route,
   ) {
     unawaited(
       client
           .record(
             beacon(
               event: event,
-              route: widget.route,
+              route: route,
               deviceClass: inputMode.name,
               referrerHost: currentReferrerHost(),
               campaign: currentCampaign(),

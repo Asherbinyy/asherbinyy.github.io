@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:simple_icons/simple_icons.dart';
 
-import 'package:url_launcher/url_launcher.dart';
+import 'package:nocturne/core/analytics/tracked_link.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
@@ -268,9 +268,7 @@ class _ContactLinkState extends State<_ContactLink> {
             child: _TileTip(
               name: widget.isTile ? widget.name : null,
               child: InkWell(
-                onTap: () => unawaited(
-                  launchUrl(widget.url, mode: LaunchMode.externalApplication),
-                ),
+                onTap: () => unawaited(launchTrackedUrl(context, widget.url)),
                 statesController: _states,
                 borderRadius: BorderRadius.circular(tokens.controlRadius),
                 hoverColor: Colors.transparent,
@@ -463,7 +461,7 @@ class _BookingCardState extends State<_BookingCard> {
             isFocused: _states.value.contains(WidgetState.focused),
             child: InkWell(
               onTap: () => unawaited(
-                launchUrl(widget.url, mode: LaunchMode.externalApplication),
+                launchTrackedUrl(context, widget.url, target: 'booking'),
               ),
               statesController: _states,
               borderRadius: BorderRadius.circular(tokens.controlRadius),

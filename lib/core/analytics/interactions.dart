@@ -7,7 +7,7 @@ import 'package:nocturne/core/analytics/browser_analytics_context.dart';
 import 'package:nocturne/core/analytics/events.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 
-/// The one way a widget records a Tier 1 interaction.
+/// The one way a widget records a consented interaction.
 ///
 /// Every emission point on the site goes through here so the consent check,
 /// the failure swallow and the device-class lookup live in one place rather
@@ -19,16 +19,18 @@ import 'package:nocturne/core/platform/platform_service.dart';
 extension RecordInteraction on WidgetRef {
   /// Records [event] against [route], with an optional [value].
   ///
-  /// Returns without doing anything when consent has not reached Tier 1,
+  /// Returns without doing anything when analytics consent is absent,
   /// because `AnalyticsClient` is a hard no-op there — not a queue.
   void recordInteraction(
     AnalyticsEvent event, {
     required String route,
     required InputMode inputMode,
     int? value,
+    String? target,
+    String? destination,
   }) {
     final client = read(analyticsClientProvider);
-    if (client == null) return;
+    if (client == null || !client.tier.allowsSessionEvents) return;
 
     unawaited(
       client
@@ -40,6 +42,8 @@ extension RecordInteraction on WidgetRef {
               referrerHost: currentReferrerHost(),
               campaign: currentCampaign(),
               value: value,
+              target: target,
+              destination: destination,
             ),
           )
           .catchError((Object _) => false),

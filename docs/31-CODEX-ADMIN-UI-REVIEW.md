@@ -48,7 +48,7 @@ fvm flutter build web --wasm --no-web-resources-cdn \
 
 | Destination | Working surface | Remaining limit |
 | --- | --- | --- |
-| Overview | Existing insights, date ranges, charts/tables for recorded data, honest disabled/empty state | No invented traffic; no separate daily page-view or exact-click series is supplied |
+| Overview | Four analytics reports with date ranges, daily page-view/click trends, exact public link targets, pages, engagement, audience and CSV | Only consented activity; no historical click destinations can be reconstructed |
 | Home | Introduction, figures, countries, skills/tools and shared career | Owner provenance required for claims |
 | Journey | Stops, chronology and project references | No new stop/media types invented |
 | Work | Projects, store links, screenshots and galleries | Bundle has no supplied project screenshots/gallery entries |
