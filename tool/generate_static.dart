@@ -249,14 +249,9 @@ ul{list-style:none;padding:0}
 .highlight{color:var(--text-secondary);font-size:14px;padding:4px 0}
 .skills-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .skills-list span{font-size:13px;color:var(--instrument-mid);border:1px solid var(--hairline);border-radius:2px;padding:2px 8px}
-.analytics-choice{margin-top:16px;padding:16px;border:1px solid var(--hairline)}
-.analytics-choice[hidden]{display:none}
-.analytics-choice h2{margin-top:0}
-.analytics-choice p{margin:8px 0}
 button,summary{font:inherit;color:var(--beacon);cursor:pointer}
 button{background:transparent;border:1px solid var(--hairline-strong);padding:8px 16px;margin:8px 12px 8px 0}
 button:focus-visible,summary:focus-visible{outline:2px solid var(--beacon);outline-offset:2px}
-@media print{.analytics-choice,footer button{display:none}}
 footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--hairline);font-size:13px;color:var(--text-muted)}
 @media(max-width:600px){body{padding:20px 16px 48px}.role-header{flex-direction:column}.app-grid{grid-template-columns:1fr}}
 ''';

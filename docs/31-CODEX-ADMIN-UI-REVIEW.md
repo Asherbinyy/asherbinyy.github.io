@@ -48,7 +48,7 @@ fvm flutter build web --wasm --no-web-resources-cdn \
 
 | Destination | Working surface | Remaining limit |
 | --- | --- | --- |
-| Overview | Four analytics reports with date ranges, daily page-view/click trends, exact public link targets, pages, engagement, audience and CSV | Only consented activity; no historical click destinations can be reconstructed |
+| Overview | Four analytics reports with date ranges, daily page-view/click trends, exact public link targets, pages, engagement, audience and CSV | Cookieless activity from this release onward; no historical click destinations can be reconstructed |
 | Home | Introduction, figures, countries, skills/tools and shared career | Owner provenance required for claims |
 | Journey | Stops, chronology and project references | No new stop/media types invented |
 | Work | Projects, store links, screenshots and galleries | Bundle has no supplied project screenshots/gallery entries |
@@ -74,7 +74,8 @@ reads, and resolve uploaded media through the admin's relay.
 The preview uses the bundled Flutter runtime and a local copy of its flag
 fallback font. The browser workflow checks that the current preview makes no
 third-party requests and writes no cookies, local storage or session storage.
-The public site's ordinary consent flow is unchanged.
+The public site now starts cookieless analytics without a consent panel or
+browser identifier; previews remain excluded.
 
 The adapter navigates to pages, not exact individual fields within a page.
 The CV/brief editor previews the shared Home data; static-document rendering

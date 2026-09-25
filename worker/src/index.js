@@ -1554,7 +1554,6 @@ async function receiveBeacon(request, env, now, headers) {
   const date = isoDate(now);
   const country = validCountry(request.cf?.country) ?? 'XX';
   if (env.ANALYTICS_STORE) {
-    if (beacon.consent !== 'granted') return response({error: 'Consent is required'}, 400, headers);
     try {
       const recorded = await analyticsOperation(env, {op: 'record', beacon, country,
         address: request.headers.get('cf-connecting-ip') ?? '',
@@ -1791,11 +1790,9 @@ export function validateBeacon(input) {
   };
 }
 
-/// A consented session identifier: 32 hex characters, minted in the tab.
+/// A legacy session identifier accepted during the client rollout.
 ///
-/// Rejected outright on `route_view`, which never needs a tab identifier. A
-/// malformed one is an error rather than a silent drop, because a client
-/// sending the wrong shape is a bug worth surfacing.
+/// New clients do not send it and the analytics store never persists it.
 function validSessionId(event, value) {
   if (value === null || value === undefined) return null;
   if (event === 'route_view') {
@@ -2003,7 +2000,7 @@ async function readInsights(url, env, now, headers) {
         knownDisabled: env.ANALYTICS_ENABLED !== 'true',
         atomic: Boolean(env.ANALYTICS_STORE),
         note: env.ANALYTICS_ENABLED === 'true'
-          ? 'Records visits and interactions after visitor consent. Rejected visits and admin previews are excluded.'
+          ? 'Records cookieless visits and interactions. Admin previews are excluded.'
           : 'Collection is disabled. Historical records may still be available.',
         reference: 'docs/06-ANALYTICS-AND-PRIVACY.md',
       },

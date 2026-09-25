@@ -8,12 +8,12 @@ import {admin, environment, siteOrigin} from './support.js';
 
 const time = Date.parse('2026-09-24T12:00:00Z');
 const base = {op: 'record', country: 'GB', address: '192.0.2.1', agent: 'Test browser', now: time,
-  beacon: {event: 'route_view', route: '/work', deviceClass: 'pointer', consent: 'granted'}};
+  beacon: {event: 'route_view', route: '/work', deviceClass: 'pointer'}};
 function setup() { return environment({ANALYTICS_STORE: durableNamespace(AnalyticsStore), ANALYTICS_ENABLED: 'true'}); }
 const record = (env, input = {}) => analyticsOperation(env, {...base, ...input});
 const read = (env) => analyticsOperation(env, {op: 'snapshot'});
 
-test('concurrent consented visits cannot lose a view or double count a daily visitor', async () => {
+test('concurrent visits cannot lose a view or double count a daily visitor', async () => {
   const env = setup();
   await Promise.all(Array.from({length: 30}, () => record(env)));
   const rows = (await read(env)).counters;
@@ -75,15 +75,14 @@ test('snapshot pagination returns every counter and bounds the date range', asyn
   assert.equal(result.counters.length,1005);
 });
 
-test('new pipeline rejects a missing consent flag before writing', async () => {
+test('new pipeline records without a consent field', async () => {
   const env = setup();
-  const {consent, ...beacon} = base.beacon;
-  const request = new Request('https://worker.example/v1/beacon',{method:'POST',headers:{origin:siteOrigin},body:JSON.stringify(beacon)});
-  assert.equal((await handleRequest(request,env,new Date(time))).status,400);
-  assert.deepEqual((await read(env)).counters,[]);
+  const request = new Request('https://worker.example/v1/beacon',{method:'POST',headers:{origin:siteOrigin},body:JSON.stringify(base.beacon)});
+  assert.equal((await handleRequest(request,env,new Date(time))).status,202);
+  assert.equal((await read(env)).counters[0].count,1);
 });
 
-test('public endpoint records and dashboard reports a real consented click', async () => {
+test('public endpoint records and dashboard reports a real click', async () => {
   const env = setup();
   const beacon = {...base.beacon,event:'outbound_click',target:'contact:linkedin',destination:'https://linkedin.com/in/example?private=discard#secret'};
   const request = new Request('https://worker.example/v1/beacon',{method:'POST',headers:{origin:siteOrigin},body:JSON.stringify(beacon)});

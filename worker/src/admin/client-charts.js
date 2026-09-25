@@ -12,7 +12,7 @@ function seriesChart(title, entries, description, wide) {
   group.append(node('h3', null, title), node('p', 'note', description));
   if (!entries.length) {
     const empty = node('div', 'chartEmpty');
-    empty.append(node('strong', null, 'No recorded data'), node('p', null, 'A chart will appear when consented activity is recorded in this range.'));
+    empty.append(node('strong', null, 'No recorded data'), node('p', null, 'A chart will appear when activity is recorded in this range.'));
     group.append(empty);
     return group;
   }

@@ -49,7 +49,6 @@ class _AnalyticsRouteViewState extends ConsumerState<AnalyticsRouteView> {
     final client = ref.read(analyticsClientProvider);
     if (client == null ||
         !mounted ||
-        !client.tier.allowsAggregate ||
         widget.route == '/console' ||
         _recordedRoute == widget.route) {
       return;
@@ -72,10 +71,5 @@ class _AnalyticsRouteViewState extends ConsumerState<AnalyticsRouteView> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    ref.listen(analyticsClientProvider, (previous, next) {
-      if (next?.tier.allowsAggregate ?? false) unawaited(_record());
-    });
-    return widget.child;
-  }
+  Widget build(BuildContext context) => widget.child;
 }

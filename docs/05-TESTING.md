@@ -1,6 +1,6 @@
 # Testing — NOCTURNE
 
-> Current verification, 2026-09-11: `/how-it-was-built` and the public consent/privacy UI were removed; don't recreate them to satisfy historical examples below. Keep tests of actual behavior and privacy boundaries. Visual acceptance also requires real-browser captures and interaction checks with real fonts. Phone viewport emulation is not physical-device testing. The full release matrix is [F9](19-FLUTTER-ENHANCEMENT-PLAN.md#f9--device-and-release-evidence).
+> Current verification, 2026-09-25: analytics is cookieless and default-on; the public consent/privacy UI is removed. Do not recreate it to satisfy historical examples below. Keep tests of actual behavior and privacy boundaries. Visual acceptance also requires real-browser captures and interaction checks with real fonts. Phone viewport emulation is not physical-device testing. The full release matrix is [F9](19-FLUTTER-ENHANCEMENT-PLAN.md#f9--device-and-release-evidence).
 
 The site's credibility partly rests on being well-built. `/how-it-was-built` will show coverage and CI status publicly, so the tests need to be real.
 
@@ -15,7 +15,7 @@ The site's credibility partly rests on being well-built. `/how-it-was-built` wil
 | Controllers / providers | 85% | |
 | Painters (trace, map, projection) | 80% | Geometry is unit-testable; rendering is golden-tested |
 | Widgets | Critical paths | Not every widget |
-| Privacy & consent | **100%** | Non-negotiable |
+| Privacy & analytics | **100%** | Non-negotiable |
 | Overall | ≥ 80% | Enforced in CI |
 
 ---
@@ -24,11 +24,11 @@ The site's credibility partly rests on being well-built. `/how-it-was-built` wil
 
 **Unit.** Models, JSON parsing, date formatting, `projection.dart` lat/lon conversion, trace amplitude maths, RSS parsing.
 
-**Widget.** Consent panel state transitions, theme and language switching, Recruiter Mode toggle, map node selection, error and empty states.
+**Widget.** Default analytics startup, theme and language switching, Recruiter Mode toggle, map node selection, error and empty states.
 
-**Golden (alchemist).** Both themes × three breakpoints × both text directions for: hero, instrument panel, work card, transmission panel, consent panel, Recruiter Mode. Goldens catch the exact class of regression that matters most here — visual drift.
+**Golden (alchemist).** Both themes × three breakpoints × both text directions for: hero, instrument panel, work card, transmission panel and Recruiter Mode. Goldens catch the exact class of regression that matters most here — visual drift.
 
-**Integration.** Cold load → acquisition sequence → interactive. Route navigation and deep links. Consent grant → withdraw → verify collection stopped.
+**Integration.** Cold load → acquisition sequence → interactive. Route navigation and deep links. Configured build → route and interaction beacons; preview and absent-endpoint builds → none.
 
 **Manual, before every merge to `main`.** Automated tests run in a synthetic environment and will not catch these:
 - Load the deployed site on a real iPhone and a real Android phone, in Safari and Chrome. Not a resized desktop window — the address bar collapsing on scroll and safe-area insets behave differently.
@@ -41,12 +41,12 @@ The site's credibility partly rests on being well-built. `/how-it-was-built` wil
 
 These are specified in `06-ANALYTICS-AND-PRIVACY.md` §9 and are restated here because they must never be deleted:
 
-1. Zero network calls occur before consent resolves.
-2. `analytics_client` no-ops entirely in the ungranted state — it does not buffer.
+1. A configured public client records immediately and shows no consent panel.
+2. No analytics cookie, preference or browser identifier is created.
 3. The Worker never writes or logs a raw IP address or user-agent string.
-4. Consent withdrawal halts collection within the same session.
-5. No session identifier is ever written to `localStorage`.
-6. The consent panel's live readout matches actual collection state.
+4. Preview, `/console` and absent-endpoint builds send nothing.
+5. Destinations exclude contact values, credentials, private queries and fragments.
+6. Dashboard empty, disabled and failure states remain distinguishable.
 
 A failing privacy test blocks merge unconditionally.
 

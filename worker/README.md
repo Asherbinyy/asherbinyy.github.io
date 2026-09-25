@@ -6,8 +6,8 @@ deduplication hash. Raw IP addresses and user-agent values are used only as
 inputs to SHA-256 inside one request invocation and are never written or logged.
 
 Current-state note (2026-09-25): this Worker also serves content, media, the
-game and the admin panel. The release enables first-party analytics only after
-the visitor grants consent. The atomic analytics store and dashboard operations
+game and the admin panel. The release enables cookieless first-party analytics
+without a prompt or browser identifier. The atomic store and dashboard operations
 are documented in
 [`docs/32-ANALYTICS-DASHBOARD-RUNBOOK.md`](../docs/32-ANALYTICS-DASHBOARD-RUNBOOK.md).
 Inspect existing bindings before creating any namespace.
@@ -254,7 +254,7 @@ the console UI rather than copied into source or logs.
 
 A synthetic accepted beacon writes production counters. Do not use one as a
 routine health check without explicit authorization; use local contract tests
-and a consented browser session for positive event verification. Document any
+and an ordinary public browser visit for positive event verification. Document any
 production test data and its cleanup separately from real visitor metrics.
 
 ## The climb's leaderboard

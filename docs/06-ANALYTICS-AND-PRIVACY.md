@@ -1,21 +1,20 @@
 # Analytics and privacy — NOCTURNE
 
-This document is the binding collection contract when analytics is enabled.
-Implementation and operations are recorded in
+This document is the binding collection contract. Implementation and operations
+are recorded in
 [`32-ANALYTICS-DASHBOARD-RUNBOOK.md`](32-ANALYTICS-DASHBOARD-RUNBOOK.md).
 
 ## Current release contract
 
-Analytics is first party and opt in. The public build has a single endpoint,
-`https://nocturne-analytics.asherbinyy.workers.dev/v1/beacon`. Nothing is
-measured or sent until the visitor chooses **Allow analytics**. Rejecting sends
-nothing. The choice can be changed from **Consent** in the footer.
+The public build sends bounded first-party analytics to
+`https://nocturne-analytics.asherbinyy.workers.dev/v1/beacon` automatically.
+There is no consent panel, cookie, analytics preference, browser identifier,
+`localStorage` value or analytics `sessionStorage` value. Admin previews and
+`/console` never report activity.
 
-The CV and brief are standalone HTML pages, but follow the same rule, storage
-key and Worker contract as the Flutter site. Admin previews never collect.
-
-The owner is the data controller. The service runs on Cloudflare. There is no
-Google Analytics, Firebase Analytics, advertising pixel or third-party tag.
+The CV and brief are standalone HTML pages and use the same Worker contract.
+The owner is the data controller and the service runs on Cloudflare. There is
+no Google Analytics, Firebase Analytics, advertising pixel or third-party tag.
 
 ## Never collect
 
@@ -23,16 +22,17 @@ Google Analytics, Firebase Analytics, advertising pixel or third-party tag.
 - URL query strings or fragments, except a public Google Play application ID.
 - Referrer paths or referrer query strings. Only the host may be counted.
 - Raw IP addresses or user-agent strings in storage or logs.
+- Cookies, browser analytics identifiers or per-event visitor records.
 - Session replay, pointer paths, keystrokes or continuous scroll positions.
-- Demographic inference, fingerprinting or cross-site identifiers.
-- Any analytics from a visitor who has not accepted or has rejected.
+- Demographic inference, fingerprint profiles or cross-site identifiers.
 
-If a future request needs one of these, it needs a new explicit owner decision
-and a privacy review. It must not be added as an ordinary dashboard field.
+If a future request needs one of these, it requires a new explicit owner
+decision and privacy review. It must not be added as an ordinary dashboard
+field.
 
-## What consent permits
+## Recorded fields
 
-After a grant, the site may send:
+The site may send:
 
 - route views;
 - outbound public app and link activations, with a stable target name and a
@@ -48,22 +48,11 @@ After a grant, the site may send:
 - input class (`touch` or `pointer`);
 - referrer host, coarse Cloudflare country and an owner-defined campaign slug.
 
-Page activity begins at the grant. Earlier navigation, reading time and clicks
-are not buffered and are never sent later.
-
 `section_dwell` and `scroll_depth` are sent once when a route is left. Hidden
 tab time is excluded. This is aggregate engagement, not a reconstruction of a
 visit.
 
-## Identifiers and storage
-
-The consent decision is stored at `nocturne.analyticsConsent.v2`. The version
-change deliberately asks visitors who previously accepted the narrower scope
-to decide again. A previous rejection remains rejected.
-
-Interaction beacons may contain a random tab ID held in `sessionStorage`. It
-dies with the tab, is cleared on withdrawal and is never stored by the Worker.
-It is not derived from the visitor.
+## Daily uniqueness and storage
 
 For a daily unique estimate and abuse control, the Worker briefly receives the
 request IP address and user-agent string from Cloudflare. It computes:
@@ -73,7 +62,7 @@ visitorHash = sha256(dailyRandomSalt + IP + userAgent)
 ```
 
 The raw inputs are discarded in the same invocation. The hash is not a report
-dimension. It is retained for at most two days and cannot be linked across UTC
+dimension. It is retained for at most two UTC dates and cannot be linked across
 days because the 32-byte salt changes daily. Daily unique counts must never be
 summed and labelled as monthly people.
 
@@ -86,20 +75,6 @@ campaign, target, redacted destination, count, numeric total where applicable
 
 The store contains no event log and no row per visit. Numeric totals exist only
 to compute mean active seconds and mean scroll quartile.
-
-## Consent interface
-
-- Accept and reject have equal visual weight.
-- Dismissing a privacy explanation is not consent.
-- The site stays usable if the visitor rejects.
-- The footer exposes the current choice on every public Flutter route and on
-  both standalone HTML pages.
-- Withdrawal stops future collection immediately and clears the tab ID.
-- If transport or storage fails, navigation and visible content continue.
-
-The notice must state the operator, fields, exclusions, retention and how to
-change the choice. It must not claim that every visit is counted: only
-consented activity can appear in the dashboard.
 
 ## Reporting rules
 
@@ -118,10 +93,9 @@ consented activity can appear in the dashboard.
 
 ## Required checks
 
-- Zero network calls before consent resolves.
-- No pre-consent buffering.
-- Rejection and withdrawal stop every event in the same session.
-- A broadened scope does not inherit an older grant.
+- No consent or analytics preference UI appears on Flutter, CV or brief.
+- A configured production client records immediately.
+- No analytics cookie or browser identifier is created.
 - Raw IP and user-agent values never enter storage.
 - Concurrent requests cannot lose counter increments or double count one daily
   visitor.
