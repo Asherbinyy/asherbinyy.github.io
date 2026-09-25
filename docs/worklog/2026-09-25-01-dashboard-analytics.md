@@ -49,6 +49,13 @@ release process for a different engineer or AI to operate it safely.
   the public client. The live admin returned the new four-report bundle with
   `noindex`; `https://sherbini.uk` passed preflight and the retired GitHub Pages
   origin was refused.
+- Merged PR #55 as `5dc295fcf8226c8cf06ba24d07fe9818b52fbd41`.
+  Main CI run `36120663511` passed verify, macOS goldens, coverage, Worker tests,
+  the production WASM/static build, Lighthouse and GitHub Pages deployment.
+- Confirmed the custom domain served that Pages build and the generated CV
+  referenced the new first-party endpoint. A clean profile showed both consent
+  choices, stored nothing and sent no beacon before a choice; rejection still
+  produced no beacon on either the static CV or Flutter home.
 
 ## Files touched
 - `.github/workflows/ci.yml` — modified — supply the analytics endpoint to the
@@ -230,6 +237,13 @@ Additional verification:
   HTTP 200 with the new report labels, site-origin preflight 204 with
   `Access-Control-Allow-Origin: https://sherbini.uk`, and old Pages-origin
   preflight 403. No production beacon was posted.
+- Main CI/Pages — pass; run `36120663511`, including verify, goldens, coverage,
+  Worker tests, WASM/static build, Lighthouse and Pages deployment.
+- Live custom domain — pass; home, CV and static analytics script returned 200
+  from the September 25 Pages artifact. Seven clean-profile consent/network
+  assertions passed. The broad console assertion was discarded because the
+  test driver explicitly disables GPU and therefore makes the existing Three.js
+  renderer log WebGL-context errors; there was no unhandled-script exception.
 
 ## Known issues left open
 - A real physical-phone and screen-reader pass remains owner verification.
@@ -240,6 +254,6 @@ Additional verification:
   keepalive request.
 
 ## Next
-Push and merge the tested branch so Pages enables the client against the
-already-deployed Worker contract, then verify the Pages deployment without
-inserting a synthetic production event.
+Use a real owner-consented public visit to confirm the first production event
+appears in all relevant admin reports, then complete the physical-phone and
+screen-reader review. Do not seed or estimate production activity.
