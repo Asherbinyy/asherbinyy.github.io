@@ -45,6 +45,10 @@ release process for a different engineer or AI to operate it safely.
   release, authentication and failure-recovery handoff.
 - Used only in-memory/local data for test fixtures. No synthetic production
   beacon was sent and no owner content or content schema was changed.
+- Deployed Worker version `07492232-ab68-4b20-a81b-e32d4f295aad` before enabling
+  the public client. The live admin returned the new four-report bundle with
+  `noindex`; `https://sherbini.uk` passed preflight and the retired GitHub Pages
+  origin was refused.
 
 ## Files touched
 - `.github/workflows/ci.yml` — modified — supply the analytics endpoint to the
@@ -222,6 +226,10 @@ Additional verification:
 - Wrangler bundle dry run — pass; `ANALYTICS_STORE` and all existing bindings
   resolved.
 - `git diff --check` and JavaScript syntax checks — pass.
+- Live Worker — pass; version `07492232-ab68-4b20-a81b-e32d4f295aad`, admin
+  HTTP 200 with the new report labels, site-origin preflight 204 with
+  `Access-Control-Allow-Origin: https://sherbini.uk`, and old Pages-origin
+  preflight 403. No production beacon was posted.
 
 ## Known issues left open
 - A real physical-phone and screen-reader pass remains owner verification.
@@ -232,6 +240,6 @@ Additional verification:
   keepalive request.
 
 ## Next
-Deploy the tested Worker revision first, merge the branch so Pages enables the
-client against that contract, then verify deployment health without inserting a
-synthetic production event.
+Push and merge the tested branch so Pages enables the client against the
+already-deployed Worker contract, then verify the Pages deployment without
+inserting a synthetic production event.
