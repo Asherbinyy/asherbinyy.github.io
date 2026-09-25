@@ -10,8 +10,8 @@
 > `web/CNAME` and `wrangler.toml`'s `SITE_ORIGIN` were updated to match.
 > The Worker was redeployed on September 16 with `SITE_ORIGIN=https://sherbini.uk`.
 > Live leaderboard and beacon preflight requests now pass the origin gate;
-> both GitHub Pages origins are refused. The September 25 analytics release
-> enables collection only after a fresh visitor grant; see
+> both GitHub Pages origins are refused. The September 25 analytics release is
+> cookieless and default-on, with no prompt or browser identifier; see
 > `32-ANALYTICS-DASHBOARD-RUNBOOK.md`.
 > The game bindings and secret are active, and real replay alarms were verified
 > without adding a public score. A completed ranked climb on the owner's phone
@@ -90,10 +90,10 @@ Evidence: [audit](18-PROJECT-AUDIT.md). Historical issue numbers remain searchab
 | DEC-2 | Subscribers cancelled; daily digest cancellation ambiguous in handover | Keep digest dormant; no account setup or email until clarified |
 | DEC-3 | Real phone/3D asset access may become necessary | Ask only for the specific missing device/asset/service after preparing a reviewable slice |
 
-Production analytics still needs one owner-consented public visit after the
-Worker and Pages releases. Do not send a synthetic production beacon: use the
-local harness for fixtures, then verify the real dashboard with that consented
-visit so production counts remain honest.
+Production analytics needs one ordinary public visit after the Worker and Pages
+release to confirm the live dashboard. Do not send a synthetic production
+beacon: use the local harness for fixtures, then verify normal traffic so
+production counts remain honest.
 
 ## Closed or corrected by this audit
 

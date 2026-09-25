@@ -62,7 +62,7 @@ void main() {
             find.text(l10n.heroReadTheCv).evaluate().length,
         1,
       );
-      // Scoped to the hero: the consent banner carries three of its own.
+      // Scoped to the hero so future page controls do not change this count.
       expect(
         find.descendant(
           of: find.byType(HeroContent),
@@ -78,8 +78,7 @@ void main() {
       await pumpStation(tester, breakpoint: ChromeBreakpoint.expanded);
       final l10n = tester.element(find.byType(ChromeScaffold)).l10n;
 
-      // With the stat panels present the actions sit just below the fold at
-      // this breakpoint while the consent banner still holds its row, so the
+      // With the stat panels present the actions may sit below the fold, so the
       // button is scrolled into view rather than tapped at its laid-out offset.
       await tester.ensureVisible(find.text(l10n.heroSeeTheWork));
       await pumpFrames(tester);

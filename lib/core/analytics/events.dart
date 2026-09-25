@@ -1,7 +1,7 @@
 /// The events this site can record, and nothing else.
 ///
 /// A closed set rather than free-form strings: `06-ANALYTICS-AND-PRIVACY.md`
-/// The privacy contract lists exactly what consent may capture. An enum makes
+/// The privacy contract lists exactly what may be captured. An enum makes
 /// adding a thing outside that list a code change somebody has to justify.
 enum AnalyticsEvent {
   /// A route was viewed.
@@ -70,10 +70,6 @@ enum AnalyticsEvent {
 /// country server-side and discards the address in the same invocation, so the
 /// client never sees or sends one.
 ///
-/// `sessionId` is the one identifier: random, scoped
-/// to a browser tab, held in `sessionStorage`, never written to `localStorage`
-/// and never linked across visits. It is null for every route-view beacon.
-///
 /// `value` carries the one number an event needs — a scroll quartile, seconds
 /// on a route — and is null for events that are simply counted.
 typedef AnalyticsBeacon = ({
@@ -82,7 +78,6 @@ typedef AnalyticsBeacon = ({
   String deviceClass,
   String? referrerHost,
   String? campaign,
-  String? sessionId,
   int? value,
   String? target,
   String? destination,
@@ -91,14 +86,13 @@ typedef AnalyticsBeacon = ({
 /// Builds a beacon, so adding a field does not touch every call site.
 ///
 /// Optional fields default to absent, which is also the route-view shape:
-/// no session identifier and no value.
+/// no numeric value, target or destination.
 AnalyticsBeacon beacon({
   required AnalyticsEvent event,
   required String route,
   required String deviceClass,
   String? referrerHost,
   String? campaign,
-  String? sessionId,
   int? value,
   String? target,
   String? destination,
@@ -108,7 +102,6 @@ AnalyticsBeacon beacon({
   deviceClass: deviceClass,
   referrerHost: referrerHost,
   campaign: campaign,
-  sessionId: sessionId,
   value: value,
   target: target,
   destination: destination,

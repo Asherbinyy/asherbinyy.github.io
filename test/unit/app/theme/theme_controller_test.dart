@@ -143,9 +143,7 @@ void main() {
         ..read(recruiterModeProvider.notifier).toggle();
       await Future<void>.delayed(Duration.zero);
 
-      // No identifier, no session key, nothing analytics-shaped. The consent
-      // key exists but only the consent controller may write it, so toggling
-      // the interface preferences must leave it untouched.
+      // No identifier, no session key and nothing analytics-shaped.
       final written = {
         for (final key in PreferenceKey.values)
           if (store.read(key.storageKey) != null) key,
@@ -155,7 +153,6 @@ void main() {
         PreferenceKey.language,
         PreferenceKey.recruiterMode,
       });
-      expect(store.read(PreferenceKey.consent.storageKey), isNull);
     });
   });
 }

@@ -42,7 +42,7 @@ void recordAnalytics(
       context,
       listen: false,
     ).read(analyticsClientProvider);
-    if (client == null || !client.tier.allowsSessionEvents) return;
+    if (client == null) return;
     final route =
         GoRouter.maybeOf(context)?.routeInformationProvider.value.uri.path ??
         '/';

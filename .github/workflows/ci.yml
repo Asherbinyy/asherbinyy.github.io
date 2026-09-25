@@ -144,7 +144,7 @@ jobs:
         run: dart run tool/generate_static.dart
 
 
-      # Collection starts only after the visitor grants analytics consent.
+      # First-party analytics is cookieless and starts with the public build.
       - name: Build Web (WASM)
         run: flutter build web --wasm --release --dart-define=ANALYTICS_ENDPOINT=https://nocturne-analytics.asherbinyy.workers.dev/v1/beacon --dart-define=ADMIN_PREVIEW_ORIGIN=https://nocturne-analytics.asherbinyy.workers.dev
 

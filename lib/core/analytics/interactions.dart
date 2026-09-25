@@ -7,11 +7,10 @@ import 'package:nocturne/core/analytics/browser_analytics_context.dart';
 import 'package:nocturne/core/analytics/events.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 
-/// The one way a widget records a consented interaction.
+/// The one way a widget records an interaction.
 ///
-/// Every emission point on the site goes through here so the consent check,
-/// the failure swallow and the device-class lookup live in one place rather
-/// than being re-implemented — slightly differently — at each call site.
+/// Every emission point on the site goes through here so the transport check,
+/// failure swallow and device-class lookup live in one place.
 ///
 /// It is deliberately fire-and-forget and never throws: `03-ARCHITECTURE.md`
 /// says analytics availability must never change navigation or visible
@@ -19,8 +18,7 @@ import 'package:nocturne/core/platform/platform_service.dart';
 extension RecordInteraction on WidgetRef {
   /// Records [event] against [route], with an optional [value].
   ///
-  /// Returns without doing anything when analytics consent is absent,
-  /// because `AnalyticsClient` is a hard no-op there — not a queue.
+  /// Returns without doing anything when this build has no analytics endpoint.
   void recordInteraction(
     AnalyticsEvent event, {
     required String route,
@@ -30,7 +28,7 @@ extension RecordInteraction on WidgetRef {
     String? destination,
   }) {
     final client = read(analyticsClientProvider);
-    if (client == null || !client.tier.allowsSessionEvents) return;
+    if (client == null) return;
 
     unawaited(
       client

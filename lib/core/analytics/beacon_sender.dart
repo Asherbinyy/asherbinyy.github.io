@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:nocturne/core/analytics/events.dart';
 
-/// Sends consent-approved beacons to the first-party Worker endpoint.
+/// Sends cookieless beacons to the first-party Worker endpoint.
 class HttpBeaconSender {
   /// The caller owns [client] and closes it with the provider that created it.
   const HttpBeaconSender({required this.client, required this.endpoint});
@@ -32,10 +32,8 @@ class HttpBeaconSender {
         'event': beacon.event.name,
         'route': beacon.route,
         'deviceClass': beacon.deviceClass,
-        'consent': 'granted',
         if (beacon.referrerHost != null) 'referrerHost': beacon.referrerHost,
         if (beacon.campaign != null) 'campaign': beacon.campaign,
-        if (beacon.sessionId != null) 'sessionId': beacon.sessionId,
         if (beacon.value != null) 'value': beacon.value,
         if (beacon.target != null) 'target': beacon.target,
         if (beacon.destination != null) 'destination': beacon.destination,

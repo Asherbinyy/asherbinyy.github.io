@@ -26,9 +26,7 @@ below analytics rather than competing with the report.
 ## End-to-end flow
 
 ```text
-Visitor grants consent
-        |
-Flutter route/actions or static CV/brief
+Flutter route/actions or static CV/brief loads
         |
 POST /v1/beacon (exact sherbini.uk Origin)
         |
@@ -43,24 +41,20 @@ Authenticated GET /v1/admin/insights
 Report arithmetic -> Overview / Links / Pages / Audience / CSV
 ```
 
-No action before the consent grant enters this flow.
+The client uses no cookie, analytics preference or browser identifier.
 
 ## Source map
 
 ### Public Flutter client
 
-- `lib/core/analytics/analytics_consent.dart` — first-choice and footer settings
-  controls plus the detailed notice.
-- `consent_controller.dart`, `consent.dart` — versioned stored decision and
-  effective tier.
-- `analytics_route_view.dart` — one page view for the current route after a
-  grant, including a grant made while the page is open.
+- `analytics_route_view.dart` — one page view when the public route becomes
+  current.
 - `tracked_link.dart` — common outbound click wrapper and destination
   redaction.
 - `engagement_reporter.dart` — foreground active seconds and deepest quartile.
-- `browser_analytics_context_web.dart` — in-memory campaign and tab-only ID.
+- `browser_analytics_context_web.dart` — in-memory campaign only.
 - `events.dart`, `beacon_sender.dart`, `analytics_client.dart` — closed event
-  type, wire format and final consent gate.
+  type, wire format and first-party transport boundary.
 - Widget call sites under `features/` and `core/widgets/content_gallery.dart`
   name apps, articles, booking, contact, media, audio, CV and game actions.
 
@@ -68,9 +62,9 @@ No action before the consent grant enters this flow.
 
 - `tool/generate_static.dart` adds the analytics script only when the build has
   a valid HTTPS `ANALYTICS_ENDPOINT`.
-- `web/static-analytics.js` implements the same choice key, exclusions, route
-  view, outbound click and engagement measurements. It exits immediately when
-  framed, so the admin preview is excluded.
+- `web/static-analytics.js` implements the same exclusions, route view,
+  outbound click and engagement measurements without writing browser storage.
+  It exits immediately when framed, so the admin preview is excluded.
 
 ### Worker
 
@@ -92,7 +86,7 @@ No action before the consent grant enters this flow.
 
 | Event | Trigger | Extra data |
 |---|---|---|
-| `route_view` | Consented public route becomes current | none |
+| `route_view` | Public route becomes current | none |
 | `outbound_click` | Public external link/app activation | target, redacted destination |
 | `cv_opened` | CV open/download action | target and public path |
 | `media_opened` | Gallery opens | stable target |
@@ -168,13 +162,11 @@ The Worker and GitHub Pages deploy separately. Release in this order:
    reuses the `AnalyticsStore` migration and deploys the new beacon contract.
 2. Record the Worker version ID in the worklog.
 3. Let the merged `main` Pages workflow build with `ANALYTICS_ENDPOINT`. The
-   generated CV/brief and Flutter app then expose the same consented client.
-4. Verify the public site shows the consent choice with a clean browser
-   profile. Reject and confirm no `/v1/beacon` request occurs. In a separate
-   profile, accept and navigate once; that real owner-consented visit may be
-   used to confirm the dashboard receives activity.
+   generated CV/brief and Flutter app then expose the same cookieless client.
+4. Verify a clean browser profile shows no analytics or consent prompt, creates
+   no analytics browser-storage key and sends a route view.
 5. Sign in to `/admin`, check all four reports, range changes and CSV. Confirm
-   the last-received timestamp matches the consented check.
+   the last-received timestamp matches the live check.
 
 If the Worker is unavailable, the public site still works and drops analytics.
 If collection must be stopped quickly, remove `ANALYTICS_ENDPOINT` from the
@@ -203,7 +195,8 @@ ends other sessions.
 
 - Collection begins with this release. It cannot reconstruct prior app/link
   clicks or fill historical gaps.
-- Counts include only visitors who accept.
+- Counts include browsers that load the configured public client; blocked
+  scripts, network failures and privacy tools can still prevent delivery.
 - Destination activation is not downstream conversion.
 - Daily uniques cannot become a cross-day people count.
 - Active-time and scroll samples are best effort when a page is left; browsers

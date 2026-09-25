@@ -90,7 +90,7 @@ function dashboardTrend(seen) {
   head.append(controls); group.append(head);
   const entries = (seen.trend || []).map((day)=>({date:day.date,count:day[dashboardMetric]}));
   group.append(seriesChart(dashboardMetric === 'views' ? 'Page views' : 'Link clicks', entries,
-    'Recorded after consent · daily totals in UTC. Dates without records are left blank.', true));
+    'Cookieless daily totals in UTC. Dates without records are left blank.', true));
   return group;
 }
 function renderDashboard() {
@@ -109,7 +109,7 @@ function renderDashboard() {
   const seen=state.insights, recorded=seen.collection.rowsInRange>0;
   const health=node('div','collectionHealth');
   const last=seen.metadata?.lastEventAt;
-  health.append(node('span',null,seen.configuration.knownDisabled ? 'Analytics collection is disabled' : last ? 'Consented activity recorded' : 'Ready · waiting for the first consented visit'));
+  health.append(node('span',null,seen.configuration.knownDisabled ? 'Analytics collection is disabled' : last ? 'Activity recorded' : 'Ready · waiting for the first visit'));
   if(last) health.append(node('span','note','Last received ' + new Date(last).toLocaleString('en-GB',{timeZone:'UTC'}) + ' UTC'));
   const download=node('button','small','Export CSV'); download.onclick=exportDashboard; download.disabled=!recorded;health.append(download);pane.append(health);
   const cards=node('div','figures dashboardFigures');
@@ -136,7 +136,7 @@ function renderDashboard() {
     pane.append(reportTable('Interactions',[{key:'name',label:'Action'},{key:'target',label:'Item'},{key:'page',label:'Page'},{key:'count',label:'Count',numeric:true}],actions));
   } else if(dashboardTab==='pages') {
     pane.append(reportTable('Pages',pageColumns,pages,{searchable:true}));
-    pane.append(node('p','note','Active time excludes hidden tabs and time before consent. Reading samples are reported when a page is left; missing samples are shown as a dash.'));
+    pane.append(node('p','note','Active time excludes hidden tabs. Reading samples are reported when a page is left; missing samples are shown as a dash.'));
   } else {
     pane.append(seriesChart('Daily unique visitors',seen.dailyUniques,'Estimated from a hash that changes daily. Counts cannot be added into monthly people totals.',true));
     const columns=node('div','reportColumns');
@@ -147,7 +147,7 @@ function renderDashboard() {
     pane.append(columns);
   }
   const details=node('details','reportFootnote');details.append(node('summary',null,'What these numbers mean'));
-  details.append(node('p','note','Only recorded, consented activity is included. Admin previews and rejected visits are excluded. Clicks count activations, not successful downloads, messages or bookings. Direct and unavailable referrers cannot be distinguished. Older records have no link destination.'));
+  details.append(node('p','note','Admin previews are excluded. Clicks count activations, not successful downloads, messages or bookings. Direct and unavailable referrers cannot be distinguished. Older records have no link destination.'));
   details.append(node('p','note',seen.uniqueVisitors.whyNoTotal));
   details.append(node('p','note','Aggregate retention: 24 months. Daily visitor hashes: at most two days. Input device describes touch or pointer; it is not an inferred phone model.'));
   pane.append(details);

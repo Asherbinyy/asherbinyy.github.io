@@ -6,11 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nocturne/core/analytics/analytics_client.dart';
 import 'package:nocturne/core/analytics/analytics_providers.dart';
 import 'package:nocturne/core/analytics/analytics_route_view.dart';
-import 'package:nocturne/core/analytics/consent_controller.dart';
-import 'package:nocturne/core/analytics/consent.dart';
 import 'package:nocturne/core/analytics/events.dart';
-import 'package:nocturne/app/theme/theme_controller.dart';
-import 'package:nocturne/core/platform/preference_store.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 import 'package:nocturne/core/platform/pointer_capabilities.dart';
@@ -26,7 +22,7 @@ void main() {
     tester,
   ) async {
     final sender = _Sender();
-    final client = AnalyticsClient(sender.call, tier: ConsentTier.session);
+    final client = AnalyticsClient(sender.call);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -52,17 +48,16 @@ void main() {
     expect(sender.sent.single.event, AnalyticsEvent.routeView);
     expect(sender.sent.single.route, '/work');
     expect(sender.sent.single.deviceClass, 'pointer');
-    expect(sender.sent.single.referrerHost, isNull);
-    expect(sender.sent.single.campaign, isNull);
   });
 
-  testWidgets('an explicit rejection sends no route view', (tester) async {
+  testWidgets('the configured transport starts without a stored choice', (
+    tester,
+  ) async {
     final sender = _Sender();
-    final client = AnalyticsClient(sender.call, tier: ConsentTier.none);
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [analyticsClientProvider.overrideWithValue(client)],
+        overrides: [beaconSenderProvider.overrideWithValue(sender.call)],
         child: const PlatformScope(
           service: PlatformService(
             capabilities: PointerCapabilities(hasCoarsePointer: true),
@@ -70,58 +65,19 @@ void main() {
           ),
           child: Directionality(
             textDirection: TextDirection.ltr,
-            child: AnalyticsRouteView(route: '/', child: SizedBox.shrink()),
+            child: AnalyticsRouteView(
+              route: '/about',
+              child: SizedBox.shrink(),
+            ),
           ),
         ),
       ),
     );
     await tester.pump();
 
-    expect(sender.sent, isEmpty);
+    expect(sender.sent, hasLength(1));
+    expect(sender.sent.single.route, '/about');
   });
-
-  testWidgets(
-    'grant records the current route without buffering earlier views',
-    (tester) async {
-      final sender = _Sender();
-      final store = InMemoryPreferenceStore();
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            beaconSenderProvider.overrideWithValue(sender.call),
-            preferenceStoreProvider.overrideWithValue(store),
-          ],
-          child: const PlatformScope(
-            service: PlatformService(
-              capabilities: PointerCapabilities(hasCoarsePointer: true),
-              viewportWidth: 400,
-            ),
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: AnalyticsRouteView(
-                route: '/about',
-                child: SizedBox.shrink(),
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      expect(sender.sent, isEmpty);
-
-      final context = tester.element(find.byType(AnalyticsRouteView));
-      ProviderScope.containerOf(
-        context,
-        listen: false,
-      ).read(consentControllerProvider.notifier).grantSession();
-      await tester.pump();
-
-      expect(sender.sent, hasLength(1));
-      expect(sender.sent.single.route, '/about');
-      expect(sender.sent.single.event, AnalyticsEvent.routeView);
-    },
-  );
 
   testWidgets('an absent endpoint leaves the page unchanged', (tester) async {
     await tester.pumpWidget(

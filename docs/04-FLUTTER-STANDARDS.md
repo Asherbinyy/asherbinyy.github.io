@@ -94,23 +94,20 @@ Any value drawn from a fixed set is an enum. String and `int` constants standing
 Use Dart 3 enhanced enums so the data lives with the enum rather than in a lookup map somewhere else:
 
 ```dart
-enum ConsentTier {
-  none('none', 0),
-  aggregate('aggregate', 1),
-  session('session', 2);
+enum AppPlatform {
+  ios('ios'),
+  android('android'),
+  web('web');
 
-  const ConsentTier(this.storageKey, this.level);
+  const AppPlatform(this.storageKey);
   final String storageKey;
-  final int level;
 
-  bool get allowsSessionEvents => level >= session.level;
-
-  static ConsentTier fromStorage(String? value) =>
-      values.firstWhere((t) => t.storageKey == value, orElse: () => none);
+  static AppPlatform fromStorage(String value) =>
+      values.firstWhere((platform) => platform.storageKey == value);
 }
 ```
 
-Applies to: consent tier, theme mode, locale, platform class, trace state, route names, work domains, employment type, app platform.
+Applies to: theme mode, locale, platform class, trace state, route names, work domains, employment type, app platform.
 
 **Never write a `default:` clause in a `switch` over an enum.** Exhaustive switches are a compile-time error when a case is added, and that error is the feature — it tells you every place that needs updating. A `default` silently swallows the new case and produces a bug at runtime instead.
 
@@ -266,11 +263,11 @@ Building bilingual from the start is much cheaper than retrofitting. Retrofittin
 | Thing | Convention | Example |
 |---|---|---|
 | File | `snake_case` | `transmission_panel.dart` |
-| Class / enum | `PascalCase` | `TransmissionPanel`, `ConsentTier` |
+| Class / enum | `PascalCase` | `TransmissionPanel`, `AppPlatform` |
 | Member / variable | `camelCase` | `traceAmplitude` |
 | Private | leading underscore | `_controller` |
 | Constant | `camelCase` | `maxTraceAmplitude` — not `MAX_TRACE_AMPLITUDE` |
-| Boolean | `is` / `has` / `can` / `should` | `isLocked`, `hasConsent` |
+| Boolean | `is` / `has` / `can` / `should` | `isLocked`, `canHover` |
 | Provider | noun + `Provider` | `contentProvider` |
 | Test | behaviour sentence | `returns fallback when profile json is malformed` |
 

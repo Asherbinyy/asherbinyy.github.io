@@ -9,14 +9,13 @@ import 'package:nocturne/core/analytics/analytics_client.dart';
 import 'package:nocturne/core/analytics/analytics_providers.dart';
 import 'package:nocturne/core/analytics/browser_analytics_context.dart';
 import 'package:nocturne/core/analytics/events.dart';
-import 'package:nocturne/core/analytics/consent_controller.dart';
 import 'package:nocturne/core/platform/platform_scope.dart';
 import 'package:nocturne/core/platform/platform_service.dart';
 
 /// Reports how far down a route the viewer read, and how long they stayed.
 ///
-/// Both are consented fields from `06-ANALYTICS-AND-PRIVACY.md` — "scroll
-/// depth" and "time per section", where a section on this site is a route.
+/// Both are bounded fields from `06-ANALYTICS-AND-PRIVACY.md` — "scroll depth"
+/// and "time per section", where a section on this site is a route.
 ///
 /// Both are reported **once, on leaving**, not continuously:
 ///
@@ -28,8 +27,6 @@ import 'package:nocturne/core/platform/platform_service.dart';
 ///   sharper number than the question deserves and a more distinguishing one
 ///   than a viewer should have to carry.
 ///
-/// Nothing is captured at all until consent is granted: `recordInteraction`
-/// resolves the client, and the client is a hard no-op below that tier.
 class EngagementReporter extends ConsumerStatefulWidget {
   /// [route] is the path this reporter is measuring.
   const EngagementReporter({
@@ -55,7 +52,6 @@ class _EngagementReporterState extends ConsumerState<EngagementReporter>
 
   /// When this route became visible.
   final Stopwatch _active = Stopwatch();
-  bool _consented = false;
   bool _foreground = true;
 
   ValueNotifier<double>? _progress;
@@ -63,30 +59,20 @@ class _EngagementReporterState extends ConsumerState<EngagementReporter>
 
   /// Cached because `ref` must not be used once dispose has begun, while a
   /// container reference stays valid. Reading the client *from* it at report
-  /// time still respects a consent decision made moments earlier.
+  /// time still resolves the current configured transport.
   ProviderContainer? _container;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    ref.listenManual(consentControllerProvider, (previous, next) {
-      _consented = next.allowsSessionEvents;
-      if (!_consented) {
-        _active
-          ..stop()
-          ..reset();
-        _deepest = 0;
-      } else if (_foreground) {
-        _active.start();
-      }
-    }, fireImmediately: true);
+    _active.start();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _foreground = state == AppLifecycleState.resumed;
-    if (_foreground && _consented) {
+    if (_foreground) {
       _active.start();
     } else {
       _active.stop();
@@ -102,7 +88,7 @@ class _EngagementReporterState extends ConsumerState<EngagementReporter>
       ..stop()
       ..reset();
     _deepest = 0;
-    if (_consented && _foreground) _active.start();
+    if (_foreground) _active.start();
   }
 
   @override
@@ -121,7 +107,7 @@ class _EngagementReporterState extends ConsumerState<EngagementReporter>
   }
 
   void _onScroll() {
-    if (!_consented || !_foreground) return;
+    if (!_foreground) return;
     final progress = _progress?.value ?? 0;
     final quartile = (progress.clamp(0.0, 1.0) * 4).floor();
     if (quartile > _deepest) _deepest = quartile;
@@ -139,7 +125,7 @@ class _EngagementReporterState extends ConsumerState<EngagementReporter>
   /// Emits both measurements as the route goes away.
   void _report(String route) {
     final inputMode = _inputMode;
-    if (!_consented || inputMode == null || route == '/console') return;
+    if (inputMode == null || route == '/console') return;
 
     // The container can already be gone: when the whole app is torn down it
     // disposes before its widgets do, and reading a disposed container throws.

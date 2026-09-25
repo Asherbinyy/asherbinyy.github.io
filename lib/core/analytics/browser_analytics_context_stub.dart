@@ -6,12 +6,3 @@ String? currentCampaign() => null;
 
 /// VM tests have no document referrer.
 String? currentReferrerHost() => null;
-
-/// VM tests have no session storage, so no session identifier exists.
-String? readSessionId() => null;
-
-/// VM tests store nothing.
-void writeSessionId(String id) {}
-
-/// VM tests have no browser storage.
-void clearAnalyticsSession() {}

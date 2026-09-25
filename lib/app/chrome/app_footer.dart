@@ -1,10 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'package:nocturne/app/theme/tokens.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:nocturne/app/l10n/localizations_context.dart';
-import 'package:nocturne/core/analytics/analytics_consent.dart';
-import 'package:nocturne/core/analytics/analytics_providers.dart';
 
 /// The 48px footer: a closing rule, and nothing else.
 ///
@@ -21,12 +17,12 @@ import 'package:nocturne/core/analytics/analytics_providers.dart';
 /// two-row header, a fifth of the screen or more was chrome. An empty bar is
 /// the honest result of having nothing to say here, and inventing a tagline to
 /// fill it would be exactly the kind of copy the owner objected to.
-class AppFooter extends ConsumerWidget {
+class AppFooter extends StatelessWidget {
   /// Creates the footer.
   const AppFooter({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final tokens = context.tokens;
 
     return DecoratedBox(
@@ -41,25 +37,7 @@ class AppFooter extends ConsumerWidget {
       // place that actually describes the work: the owner asked for a clean
       // page and CC BY-SA does not require the attribution to be on the page
       // itself, only that it be given.
-      child: SizedBox(
-        height: tokens.footerHeight,
-        width: double.infinity,
-        child: ref.watch(analyticsIsCollectingProvider)
-            ? Center(
-                child: TextButton(
-                  onPressed: () => showDialog<void>(
-                    context: context,
-                    builder: (context) => const Dialog(
-                      child: SingleChildScrollView(
-                        child: AnalyticsConsent(settings: true),
-                      ),
-                    ),
-                  ),
-                  child: Text(context.l10n.footerConsent),
-                ),
-              )
-            : null,
-      ),
+      child: SizedBox(height: tokens.footerHeight, width: double.infinity),
     );
   }
 }

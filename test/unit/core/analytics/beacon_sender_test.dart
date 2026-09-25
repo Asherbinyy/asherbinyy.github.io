@@ -52,14 +52,12 @@ void main() {
     expect(captured.headers['content-type'], 'application/json');
     expect(jsonDecode(captured.body), <String, Object?>{
       'event': 'route_view',
-      'consent': 'granted',
       'route': '/work',
       'deviceClass': 'pointer',
       'referrerHost': 'example.com',
       'campaign': 'graduate-role',
-      // No sessionId and no value: a route view has neither, and
-      // sending them as nulls would be rejected by any Worker deployed before
-      // those fields existed.
+      // No value: a route view has none, and sending it as null would be
+      // rejected by a Worker deployed before that field existed.
     });
   });
 
@@ -84,7 +82,7 @@ void main() {
     );
   });
 
-  test('sends a consented interaction with its identifier and value', () async {
+  test('sends an interaction with its bounded value', () async {
     late http.Request captured;
     final client = MockClient.streaming((request, bodyStream) async {
       captured = request as http.Request;
@@ -99,17 +97,14 @@ void main() {
         event: AnalyticsEvent.scrollDepth,
         route: '/work',
         deviceClass: 'touch',
-        sessionId: 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
         value: 3,
       ),
     );
 
     expect(jsonDecode(captured.body), <String, Object?>{
       'event': 'scroll_depth',
-      'consent': 'granted',
       'route': '/work',
       'deviceClass': 'touch',
-      'sessionId': 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
       'value': 3,
     });
   });

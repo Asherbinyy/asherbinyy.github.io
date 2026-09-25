@@ -5,6 +5,14 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### Default cookieless analytics, 2026-09-25
+
+- Removed the analytics prompt, footer consent control and stored decision.
+- Enabled the configured first-party client immediately on public Flutter,
+  CV and brief pages, while keeping admin previews and `/console` excluded.
+- Removed the analytics tab identifier and all analytics browser storage. The
+  Worker still discards raw request identity after its daily salted hash.
+
 ### Analytics dashboard, 2026-09-25
 
 - Rebuilt admin insights as Overview, Links & apps, Pages and Audience reports

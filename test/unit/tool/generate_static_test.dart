@@ -440,7 +440,7 @@ void main() {
     }
   });
 
-  test('production config adds the shared consented analytics client', () {
+  test('production config adds the shared cookieless analytics client', () {
     final root = _projectRoot();
     ProcessResult run(String endpoint) => Process.runSync(
       _dartExecutable(),
@@ -459,7 +459,12 @@ void main() {
         expect(html, contains('src="/static-analytics.js"'));
         expect(html, contains('data-endpoint="https://nocturne-analytics.'));
       }
-      expect(File('$root/web/static-analytics.js').existsSync(), isTrue);
+      final client = File('$root/web/static-analytics.js');
+      expect(client.existsSync(), isTrue);
+      final script = client.readAsStringSync();
+      expect(script, isNot(contains('localStorage')));
+      expect(script, isNot(contains('sessionStorage')));
+      expect(script, isNot(contains('Allow analytics')));
     } finally {
       final restored = run('');
       expect(restored.exitCode, 0, reason: restored.stderr.toString());

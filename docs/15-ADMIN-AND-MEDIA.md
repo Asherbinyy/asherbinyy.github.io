@@ -202,9 +202,9 @@ A typed component contract should drive the editor and consumers. Arbitrary fiel
 
 Keep credentials separate from public previews and out of source/logs. Password management must not expose a Cloudflare account token to the browser. Test unauthorized writes, session behavior, rotation and lockout in isolated data.
 
-The public build enables first-party analytics only after an explicit grant.
-Rejected and unresolved visits send nothing, admin previews are excluded, and
-a graph must never imply invented visitors. The binding collection contract is
+The public build enables cookieless first-party analytics without a prompt,
+cookie, preference or browser identifier. Admin previews are excluded, and a
+graph must never imply invented visitors. The binding collection contract is
 [`06-ANALYTICS-AND-PRIVACY.md`](06-ANALYTICS-AND-PRIVACY.md).
 
 Subscriptions were cancelled. The separate daily digest remains dormant because the original cancellation and handover differ in scope.

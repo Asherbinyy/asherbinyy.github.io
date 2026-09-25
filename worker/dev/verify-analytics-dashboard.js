@@ -13,7 +13,7 @@ const beacon = async (event, route, extra = {}) => {
   const response = await fetch(base + '/v1/beacon', {
     method:'POST',
     headers:{origin:base, 'content-type':'application/json'},
-    body:JSON.stringify({event,route,deviceClass:'pointer',consent:'granted',...extra}),
+    body:JSON.stringify({event,route,deviceClass:'pointer',...extra}),
   });
   if (response.status !== 202) throw new Error('Local beacon failed: ' + response.status);
 };
