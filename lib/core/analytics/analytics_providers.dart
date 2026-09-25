@@ -7,14 +7,8 @@ import 'package:nocturne/core/analytics/consent_controller.dart';
 
 /// Compile-time endpoint; an omitted or invalid value keeps transport disabled.
 ///
-/// **This is the site's analytics switch.** With no endpoint supplied at build
-/// time there is no sender, so there is no client, so nothing is recorded,
-/// nothing is stored on the device and no consent is needed — which is why the
-/// banner does not appear and `/privacy` says the site collects nothing.
-///
-/// Production currently supplies no endpoint. Restoring collection means
-/// passing `--dart-define=ANALYTICS_ENDPOINT=...` in the release build again;
-/// the tiers, the consent model and the Worker are all still here and tested.
+/// Without an endpoint, transport and the consent controls are absent. Preview
+/// containers override this provider to keep preview interactions unrecorded.
 final analyticsEndpointProvider = Provider<Uri?>((ref) {
   const value = String.fromEnvironment('ANALYTICS_ENDPOINT');
   return parseAnalyticsEndpoint(value);

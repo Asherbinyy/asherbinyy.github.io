@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:nocturne/core/analytics/tracked_link.dart';
+import 'package:nocturne/core/analytics/events.dart';
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
 import 'package:nocturne/app/theme/typography.dart';
@@ -11,7 +12,12 @@ import 'package:nocturne/content/models/gallery.dart';
 /// Supplied media only. External video opens after an explicit press.
 class ContentGallery extends StatelessWidget {
   /// Uses the supplied page/item name as the gallery label.
-  const ContentGallery({required this.entries, required this.label, super.key});
+  const ContentGallery({
+    required this.entries,
+    required this.label,
+    required this.analyticsTarget,
+    super.key,
+  });
 
   /// Owner-supplied media in source order.
   final List<GalleryEntry> entries;
@@ -19,26 +25,45 @@ class ContentGallery extends StatelessWidget {
   /// Name of the project or interest.
   final String label;
 
+  /// Stable content id used by aggregate interaction reports.
+  final String analyticsTarget;
+
   @override
   Widget build(BuildContext context) {
     if (entries.isEmpty) return const SizedBox.shrink();
     return TextButton.icon(
       icon: const Icon(Icons.photo_library_outlined),
       label: Text(label),
-      onPressed: () => unawaited(
-        showDialog<void>(
-          context: context,
-          builder: (context) => _GalleryDialog(entries: entries, label: label),
-        ),
-      ),
+      onPressed: () {
+        recordAnalytics(
+          context,
+          AnalyticsEvent.mediaOpened,
+          target: analyticsTarget,
+        );
+        unawaited(
+          showDialog<void>(
+            context: context,
+            builder: (context) => _GalleryDialog(
+              entries: entries,
+              label: label,
+              analyticsTarget: analyticsTarget,
+            ),
+          ),
+        );
+      },
     );
   }
 }
 
 class _GalleryDialog extends StatelessWidget {
-  const _GalleryDialog({required this.entries, required this.label});
+  const _GalleryDialog({
+    required this.entries,
+    required this.label,
+    required this.analyticsTarget,
+  });
   final List<GalleryEntry> entries;
   final String label;
+  final String analyticsTarget;
 
   @override
   Widget build(BuildContext context) => Dialog(
@@ -75,9 +100,10 @@ class _GalleryDialog extends StatelessWidget {
                             ),
                             GalleryKind.video => TextButton.icon(
                               onPressed: () => unawaited(
-                                launchUrl(
+                                launchTrackedUrl(
+                                  context,
                                   entry.url!,
-                                  mode: LaunchMode.externalApplication,
+                                  target: 'media:$analyticsTarget',
                                 ),
                               ),
                               icon: const Icon(Icons.open_in_new),

@@ -23,7 +23,7 @@ AnalyticsBeacon _interaction(AnalyticsEvent event, {int? value}) => beacon(
 
 void main() {
   group('the session identifier', () {
-    test('is attached to Tier 1 events once consent allows them', () async {
+    test('is attached to interactions once consent allows them', () async {
       final sender = _RecordingSender();
       final client = AnalyticsClient(
         sender.call,
@@ -36,9 +36,7 @@ void main() {
       expect(sender.sent.single.sessionId, 'a1b2c3d4e5f60718293a4b5c6d7e8f90');
     });
 
-    test('is never attached to a Tier 0 route view', () async {
-      // Section 3: Tier 0 creates no per-person record. An identifier on it
-      // would be exactly that, and would put it inside PECR consent.
+    test('is never attached to a route view', () async {
       final sender = _RecordingSender();
       final client = AnalyticsClient(
         sender.call,
@@ -57,14 +55,14 @@ void main() {
       expect(sender.sent.single.sessionId, isNull);
     });
 
-    test('is never minted below Tier 1', () async {
+    test('is never minted without a grant', () async {
       // The only path to an identifier runs through a tier check, so an
-      // aggregate-only viewer cannot cause one to exist.
+      // rejected viewer cannot cause one to exist.
       var minted = 0;
       final sender = _RecordingSender();
       final client = AnalyticsClient(
         sender.call,
-        tier: ConsentTier.aggregate,
+        tier: ConsentTier.none,
         sessionId: () {
           minted++;
           return 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
@@ -97,7 +95,7 @@ void main() {
 
       await client.record(_interaction(AnalyticsEvent.themeChanged));
       // Assigning the tier applies the decision immediately.
-      client.tier = ConsentTier.aggregate;
+      client.tier = ConsentTier.none;
       final second = await client.record(
         _interaction(AnalyticsEvent.themeChanged),
       );
@@ -134,9 +132,9 @@ void main() {
       expect(sender.sent.map((b) => b.value), [3, 47]);
     });
 
-    test('are refused entirely below Tier 1', () async {
+    test('are refused entirely without a grant', () async {
       final sender = _RecordingSender();
-      final client = AnalyticsClient(sender.call, tier: ConsentTier.aggregate);
+      final client = AnalyticsClient(sender.call, tier: ConsentTier.none);
 
       final scroll = await client.record(
         _interaction(AnalyticsEvent.scrollDepth, value: 4),

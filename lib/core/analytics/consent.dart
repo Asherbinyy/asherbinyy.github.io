@@ -1,39 +1,27 @@
 /// What the viewer has allowed.
 ///
-/// `06-ANALYTICS-AND-PRIVACY.md` defines two tiers plus an explicit refusal.
-/// Tier 0 is aggregate, cookieless and stores nothing on the device, so it sits
-/// outside PECR consent; Tier 1 requires an affirmative action; and "collect
-/// nothing" disables even Tier 0 for that viewer.
+/// Both aggregate views and interaction events require an affirmative grant.
+/// An unresolved choice and a rejection send nothing.
 enum ConsentTier {
-  /// The viewer has not yet chosen. Nothing beyond Tier 0 may run.
-  unresolved('unresolved', 1),
+  /// The viewer has not yet chosen. No analytics may run.
+  unresolved('unresolved'),
 
-  /// The viewer asked for nothing at all to be collected, Tier 0 included.
-  none('none', 0),
-
-  /// Aggregate, anonymous counters only.
-  aggregate('aggregate', 1),
+  /// The viewer asked for nothing to be collected.
+  none('none'),
 
   /// Session-scoped events, granted explicitly.
-  session('session', 2);
+  session('session');
 
-  const ConsentTier(this.storageKey, this.level);
+  const ConsentTier(this.storageKey);
 
   /// Stable key written to storage; never a display label.
   final String storageKey;
 
-  /// How much this tier permits. Higher includes lower.
-  final int level;
-
   /// Whether aggregate counters may be sent.
-  ///
-  /// Unresolved still permits them: Tier 0 creates no per-person record and
-  /// writes nothing to the device, which is what puts it outside consent.
-  /// Only an explicit refusal switches it off.
-  bool get allowsAggregate => this != ConsentTier.none;
+  bool get allowsAggregate => this == ConsentTier.session;
 
   /// Whether session-scoped events may be captured.
-  bool get allowsSessionEvents => level >= ConsentTier.session.level;
+  bool get allowsSessionEvents => this == ConsentTier.session;
 
   /// Whether the viewer has answered.
   bool get isResolved => this != ConsentTier.unresolved;

@@ -439,6 +439,32 @@ void main() {
       });
     }
   });
+
+  test('production config adds the shared consented analytics client', () {
+    final root = _projectRoot();
+    ProcessResult run(String endpoint) => Process.runSync(
+      _dartExecutable(),
+      ['run', 'tool/generate_static.dart'],
+      workingDirectory: root,
+      environment: {'ANALYTICS_ENDPOINT': endpoint},
+    );
+
+    try {
+      final generated = run(
+        'https://nocturne-analytics.asherbinyy.workers.dev/v1/beacon',
+      );
+      expect(generated.exitCode, 0, reason: generated.stderr.toString());
+      for (final route in ['cv', 'brief']) {
+        final html = File('$root/web/$route/index.html').readAsStringSync();
+        expect(html, contains('src="/static-analytics.js"'));
+        expect(html, contains('data-endpoint="https://nocturne-analytics.'));
+      }
+      expect(File('$root/web/static-analytics.js').existsSync(), isTrue);
+    } finally {
+      final restored = run('');
+      expect(restored.exitCode, 0, reason: restored.stderr.toString());
+    }
+  });
 }
 
 /// Locates the project root by walking up to find pubspec.yaml.

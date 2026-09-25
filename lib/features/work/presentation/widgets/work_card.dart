@@ -100,7 +100,11 @@ class WorkCard extends StatelessWidget {
           SizedBox(height: tokens.space4),
           MakerLine(maker: maker),
         ],
-        ContentGallery(entries: app.media, label: app.name),
+        ContentGallery(
+          entries: app.media,
+          label: app.name,
+          analyticsTarget: 'gallery:app:${app.id}',
+        ),
         if (role != null) ...[
           SizedBox(height: tokens.space12),
           Text(role, style: type.bodyS.copyWith(color: tokens.textSecondary)),

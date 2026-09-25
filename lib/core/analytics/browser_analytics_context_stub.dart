@@ -12,3 +12,6 @@ String? readSessionId() => null;
 
 /// VM tests store nothing.
 void writeSessionId(String id) {}
+
+/// VM tests have no browser storage.
+void clearAnalyticsSession() {}

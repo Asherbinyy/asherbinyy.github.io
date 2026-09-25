@@ -32,10 +32,13 @@ class HttpBeaconSender {
         'event': beacon.event.name,
         'route': beacon.route,
         'deviceClass': beacon.deviceClass,
+        'consent': 'granted',
         if (beacon.referrerHost != null) 'referrerHost': beacon.referrerHost,
         if (beacon.campaign != null) 'campaign': beacon.campaign,
         if (beacon.sessionId != null) 'sessionId': beacon.sessionId,
         if (beacon.value != null) 'value': beacon.value,
+        if (beacon.target != null) 'target': beacon.target,
+        if (beacon.destination != null) 'destination': beacon.destination,
       }),
     );
     if (result.statusCode < 200 || result.statusCode >= 300) {

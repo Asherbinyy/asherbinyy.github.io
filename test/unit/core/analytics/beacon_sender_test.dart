@@ -52,11 +52,12 @@ void main() {
     expect(captured.headers['content-type'], 'application/json');
     expect(jsonDecode(captured.body), <String, Object?>{
       'event': 'route_view',
+      'consent': 'granted',
       'route': '/work',
       'deviceClass': 'pointer',
       'referrerHost': 'example.com',
       'campaign': 'graduate-role',
-      // No sessionId and no value: a Tier 0 route view has neither, and
+      // No sessionId and no value: a route view has neither, and
       // sending them as nulls would be rejected by any Worker deployed before
       // those fields existed.
     });
@@ -83,7 +84,7 @@ void main() {
     );
   });
 
-  test('sends a Tier 1 beacon with its identifier and value', () async {
+  test('sends a consented interaction with its identifier and value', () async {
     late http.Request captured;
     final client = MockClient.streaming((request, bodyStream) async {
       captured = request as http.Request;
@@ -105,6 +106,7 @@ void main() {
 
     expect(jsonDecode(captured.body), <String, Object?>{
       'event': 'scroll_depth',
+      'consent': 'granted',
       'route': '/work',
       'deviceClass': 'touch',
       'sessionId': 'a1b2c3d4e5f60718293a4b5c6d7e8f90',

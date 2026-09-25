@@ -12,7 +12,7 @@ function seriesChart(title, entries, description, wide) {
   group.append(node('h3', null, title), node('p', 'note', description));
   if (!entries.length) {
     const empty = node('div', 'chartEmpty');
-    empty.append(node('strong', null, 'No recorded data'), node('p', null, 'Collection is disabled. A chart will appear when recorded data is available for this range.'));
+    empty.append(node('strong', null, 'No recorded data'), node('p', null, 'A chart will appear when consented activity is recorded in this range.'));
     group.append(empty);
     return group;
   }
@@ -35,7 +35,7 @@ function seriesChart(title, entries, description, wide) {
     if (previous && parseDay(point.date) - parseDay(previous.date) === 86400000) {
       svg.append(svgNode('line', {x1: x(previous.date), y1: y(previous.count), x2: x(point.date), y2: y(point.count), class: 'chartLine'}));
     }
-    const dot = svgNode('circle', {cx: x(point.date), cy: y(point.count), r: 4, class: 'chartPoint'});
+    const dot = svgNode('circle', {cx: x(point.date), cy: y(point.count), r: 4, class: 'chartPoint', tabindex: 0, role: 'img', 'aria-label': point.date + ': ' + point.count});
     dot.append(svgNode('title', {}, point.date + ': ' + point.count));
     svg.append(dot); previous = point;
   }

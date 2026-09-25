@@ -3,6 +3,8 @@ import 'package:nocturne/content/asset_content.dart';
 import 'package:nocturne/content/content_result.dart';
 import 'package:nocturne/content/models/profile.dart';
 import 'package:nocturne/core/net/relay.dart';
+import 'package:nocturne/core/analytics/tracked_link.dart';
+import 'package:nocturne/core/analytics/events.dart';
 
 import 'dart:async';
 import 'dart:math' as math;
@@ -76,6 +78,13 @@ class _NamePronunciationState extends ConsumerState<NamePronunciation>
       } else {
         await player.play(
           AssetSource(source?.replaceFirst('assets/', '') ?? 'audio/name.m4a'),
+        );
+      }
+      if (mounted) {
+        recordAnalytics(
+          context,
+          AnalyticsEvent.namePlayed,
+          target: 'audio:name',
         );
       }
     } catch (_) {

@@ -5,7 +5,12 @@ This service implements the server-side privacy boundary in
 deduplication hash. Raw IP addresses and user-agent values are used only as
 inputs to SHA-256 inside one request invocation and are never written or logged.
 
-Current-state note (2026-09-11): this Worker also serves content, media and the admin panel. The Pages release currently omits `ANALYTICS_ENDPOINT`, so visitor collection is disabled. The setup steps below describe initial provisioning; inspect existing bindings before creating any namespace. Admin limitations and the new publication contract are in [`docs/15-ADMIN-AND-MEDIA.md`](../docs/15-ADMIN-AND-MEDIA.md).
+Current-state note (2026-09-25): this Worker also serves content, media, the
+game and the admin panel. The release enables first-party analytics only after
+the visitor grants consent. The atomic analytics store and dashboard operations
+are documented in
+[`docs/32-ANALYTICS-DASHBOARD-RUNBOOK.md`](../docs/32-ANALYTICS-DASHBOARD-RUNBOOK.md).
+Inspect existing bindings before creating any namespace.
 
 Before an explicitly authorized deployment:
 
@@ -37,17 +42,16 @@ Before an explicitly authorized deployment:
    the admin token can rewrite what the site says about the owner. Rotating
    either is `wrangler secret put` again, with no code change.
 
-6. Deploy with `npx wrangler deploy` only for an authorized release. Pages
-   currently omits the analytics endpoint. Deploying the Worker does not enable
-   collection in the public client; content relay configuration is separate.
+6. Confirm the `ANALYTICS_STORE` Durable Object binding and
+   `v3-analytics-store` migration. Deploy with `npx wrangler deploy` only for an
+   authorized release. Deploy the Worker before the Pages build that supplies
+   `ANALYTICS_ENDPOINT`; content relay configuration is separate.
 
-The midnight UTC trigger rotates the 32-byte daily salt. The second trigger runs
-hourly from 01:00 through 23:00 UTC, verifies that rotation happened, and sends
-the digest once at local London noon, including across daylight-saving changes.
-Keeping midnight out of the second trigger prevents two independent invocations
-from rotating the same salt concurrently. Counter keys expire after 24 calendar
-months; daily visitor hashes expire after two days; digest idempotency keys
-expire after two days.
+The analytics Durable Object creates a 32-byte salt for the current UTC day and
+schedules its own midnight alarm. Aggregate counters expire after 24 calendar
+months; daily visitor and rate-limit hashes remain for at most two UTC dates.
+The older KV cron remains for historical counters and optional digests; new
+events use the transactional object.
 
 ## Running the admin panel locally
 
@@ -239,8 +243,8 @@ existing secrets; do not rotate `CONSOLE_TOKEN` just to publish new code.
 Pages and the Worker deploy separately. A green Pages release does not deploy
 `worker/src/index.js`. When a release changes that file or its bindings, include
 the Worker deployment in the release and record its version ID in the worklog.
-Keep absent optional beacon fields omitted so older Workers continue accepting
-Tier 0 events while the two deployments are being coordinated.
+Keep absent optional beacon fields omitted while the two deployments are being
+coordinated.
 
 After deployment, check `/v1/writing` with the configured site Origin: it should
 return parseable RSS, not just a successful status. Check that missing Origin

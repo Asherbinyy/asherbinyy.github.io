@@ -15,6 +15,7 @@
 
 export class FakeStorage {
   map = new Map();
+  alarmAt = null;
   failOn = null;
 
   /// Called before a read or a write, so a test can make something else happen
@@ -38,11 +39,15 @@ export class FakeStorage {
     this.map.delete(key);
   }
 
-  async list({prefix = ''} = {}) {
+  async getAlarm() { return this.alarmAt; }
+  async setAlarm(when) { this.alarmAt = Number(when); }
+
+  async list({prefix = '', start, end, startAfter, limit = Infinity} = {}) {
     return new Map(
       [...this.map.entries()]
-        .filter(([key]) => key.startsWith(prefix))
+        .filter(([key]) => key.startsWith(prefix) && (!start || key >= start) && (!end || key < end) && (!startAfter || key > startAfter))
         .sort(([left], [right]) => (left < right ? -1 : 1))
+        .slice(0, limit)
         .map(([key, value]) => [key, structuredClone(value)]),
     );
   }
@@ -79,6 +84,7 @@ export function durableNamespace(ContentStore) {
   const object = new ContentStore(state);
   return {
     state,
+    object,
     idFromName: (name) => name,
     get: () => ({
       fetch: (url, init) => object.fetch(new Request(url, init)),

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:nocturne/core/analytics/tracked_link.dart';
 
 import 'package:nocturne/app/l10n/localizations_context.dart';
 import 'package:nocturne/app/theme/tokens.dart';
@@ -81,9 +81,10 @@ class _ArticleCardState extends ConsumerState<ArticleCard> {
           isFocused: _states.value.contains(WidgetState.focused),
           child: InkWell(
             onTap: () => unawaited(
-              launchUrl(
+              launchTrackedUrl(
+                context,
                 widget.article.url,
-                mode: LaunchMode.externalApplication,
+                target: 'article:${widget.article.url.host}',
               ),
             ),
             statesController: _states,

@@ -8,6 +8,7 @@ send_metrics = false
 [vars]
 SITE_ID = "asherbinyy.github.io"
 SITE_ORIGIN = "https://sherbini.uk"
+ANALYTICS_ENABLED = "true"
 # The owner's Medium handle comes from profile.json's contact block; "/feed" is
 # Medium's own convention for the RSS of a publication or profile.
 WRITING_FEED_URL = "https://sherbini.medium.com/feed"
@@ -61,3 +62,11 @@ new_sqlite_classes = ["AscentBoard", "AscentVerifier"]
 [[migrations]]
 tag = "v2-content-store"
 new_sqlite_classes = ["ContentStore"]
+
+[[durable_objects.bindings]]
+name = "ANALYTICS_STORE"
+class_name = "AnalyticsStore"
+
+[[migrations]]
+tag = "v3-analytics-store"
+new_sqlite_classes = ["AnalyticsStore"]

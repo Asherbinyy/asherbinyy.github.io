@@ -66,10 +66,13 @@ void main() {
   });
 
   group('tier boundaries', () {
-    test('aggregate counting needs no grant, being cookieless', () async {
+    test('page views stay silent until an explicit grant', () async {
       final sender = _RecordingSender();
       final client = AnalyticsClient(sender.call);
 
+      expect(await client.record(_routeView), isFalse);
+      expect(sender.sent, isEmpty);
+      client.tier = ConsentTier.session;
       expect(await client.record(_routeView), isTrue);
       expect(sender.sent, hasLength(1));
     });
@@ -85,7 +88,7 @@ void main() {
 
     test('session events need an affirmative grant', () async {
       final sender = _RecordingSender();
-      final client = AnalyticsClient(sender.call, tier: ConsentTier.aggregate);
+      final client = AnalyticsClient(sender.call, tier: ConsentTier.none);
 
       expect(await client.record(_click), isFalse);
       client.tier = ConsentTier.session;
@@ -99,7 +102,7 @@ void main() {
       final client = AnalyticsClient(sender.call, tier: ConsentTier.session);
 
       expect(await client.record(_click), isTrue);
-      client.tier = ConsentTier.aggregate;
+      client.tier = ConsentTier.none;
       expect(await client.record(_click), isFalse);
 
       expect(sender.sent, hasLength(1));
@@ -170,6 +173,28 @@ void main() {
       expect(
         _container(store).read(consentControllerProvider),
         ConsentTier.unresolved,
+      );
+    });
+
+    test('an old grant is asked again when collection scope expands', () {
+      final store = InMemoryPreferenceStore({
+        'nocturne.consent': ConsentTier.session.storageKey,
+      });
+
+      expect(
+        _container(store).read(consentControllerProvider),
+        ConsentTier.unresolved,
+      );
+    });
+
+    test('an old refusal remains refused after the scope change', () {
+      final store = InMemoryPreferenceStore({
+        'nocturne.consent': ConsentTier.none.storageKey,
+      });
+
+      expect(
+        _container(store).read(consentControllerProvider),
+        ConsentTier.none,
       );
     });
 

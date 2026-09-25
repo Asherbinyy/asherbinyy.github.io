@@ -139,16 +139,14 @@ jobs:
         run: dart run tool/generate_mark.dart
 
       - name: Generate static routes
+        env:
+          ANALYTICS_ENDPOINT: https://nocturne-analytics.asherbinyy.workers.dev/v1/beacon
         run: dart run tool/generate_static.dart
 
 
-      # No ANALYTICS_ENDPOINT is supplied, so the release build has no sender,
-      # no client, and therefore collects nothing: no beacon, no consent
-      # banner, and nothing written to a visitor's device. The tiers, the
-      # consent model, the Worker and its tests all remain in the repository.
-      # Restoring collection is one --dart-define on this line.
+      # Collection starts only after the visitor grants analytics consent.
       - name: Build Web (WASM)
-        run: flutter build web --wasm --release --dart-define=ADMIN_PREVIEW_ORIGIN=https://nocturne-analytics.asherbinyy.workers.dev
+        run: flutter build web --wasm --release --dart-define=ANALYTICS_ENDPOINT=https://nocturne-analytics.asherbinyy.workers.dev/v1/beacon --dart-define=ADMIN_PREVIEW_ORIGIN=https://nocturne-analytics.asherbinyy.workers.dev
 
       - name: Ensure GitHub Pages routing and Jekyll bypass
         run: |

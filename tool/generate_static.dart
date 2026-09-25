@@ -178,6 +178,19 @@ String _formatDate(String? date) {
 /// Comments live here rather than inside the emitted CSS: every byte of that
 /// string ships to every reader, and the reasoning is for whoever edits this
 /// file next.
+String _analyticsMarkup() {
+  final value = Platform.environment['ANALYTICS_ENDPOINT'];
+  final endpoint = value == null ? null : Uri.tryParse(value);
+  if (endpoint == null ||
+      endpoint.scheme != 'https' ||
+      endpoint.host.isEmpty ||
+      endpoint.userInfo.isNotEmpty) {
+    return '';
+  }
+  return '<script defer src="/static-analytics.js" '
+      'data-endpoint="${_escAttr(endpoint.toString())}"></script>';
+}
+
 String _criticalCss() => '''
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -236,6 +249,14 @@ ul{list-style:none;padding:0}
 .highlight{color:var(--text-secondary);font-size:14px;padding:4px 0}
 .skills-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .skills-list span{font-size:13px;color:var(--instrument-mid);border:1px solid var(--hairline);border-radius:2px;padding:2px 8px}
+.analytics-choice{margin-top:16px;padding:16px;border:1px solid var(--hairline)}
+.analytics-choice[hidden]{display:none}
+.analytics-choice h2{margin-top:0}
+.analytics-choice p{margin:8px 0}
+button,summary{font:inherit;color:var(--beacon);cursor:pointer}
+button{background:transparent;border:1px solid var(--hairline-strong);padding:8px 16px;margin:8px 12px 8px 0}
+button:focus-visible,summary:focus-visible{outline:2px solid var(--beacon);outline-offset:2px}
+@media print{.analytics-choice,footer button{display:none}}
 footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--hairline);font-size:13px;color:var(--text-muted)}
 @media(max-width:600px){body{padding:20px 16px 48px}.role-header{flex-direction:column}.app-grid{grid-template-columns:1fr}}
 ''';
@@ -462,6 +483,7 @@ String _generateCv(
       'without JavaScript.</p>',
     )
     ..writeln('</footer>')
+    ..writeln(_analyticsMarkup())
     ..writeln('</body>')
     ..writeln('</html>');
 
@@ -533,13 +555,16 @@ void _writeCvApp(StringBuffer buf, Map<String, dynamic> app) {
     buf.writeln('<div class="app-links">');
     if (store['ios'] != null) {
       buf.writeln(
-        '<a href="${_escAttr(store['ios'] as String)}" '
+        '<a data-analytics-target="app:${_escAttr(app['id'] as String)}:ios" '
+        'href="${_escAttr(store['ios'] as String)}" '
         'rel="noopener noreferrer" target="_blank">App Store</a>',
       );
     }
     if (store['android'] != null) {
       buf.writeln(
-        '<a href="${_escAttr(store['android'] as String)}" '
+        '<a data-analytics-target="app:'
+        '${_escAttr(app['id'] as String)}:android" '
+        'href="${_escAttr(store['android'] as String)}" '
         'rel="noopener noreferrer" target="_blank">Google Play</a>',
       );
     }
@@ -796,6 +821,7 @@ String _generateBrief(
     ..writeln('<footer>')
     ..writeln('<p><a href="$baseUrl/">View full portfolio</a></p>')
     ..writeln('</footer>')
+    ..writeln(_analyticsMarkup())
     ..writeln('</body>')
     ..writeln('</html>');
 

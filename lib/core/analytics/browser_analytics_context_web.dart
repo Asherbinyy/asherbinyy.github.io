@@ -2,6 +2,8 @@ import 'dart:js_interop';
 
 const _campaignKey = 'nocturne.campaign';
 const _sessionKey = 'nocturne.session';
+String? _campaign;
+String? _session;
 
 @JS('window.sessionStorage.setItem')
 external void _setSessionItem(String key, String value);
@@ -13,11 +15,12 @@ external String? _getSessionItem(String key);
 external String get _documentReferrer;
 
 /// Campaign attribution is session-scoped and contains no viewer identifier.
-void captureCampaign(String campaign) =>
-    _setSessionItem(_campaignKey, campaign);
+void captureCampaign(String campaign) {
+  _campaign = campaign;
+}
 
 /// Returns the campaign captured on entry to this tab.
-String? currentCampaign() => _getSessionItem(_campaignKey);
+String? currentCampaign() => _campaign;
 
 /// Parses only the host, dropping path, query and fragment at this boundary.
 String? currentReferrerHost() {
@@ -30,7 +33,34 @@ String? currentReferrerHost() {
 /// `sessionStorage`, never `localStorage`: section 4 requires the identifier to
 /// die with the tab and never be linked across visits. There is a mandatory
 /// test asserting nothing is written to `localStorage`.
-String? readSessionId() => _getSessionItem(_sessionKey);
+String? readSessionId() {
+  try {
+    return _session ??= _getSessionItem(_sessionKey);
+  } on Object {
+    return _session;
+  }
+}
 
 /// Stores this tab's session identifier for the life of the tab.
-void writeSessionId(String id) => _setSessionItem(_sessionKey, id);
+void writeSessionId(String id) {
+  _session = id;
+  try {
+    _setSessionItem(_sessionKey, id);
+  } on Object {
+    // A denied storage API must not break the visitor's chosen collection.
+  }
+}
+
+@JS('window.sessionStorage.removeItem')
+external void _removeSessionItem(String key);
+
+/// Withdrawal removes the tab identifier and any legacy campaign entry.
+void clearAnalyticsSession() {
+  _session = null;
+  try {
+    _removeSessionItem(_sessionKey);
+    _removeSessionItem(_campaignKey);
+  } on Object {
+    /* Storage may be disabled by the browser. */
+  }
+}

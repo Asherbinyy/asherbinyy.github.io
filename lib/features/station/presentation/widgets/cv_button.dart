@@ -50,6 +50,10 @@ class CvButton extends ConsumerWidget {
           AnalyticsEvent.cvOpened,
           route: route.path,
           inputMode: context.platform.inputMode,
+          target: 'cv',
+          destination: Uri.base
+              .resolve(cvFile == null ? '/cv/' : '/assets/$cvFile')
+              .toString(),
         );
         // Flutter serves a declared asset under its own `assets/` prefix, so
         // the bundled path is not the URL. Built here rather than stored in

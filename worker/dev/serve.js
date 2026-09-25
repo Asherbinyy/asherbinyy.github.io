@@ -20,6 +20,7 @@ import {fileURLToPath} from 'node:url';
 
 import {handleRequest} from '../src/index.js';
 import {ContentStore} from '../src/store.js';
+import {AnalyticsStore} from '../src/analytics-store.js';
 import {durableNamespace} from './durable-double.js';
 
 const realSite = process.env.REAL_SITE === '1';
@@ -83,6 +84,7 @@ const contentStore = durableNamespace(ContentStore);
 
 const env = {
   ANALYTICS: new MemoryKv(),
+  ...(process.env.ANALYTICS_DEV === '1' ? {ANALYTICS_STORE: durableNamespace(AnalyticsStore), ANALYTICS_ENABLED:'true'} : {}),
   CONTENT: new MemoryKv(),
   CONTENT_STORE: contentStore,
   ADMIN_TOKEN: token,

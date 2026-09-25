@@ -96,8 +96,9 @@ class _StudyState extends ConsumerState<_Study> {
       if (!mounted) return;
       ref.recordInteraction(
         AnalyticsEvent.caseStudyOpened,
-        route: AppRoute.caseStudy.path,
+        route: '/work/${widget.study.id}',
         inputMode: context.platform.inputMode,
+        target: 'study:${widget.study.id}',
       );
     });
   }

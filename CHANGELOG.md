@@ -5,6 +5,20 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### Analytics dashboard, 2026-09-25
+
+- Rebuilt admin insights as Overview, Links & apps, Pages and Audience reports
+  with real trends, comparisons, app/link destinations, source pages,
+  engagement, referrers, countries, campaigns, search, sorting and CSV export.
+- Added consent-gated page and interaction measurement across Flutter and the
+  standalone CV/brief. An expanded scope requires a fresh grant; a previous
+  rejection remains rejected.
+- Moved new counts to an atomic SQLite Durable Object with per-day unique
+  estimates, rate limiting, rollback-safe updates and 24-month retention. Raw
+  request addresses and browser headers are never stored.
+- Added a complete analytics privacy contract and operator runbook. No owner
+  content or schema changed.
+
 ### Merged to `main`, 2026-09-24 (third review)
 
 - **Scoreboard:** the first climb of a visit now counts. It was never played on a server-issued run, so somebody who joined after it found nothing on the board. The run is fetched with a random key held only in the tab, and joining claims the climb just finished.
