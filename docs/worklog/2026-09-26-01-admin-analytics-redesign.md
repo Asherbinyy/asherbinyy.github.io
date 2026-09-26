@@ -32,6 +32,10 @@ reporting without creating an event log or inventing visitor figures.
   admin returned the redesigned bundle with no-store/noindex headers, and the
   production-origin beacon preflight returned the exact `https://sherbini.uk`
   allow-origin header.
+- Merged PR #58 as `4e4d9ee824416068ee878d79c9f91da3abff8bab` after its
+  verify, golden and security checks passed. Main CI run `36213343036` then
+  passed verify, Worker tests, coverage, goldens, the WASM/static build,
+  Lighthouse and GitHub Pages deployment.
 - Installed no plugin or package. The existing repository browser driver,
   Worker runtime and test tooling covered the work without another dependency.
 
@@ -91,6 +95,9 @@ Additional verification:
 - Live admin — HTTP 200, `no-store`, `noindex`, redesigned bundle present.
 - Production CORS — HTTP 204 with exact `Access-Control-Allow-Origin:
   https://sherbini.uk`; no synthetic production beacon was sent.
+- PR #58 — merged after verify, goldens and GitGuardian passed.
+- Main CI/Pages — pass; run `36213343036`, including verify, Worker tests,
+  coverage, goldens, WASM/static build, Lighthouse and Pages deployment.
 - `git diff --check` — pass.
 
 ## Known issues left open
