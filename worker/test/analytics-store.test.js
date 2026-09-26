@@ -57,6 +57,43 @@ test('link identity, page, and engagement sums survive storage and reporting', a
   assert.equal(report.uniqueVisitors.total, null);
 });
 
+test('today uses aggregate UTC hours while legacy rows stay in exact totals', async () => {
+  const env = setup();
+  await record(env);
+  await record(env, {now: time + 2 * 60 * 60 * 1000});
+  const snapshot = await read(env);
+  assert.deepEqual(snapshot.counters
+    .filter((row) => row.dimensions[1] === 'route_view')
+    .map((row) => row.dimensions[9]), ['12', '14']);
+  snapshot.counters.push({
+    dimensions: ['2026-09-24', 'route_view', '/', 'GB', 'pointer', '-', '-', '-', '-'],
+    count: 3,
+  });
+  const report = dashboardReport(snapshot, {from:'2026-09-24',to:'2026-09-24'});
+  assert.equal(report.views,5);
+  assert.equal(report.timeline.granularity,'hour');
+  assert.deepEqual(report.timeline.series.map((point) => [point.key,point.views]), [
+    ['12:00',1],['14:00',1],
+  ]);
+  assert.deepEqual(report.timeline.hourlyCoverage,{counted:2,total:5,complete:false});
+});
+
+test('long ranges group charts by month without changing totals', () => {
+  const snapshot = {counters:[
+    {dimensions:['2026-01-02','route_view','/','GB','pointer','-','-','-','-','09'],count:2},
+    {dimensions:['2026-01-22','route_view','/work','GB','pointer','-','-','-','-','12'],count:3},
+    {dimensions:['2026-03-01','outbound_click','/work','GB','pointer','-','-','app:x','-','14'],count:4},
+  ],totals:[]};
+  const report = dashboardReport(snapshot,{from:'2026-01-01',to:'2026-12-31'});
+  assert.equal(report.views,5);
+  assert.equal(report.clicks,4);
+  assert.equal(report.timeline.granularity,'month');
+  assert.deepEqual(report.timeline.series.map((point) =>
+    [point.key,point.views,point.clicks]), [
+    ['2026-01',5,0],['2026-03',0,4],
+  ]);
+});
+
 test('named interactions remain attributable to an item and source page', async () => {
   const env = setup();
   await record(env, {beacon: {...base.beacon,event:'media_opened',target:'gallery:app:sample'}});
