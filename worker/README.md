@@ -5,10 +5,11 @@ This service implements the server-side privacy boundary in
 deduplication hash. Raw IP addresses and user-agent values are used only as
 inputs to SHA-256 inside one request invocation and are never written or logged.
 
-Current-state note (2026-09-25): this Worker also serves content, media, the
+Current-state note (2026-09-26): this Worker also serves content, media, the
 game and the admin panel. The release enables cookieless first-party analytics
-without a prompt or browser identifier. The atomic store and dashboard operations
-are documented in
+without a prompt or browser identifier. New counter rows include a coarse UTC
+hour for the Today report; there is still no timestamp or event log. The atomic
+store and dashboard operations are documented in
 [`docs/32-ANALYTICS-DASHBOARD-RUNBOOK.md`](../docs/32-ANALYTICS-DASHBOARD-RUNBOOK.md).
 Inspect existing bindings before creating any namespace.
 
@@ -51,7 +52,8 @@ The analytics Durable Object creates a 32-byte salt for the current UTC day and
 schedules its own midnight alarm. Aggregate counters expire after 24 calendar
 months; daily visitor and rate-limit hashes remain for at most two UTC dates.
 The older KV cron remains for historical counters and optional digests; new
-events use the transactional object.
+events use the transactional object. The admin groups Today by hour, ranges up
+to 93 days by day and longer ranges by month without filling missing periods.
 
 ## Running the admin panel locally
 

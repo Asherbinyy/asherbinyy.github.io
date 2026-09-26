@@ -70,11 +70,16 @@ Aggregate counter rows are retained for 24 months. They hold only:
 
 ```text
 date, event, route, country, input class, referrer host,
-campaign, target, redacted destination, count, numeric total where applicable
+campaign, target, redacted destination, UTC hour, count,
+numeric total where applicable
 ```
 
-The store contains no event log and no row per visit. Numeric totals exist only
-to compute mean active seconds and mean scroll quartile.
+The hour is an aggregate counter dimension added on September 26, 2026. It
+allows the Today report to show when activity arrived without storing a
+timestamp or an event row. Older counters remain valid and stay in exact daily
+totals, but cannot be placed on an hourly chart. The store contains no event log
+and no row per visit. Numeric totals exist only to compute mean active seconds
+and mean scroll quartile.
 
 ## Reporting rules
 
@@ -85,6 +90,8 @@ to compute mean active seconds and mean scroll quartile.
 - Clicks per 100 views is a frequency, not a conversion rate, and may exceed
   100 because one view can produce several clicks.
 - Missing days remain missing in graphs; the dashboard must not invent zeros.
+- Today uses UTC-hour buckets where they exist. Ranges up to 93 days use daily
+  buckets; longer ranges use monthly buckets. Grouping never changes totals.
 - Old counters without targets are labelled as legacy data, not guessed.
 - Direct navigation and unavailable referrers cannot be distinguished.
 - Daily uniques are estimates per UTC day. There is no weekly or monthly unique

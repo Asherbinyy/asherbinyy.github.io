@@ -1,8 +1,8 @@
 # Admin and media
 
-Release state: September 25. The real Flutter preview, collapsible panels,
+Release state: September 26. The real Flutter preview, collapsible panels,
 current-content schema, uploaded-media consumers and base theme/font defaults
-are in production. The analytics home is now the four-report dashboard
+are in production. The redesigned analytics home is now the four-report dashboard
 described in [the analytics runbook](32-ANALYTICS-DASHBOARD-RUNBOOK.md). See the
 [UI review](31-CODEX-ADMIN-UI-REVIEW.md) for the wider admin workspace.
 
@@ -88,12 +88,14 @@ ending mid-edit asks for the password over the panel and keeps every draft. The
 hourly lockout no longer takes the owner down with the attacker.
 
 **A6, home.** Four reports cover overview, links and apps, pages and audience.
-They show observed daily series, equal-length previous-period comparisons,
-public destinations, source pages, named interactions, page engagement,
-referrers, countries, input devices and campaigns. Search, sorting and CSV are
-built in. No weekly or monthly unique-visitor figure is invented: the visitor
-hash is salted daily, so adding days would count returning people again. Empty,
-disabled and failed states remain distinct.
+They show an observed dual-series traffic chart, equal-length previous-period
+comparisons, factual range highlights, ranked performance, public destinations,
+source pages, named interactions, page engagement, a local country map,
+referrers, input devices and campaigns. Today, day, month, two-year and custom
+UTC ranges choose hourly, daily or monthly buckets automatically. Search,
+sorting and CSV are built in. No weekly or monthly unique-visitor figure is
+invented: the visitor hash is salted daily, so adding days would count returning
+people again. Empty, disabled and failed states remain distinct.
 
 **The preview channel — the admin half only.** The editor's side of protocol v1
 is built: the frame, the session, the handshake, the validated draft, selection
