@@ -44,8 +44,8 @@ const state = {
   releaseError: '',
   atomicStore: null,
   range: {
-    id: '28',
-    from: new Date(Date.now() - 27 * 86400000).toISOString().slice(0, 10),
+    id: '30',
+    from: new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10),
     to: new Date().toISOString().slice(0, 10),
   },
 };
