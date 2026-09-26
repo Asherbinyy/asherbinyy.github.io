@@ -1981,8 +1981,10 @@ async function readInsights(url, env, now, headers) {
     return response({error: 'That range ends before it starts'}, 400, headers);
   }
 
-  if (Date.parse(to) - Date.parse(from) >= 366 * 86400000) {
-    return response({error: 'Choose a range of at most 366 days'}, 400, headers);
+  const oldest = new Date(to + 'T00:00:00Z');
+  oldest.setUTCFullYear(oldest.getUTCFullYear() - 2);
+  if (from < oldest.toISOString().slice(0, 10)) {
+    return response({error: 'Choose a range within the last two calendar years'}, 400, headers);
   }
 
   let snapshot;

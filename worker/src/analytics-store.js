@@ -22,7 +22,9 @@ export class AnalyticsStore {
   }
 
   async record({beacon, country, address, agent, now}) {
-    const date = new Date(now).toISOString().slice(0, 10);
+    const received = new Date(now);
+    const date = received.toISOString().slice(0, 10);
+    const hour = String(received.getUTCHours()).padStart(2, '0');
     // One salt, one UTC day, even when the first requests arrive together.
     let salt = await this.storage.get('salt');
     if (salt?.date !== date) {
@@ -33,7 +35,7 @@ export class AnalyticsStore {
     const visitor = await digest(salt.value + '\0' + address + '\0' + agent);
     const dimensions = [date, beacon.event, beacon.route, country,
       beacon.deviceClass, beacon.referrerHost ?? '-', beacon.campaign ?? '-',
-      beacon.target ?? '-', beacon.destination ?? '-'];
+      beacon.target ?? '-', beacon.destination ?? '-', hour];
     const name = 'row|' + dimensions.map(encodeURIComponent).join('|');
     const visitorKey = 'visitor|' + date + '|' + visitor;
     const limitKey = 'rate|' + date + '|' + visitor;

@@ -35,8 +35,18 @@ try {
   await page.settle(1600);
   check('overview opens', await page.eval("document.body.dataset.view === 'home'"));
   check('four report tabs are present', await page.eval("document.querySelectorAll('.reportTabs button').length === 4"));
-  check('overview reports exact totals', await page.eval("[...document.querySelectorAll('.figure strong')].map(n=>n.textContent).slice(0,3).join('|') === '2|3|1'"));
-  check('traffic graph has observed data', await page.eval("document.querySelectorAll('.chartCard svg circle').length === 1"));
+  check('clean time presets include today through two years', await page.eval("document.querySelectorAll('.rangePresets button').length === 8 && document.querySelector('.rangePresets').innerText.includes('Today') && document.querySelector('.rangePresets').innerText.includes('2 years')"));
+  await page.eval("clickText('.rangePresets button','Today')");
+  await page.settle(1000);
+  check('today loads an hourly UTC report', await page.eval("document.querySelector('.rangeDates').innerText.split('—').map(t=>t.trim().slice(0,10)).every((v,_,a)=>v===a[0]) && document.querySelector('.trafficCard').innerText.includes('UTC hours')"));
+  await page.eval("clickText('.rangePresets button','2 years')");
+  await page.settle(1000);
+  check('two years loads monthly totals', await page.eval("document.querySelector('.trafficCard').innerText.includes('Monthly recorded totals')"));
+  await page.eval("clickText('.rangePresets button','30 days')");
+  await page.settle(1000);
+  check('overview reports exact totals', await page.eval("[...document.querySelectorAll('.metricCard strong')].map(n=>n.textContent).slice(0,3).join('|') === '2|3|1'"));
+  check('traffic graph has both exact series', await page.eval("document.querySelectorAll('.trafficCard svg circle').length === 2 && document.querySelector('.trafficCard').innerText.includes('Page views') && document.querySelector('.trafficCard').innerText.includes('Link clicks')"));
+  check('overview derives factual range insights', await page.eval("document.querySelector('.insightPanel').innerText.includes('Most viewed page') && document.querySelector('.insightPanel').innerText.includes('Most clicked')"));
   await page.eval("clickText('.reportTabs button','Links & apps')");
   await page.settle();
   check('app name and platform resolve', await page.eval("$('editor').innerText.includes('Example One · Google Play')"));
@@ -51,6 +61,7 @@ try {
   await page.eval("clickText('.reportTabs button','Audience')");
   await page.settle();
   check('audience uses page-view categories', await page.eval("$('editor').innerText.includes('example.org') && $('editor').innerText.includes('portfolio-review')"));
+  check('audience includes a local world map and exact country table', await page.eval("document.querySelectorAll('.countryCard svg .mapCountry').length > 150 && $('editor').innerText.includes('Countries')"));
   await page.eval(`(() => {
     window.__download = {};
     URL.createObjectURL = (blob) => { window.__download.blob = blob; return 'blob:local'; };
@@ -60,9 +71,13 @@ try {
   await page.eval("clickText('.collectionHealth button','Export CSV')");
   await page.settle();
   check('CSV export is populated and named', await page.eval("window.__download.name.startsWith('portfolio-audience-') && window.__download.blob.text().then(t=>t.includes('referrers') && t.includes('example.org'))",true));
+  await page.eval("clickText('.reportTabs button','Overview')");
+  await page.settle();
+  await page.viewport(1440,900,false);
+  await page.screenshot('/private/tmp/nocturne-analytics-dashboard-desktop.png');
   await page.viewport(390,844,true);
   check('dashboard fits a phone viewport', await page.eval("document.documentElement.scrollWidth <= innerWidth && $('editorPane').scrollWidth <= $('editorPane').clientWidth + 1"));
-  await page.screenshot('/private/tmp/nocturne-analytics-dashboard.png');
+  await page.screenshot('/private/tmp/nocturne-analytics-dashboard-phone.png');
   const errors = page.logs.filter((entry) => ['error','exception'].includes(entry.level));
   check('browser reports no JavaScript errors', errors.length === 0);
   if (errors.length) process.stdout.write(JSON.stringify(errors,null,2) + '\n');

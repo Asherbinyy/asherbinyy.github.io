@@ -5,6 +5,16 @@ Keep a Changelog format. Milestone releases are tagged `v0.1.0`, `v0.2.0`,
 
 ## [Unreleased]
 
+### Analytics dashboard redesign, 2026-09-26
+
+- Rebuilt the admin analytics home around a compact responsive hierarchy,
+  combined views/clicks chart, exact factual highlights, ranked performance,
+  richer page/link reporting and a local public-domain country map.
+- Added Today, 7-day, 30-day, 3-month, 12-month, 2-year and custom UTC ranges;
+  charts use hourly, daily or monthly aggregate buckets without filling gaps.
+- Added a UTC-hour counter dimension for new records. It contains no timestamp,
+  event row or browser identifier; historical totals remain unchanged.
+
 ### Default cookieless analytics, 2026-09-25
 
 - Removed the analytics prompt, footer consent control and stored decision.

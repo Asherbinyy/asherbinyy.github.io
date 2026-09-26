@@ -3,10 +3,13 @@ import {clientDashboard} from './client-dashboard.js';
 /** Shared range, chart and publication controls. */
 export const clientHome = clientDashboard + `
 const ranges = [
-  {id: '7', label: 'Last 7 days', days: 7},
-  {id: '28', label: 'Last 28 days', days: 28},
-  {id: '90', label: 'Last 90 days', days: 90},
-  {id: 'custom', label: 'Choose dates', days: 0},
+  {id: 'today', label: 'Today', days: 1},
+  {id: '7', label: '7 days', days: 7},
+  {id: '30', label: '30 days', days: 30},
+  {id: '90', label: '3 months', days: 90},
+  {id: '365', label: '12 months', years: 1},
+  {id: '730', label: '2 years', years: 2},
+  {id: 'custom', label: 'Custom', days: 0},
 ];
 let insightsRequest = 0;
 let insightsLoading = false;
@@ -16,8 +19,13 @@ let releaseRequest = 0;
 function dayString(when) { return when.toISOString().slice(0, 10); }
 function rangeDates() {
   if (state.range.id === 'custom') return {from: state.range.from, to: state.range.to};
-  const chosen = ranges.find((entry) => entry.id === state.range.id) || ranges[1];
+  const chosen = ranges.find((entry) => entry.id === state.range.id) || ranges[2];
   const now = new Date();
+  if (chosen.years) {
+    const from = new Date(now.getTime());
+    from.setUTCFullYear(from.getUTCFullYear() - chosen.years);
+    return {from: dayString(from), to: dayString(now)};
+  }
   return {from: dayString(new Date(now.getTime() - (chosen.days - 1) * 86400000)), to: dayString(now)};
 }
 
@@ -103,15 +111,14 @@ function releaseSection() {
 }
 
 function rangePicker() {
-  const wrap = node('div', 'field');
-  const row = node('div', 'checks'); row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Date range');
+  const wrap = node('div', 'rangePicker');
+  const row = node('div', 'rangePresets'); row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Date range');
   for (const range of ranges) {
-    const button = node('button', 'small', range.label); button.type = 'button';
+    const button = node('button', 'quiet small', range.label); button.type = 'button';
     button.setAttribute('aria-pressed', String(state.range.id === range.id));
-    if (state.range.id === range.id) button.style.borderColor = 'var(--gold)';
     button.onclick = () => { state.range.id = range.id; refreshInsights(); }; row.append(button);
   }
-  const refresh = node('button', 'small', 'Refresh'); refresh.onclick = refreshInsights; row.append(refresh); wrap.append(row);
+  const refresh = node('button', 'small rangeRefresh', 'Refresh data'); refresh.onclick = refreshInsights; row.append(refresh); wrap.append(row);
   if (state.range.id === 'custom') {
     const pair = node('div', 'pair');
     for (const [key, text] of [['from', 'From'], ['to', 'To']]) {
@@ -121,7 +128,7 @@ function rangePicker() {
     }
     wrap.append(pair);
   }
-  const dates = rangeDates(); wrap.append(node('p', 'help', dates.from + ' — ' + dates.to + ' · UTC calendar days')); return wrap;
+  const dates = rangeDates(); wrap.append(node('p', 'rangeDates', dates.from + ' — ' + dates.to + ' · UTC')); return wrap;
 }
 async function loadRelease() {
   const ticket = ++releaseRequest;

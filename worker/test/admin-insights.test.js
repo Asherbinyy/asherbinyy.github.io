@@ -205,6 +205,20 @@ test('a range that ends before it starts is refused', async () => {
   assert.equal(response.status, 400);
 });
 
+test('the report accepts two calendar years and refuses anything older', async () => {
+  const accepted = await handleRequest(
+    admin('/v1/admin/insights?from=2024-09-26&to=2026-09-26'),
+    environment(),
+  );
+  assert.equal(accepted.status, 200);
+  assert.equal((await accepted.json()).timeline.granularity, 'month');
+  const refused = await handleRequest(
+    admin('/v1/admin/insights?from=2024-09-25&to=2026-09-26'),
+    environment(),
+  );
+  assert.equal(refused.status, 400);
+});
+
 test('a nonsense range falls back to the default rather than failing', async () => {
   const response = await handleRequest(
     admin('/v1/admin/insights?from=yesterday&to=soon'),

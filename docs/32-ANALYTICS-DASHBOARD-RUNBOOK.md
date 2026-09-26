@@ -10,14 +10,17 @@ The admin home has four reports:
 
 | Report | Contents |
 |---|---|
-| Overview | Page views, link clicks, CV opens, clicks per 100 views, previous-period comparisons, a daily traffic graph, top links and top pages |
-| Links & apps | Public destination, stable target, type, click count, source pages, app detail views and other interactions |
-| Pages | Views, outbound clicks, mean active seconds and mean scroll quartile by route |
-| Audience | Daily unique estimates, referrer hosts, countries, input devices and campaigns; every share is based on page views |
+| Overview | Page views, link clicks, CV opens, clicks per 100 views, previous-period comparisons, a dual-series traffic chart, factual range highlights and ranked pages/links |
+| Links & apps | Click share, public destination, stable target, type, source pages, app detail views and other named interactions |
+| Pages | View share, views, interactions, outbound clicks, mean active seconds and mean scroll quartile by route |
+| Audience | A local country map, exact country table, daily unique estimates, referrer hosts, input devices and campaigns; every share is based on page views |
 
-Ranges are 7, 28 or 90 days, or a custom UTC range up to 366 days. Tables are
-searchable and sortable. Each report exports its own CSV. CSV cells are quoted
-and spreadsheet formulas are neutralised.
+Ranges are Today, 7 days, 30 days, 3 months, 12 months, 2 years, or a custom UTC
+range within the 24-month retention window. Today is grouped by recorded UTC
+hour, ranges up to 93 days by day, and longer ranges by month. Historical rows
+without an hour remain in totals and are explicitly excluded from the hourly
+plot. Tables are searchable and sortable. Each report exports its own CSV. CSV
+cells are quoted and spreadsheet formulas are neutralised.
 
 The interface uses the portfolio's type, rules and spacing. It has real empty,
 loading, retry and disabled states. Publication status is kept in a disclosure
@@ -78,7 +81,11 @@ The client uses no cookie, analytics preference or browser identifier.
   historical KV compatibility.
 - `worker/src/admin/client-dashboard.js` renders the four reports and CSV.
 - `worker/src/admin/client-charts.js` draws observed series and always includes
-  an exact accessible table.
+  an exact accessible table. It also renders the country map locally.
+- `worker/src/admin/world-map-data.js` contains a compact equirectangular
+  projection of Natural Earth 1:110m Admin 0 Countries. Natural Earth data is
+  public domain; the exact upstream revision and source checksum are recorded
+  in that file. The admin makes no map-tile or third-party request.
 - `wrangler.toml` binds `ANALYTICS_STORE`, enables collection and declares the
   `v3-analytics-store` migration.
 
@@ -111,7 +118,7 @@ except the public Google Play `id`.
 The Durable Object key for a counter encodes these dimensions:
 
 ```text
-row|date|event|route|country|device|referrer|campaign|target|destination
+row|date|event|route|country|device|referrer|campaign|target|destination|hour
 ```
 
 Each transaction updates the count, numeric total when present, daily-visitor
@@ -119,13 +126,19 @@ marker and metadata together. A failed write rolls back all of them. The
 per-daily-hash limit is 120 accepted beacons per minute; the next one receives
 429 and is not counted.
 
+`hour` is the two-digit UTC hour when the Worker accepted the beacon. It is a
+counter dimension rather than a timestamp. It creates no event log, visit row,
+browser identifier or cross-day link. Rows written before September 26, 2026
+do not have it and continue to report normally.
+
 The alarm removes aggregate rows older than 24 months and visitor/rate keys
 older than one day, giving those short-lived values at most two UTC dates in
 storage. It then schedules the next UTC midnight alarm.
 
 `/v1/admin/insights` reads the requested range plus an equal-length previous
 range. It merges historical KV counters with the new object, then produces the
-report. The previous period is used only when it contains records.
+report. The previous period is used only when it contains records. Requests
+may span at most two calendar years, matching aggregate retention.
 
 ## Local verification
 
